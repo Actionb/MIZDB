@@ -219,11 +219,11 @@ class ACAusgabe(ACTabular):
         return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
 
     def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']  # pragma: no cover
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
 
     def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]  # pragma: no cover
+        return [result.num_string, result.lnum_string, result.jahr_string]
 
 
 class ACAutor(ACBase):

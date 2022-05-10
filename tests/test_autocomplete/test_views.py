@@ -3,7 +3,7 @@ from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
+from django.db.models import BooleanField, Count, ExpressionWrapper, Q, QuerySet
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import override as translation_override
 
@@ -568,9 +568,8 @@ class TestACBand(RequestTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.genre = make(_models.Genre, genre='Testgenre')
-        # noinspection PyUnresolvedReferences
-        cls.contains = make(cls.model, band_name='Bar Foo', genre=cls.genre)
+        cls.genre = genre = make(_models.Genre, genre='Testgenre')
+        cls.contains = make(cls.model, band_name='Bar Foo', genre=genre)
         cls.startsw = make(cls.model, band_name='Foo Fighters')
         cls.exact = make(cls.model, band_name='Foo')
         cls.alias = make(cls.model, band_name='Bars', bandalias__alias='Fee Fighters')
@@ -670,33 +669,53 @@ class TestACBand(RequestTestCase):
 
 class TestACAusgabe(ACViewTestCase):
 
-    model = _models.Ausgabe
-    path = 'acausgabe'
     view_class = ACAusgabe
+    model = _models.Ausgabe
+    path = reverse_lazy('acausgabe')
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
+        cls.mag = mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj_num = make(
-            cls.model, magazin=cls.mag, ausgabejahr__jahr=2020, ausgabenum__num=10)
+            cls.model, magazin=mag, ausgabejahr__jahr=2020, ausgabenum__num=10
+        )
         cls.obj_lnum = make(
-            cls.model, magazin=cls.mag, ausgabejahr__jahr=2020, ausgabelnum__lnum=10)
+            cls.model, magazin=mag, ausgabejahr__jahr=2020, ausgabelnum__lnum=11
+        )
         cls.obj_monat = make(
-            cls.model, magazin=cls.mag, ausgabejahr__jahr=2020,
+            cls.model, magazin=mag, ausgabejahr__jahr=2020,
             ausgabemonat__monat__monat='Januar'
         )
         cls.obj_sonder = make(
-            cls.model, magazin=cls.mag, sonderausgabe=True,
+            cls.model, magazin=mag, sonderausgabe=True,
             beschreibung='Special Edition'
         )
         # noinspection SpellCheckingInspection
-        cls.obj_jahrg = make(cls.model, magazin=cls.mag, jahrgang=12, ausgabenum__num=13)
-        cls.obj_datum = make(cls.model, magazin=cls.mag, e_datum='1986-08-18')
+        cls.obj_jahrg = make(cls.model, magazin=mag, jahrgang=12, ausgabenum__num=13)
+        cls.obj_datum = make(cls.model, magazin=mag, e_datum='1986-08-18')
 
+        # noinspection PyUnresolvedReferences
         cls.test_data = [
-            cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg]
+            cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg
+        ]
 
         super().setUpTestData()
+
+    def test_get_queryset_add_annotations(self):
+        """Assert that the ModelAdmin annotations are added to the queryset."""
+        class DummyAdmin:
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            # noinspection PyMethodMayBeStatic
+            def get_changelist_annotations(self):
+                return {'foo': Count('*')}
+
+        with patch('dbentry.admin.AusgabenAdmin', new=DummyAdmin):
+            view = self.get_view(self.get_request())
+            queryset = view.get_queryset()
+            self.assertIn('foo', queryset.query.annotations)
 
     def test_search_num(self):
         """Assert that an object can be found via its num value(s)."""
@@ -715,9 +734,9 @@ class TestACAusgabe(ACViewTestCase):
         view = self.get_view(q=self.obj_lnum.__str__())
         self.assertIn(self.obj_lnum, view.get_queryset())
 
-        # search for 10/11:
+        # search for 11/12:
         # noinspection PyUnresolvedReferences
-        self.obj_lnum.ausgabelnum_set.create(lnum=11)
+        self.obj_lnum.ausgabelnum_set.create(lnum=12)
         self.obj_lnum.refresh_from_db()
         view = self.get_view(q=self.obj_lnum.__str__())
         self.assertIn(self.obj_lnum, view.get_queryset())
@@ -756,6 +775,26 @@ class TestACAusgabe(ACViewTestCase):
         """Assert that the queryset is chronologically ordered."""
         view = self.get_view()
         self.assertTrue(view.get_queryset().chronologically_ordered)
+
+    def test_tabular_results(self):
+        """Assert that the results contain extra data for the tabular display."""
+        response = self.client.get(self.path, data={'q': str(self.obj_num), 'tabular': True})
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)['results'][0]
+
+        self.assertIn('text', results.keys())
+        self.assertEqual(results['text'], 'Ausgabe')
+        self.assertIn('is_optgroup', results.keys())
+        self.assertEqual(results['is_optgroup'], True)
+        self.assertIn('optgroup_headers', results.keys())
+        self.assertEqual(results['optgroup_headers'], ['Nummer', 'lfd.Nummer', 'Jahr'])
+        self.assertIn('children', results.keys())
+        self.assertEqual(len(results['children']), 1, results['children'])
+        result = results['children'][0]
+        self.assertEqual(result['id'], str(self.obj_num.pk))
+        self.assertEqual(result['text'], str(self.obj_num))
+        self.assertEqual(result[EXTRA_DATA_KEY], ['10', '-', '2020'])
+        self.assertEqual(result['selected_text'], str(self.obj_num))
 
 
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
