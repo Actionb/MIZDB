@@ -802,61 +802,24 @@ class TestACAusgabe(ACViewTestCase):
         self.assertEqual(result['selected_text'], str(self.obj_num))
 
 
-class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Provenienz
-    has_alias = False
-    test_data_count = 1
-
-
-class TestACPerson(ACViewTestCase):
-    model = _models.Person
-    view_class = ACPerson
-
-    @patch('dbentry.ac.views.log_addition')
-    def test_create_object_new_adds_log_entry(self, log_addition_mock):
-        """Assert that a log entry is added for the created object."""
-        view = self.get_view(self.get_request())
-        view.create_object('Alice Testman')
-        log_addition_mock.assert_called()
-
-    @translation_override(language=None)
-    def test_build_create_option(self):
-        """Assert that the create option contains the expected items."""
-        request = self.get_request()
-        view = self.get_view(request)
-
-        for name in ('Alice Testman', 'Testman, Alice'):
-            with self.subTest(name=name):
-                create_option = view.build_create_option(q=name)
-                self.assertEqual(
-                    create_option[0],
-                    {'id': name, 'text': f'Create "{name}"', 'create_id': True},
-                    msg="The first item should be the 'create' button."
-                )
-                self.assertEqual(
-                    create_option[1],
-                    {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
-                    msg="The second item should be some descriptive text."
-                )
-                self.assertEqual(
-                    create_option[2],
-                    {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
-                    msg="The third item should be the data for 'vorname'."
-                )
-                self.assertEqual(
-                    create_option[3],
-                    {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
-                    msg="The fourth item should be the data for 'nachname'."
-                )
-                self.assertEqual(len(create_option), 4)
-
-
 class TestACAutor(ACViewTestCase):
-    model = _models.Autor
+
     view_class = ACAutor
+    model = _models.Autor
+    path = reverse_lazy('acautor')
+    
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        obj = make(
+            self.model, kuerzel='AT',
+            person__vorname='Alice', person__nachname='Testman'
+        )
+        response = self.client.get(self.path, data={'q': 'Alice Testman (AT)'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([str(obj.pk)], get_result_ids(response))
 
     @patch('dbentry.ac.views.log_addition')
-    def test_create_object_new_adds_log_entry(self, log_addition_mock):
+    def test_create_object_adds_log_entry(self, log_addition_mock):
         """Assert that log entries are added for the created objects."""
         request = self.get_request()
         view = self.get_view(request)
@@ -899,6 +862,58 @@ class TestACAutor(ACViewTestCase):
             msg="The fifth item should be the data for 'kuerzel'."
         )
         self.assertEqual(len(create_option), 5)
+        
+
+class TestACPerson(ACViewTestCase):
+    
+    view_class = ACPerson
+    model = _models.Person
+    path = reverse_lazy('acperson')
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        obj = make(self.model, vorname='Alice', nachname='Testman')
+        response = self.client.get(self.path, data={'q': 'Alice Testman'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([str(obj.pk)], get_result_ids(response))
+
+    @patch('dbentry.ac.views.log_addition')
+    def test_create_object_adds_log_entry(self, log_addition_mock):
+        """Assert that a log entry is added for the created object."""
+        view = self.get_view(self.get_request())
+        view.create_object('Alice Testman')
+        log_addition_mock.assert_called()
+
+    @translation_override(language=None)
+    def test_build_create_option(self):
+        """Assert that the create option contains the expected items."""
+        request = self.get_request()
+        view = self.get_view(request)
+
+        for name in ('Alice Testman', 'Testman, Alice'):
+            with self.subTest(name=name):
+                create_option = view.build_create_option(q=name)
+                self.assertEqual(
+                    create_option[0],
+                    {'id': name, 'text': f'Create "{name}"', 'create_id': True},
+                    msg="The first item should be the 'create' button."
+                )
+                self.assertEqual(
+                    create_option[1],
+                    {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
+                    msg="The second item should be some descriptive text."
+                )
+                self.assertEqual(
+                    create_option[2],
+                    {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
+                    msg="The third item should be the data for 'vorname'."
+                )
+                self.assertEqual(
+                    create_option[3],
+                    {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
+                    msg="The fourth item should be the data for 'nachname'."
+                )
+                self.assertEqual(len(create_option), 4)
 
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
