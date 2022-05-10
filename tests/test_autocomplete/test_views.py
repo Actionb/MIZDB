@@ -864,60 +864,29 @@ class TestACAutor(ACViewTestCase):
         self.assertEqual(len(create_option), 5)
 
 
-@skip("There are no autocompletes for Buch instances (yet?).")
-class TestACBuch(ACViewTestCase):
-    model = _models.Buch
-    view_class = ACBase
-
-    def test_get_search_results_validates_and_compacts_search_term(self):
-        """
-        Assert that the search term is transformed into compact ISBN-13, if it
-        is found to be a valid ISBN. ISBN-13 is equivalent to EAN.
-        """
-        view = self.get_view(self.get_request())
-        for isbn in ('1-234-56789-X', '978-1-234-56789-7'):
-            with self.subTest(ISBN=isbn):
-                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-                    view.get_search_results(self.queryset, isbn)
-                    super_mock.assert_called_with(self.queryset, isbn.replace('-', ''))
-
-        # Invalid ISBN - leave search term as-is:
-        for isbn in ('1-234-56789-1', '978-1-234-56789-1'):
-            with self.subTest(ISBN=isbn):
-                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-                    view.get_search_results(self.queryset, isbn)
-                    super_mock.assert_called_with(self.queryset, isbn)
-
-    def test_q_isbn(self):
-        """Assert that a Buch instance can be found using its ISBN."""
-        obj = make(_models.Buch, titel='Testbuch', issn='9781234567897')
-        for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
-            with self.subTest(ISBN=isbn):
-                view = self.get_view(request=self.get_request(), q=isbn)
-                self.assertIn(obj, view.get_queryset())
-
-    def test_q_ean(self):
-        """Assert that a Buch instance can be found using its EAN."""
-        obj = make(_models.Buch, titel='Testbuch', ean='9781234567897')
-        for ean in ('9781234567897', '978-1-234-56789-7'):
-            with self.subTest(EAN=ean):
-                view = self.get_view(request=self.get_request(), q=ean)
-                self.assertIn(obj, view.get_queryset())
-
-
 class TestACBuchband(ACViewTestCase):
-    model = _models.Buch
+
     view_class = ACBuchband
+    model = _models.Buch
+    path = reverse_lazy('acbuchband')
 
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
+        # noinspection PyUnresolvedReferences
         cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
         cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
 
+        # noinspection PyUnresolvedReferences
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
 
         super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        response = self.client.get(self.path, data={'q': 'Buch'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([str(self.obj1.pk)], get_result_ids(response))
 
     def test_gets_queryset_filters_out_non_buchband(self):
         """
@@ -931,6 +900,28 @@ class TestACBuchband(ACViewTestCase):
 
         self.model.objects.filter(pk=self.obj1.pk).update(is_buchband=False)
         self.assertFalse(view.get_queryset())
+
+    @skip("Searching for ISBN not implemented.")
+    def test_q_isbn(self):
+        """Assert that a Buch instance can be found using its ISBN."""
+        self.obj1.ISBN = '9781234567897'
+        self.obj1.save()
+
+        for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
+            with self.subTest(ISBN=isbn):
+                view = self.get_view(request=self.get_request(), q=isbn)
+                self.assertIn(self.obj1, view.get_queryset())
+
+    @skip("Searching for EAN not implemented.")
+    def test_q_ean(self):
+        """Assert that a Buch instance can be found using its EAN."""
+        self.obj1.EAN = '9781234567897'
+        self.obj1.save()
+
+        for ean in ('9781234567897', '978-1-234-56789-7'):
+            with self.subTest(EAN=ean):
+                view = self.get_view(request=self.get_request(), q=ean)
+                self.assertIn(self.obj1, view.get_queryset())
 
 
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
