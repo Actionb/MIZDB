@@ -17,8 +17,8 @@ class Artikel(models.Model):
 
 class Band(models.Model):
     band_name = models.CharField('Bandname', max_length=200)
-    genre = models.ManyToManyField('Genre')
-    musiker = models.ManyToManyField('Musiker')
+    genre = models.ManyToManyField('test_autocomplete.Genre')
+    musiker = models.ManyToManyField('test_autocomplete.Musiker')
 
     _fts = SearchVectorField(columns=[WeightedColumn('band_name', 'A', SIMPLE)])
 
@@ -29,6 +29,9 @@ class Band(models.Model):
 
     class Meta:
         ordering = ('band_name', )
+
+    def __str__(self):
+        return self.band_name
 
 
 class Genre(models.Model):

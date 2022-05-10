@@ -6,7 +6,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import override as translation_override
-from django.test import RequestFactory
 
 import dbentry.models as _models
 from dbentry.ac.views import (
@@ -179,24 +178,131 @@ class TestAutorNameParser(MIZTestCase):
 
 
 class TestACBase(ACViewTestCase):
+    """Unit tests for ACBase."""
 
     view_class = ACBase
     model = Band
-    create_field = 'band_name'
-    path = reverse_lazy('acband')  # TODO: remove path attribute
 
-    # noinspection SpellCheckingInspection
     @classmethod
     def setUpTestData(cls):
-        cls.genre = make(Genre, genre='Testgenre')
-        cls.obj1 = cls.contains = make(cls.model, band_name='Bar Foo', genre=cls.genre)
-        cls.obj2 = cls.startsw = make(cls.model, band_name='Foo Fighters')
-        cls.exact = make(cls.model, band_name='Foo')
-        cls.zero = make(cls.model, band_name='0')
-
-        cls.test_data = [cls.contains, cls.startsw, cls.exact, cls.zero]
+        cls.genre = genre = make(Genre, genre='Testgenre')
+        cls.obj1 = make(cls.model, band_name='Bar Foo', genre=genre)
+        cls.obj2 = make(cls.model, band_name='Foo Fighters')
 
         super().setUpTestData()
+
+    def test_setup_sets_model(self):
+        """Assert that setup sets the 'model' attribute from the kwargs."""
+        view = self.view_class()
+        view.model = None
+        view.setup(self.get_request(), model_name='ausgabe')
+        self.assertEqual(view.model, _models.Ausgabe)
+
+    def test_setup_sets_create_field(self):
+        """Assert that setup sets the 'create_field' attribute from the kwargs."""
+        request = self.get_request()
+        view = self.view_class(model=self.model)
+        view.create_field = None
+        view.setup(request, create_field="this ain't no field")
+        self.assertEqual(view.create_field, "this ain't no field")
+
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option(self, has_more_mock):
+        """
+        A create option should be displayed when:
+            - a create_field is set and
+            - q is not None and not an empty string and
+            - we're on the last page of the results (if there is pagination)
+        """
+        view = self.get_view()
+        view.create_field = 'any'
+        view.prevent_duplicates = False
+        q = 'foo'
+        context = {'page_obj': object()}
+        has_more_mock.return_value = False
+
+        self.assertTrue(view.display_create_option(context, q))
+
+    def test_display_create_option_no_create_field(self):
+        """No create option should be shown, if there is no create field set."""
+        view = self.get_view()
+        view.prevent_duplicates = False
+
+        for create_field in (None, ''):
+            with self.subTest(create_field=create_field):
+                view.create_field = create_field
+                self.assertFalse(view.display_create_option({}, 'foo'))
+
+    def test_display_create_option_no_q(self):
+        """No create option should be shown, if q is None or empty."""
+        view = self.get_view()
+        view.create_field = 'any'
+        view.prevent_duplicates = False
+
+        for q in (None, ''):
+            with self.subTest(q=q):
+                self.assertFalse(view.display_create_option({}, q))
+
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_no_pagination(self, has_more_mock):
+        """A create option should be shown, if there is no pagination."""
+        view = self.get_view()
+        view.create_field = 'any'
+        view.prevent_duplicates = False
+        has_more_mock.return_value = False
+
+        # Context is missing 'page_obj':
+        self.assertTrue(view.display_create_option({}, 'foo'))
+
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_more_results(self, has_more_mock):
+        """No create option should be shown, if there are more pages of results."""
+        view = self.get_view()
+        view.create_field = 'any'
+        view.prevent_duplicates = False
+        context = {'page_obj': object()}
+        has_more_mock.return_value = True
+
+        self.assertFalse(view.display_create_option(context, 'foo'))
+
+    def test_display_create_option_exact_match(self):
+        """
+        No create option should be displayed, if there is an exact match for
+        the search term and prevent_duplicates is set to True.
+        """
+        view = self.get_view(self.get_request(), create_field='band_name')
+        view.prevent_duplicates = True
+        context = {'page_obj': object(), 'object_list': self.model.objects.all()}
+
+        self.assertFalse(view.display_create_option(context, 'Bar Foo'))
+
+    @translation_override(language=None)
+    def test_build_create_option(self):
+        """Check the default create option."""
+        q = 'foo'
+        view = self.get_view(self.get_request())
+        option_kwargs = view.build_create_option(q)[0]
+
+        self.assertEqual(option_kwargs['id'], q)
+        self.assertEqual(option_kwargs['text'], 'Create "foo"')
+        self.assertEqual(option_kwargs['create_id'], True)
+
+    def test_get_create_option(self):
+        """
+        get_create_option should return the result of build_create_option, if
+        all requirements for displaying a create option are satisfied.
+        """
+        q = 'foo'
+        view = self.get_view(self.get_request())
+
+        with patch.object(view, 'display_create_option') as display_option_mock:
+            with patch.object(view, 'build_create_option') as build_option_mock:
+                display_option_mock.return_value = True
+                build_option_mock.return_value = 'This would be the create option!'
+                self.assertEqual(
+                    view.get_create_option(context={}, q=q),
+                    'This would be the create option!'
+                )
 
     def test_get_create_option_no_perms(self):
         """
@@ -213,116 +319,24 @@ class TestACBase(ACViewTestCase):
         Assert that get_create_option transforms the search term into a string
         and strips it before passing it on.
         """
-        # TODO: replace with just self.get_request once merged into test-rework
-        request = RequestFactory().get('/')
-        request.user = self.super_user
-        view = self.get_view(request)
+        view = self.get_view(self.get_request())
         display_mock.return_value = False
         for q in (None, '    '):
             with self.subTest(q=q):
                 view.get_create_option(context={}, q=q)
                 display_mock.assert_called_with({}, '')
 
-    @patch('dbentry.ac.views.ACBase.has_more')
-    def test_display_create_option(self, has_more_mock):
+    def test_get_ordering(self):
         """
-        A create option should be displayed when:
-            - a create_field is set and
-            - q is not None and not an empty string and
-            - we're on the last page of the results (if there is pagination)
+        get_ordering should return the view's ordering attribute or the default
+        ordering of the view's model.
         """
         view = self.get_view()
-        view.create_field = 'any'
-        has_more_mock.return_value = False
-        q = 'foo'
-        context = {'page_obj': object(), 'object_list': []}
+        view.ordering = None
+        self.assertEqual(view.get_ordering(), view.model._meta.ordering)
 
-        self.assertTrue(view.display_create_option(context, q))
-
-    @patch('dbentry.ac.views.ACBase.has_more')
-    def test_display_create_option_no_create_field(self, has_more_mock):
-        """No create option should be shown, if there is no create field set."""
-        view = self.get_view()
-        has_more_mock.return_value = False
-        context = {'page_obj': object(), 'object_list': []}
-
-        for create_field in (None, ''):
-            with self.subTest(create_field=create_field):
-                view.create_field = create_field
-                self.assertFalse(view.display_create_option(context, 'foo'))
-
-    @patch('dbentry.ac.views.ACBase.has_more')
-    def test_display_create_option_no_q(self, has_more_mock):
-        """No create option should be shown, if q is None or empty."""
-        view = self.get_view()
-        view.create_field = 'any'
-        has_more_mock.return_value = False
-        context = {'page_obj': object(), 'object_list': []}
-
-        for q in (None, ''):
-            with self.subTest(q=q):
-                self.assertFalse(view.display_create_option(context, q))
-
-    @patch('dbentry.ac.views.ACBase.has_more')
-    def test_display_create_option_no_pagination(self, has_more_mock):
-        """A create option should be shown, if there is no pagination."""
-        view = self.get_view()
-        view.create_field = 'any'
-        has_more_mock.return_value = False
-        context = {'object_list': []}  # page_obj is missing
-
-        self.assertTrue(view.display_create_option(context, 'foo'))
-
-    @patch('dbentry.ac.views.ACBase.has_more')
-    def test_display_create_option_more_results(self, has_more_mock):
-        """No create option should be shown, if there are more pages of results."""
-        view = self.get_view()
-        view.create_field = 'any'
-        context = {'page_obj': object(), 'object_list': []}
-
-        has_more_mock.return_value = True
-        self.assertFalse(view.display_create_option(context, 'foo'))
-
-    @patch('dbentry.ac.views.ACBase.has_more')
-    def test_display_create_option_exact_match(self, has_more_mock):
-        """
-        No create option should be displayed, if there is an exact match for
-        the search term and prevent_duplicates is set to True.
-        """
-        has_more_mock.return_value = False
-        context = {
-            'page_obj': object(),
-            'object_list': self.model.objects.filter(pk=self.obj1.pk)
-        }
-        view = self.get_view()
-        view.prevent_duplicates = True
-        self.assertFalse(view.display_create_option(context, 'Bar Foo'))
-
-    def test_apply_forwarded(self):
-        """Assert that the queryset is filtered according to the forwarded values."""
-        queryset = self.model.objects.all()
-        view = self.get_view()
-        view.forwarded = {'genre': self.genre.pk}
-        self.assertQuerysetEqual(view.apply_forwarded(queryset), [self.obj1])
-
-        musiker = make(Musiker)
-        view.forwarded['musiker'] = musiker.pk
-        self.assertFalse(view.apply_forwarded(queryset).exists())
-        # noinspection PyUnresolvedReferences
-        musiker.band_set.add(self.obj1)
-        self.assertTrue(view.apply_forwarded(queryset).exists())
-
-    def test_apply_forwarded_no_values(self):
-        """
-        Assert that if none of the forwards provide (useful) values to filter
-        with, an empty queryset is returned.
-        """
-        queryset = self.model.objects.all()
-        view = self.get_view()
-        view.forwarded = {'ignore_me_too': ''}
-        self.assertFalse(view.apply_forwarded(queryset).exists())
-        view.forwarded = {'': 'ignore_me'}
-        self.assertFalse(view.apply_forwarded(queryset).exists())
+        view.ordering = ('hovercrafts', '-eels')
+        self.assertEqual(view.get_ordering(), ('hovercrafts', '-eels'))
 
     def test_get_search_results_calls_search(self):
         """
@@ -370,6 +384,69 @@ class TestACBase(ACViewTestCase):
         with patch.object(queryset, 'search') as search_mock:
             view.get_search_results(queryset, '0')
             search_mock.assert_called_with('0')
+
+    def test_apply_forwarded(self):
+        """Assert that the queryset is filtered according to the forwarded values."""
+        queryset = self.model.objects.all()
+        view = self.get_view()
+        view.forwarded = {'genre': self.genre.pk}
+        self.assertQuerysetEqual(view.apply_forwarded(queryset), [self.obj1])
+
+        musiker = make(Musiker)
+        view.forwarded['musiker'] = musiker.pk
+        self.assertFalse(view.apply_forwarded(queryset).exists())
+        # noinspection PyUnresolvedReferences
+        musiker.band_set.add(self.obj1)
+        self.assertTrue(view.apply_forwarded(queryset).exists())
+
+    def test_apply_forwarded_no_values(self):
+        """
+        Assert that if none of the forwards provide (useful) values to filter
+        with, an empty queryset is returned.
+        """
+        queryset = self.model.objects.all()
+        view = self.get_view()
+        view.forwarded = {'ignore_me_too': ''}
+        self.assertFalse(view.apply_forwarded(queryset).exists())
+        view.forwarded = {'': 'ignore_me'}
+        self.assertFalse(view.apply_forwarded(queryset).exists())
+
+    def test_forwards_applied_before_pk_search(self):
+        """
+        Filters based on forwarded values must be applied before
+        get_search_results attempts a primary key lookup for numeric search
+        terms.
+
+        If an instance with a primary key matching the search term exists,
+        get_search_results will just return a queryset containing that instance,
+        and no full text search with that search term will be performed.
+        If that instance then doesn't match the forward filters, and if those
+        filters are applied after get_search_results, the result list would be
+        empty even though a full text search should have returned results.
+        """
+        view = self.get_view()
+        self.obj1.band_name = str(self.obj2.pk)
+        self.obj1.save()
+        view.q = str(self.obj2.pk)
+        # If forward filters are applied last, then get_search_results will
+        # return a queryset containing just obj2 - but obj2 doesn't have the
+        # required genre: the result queryset would be empty.
+        view.forwarded = {'genre': self.genre.pk}
+        self.assertQuerysetEqual(view.get_queryset(), [self.obj1])
+
+    def test_create_object(self):
+        """
+        create_object should create and return a model instance. A log entry
+        should also be created for that new object.
+        """
+        view = self.get_view(self.get_request(), create_field='band_name')
+
+        with patch('dbentry.ac.views.log_addition') as log_addition_mock:
+            new_obj = view.create_object('Fee Fighters')
+            self.assertIsInstance(new_obj, self.model)
+            self.assertEqual(new_obj.band_name, 'Fee Fighters')
+            self.assertTrue(new_obj.pk)
+            log_addition_mock.assert_called()
 
     def test_get_queryset_empty_search_term(self):
         """If the search term is an empty string, do not perform any queries."""
