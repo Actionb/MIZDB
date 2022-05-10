@@ -313,7 +313,7 @@ class ACMusiker(ACTabular):
     model = _models.Musiker
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
@@ -358,7 +358,7 @@ class ACSpielort(ACTabular):
     model = _models.Spielort
 
     def get_group_headers(self) -> list:
-        return ['Ort']  # pragma: no cover
+        return ['Ort']
 
     def get_extra_data(self, result: _models.Spielort) -> list:
         return [str(result.ort)]
@@ -368,7 +368,7 @@ class ACVeranstaltung(ACTabular):
     model = _models.Veranstaltung
 
     def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']  # pragma: no cover
+        return ['Datum', 'Spielort']
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]
