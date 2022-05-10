@@ -21,6 +21,15 @@ from tests.mixins import LoggingTestMixin
 from tests.test_autocomplete.models import Band, Musiker, Genre
 
 
+def get_result_ids(response):
+    """Return the ids of the results of an autocomplete request."""
+    return [
+        d['id']
+        for d in json.loads(response.content)['results']
+        if not d.get('create_id', False)
+    ]
+
+
 class ACViewTestCase(ViewTestCase):
 
     model = None
@@ -577,15 +586,11 @@ class TestACBand(RequestTestCase):
 
         super().setUpTestData()
 
-    @staticmethod
-    def get_result_ids(response):
-        return [d['id'] for d in json.loads(response.content)['results']]
-
-    def test_results(self):
-        """Assert that the expected result is found."""
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
         response = self.client.get(self.path, data={'q': 'Foo Fighters'})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual([str(self.startsw.pk)], self.get_result_ids(response))
+        self.assertEqual([str(self.startsw.pk)], get_result_ids(response))
 
     def test_result_ordering(self):
         """Exact matches should come before startswith before all others."""
@@ -593,25 +598,25 @@ class TestACBand(RequestTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [str(self.exact.pk), str(self.startsw.pk), str(self.contains.pk)],
-            self.get_result_ids(response)
+            get_result_ids(response)
         )
 
     def test_search_term_is_alias(self):
         """An object should be findable via its alias."""
         response = self.client.get(self.path, data={'q': 'Fee Fighters'})
         self.assertEqual(response.status_code, 200)
-        self.assertIn(str(self.alias.pk), self.get_result_ids(response))
+        self.assertIn(str(self.alias.pk), get_result_ids(response))
 
     def test_search_term_is_numeric(self):
         """For numeric search terms, a lookup for primary keys should be attempted."""
         response = self.client.get(self.path, data={'q': self.exact.pk})
         self.assertEqual(response.status_code, 200)
-        self.assertIn(str(self.exact.pk), self.get_result_ids(response))
+        self.assertIn(str(self.exact.pk), get_result_ids(response))
 
         # The primary key doesn't exist: a normal search should be done.
         response = self.client.get(self.path, data={'q': '0'})
         self.assertEqual(response.status_code, 200)
-        self.assertIn(str(self.zero.pk), self.get_result_ids(response))
+        self.assertIn(str(self.zero.pk), get_result_ids(response))
 
     @translation_override(language=None)
     def test_create_option(self):
@@ -653,7 +658,7 @@ class TestACBand(RequestTestCase):
             self.path, data={'text': 'foo', 'forward': f'{{"genre": "{self.genre.pk}"}}'}
         )
         self.assertEqual(response.status_code, 200, msg=response.content)
-        self.assertEqual([str(self.contains.pk)], self.get_result_ids(response))
+        self.assertEqual([str(self.contains.pk)], get_result_ids(response))
 
     def test_create_object(self):
         """Check the object created with a POST request."""
