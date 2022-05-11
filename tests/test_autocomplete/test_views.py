@@ -7,11 +7,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
-from dbentry.ac.views import (
-    ACAutor, ACBase, ACAusgabe, ACBuchband, ACMagazin, ACPerson, ACTabular,
-    ContentTypeAutocompleteView,
-    GND, GNDPaginator, Paginator, parse_autor_name
-)
+from dbentry.ac import views
 from dbentry.ac.widgets import EXTRA_DATA_KEY, GENERIC_URL_NAME
 
 from tests.case import MIZTestCase, RequestTestCase, ViewTestCase
@@ -51,7 +47,7 @@ class ACViewTestCase(ViewTestCase):
 # noinspection PyUnresolvedReferences
 class ACViewTestMethodMixin(LoggingTestMixin):
     # TODO: remove this mixin and apply the tests directly in each test case
-    view_class = ACBase
+    view_class = views.ACBase
     has_alias = True
     alias_accessor_name = ''
 
@@ -162,14 +158,14 @@ class TestAutorNameParser(MIZTestCase):
         ]
         for name, expected in names:
             with self.subTest(name=name):
-                self.assertEqual(parse_autor_name(name), expected)
+                self.assertEqual(views.parse_autor_name(name), expected)
 
     def test_kuerzel_max_length(self):
         """
         Assert that the kuerzel is shortened, so that its length doesn't exceed
         the model field max_length of 8.
         """
-        _v, _n, kuerzel = parse_autor_name('Alice (Supercalifragilisticexpialidocious) Tester')
+        *y, kuerzel = views.parse_autor_name('Alice (Supercalifragilisticexpialidocious) Tester')
         # noinspection SpellCheckingInspection
         self.assertEqual(kuerzel, 'Supercal')
 
@@ -177,7 +173,7 @@ class TestAutorNameParser(MIZTestCase):
 class TestACBase(ACViewTestCase):
     """Unit tests for ACBase."""
 
-    view_class = ACBase
+    view_class = views.ACBase
     model = Band
 
     @classmethod
@@ -478,7 +474,7 @@ class TestACBase(ACViewTestCase):
 
 class TestACTabular(ACViewTestCase):
 
-    class DummyView(ACTabular):
+    class DummyView(views.ACTabular):
 
         def get_group_headers(self):
             return ['foo']
@@ -673,7 +669,7 @@ class TestACBand(RequestTestCase):
 
 class TestACAusgabe(ACViewTestCase):
 
-    view_class = ACAusgabe
+    view_class = views.ACAusgabe
     model = _models.Ausgabe
     path = reverse_lazy('acausgabe')
 
@@ -803,7 +799,7 @@ class TestACAusgabe(ACViewTestCase):
 
 class TestACAutor(ACViewTestCase):
 
-    view_class = ACAutor
+    view_class = views.ACAutor
     model = _models.Autor
     path = reverse_lazy('acautor')
     
@@ -865,7 +861,7 @@ class TestACAutor(ACViewTestCase):
 
 class TestACBuchband(ACViewTestCase):
 
-    view_class = ACBuchband
+    view_class = views.ACBuchband
     model = _models.Buch
     path = reverse_lazy('acbuchband')
 
@@ -903,7 +899,7 @@ class TestACBuchband(ACViewTestCase):
 
 class TestACMagazin(ACViewTestCase):
 
-    view_class = ACMagazin
+    view_class = views.ACMagazin
     model = _models.Magazin
     path = reverse_lazy('acmagazin')
 
@@ -938,6 +934,8 @@ class TestACMagazin(ACViewTestCase):
 
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
+
+    view_class = views.ACMusiker
     model = _models.Musiker
     alias_accessor_name = 'musikeralias_set'
     raw_data = [
@@ -972,7 +970,7 @@ class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACPerson(ACViewTestCase):
     
-    view_class = ACPerson
+    view_class = views.ACPerson
     model = _models.Person
     path = reverse_lazy('acperson')
 
@@ -1051,7 +1049,7 @@ class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestGND(ViewTestCase):
 
-    view_class = GND
+    view_class = views.GND
     path = reverse_lazy('gnd')
 
     @patch('dbentry.ac.views.searchgnd')
@@ -1216,7 +1214,7 @@ class TestGNDPaginator(MIZTestCase):
         Assert that paginator.count returns the 'total_count' that was passed
         to the constructor.
         """
-        paginator = GNDPaginator(object_list=[], per_page=1, total_count=69)
+        paginator = views.GNDPaginator(object_list=[], per_page=1, total_count=69)
         self.assertEqual(paginator.count, 69)
 
     def test_page_does_not_slice_object_list(self):
@@ -1225,18 +1223,18 @@ class TestGNDPaginator(MIZTestCase):
         call to Paginator._get_page.
         """
         # Mock object isn't subscriptable; trying to slice it would raise a TypeError.
-        paginator = GNDPaginator(
+        paginator = views.GNDPaginator(
             object_list=Mock(), per_page=1, total_count=1, allow_empty_first_page=True
         )
         msg = "GNDPaginator.page tried to slice the object list."
-        with patch.object(Paginator, '_get_page'):
+        with patch.object(views.Paginator, '_get_page'):
             with self.assertNotRaises(TypeError, msg=msg):
                 paginator.page(number=1)
 
 
 class TestContentTypeAutocompleteView(ACViewTestCase):
     model = ContentType
-    view_class = ContentTypeAutocompleteView
+    view_class = views.ContentTypeAutocompleteView
 
     def test_get_queryset(self):
         # Test that the queryset only returns models that have in the admin
