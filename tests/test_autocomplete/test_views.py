@@ -966,7 +966,6 @@ class TestACMagazin(ACViewTestCase):
 
 class TestACMusiker(RequestTestCase):
 
-    view_class = views.ACMusiker
     model = _models.Musiker
     path = reverse_lazy('acmusiker')
     create_path = reverse_lazy('acmusiker', kwargs={'create_field': 'kuenstler_name'})
@@ -1074,14 +1073,47 @@ class TestACPerson(ACViewTestCase):
                 self.assertEqual(len(create_option), 4)
 
 
-class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
+class TestACSpielort(RequestTestCase):
+
     model = _models.Spielort
-    alias_accessor_name = 'spielortalias_set'
-    raw_data = [{
-        'spielortalias__alias': 'AliasSpielort',
-        'beschreibung': "If it beeps like a boop, it's probably a test.",
-        'bemerkungen': 'Stuff and Things.'
-    }]
+    path = reverse_lazy('acspielort')
+
+    @classmethod
+    def setUpTestData(cls):
+        ort = make(_models.Ort, stadt='Dortmund', land__code='DE')
+        cls.obj = make(
+            cls.model, name='Freizeitzentrum West', spielortalias__alias='FZW', ort=ort,
+            beschreibung='Ort für Konzerte', bemerkungen='Braucht mehr Info!',
+        )
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        search_terms = [self.obj.pk, 'Freizeitzentrum West', 'FZW', 'Dortmund', 'Konzerte', 'Info']
+        for search_term in search_terms:
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_tabular_results(self):
+        """Assert that the results contain extra data for the tabular display."""
+        response = self.get_response(self.path, data={'q': 'FZW', 'tabular': True})
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)['results'][0]
+
+        self.assertIn('text', results.keys())
+        self.assertEqual(results['text'], 'Spielort')
+        self.assertIn('is_optgroup', results.keys())
+        self.assertEqual(results['is_optgroup'], True)
+        self.assertIn('optgroup_headers', results.keys())
+        self.assertEqual(results['optgroup_headers'], ['Ort'])
+        self.assertIn('children', results.keys())
+        self.assertEqual(len(results['children']), 1, results['children'])
+        result = results['children'][0]
+        self.assertEqual(result['id'], str(self.obj.pk))
+        self.assertEqual(result['text'], str(self.obj))
+        self.assertEqual(result[EXTRA_DATA_KEY], ['Dortmund, DE'])
+        self.assertEqual(result['selected_text'], str(self.obj))
 
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
