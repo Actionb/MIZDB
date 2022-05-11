@@ -1381,7 +1381,19 @@ class TestACInstrument(RequestTestCase):
                 self.assertIn(str(self.obj.pk), get_result_ids(response))
 
 
-class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
+class TestACLand(RequestTestCase):
+
     model = _models.Land
-    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
-    has_alias = False
+    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'land'})
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, land_name='Deutschland', code='XY')
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, 'Deutschland', 'XY'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
