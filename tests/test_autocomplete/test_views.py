@@ -823,7 +823,7 @@ class TestACAutor(ACViewTestCase):
         self.assertEqual(response.status_code, 200)
         created = json.loads(response.content)
         self.assertTrue(created['id'])
-        self.assertEqual(created['text'], 'Bob Tester')
+        self.assertEqual(created['text'], 'Bob Tester (BT)')
         self.assertTrue(
             self.model.objects.filter(
                 person__vorname='Bob', person__nachname='Tester', kuerzel='BT'
@@ -1349,22 +1349,23 @@ class TestGNDPaginator(MIZTestCase):
 
 
 class TestContentTypeAutocompleteView(ACViewTestCase):
+
     model = ContentType
     view_class = views.ContentTypeAutocompleteView
 
     def test_get_queryset(self):
         # Test that the queryset only returns models that have in the admin
         # site register.
-        # FIXME: flaky test: this test failed because multiple 'artikel' (lower case)
-        #  content types were found in view.get_queryset
         class DummySite:
-            _registry = {_models.Artikel: 'ModelAdmin_would_go_here'}
+            _registry = {Band: 'ModelAdmin_would_go_here'}
 
         view = self.get_view()
         view.admin_site = DummySite
-        self.assertEqual(
-            list(view.get_queryset()),
-            [ContentType.objects.get_for_model(_models.Artikel)]
+        # noinspection PyUnresolvedReferences
+        opts = Band._meta
+        self.assertQuerysetEqual(
+            view.get_queryset(),
+            ContentType.objects.filter(app_label=opts.app_label, model=opts.model_name)
         )
 
 
