@@ -1116,14 +1116,51 @@ class TestACSpielort(RequestTestCase):
         self.assertEqual(result['selected_text'], str(self.obj))
 
 
-class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
+class TestACVeranstaltung(RequestTestCase):
+
     model = _models.Veranstaltung
-    alias_accessor_name = 'veranstaltungalias_set'
-    raw_data = [{
-        'veranstaltungalias__alias': 'AliasVeranstaltung',
-        'beschreibung': "If it beeps like a boop, it's probably a test.",
-        'bemerkungen': 'Stuff and Things.'
-    }]
+    path = reverse_lazy('acveranstaltung')
+
+    @classmethod
+    def setUpTestData(cls):
+        ort = make(_models.Ort, stadt='Bethel', land__code='US')
+        spielort = make(_models.Spielort, name="Max Yasgur's Dairy Farm", ort=ort)
+        cls.obj = make(
+            cls.model, name='Woodstock', datum='1969', spielort=spielort,
+            veranstaltungalias__alias='Woodstock Rock Festival',
+            beschreibung='Summer of Love!', bemerkungen='Braucht mehr Info!',
+        )
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        search_terms = [
+            self.obj.pk, 'Woodstock', '1969', 'Rock Festival', 'Yasgur', 'Bethel', 'Love', 'Info'
+        ]
+        for search_term in search_terms:
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_tabular_results(self):
+        """Assert that the results contain extra data for the tabular display."""
+        response = self.get_response(self.path, data={'q': 'Woodstock', 'tabular': True})
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)['results'][0]
+
+        self.assertIn('text', results.keys())
+        self.assertEqual(results['text'], 'Veranstaltung')
+        self.assertIn('is_optgroup', results.keys())
+        self.assertEqual(results['is_optgroup'], True)
+        self.assertIn('optgroup_headers', results.keys())
+        self.assertEqual(results['optgroup_headers'], ['Datum', 'Spielort'])
+        self.assertIn('children', results.keys())
+        self.assertEqual(len(results['children']), 1, results['children'])
+        result = results['children'][0]
+        self.assertEqual(result['id'], str(self.obj.pk))
+        self.assertEqual(result['text'], str(self.obj))
+        self.assertEqual(result[EXTRA_DATA_KEY], ['1969', "Max Yasgur's Dairy Farm"])
+        self.assertEqual(result['selected_text'], str(self.obj))
 
 
 class TestGND(ViewTestCase):
