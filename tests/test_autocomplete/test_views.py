@@ -574,7 +574,7 @@ class TestACBand(RequestTestCase):
     def setUpTestData(cls):
         cls.genre = genre = make(_models.Genre, genre='Testgenre')
         cls.contains = make(cls.model, band_name='Bar Foo', genre=genre)
-        cls.startsw = make(cls.model, band_name='Foo Fighters')
+        cls.startsw = make(cls.model, band_name='Foo Fighters', bandalias__alias='The Holy Shits')
         cls.exact = make(cls.model, band_name='Foo')
         cls.alias = make(cls.model, band_name='Bars', bandalias__alias='Fee Fighters')
         cls.zero = make(cls.model, band_name='0')
@@ -583,9 +583,11 @@ class TestACBand(RequestTestCase):
 
     def test(self):
         """Assert that an autocomplete request returns the expected results."""
-        response = self.client.get(self.path, data={'q': 'Foo Fighters'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual([str(self.startsw.pk)], get_result_ids(response))
+        for search_term in (self.startsw.pk, 'Foo Fighters', 'The Holy Shits'):
+            with self.subTest(search_term=search_term):
+                response = self.client.get(self.path, data={'q': search_term})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual([str(self.startsw.pk)], get_result_ids(response))
 
     def test_result_ordering(self):
         """Exact matches should come before startswith before all others."""
@@ -809,9 +811,11 @@ class TestACAutor(ACViewTestCase):
             self.model, kuerzel='AT',
             person__vorname='Alice', person__nachname='Testman'
         )
-        response = self.client.get(self.path, data={'q': 'Alice Testman (AT)'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual([str(obj.pk)], get_result_ids(response))
+        for search_term in (obj.pk, 'AT', 'Alice', 'Testman', 'Alice Testman (AT)'):
+            with self.subTest(search_term=search_term):
+                response = self.client.get(self.path, data={'q': search_term})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual([str(obj.pk)], get_result_ids(response))
 
     @patch('dbentry.ac.views.log_addition')
     def test_create_object_adds_log_entry(self, log_addition_mock):
@@ -879,9 +883,11 @@ class TestACBuchband(ACViewTestCase):
 
     def test(self):
         """Assert that an autocomplete request returns the expected results."""
-        response = self.client.get(self.path, data={'q': 'Buch'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual([str(self.obj1.pk)], get_result_ids(response))
+        for search_term in (self.obj1.pk, 'Buch'):
+            with self.subTest(search_term=search_term):
+                response = self.client.get(self.path, data={'q': search_term})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual([str(self.obj1.pk)], get_result_ids(response))
 
     def test_gets_queryset_filters_out_non_buchband(self):
         """
@@ -911,7 +917,7 @@ class TestACMagazin(ACViewTestCase):
 
     def test(self):
         """Assert that an autocomplete request returns the expected results."""
-        for search_term in ('Testmag', '12345679', '1234-5679'):
+        for search_term in (self.obj.pk, 'Testmag', '12345679', '1234-5679'):
             with self.subTest(search_term=search_term):
                 response = self.get_response(self.path, data={'q': search_term})
                 self.assertIn(str(self.obj.pk), get_result_ids(response))
@@ -985,7 +991,6 @@ class TestACMusiker(ACViewTestCase):
         response = self.post_response(self.create_path, data={'text': 'Princess'})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(self.model.objects.filter(kuenstler_name='Princess').exists())
-
 
 
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
