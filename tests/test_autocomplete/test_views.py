@@ -1055,10 +1055,22 @@ class TestACGenre(RequestTestCase):
         self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
-class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
+class TestACInstrument(RequestTestCase):
+
     model = _models.Instrument
-    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
-    has_alias = False
+    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'instrument'})
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, instrument='Piano', kuerzel='xy')
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, 'Piano', 'xy'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
 
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
