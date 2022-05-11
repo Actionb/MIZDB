@@ -9,11 +9,9 @@ from django.utils.translation import override as translation_override
 import dbentry.models as _models
 from dbentry.ac import views
 from dbentry.ac.widgets import EXTRA_DATA_KEY, GENERIC_URL_NAME
-
 from tests.case import MIZTestCase, RequestTestCase, ViewTestCase
 from tests.factory import make
-from tests.mixins import LoggingTestMixin
-from tests.test_autocomplete.models import Band, Musiker, Genre
+from tests.test_autocomplete.models import Band, Genre, Musiker
 
 
 def get_result_ids(response):
@@ -26,7 +24,6 @@ def get_result_ids(response):
 
 
 class ACViewTestCase(ViewTestCase):
-
     model = None
 
     def get_view(self, request=None, args=None, kwargs=None, model=None,
@@ -42,105 +39,6 @@ class ACViewTestCase(ViewTestCase):
         if not getattr(view, 'q', None):
             view.q = q
         return view
-
-
-# noinspection PyUnresolvedReferences
-class ACViewTestMethodMixin(LoggingTestMixin):
-    # TODO: remove this mixin and apply the tests directly in each test case
-    view_class = views.ACBase
-    has_alias = True
-    alias_accessor_name = ''
-
-    def test_get_ordering(self):
-        """
-        Assert that get_ordering returns either the value of the ordering
-        attribute or the default ordering of the model.
-        """
-        view = self.get_view()
-        if view.ordering:
-            self.assertEqual(view.get_ordering(), view.ordering)
-        else:
-            self.assertEqual(view.get_ordering(), self.model._meta.ordering)
-
-    def test_get_search_results(self):
-        """
-        Test that an object can be found by querying for the data that was used
-        in its creation.
-        """
-        if not self.raw_data:
-            return
-        view = self.get_view()
-        for data in self.raw_data:
-            for field, value in data.items():
-                with self.subTest(field=field, value=value):
-                    q = str(value)
-                    result = view.get_search_results(self.queryset, q)
-                    if not result:
-                        fail_msg = (
-                            f"Could not find test object by querying for field {field!r} "
-                            f"with search term {q!r}"
-                        )
-                        self.fail(fail_msg)
-                    if isinstance(result, list):
-                        if isinstance(result[-1], (list, tuple)):
-                            result = (o[0] for o in result)
-                        else:
-                            result = (o.pk for o in result)
-                    else:
-                        result = result.values_list('pk', flat=True)
-                    self.assertIn(self.obj1.pk, result)
-
-    def test_get_search_results_alias(self):
-        """Assert that an object can be found through its aliases."""
-        if not self.has_alias:
-            return
-        if not self.alias_accessor_name:
-            # No point in running this test
-            self.warn('Test aborted: no alias accessor name set.')
-            return
-
-        # Find an object through its alias
-        alias = getattr(self.obj1, self.alias_accessor_name).first()
-        if alias is None:
-            self.warn('Test aborted: queryset of aliases is empty.')
-            return
-        view = self.get_view()
-        q = str(alias)
-        result = [obj.pk for obj in view.get_search_results(self.queryset, q)]
-        self.assertTrue(
-            result,
-            msg=f"View returned no results when querying for alias: {q}"
-        )
-        self.assertIn(self.obj1.pk, result)
-
-    @translation_override(language=None)
-    def test_get_create_option(self):
-        request = self.get_request()
-        view = self.get_view(request)
-        create_option = view.get_create_option(context={'object_list': []}, q='Beep')
-        if view.create_field:
-            self.assertEqual(len(create_option), 1)
-            self.assertEqual(create_option[0].get('id'), 'Beep')
-            self.assertEqual(create_option[0].get('text'), 'Create "Beep"')
-            self.assertTrue(create_option[0].get('create_id'))
-        else:
-            self.assertEqual(len(create_option), 0)
-
-    def test_create_object_with_log_entry(self):
-        # request set on view, log entry should be created
-        request = self.get_request()
-        view = self.get_view(request)
-        if view.create_field:
-            obj = view.create_object('Boop')
-            self.assertLoggedAddition(obj)
-
-    def test_create_object_strip(self):
-        # Assert that the input is stripped for object creation:
-        request = self.get_request()
-        view = self.get_view(request)
-        if view.create_field:
-            obj = view.create_object('   Boop\n')
-            self.assertEqual(getattr(obj, view.create_field), 'Boop')
 
 
 class TestAutorNameParser(MIZTestCase):
@@ -173,8 +71,8 @@ class TestAutorNameParser(MIZTestCase):
 class TestACBase(ACViewTestCase):
     """Unit tests for ACBase."""
 
-    view_class = views.ACBase
     model = Band
+    view_class = views.ACBase
 
     @classmethod
     def setUpTestData(cls):
@@ -473,7 +371,6 @@ class TestACBase(ACViewTestCase):
 
 
 class TestACTabular(ACViewTestCase):
-
     class DummyView(views.ACTabular):
 
         def get_group_headers(self):
@@ -482,8 +379,8 @@ class TestACTabular(ACViewTestCase):
         def get_extra_data(self, result):
             return ['bar']
 
-    view_class = DummyView
     model = Band
+    view_class = DummyView
 
     @classmethod
     def setUpTestData(cls):
@@ -498,7 +395,7 @@ class TestACTabular(ACViewTestCase):
         """
         view = self.get_view()
         result = view.get_results({'object_list': [self.obj]})[0]
-        
+
         self.assertIn(EXTRA_DATA_KEY, result)
         self.assertEqual(['bar'], result[EXTRA_DATA_KEY])
 
@@ -509,7 +406,7 @@ class TestACTabular(ACViewTestCase):
             'object_list': [self.obj],
             'page_obj': view.paginate_queryset(self.model.objects.all(), 10)[1]
         }
-        
+
         response = view.render_to_response(context)
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)['results']
@@ -670,10 +567,9 @@ class TestACBand(RequestTestCase):
 
 
 class TestACAusgabe(ACViewTestCase):
-
-    view_class = views.ACAusgabe
     model = _models.Ausgabe
     path = reverse_lazy('acausgabe')
+    view_class = views.ACAusgabe
 
     @classmethod
     def setUpTestData(cls):
@@ -705,6 +601,7 @@ class TestACAusgabe(ACViewTestCase):
 
     def test_get_queryset_add_annotations(self):
         """Assert that the ModelAdmin annotations are added to the queryset."""
+
         class DummyAdmin:
 
             def __init__(self, *args, **kwargs):
@@ -800,11 +697,10 @@ class TestACAusgabe(ACViewTestCase):
 
 
 class TestACAutor(ACViewTestCase):
-
-    view_class = views.ACAutor
     model = _models.Autor
     path = reverse_lazy('acautor')
-    
+    view_class = views.ACAutor
+
     def test(self):
         """Assert that an autocomplete request returns the expected results."""
         obj = make(
@@ -878,10 +774,9 @@ class TestACAutor(ACViewTestCase):
 
 
 class TestACBuchband(ACViewTestCase):
-
-    view_class = views.ACBuchband
     model = _models.Buch
     path = reverse_lazy('acbuchband')
+    view_class = views.ACBuchband
 
     @classmethod
     def setUpTestData(cls):
@@ -918,11 +813,10 @@ class TestACBuchband(ACViewTestCase):
 
 
 class TestACMagazin(ACViewTestCase):
-
-    view_class = views.ACMagazin
     model = _models.Magazin
     path = reverse_lazy('acmagazin')
     create_path = reverse_lazy('acmagazin', kwargs={'create_field': 'magazin_name'})
+    view_class = views.ACMagazin
 
     @classmethod
     def setUpTestData(cls):
@@ -965,10 +859,10 @@ class TestACMagazin(ACViewTestCase):
 
 
 class TestACMusiker(RequestTestCase):
-
     model = _models.Musiker
     path = reverse_lazy('acmusiker')
     create_path = reverse_lazy('acmusiker', kwargs={'create_field': 'kuenstler_name'})
+    # noinspection SpellCheckingInspection
     test_data = {
         'kuenstler_name': 'Prince',
         'musikeralias__alias': 'TAFKAP',
@@ -1007,6 +901,7 @@ class TestACMusiker(RequestTestCase):
         result = results['children'][0]
         self.assertEqual(result['id'], str(self.obj.pk))
         self.assertEqual(result['text'], str(self.obj))
+        # noinspection SpellCheckingInspection
         self.assertEqual(result[EXTRA_DATA_KEY], ['TAFKAP'])
         self.assertEqual(result['selected_text'], str(self.obj))
 
@@ -1022,10 +917,9 @@ class TestACMusiker(RequestTestCase):
 
 
 class TestACPerson(ACViewTestCase):
-
-    view_class = views.ACPerson
     model = _models.Person
     path = reverse_lazy('acperson')
+    view_class = views.ACPerson
 
     def test(self):
         """Assert that an autocomplete request returns the expected results."""
@@ -1074,7 +968,6 @@ class TestACPerson(ACViewTestCase):
 
 
 class TestACSpielort(RequestTestCase):
-
     model = _models.Spielort
     path = reverse_lazy('acspielort')
 
@@ -1117,7 +1010,6 @@ class TestACSpielort(RequestTestCase):
 
 
 class TestACVeranstaltung(RequestTestCase):
-
     model = _models.Veranstaltung
     path = reverse_lazy('acveranstaltung')
 
@@ -1164,9 +1056,8 @@ class TestACVeranstaltung(RequestTestCase):
 
 
 class TestGND(ViewTestCase):
-
-    view_class = views.GND
     path = reverse_lazy('gnd')
+    view_class = views.GND
 
     @patch('dbentry.ac.views.searchgnd')
     def test(self, query_mock):
@@ -1349,7 +1240,6 @@ class TestGNDPaginator(MIZTestCase):
 
 
 class TestContentTypeAutocompleteView(ACViewTestCase):
-
     model = ContentType
     view_class = views.ContentTypeAutocompleteView
 
@@ -1374,7 +1264,6 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
 ####################################################################################################
 
 class TestACGenre(RequestTestCase):
-
     model = _models.Genre
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre'})
     create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre', 'create_field': 'genre'})  # noqa
@@ -1403,7 +1292,6 @@ class TestACGenre(RequestTestCase):
 
 
 class TestACSchlagwort(RequestTestCase):
-
     model = _models.Schlagwort
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'schlagwort'})
     create_path = reverse_lazy(
@@ -1434,7 +1322,6 @@ class TestACSchlagwort(RequestTestCase):
 
 
 class TestACInstrument(RequestTestCase):
-
     model = _models.Instrument
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'instrument'})
 
@@ -1452,7 +1339,6 @@ class TestACInstrument(RequestTestCase):
 
 
 class TestACLand(RequestTestCase):
-
     model = _models.Land
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'land'})
 
