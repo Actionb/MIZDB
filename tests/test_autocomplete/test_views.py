@@ -901,29 +901,24 @@ class TestACBuchband(ACViewTestCase):
         self.assertFalse(view.get_queryset())
 
 
-# TODO: work start here
-class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
-
-    model = _models.Genre
-    alias_accessor_name = 'genrealias_set'
-    raw_data = [{'genrealias__alias': 'Beep'}]
-
-
-class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Instrument
-    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
-    has_alias = False
-
-
-class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Land
-    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
-    has_alias = False
-
-
 class TestACMagazin(ACViewTestCase):
-    model = _models.Magazin
+
     view_class = ACMagazin
+    model = _models.Magazin
+    path = reverse_lazy('acmagazin')
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, magazin_name='Testmagazin', issn='12345679')
+
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in ('Testmag', '12345679', '1234-5679'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
 
     def test_get_search_results_validates_and_compacts_search_term(self):
         """
@@ -941,14 +936,6 @@ class TestACMagazin(ACViewTestCase):
             view.get_search_results(queryset, '1234-5670')
             super_mock.assert_called_with(queryset, '1234-5670')
 
-    def test_search_term_issn(self):
-        """Assert that a Magazin instance can be found using its ISSN."""
-        obj = make(_models.Magazin, magazin_name='Testmagazin', issn='12345679')
-        for issn in ('12345679', '1234-5679'):
-            with self.subTest(ISSN=issn):
-                view = self.get_view(request=self.get_request(), q=issn)
-                self.assertIn(obj, view.get_queryset())
-
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Musiker
@@ -962,6 +949,25 @@ class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
             'bemerkungen': 'Stuff'
         }
     ]
+
+
+class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
+
+    model = _models.Genre
+    alias_accessor_name = 'genrealias_set'
+    raw_data = [{'genrealias__alias': 'Beep'}]
+
+
+class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
+    model = _models.Instrument
+    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
+    has_alias = False
+
+
+class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
+    model = _models.Land
+    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
+    has_alias = False
         
 
 class TestACPerson(ACViewTestCase):
