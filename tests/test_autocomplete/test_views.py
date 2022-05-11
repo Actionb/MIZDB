@@ -964,7 +964,7 @@ class TestACMagazin(ACViewTestCase):
         self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
-class TestACMusiker(ACViewTestCase):
+class TestACMusiker(RequestTestCase):
 
     view_class = views.ACMusiker
     model = _models.Musiker
@@ -1022,11 +1022,37 @@ class TestACMusiker(ACViewTestCase):
         self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
-class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
+####################################################################################################
+# Tests for various autocompletes that use the generic URL.
+####################################################################################################
+
+class TestACGenre(RequestTestCase):
 
     model = _models.Genre
-    alias_accessor_name = 'genrealias_set'
-    raw_data = [{'genrealias__alias': 'Beep'}]
+    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre'})
+    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre', 'create_field': 'genre'})  # noqa
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, genre='Electronic Dance Music', genrealias__alias='EDM')
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, 'Electronic Dance Music', 'EDM'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={'text': 'Rock'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Rock')
+        self.assertTrue(self.model.objects.filter(genre='Rock').exists())
+        self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
