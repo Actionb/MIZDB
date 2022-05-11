@@ -1022,65 +1022,8 @@ class TestACMusiker(RequestTestCase):
         self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
-####################################################################################################
-# Tests for various autocompletes that use the generic URL.
-####################################################################################################
-
-class TestACGenre(RequestTestCase):
-
-    model = _models.Genre
-    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre'})
-    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre', 'create_field': 'genre'})  # noqa
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj = make(cls.model, genre='Electronic Dance Music', genrealias__alias='EDM')
-        super().setUpTestData()
-
-    def test(self):
-        """Assert that an autocomplete request returns the expected results."""
-        for search_term in (self.obj.pk, 'Electronic Dance Music', 'EDM'):
-            with self.subTest(search_term=search_term):
-                response = self.get_response(self.path, data={'q': search_term})
-                self.assertIn(str(self.obj.pk), get_result_ids(response))
-
-    def test_create_object(self):
-        """Assert that a new object can be created using a POST request."""
-        response = self.post_response(self.create_path, data={'text': 'Rock'})
-        self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
-        self.assertTrue(created['id'])
-        self.assertEqual(created['text'], 'Rock')
-        self.assertTrue(self.model.objects.filter(genre='Rock').exists())
-        self.assertTrue(self.model.objects.get(pk=created['id']))
-
-
-class TestACInstrument(RequestTestCase):
-
-    model = _models.Instrument
-    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'instrument'})
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj = make(cls.model, instrument='Piano', kuerzel='xy')
-        super().setUpTestData()
-
-    def test(self):
-        """Assert that an autocomplete request returns the expected results."""
-        for search_term in (self.obj.pk, 'Piano', 'xy'):
-            with self.subTest(search_term=search_term):
-                response = self.get_response(self.path, data={'q': search_term})
-                self.assertIn(str(self.obj.pk), get_result_ids(response))
-
-
-class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Land
-    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
-    has_alias = False
-        
-
 class TestACPerson(ACViewTestCase):
-    
+
     view_class = views.ACPerson
     model = _models.Person
     path = reverse_lazy('acperson')
@@ -1129,13 +1072,6 @@ class TestACPerson(ACViewTestCase):
                     msg="The fourth item should be the data for 'nachname'."
                 )
                 self.assertEqual(len(create_option), 4)
-
-
-class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
-
-    model = _models.Schlagwort
-    alias_accessor_name = 'schlagwortalias_set'
-    raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]
 
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
@@ -1361,3 +1297,91 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
             list(view.get_queryset()),
             [ContentType.objects.get_for_model(_models.Artikel)]
         )
+
+
+####################################################################################################
+# Tests for various autocompletes that use the generic URL.
+####################################################################################################
+
+class TestACGenre(RequestTestCase):
+
+    model = _models.Genre
+    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre'})
+    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre', 'create_field': 'genre'})  # noqa
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, genre='Electronic Dance Music', genrealias__alias='EDM')
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, 'Electronic Dance Music', 'EDM'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={'text': 'Rock'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Rock')
+        self.assertTrue(self.model.objects.filter(genre='Rock').exists())
+        self.assertTrue(self.model.objects.get(pk=created['id']))
+
+
+class TestACSchlagwort(RequestTestCase):
+
+    model = _models.Schlagwort
+    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'schlagwort'})
+    create_path = reverse_lazy(
+        GENERIC_URL_NAME, kwargs={'model_name': 'schlagwort', 'create_field': 'schlagwort'}
+    )
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, schlagwort='Hippies', schlagwortalias__alias='Summer of Love')
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, 'Hippies', 'Summer of Love'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={'text': 'History'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'History')
+        self.assertTrue(self.model.objects.filter(schlagwort='History').exists())
+        self.assertTrue(self.model.objects.get(pk=created['id']))
+
+
+class TestACInstrument(RequestTestCase):
+
+    model = _models.Instrument
+    path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'instrument'})
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, instrument='Piano', kuerzel='xy')
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, 'Piano', 'xy'):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+
+class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
+    model = _models.Land
+    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
+    has_alias = False
