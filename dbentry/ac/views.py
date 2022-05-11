@@ -386,8 +386,9 @@ class ContentTypeAutocompleteView(autocomplete.Select2QuerySetView):
 
     def get_queryset(self) -> QuerySet:
         """Limit the queryset to models registered with miz_site."""
-        registered_models = [m._meta.model_name for m in self.admin_site._registry.keys()]
-        return super().get_queryset().filter(model__in=registered_models).order_by('model')
+        apps = [m._meta.app_label for m in self.admin_site._registry.keys()]
+        models = [m._meta.model_name for m in self.admin_site._registry.keys()]
+        return super().get_queryset().filter(model__in=models, app_label__in=apps).order_by('model')
 
 
 ###############################################################################
