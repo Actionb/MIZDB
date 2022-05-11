@@ -569,6 +569,7 @@ class TestACBand(RequestTestCase):
 
     model = _models.Band
     path = reverse_lazy('acband')
+    create_path = reverse_lazy('acband', kwargs={'create_field': 'band_name'})
 
     @classmethod
     def setUpTestData(cls):
@@ -588,6 +589,16 @@ class TestACBand(RequestTestCase):
                 response = self.client.get(self.path, data={'q': search_term})
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual([str(self.startsw.pk)], get_result_ids(response))
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={'text': 'Foo Bars'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Foo Bars')
+        self.assertTrue(self.model.objects.filter(band_name='Foo Bars').exists())
+        self.assertTrue(self.model.objects.get(pk=created['id']))
 
     def test_result_ordering(self):
         """Exact matches should come before startswith before all others."""
@@ -656,17 +667,6 @@ class TestACBand(RequestTestCase):
         )
         self.assertEqual(response.status_code, 200, msg=response.content)
         self.assertEqual([str(self.contains.pk)], get_result_ids(response))
-
-    def test_create_object(self):
-        """Check the object created with a POST request."""
-        path = reverse('acband', kwargs={'create_field': 'band_name'})
-        response = self.post_response(path, data={'text': 'Foo Bars'})
-        self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
-        self.assertTrue(created['id'])
-        self.assertEqual(created['text'], 'Foo Bars')
-        self.assertTrue(self.model.objects.filter(band_name='Foo Bars').exists())
-        self.assertEqual(self.model.objects.get(band_name='Foo Bars').pk, created['id'])
 
 
 class TestACAusgabe(ACViewTestCase):
@@ -817,6 +817,20 @@ class TestACAutor(ACViewTestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual([str(obj.pk)], get_result_ids(response))
 
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.path, data={'text': 'Bob Tester (BT)'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Bob Tester')
+        self.assertTrue(
+            self.model.objects.filter(
+                person__vorname='Bob', person__nachname='Tester', kuerzel='BT'
+            ).exists()
+        )
+        self.assertTrue(self.model.objects.get(pk=created['id']))
+
     @patch('dbentry.ac.views.log_addition')
     def test_create_object_adds_log_entry(self, log_addition_mock):
         """Assert that log entries are added for the created objects."""
@@ -908,6 +922,7 @@ class TestACMagazin(ACViewTestCase):
     view_class = views.ACMagazin
     model = _models.Magazin
     path = reverse_lazy('acmagazin')
+    create_path = reverse_lazy('acmagazin', kwargs={'create_field': 'magazin_name'})
 
     @classmethod
     def setUpTestData(cls):
@@ -937,6 +952,16 @@ class TestACMagazin(ACViewTestCase):
         with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
             view.get_search_results(queryset, '1234-5670')
             super_mock.assert_called_with(queryset, '1234-5670')
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={'text': 'Good Times'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Good Times')
+        self.assertTrue(self.model.objects.filter(magazin_name='Good Times').exists())
+        self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
 class TestACMusiker(ACViewTestCase):
@@ -990,7 +1015,11 @@ class TestACMusiker(ACViewTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.create_path, data={'text': 'Princess'})
         self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Princess')
         self.assertTrue(self.model.objects.filter(kuenstler_name='Princess').exists())
+        self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
