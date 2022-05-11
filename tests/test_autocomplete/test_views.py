@@ -933,20 +933,59 @@ class TestACMagazin(ACViewTestCase):
             super_mock.assert_called_with(queryset, '1234-5670')
 
 
-class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
+class TestACMusiker(ACViewTestCase):
 
     view_class = views.ACMusiker
     model = _models.Musiker
-    alias_accessor_name = 'musikeralias_set'
-    raw_data = [
-        {
-            'musikeralias__alias': 'John',
-            'person__vorname': 'Peter',
-            'person__nachname': 'Lustig',
-            'beschreibung': 'Description',
-            'bemerkungen': 'Stuff'
-        }
-    ]
+    path = reverse_lazy('acmusiker')
+    create_path = reverse_lazy('acmusiker', kwargs={'create_field': 'kuenstler_name'})
+    test_data = {
+        'kuenstler_name': 'Prince',
+        'musikeralias__alias': 'TAFKAP',
+        'person__vorname': 'Rogers',
+        'person__nachname': 'Nelson',
+        'beschreibung': 'American singer-songwriter',
+        'bemerkungen': 'Alan: revisit this'
+    }
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, **cls.test_data)
+        super().setUpTestData()
+
+    def test(self):
+        """Assert that an autocomplete request returns the expected results."""
+        for search_term in (self.obj.pk, *self.test_data.values()):
+            with self.subTest(search_term=search_term):
+                response = self.get_response(self.path, data={'q': search_term})
+                self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_tabular_results(self):
+        """Assert that the results contain extra data for the tabular display."""
+        response = self.get_response(self.path, data={'q': 'Prince', 'tabular': True})
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)['results'][0]
+
+        self.assertIn('text', results.keys())
+        self.assertEqual(results['text'], 'Musiker')
+        self.assertIn('is_optgroup', results.keys())
+        self.assertEqual(results['is_optgroup'], True)
+        self.assertIn('optgroup_headers', results.keys())
+        self.assertEqual(results['optgroup_headers'], ['Alias'])
+        self.assertIn('children', results.keys())
+        self.assertEqual(len(results['children']), 1, results['children'])
+        result = results['children'][0]
+        self.assertEqual(result['id'], str(self.obj.pk))
+        self.assertEqual(result['text'], str(self.obj))
+        self.assertEqual(result[EXTRA_DATA_KEY], ['TAFKAP'])
+        self.assertEqual(result['selected_text'], str(self.obj))
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={'text': 'Princess'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.model.objects.filter(kuenstler_name='Princess').exists())
+
 
 
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
