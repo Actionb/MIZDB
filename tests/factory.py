@@ -1,16 +1,22 @@
 # WARNING: unique together options are not really supported. Use with caution.
 import itertools
 import sys
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, Union
+from typing import (
+    Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar,
+    Union
+)
 
 import factory
-from django.db.models import Field, Model
+from django.db.models import Field
 from factory import builder, declarations
 from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.fields import PartialDateField
 from dbentry.utils import get_model_fields, get_model_relations, is_iterable
+
+
+Model = TypeVar('Model')
 
 
 class UniqueFaker(factory.Sequence):
