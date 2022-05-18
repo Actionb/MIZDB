@@ -1,3 +1,5 @@
+from unittest import skip
+
 from django.test import TestCase
 
 from dbentry.actions.actions import add_cls_attrs
@@ -13,6 +15,7 @@ dummy_func1.short_description = 'Beep'  # noqa
 dummy_func1.allowed_permissions = 'Boop'
 
 
+@skip("Has not been reworked yet.")
 class TestAddClsAttrsDecorator(TestCase):
 
     def test_deco_with_cls_attrs_and_no_func_attrs(self):

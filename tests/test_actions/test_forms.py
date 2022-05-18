@@ -1,3 +1,5 @@
+from unittest import skip
+
 from django.core.exceptions import ValidationError
 
 from dbentry import models as _models
@@ -5,6 +7,7 @@ from dbentry.actions.forms import BrochureActionFormOptions
 from dbentry.tests.base import FormTestCase
 
 
+@skip("Has not been reworked yet.")
 class TestBrochureActionFormOptions(FormTestCase):
 
     form_class = BrochureActionFormOptions
