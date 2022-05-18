@@ -69,14 +69,24 @@ class TestFullTextSearch(DataTestCase):
             self.model, band_name='Toten Hosen',
             beschreibung='Sie gehen gerne zum Arzt.'
         )
-        self.assertEqual(
+        self.assertEqual(  # TODO: @test-rework: use assertQuerysetEqual
             list(self.model.objects.search('Ärzte', ranked=True)),
             [exact, startsw, self.obj1, another]
         )
-        # Assert that search respects specified ordering:
+
+    def test_ordering_respects_specified_ordering(self):
+        """Assert that search includes previously specified ordering."""
         self.assertIn(
             '-beschreibung',
             self.queryset.order_by('-beschreibung').search('Ärzte', ranked=True).query.order_by,
+        )
+
+    def test_ordering_pk_match(self):
+        """Assert that the primary key matches come first before other matches."""
+        pk_match = make(self.model)
+        exact = make(self.model, band_name=str(pk_match.pk))
+        self.assertEqual(  # TODO: @test-rework: use assertQuerysetEqual
+            list(self.model.objects.search(str(pk_match.pk))), [pk_match, exact]
         )
 
     def test_ordering_not_ranked(self):
@@ -96,21 +106,16 @@ class TestFullTextSearch(DataTestCase):
             self.model, band_name='Toten Hosen',
             beschreibung='Sie gehen gerne zum Arzt.'
         )
-        self.assertEqual(
+        self.assertEqual(  # TODO: @test-rework: use assertQuerysetEqual
             list(self.queryset.search('Die Ärzte', ranked=False).order_by('-rank')),
-            [self.obj1, other, another]
+            [self.obj1, other, another],
         )
 
-    def test_alias_search(self):
-        # Assert that objects can be found by searching for an alias.
-        results = self.queryset.search('Doktores')
-        self.assertEqual(results.count(), 1)
-        self.assertEqual(results.get(), self.obj1)
-        self.assertTrue(results.get().rank)
-
-    def test_ordering(self):
-        # Assert that the initially unordered result queryset includes the
-        # model's default ordering.
+    def test_ordering_unordered(self):
+        """
+        Assert that the initially unordered result queryset includes the
+        model's default ordering.
+        """
         results = self.queryset.order_by().search('Die Ärzte', ranked=False)
         for ordering in self.model._meta.ordering:
             self.assertIn(
@@ -122,6 +127,13 @@ class TestFullTextSearch(DataTestCase):
                     )
                 )
             )
+
+    def test_alias_search(self):
+        """Assert that objects can be found by searching for an alias."""
+        results = self.queryset.search('Doktores')
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.get(), self.obj1)
+        self.assertTrue(results.get().rank)
 
     def test_handles_special_characters(self):
         # Assert that queries with tsquery-specific chars are fine.

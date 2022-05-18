@@ -261,21 +261,6 @@ class TestACBase(ACViewTestCase):
                 with self.assertNumQueries(0):
                     view.get_search_results(queryset, q)
 
-    def test_get_search_results_pk(self):
-        """
-        Assert that the queryset is filtered against primary keys, if q is a
-        numeric string and a record with such a primary key exists.
-        """
-        queryset = self.model.objects.all()
-        view = self.get_view()
-
-        self.assertIn(self.obj1, view.get_search_results(queryset, str(self.obj1.pk)))
-
-        # The primary key doesn't exist: a normal search should be done.
-        with patch.object(queryset, 'search') as search_mock:
-            view.get_search_results(queryset, '0')
-            search_mock.assert_called_with('0')
-
     def test_apply_forwarded(self):
         """Assert that the queryset is filtered according to the forwarded values."""
         queryset = self.model.objects.all()
@@ -475,7 +460,6 @@ class TestACBand(RequestTestCase):
         cls.startsw = make(cls.model, band_name='Foo Fighters', bandalias__alias='The Holy Shits')
         cls.exact = make(cls.model, band_name='Foo')
         cls.alias = make(cls.model, band_name='Bars', bandalias__alias='Fee Fighters')
-        cls.zero = make(cls.model, band_name='0')
 
         super().setUpTestData()
 
@@ -512,16 +496,12 @@ class TestACBand(RequestTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(str(self.alias.pk), get_result_ids(response))
 
-    def test_search_term_is_numeric(self):
-        """For numeric search terms, a lookup for primary keys should be attempted."""
+    def test_search_term_matches_pk(self):
+        """Primary key matches should be the first results."""
+        other = make(self.model, band_name=str(self.exact.pk))
         response = self.client.get(self.path, data={'q': self.exact.pk})
         self.assertEqual(response.status_code, 200)
-        self.assertIn(str(self.exact.pk), get_result_ids(response))
-
-        # The primary key doesn't exist: a normal search should be done.
-        response = self.client.get(self.path, data={'q': '0'})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(str(self.zero.pk), get_result_ids(response))
+        self.assertEqual([str(self.exact.pk), str(other.pk)], get_result_ids(response))
 
     @translation_override(language=None)
     def test_create_option(self):

@@ -77,17 +77,18 @@ class TextSearchQuerySetMixin(object):
 
         If ``ranked`` is True (which is the default) or if the queryset is
         unordered, order the results by how closely they matched the search
-        term: exact matches first, then matches that start with the search term,
-        then ordered by text search rank, and finally ordered either according
-        to the queryset ordering or - if the queryset wasn't ordered - by the
-        model's default ordering.
+        term: matches for primary keys first, then exact matches, then matches
+        that start with the search term, then ordered by text search rank, and
+        finally ordered either according to the queryset ordering or - if the
+        queryset wasn't ordered - by the model's default ordering.
         """
         if not q:
             return self.none()  # type: ignore[attr-defined]
 
         filters = Q()
+        if q.isnumeric():
+            filters |= Q(pk=q)
         model_search_rank = related_search_rank = None
-
         model = self.model  # type: ignore[attr-defined]
         search_field = _get_search_vector_field(model)
         if search_field:
@@ -156,5 +157,10 @@ class TextSearchQuerySetMixin(object):
                     output_field=BooleanField()
                 )
                 ordering = [exact.desc(), startswith.desc()] + ordering
+                if q.isnumeric():
+                    # Prepend an ordering for exact pk matches:
+                    ordering.insert(
+                        0, ExpressionWrapper(Q(pk=q), output_field=BooleanField()).desc()
+                    )
             results = results.order_by(*ordering)
         return results

@@ -95,15 +95,9 @@ class ACBase(autocomplete.Select2QuerySetView):
         """Filter the results based on the query."""
         queryset = self.apply_forwarded(queryset)
         search_term = search_term.strip()
-        if search_term:
-            # If the search term is a numeric value, try using it in a primary
-            # key lookup, and if that returns results, return them.
-            if search_term.isnumeric() and queryset.filter(pk=search_term).exists():
-                return queryset.filter(pk=search_term)
-            if not isinstance(queryset, MIZQuerySet):
-                return super().get_search_results(queryset, search_term)
+        if search_term and isinstance(queryset, MIZQuerySet):
             return queryset.search(search_term)
-        return queryset
+        return super().get_search_results(queryset, search_term)
 
     def apply_forwarded(self, queryset: QuerySet) -> QuerySet:
         """Apply filters based on the forwarded values to the given queryset."""
