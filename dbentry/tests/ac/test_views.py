@@ -226,30 +226,6 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
                 with self.assertNumQueries(0):
                     view.get_search_results(queryset, q)
 
-    def test_get_search_results_pk(self):
-        """
-        Assert that the queryset is filtered against primary keys, if q is a
-        numeric string and a record with such a primary key exists.
-        """
-        queryset = self.model.objects.all()
-        view = self.get_view()
-
-        self.assertIn(self.obj1, view.get_search_results(queryset, str(self.obj1.pk)))
-
-        # The primary key doesn't exist: a normal search should be done.
-        with patch.object(queryset, 'search') as search_mock:
-            view.get_search_results(queryset, '0')
-            search_mock.assert_called_with('0')
-
-    def test_get_queryset_empty_search_term(self):
-        """If the search term is an empty string, do not perform any queries."""
-        view = self.get_view()
-        for q in ('', '   '):
-            with self.subTest(q=q):
-                view.q = q
-                with self.assertNumQueries(0):
-                    view.get_queryset()
-
     def test_get_queryset_ordering(self):
         """Assert that the result queryset has the 'text search ordering'."""
         # The expected ordering would be:
@@ -273,10 +249,18 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(ordering[3], name_field)
         self.assertEqual(len(ordering), 4)
 
+    def test_get_queryset_ordering_pk_matching(self):
+        """
+        Assert that for numeric search terms the ordering includes an item that
+        puts primary key matches first.
+        """
+        view = self.get_view(q='1')
+        ordering = view.get_queryset().query.order_by
+        pk_match = ExpressionWrapper(Q(pk='1'), output_field=BooleanField())
+        self.assertEqual(ordering[0], pk_match.desc())
+
     def test_setup_sets_model(self):
-        """
-        Assert that setup sets the 'model' attribute from the kwargs.
-        """
+        """Assert that setup sets the 'model' attribute from the kwargs."""
         view = self.view_class()
         view.model = None
         view.setup(self.get_request(), model_name='ausgabe')
