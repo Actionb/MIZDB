@@ -62,7 +62,7 @@ class TestOptionalFormView(ViewTestCase):
 
     def test_get_form_no_form_class(self):
         """get_form should return None, if the no form_class is set."""
-        view = self.get_view(self.get_request(), initkwargs={'form_class': None})
+        view = self.get_view(self.get_request(), form_class=None)
         self.assertIsNone(view.get_form())
 
     @mock.patch.object(OptionalFormView, 'form_valid')
@@ -72,7 +72,7 @@ class TestOptionalFormView(ViewTestCase):
         call form_valid.
         """
         request = self.post_request()
-        view = self.get_view(request, initkwargs={'form_class': None})
+        view = self.get_view(request, form_class=None)
         self.assertIsNone(view.get_form_class())
         view.post(request)
         self.assertTrue(form_valid_mock.called)
@@ -96,7 +96,7 @@ class TestOptionalFormView(ViewTestCase):
         form is not valid.
         """
         request = self.post_request()  # no data for the form
-        view = self.get_view(request, initkwargs={'form_class': self.TestForm})
+        view = self.get_view(request, form_class=self.TestForm)
         view.post(request)
         self.assertTrue(form_invalid_mock.called)
 
