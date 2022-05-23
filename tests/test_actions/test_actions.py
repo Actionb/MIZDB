@@ -1,48 +1,48 @@
-from unittest import skip
-
 from django.test import TestCase
 
 from dbentry.actions.actions import add_cls_attrs
 
 
-def dummy_func0():
+def func0():
     pass
 
 
-def dummy_func1():
+def func1():
     pass
-dummy_func1.short_description = 'Beep'  # noqa
-dummy_func1.allowed_permissions = 'Boop'
 
 
-@skip("Has not been reworked yet.")
+func1.short_description = 'Foo'  # noqa
+func1.allowed_permissions = 'Bar'
+
+
 class TestAddClsAttrsDecorator(TestCase):
+    class View:
+        short_description = 'This is a test description.'
+        allowed_permissions = ('add_band',)
 
-    def test_deco_with_cls_attrs_and_no_func_attrs(self):
-        dummy_view = type(
-            'Dummy', (object, ),
-            {'short_description': 'Testdesc', 'allowed_permissions': 'Nope'}
-        )
-        msg = (
-            "Decorator should add attributes to the function from the view "
-            "if the attributes are missing from the function."
-        )
-        decorated_func = add_cls_attrs(dummy_view)(dummy_func0)
-        self.assertEqual(decorated_func.short_description, 'Testdesc', msg=msg)
-        self.assertEqual(decorated_func.allowed_permissions, 'Nope', msg=msg)
+    view_class = View
 
-    def test_deco_with_cls_attrs_and_func_attrs(self):
-        # Assert that the decorator does not overwrite set attributes.
-        dummy_view = type(
-            'Dummy', (object, ),
-            {'short_description': 'Testdesc', 'allowed_permissions': 'Nope'}
-        )
-        decorated_func = add_cls_attrs(dummy_view)(dummy_func1)
-        self.assertEqual(
-            decorated_func.short_description, 'Beep',
-            msg="Decorator should not overwrite attributes set on the function."
-        )
-        self.assertEqual(
-            decorated_func.allowed_permissions, 'Boop',
-            msg="Decorator should not overwrite attributes set on the function."
-        )
+    def test_sets_description(self):
+        """
+        Assert that the decorator assigns the view class' description to the
+        view function.
+        """
+        decorated_func = add_cls_attrs(self.view_class)(func0)
+        self.assertEqual(decorated_func.short_description, 'This is a test description.')
+
+    def test_sets_allowed_permissions(self):
+        """
+        Assert that the decorator assigns the view class' permissions to the
+        view function.
+        """
+        decorated_func = add_cls_attrs(self.view_class)(func0)
+        self.assertEqual(decorated_func.allowed_permissions, ('add_band',))
+
+    def test_does_not_override_set_attributes(self):
+        """
+        Assert that the decorator does not overwrite attributes set on the view
+        function.
+        """
+        decorated_func = add_cls_attrs(self.view_class)(func1)
+        self.assertEqual(decorated_func.short_description, 'Foo')
+        self.assertEqual(decorated_func.allowed_permissions, 'Bar')

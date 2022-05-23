@@ -22,11 +22,9 @@ def add_cls_attrs(view_cls: Type[View]) -> Callable:
     """
 
     def wrap(func):
-        if (not hasattr(func, 'short_description')
-                and hasattr(view_cls, 'short_description')):
+        if not hasattr(func, 'short_description') and hasattr(view_cls, 'short_description'):
             func.short_description = view_cls.short_description
-        if (not hasattr(func, 'allowed_permissions')
-                and hasattr(view_cls, 'allowed_permissions')):
+        if not hasattr(func, 'allowed_permissions') and hasattr(view_cls, 'allowed_permissions'):
             func.allowed_permissions = view_cls.allowed_permissions
         return func
 
@@ -35,27 +33,19 @@ def add_cls_attrs(view_cls: Type[View]) -> Callable:
 
 @add_cls_attrs(BulkEditJahrgang)
 def bulk_jg(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return BulkEditJahrgang.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+    return BulkEditJahrgang.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(MergeViewWizarded)
 def merge_records(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return MergeViewWizarded.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+    return MergeViewWizarded.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(MoveToBrochureBase)
 def moveto_brochure(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return MoveToBrochureBase.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+    return MoveToBrochureBase.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(ChangeBestand)
 def change_bestand(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return ChangeBestand.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+    return ChangeBestand.as_view(model_admin=model_admin, queryset=queryset)(request)
