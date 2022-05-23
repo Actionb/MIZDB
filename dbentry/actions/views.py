@@ -208,6 +208,7 @@ class MergeViewWizarded(WizardConfirmationView):
         """
         Check whether the Ausgabe instances are from different Magazin instances.
         """
+        # TODO: this method should be a standalone function
         if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
@@ -230,6 +231,7 @@ class MergeViewWizarded(WizardConfirmationView):
         """
         Check whether the Artikel instances are from different Ausgabe instances.
         """
+        # TODO: this method should be a standalone function
         if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
