@@ -15,7 +15,7 @@ class Band(models.Model):
         DISBANDED = ('DISB', 'Aufgelöst')
 
     band_name = models.CharField('Bandname', max_length=100)
-    status = models.CharField(max_length=4, choices=Status.choices)
+    status = models.CharField(max_length=4, choices=Status.choices, default=Status.ACTIVE)
     genres = models.ManyToManyField('test_actions.Genre')
 
     class Meta:

@@ -25,6 +25,7 @@ from dbentry.actions.views import (
 )
 from dbentry.actions.forms import (
     MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions)
+from dbentry.base.forms import MIZAdminForm
 from dbentry.base.views import MIZAdminMixin, FixedSessionWizardView
 from dbentry.sites import miz_site
 from dbentry.tests.mixins import LoggingTestMixin
@@ -34,29 +35,45 @@ from tests.factory import make
 from tests.test_actions.models import Band, Genre
 
 
-class ActionViewTestCase(AdminTestCase, ViewTestCase):
-
-    action_name = ''
-
-    def get_view(self, request=None, args=None, kwargs=None, action_name=None, **initkwargs):
-        # Allow setting the action_name and fields attribute and assure
-        # model_admin and queryset are passed as initkwargs.
-        initkwargs = {
-            'model_admin': self.model_admin, 'queryset': self.queryset.all(), **initkwargs
-        }
-
-        action_name = action_name or self.action_name  # TODO: add action_name to initkwargs - might have the same effect?
-        if action_name:
-            self.view_class.action_name = action_name
-
-        return super().get_view(request=request, args=args, kwargs=kwargs, **initkwargs)
-
-
 admin_site = admin.AdminSite(name='test')
+
+
+class RenameConfirmationForm(MIZAdminForm):
+    new_name = forms.CharField()
+
+
+class RenameBandActionView(ActionConfirmationView):
+    """Dummy action view class."""
+
+    title = 'Rename Band'
+    breadcrumbs_title = 'Rename'
+    # TODO: check for that 'reversible' specific stuff?
+    short_description = 'Rename all Band objects for fun and profit!'
+    action_name = 'rename_band'
+    allowed_permissions = ('change',)  # Require that the user has change permission
+    action_allowed_checks = ('bands_are_active',)  # Require that only active bands can be renamed
+    form_class = RenameConfirmationForm
+    admin_site = admin_site
+
+    def bands_are_active(view):  # noqa
+        """Return whether all selected Band objects are active."""
+        return not view.queryset.exclude(status=Band.Status.ACTIVE).exists()
+
+    def perform_action(self, cleaned_data) -> None:
+        """Rename all Band objects in the view's queryset."""
+        self.queryset.update(band_name=cleaned_data['new_name'])
+
+
+def rename_band(model_admin, request, queryset):
+    """Dummy action view FUNCTION."""
+    return RenameBandActionView.as_view(model_admin=model_admin, queryset=queryset)(request)
+rename_band.short_description = RenameBandActionView.short_description  # noqa
+rename_band.allowed_permissions = RenameBandActionView.allowed_permissions
 
 
 @admin.register(Band, site=admin_site)
 class BandAdmin(admin.ModelAdmin):
+    actions = [rename_band]
 
     @property
     def media(self):
@@ -72,6 +89,72 @@ class URLConf:
     urlpatterns = [path('test_actions/', admin_site.urls)]
 
 
+@override_settings(ROOT_URLCONF=URLConf)
+class Test(AdminTestCase):
+    """Integration test for ActionConfirmationView (and ConfirmationViewMixin)."""
+
+    admin_site = admin_site
+    model = Band
+    model_admin_class = BandAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model)
+        cls.inactive = make(cls.model, status=Band.Status.INACTIVE)
+        super().setUpTestData()
+
+    def test_rename(self):
+        """Assert that the confirmation form is displayed before proceeding with the action."""
+        request_data = {
+            'action': 'rename_band',
+            'index': '0',  # index which action form was posted (f.ex. 0=top, 1=bottom)
+            helpers.ACTION_CHECKBOX_NAME: [str(self.obj.pk)]  # selected objects
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/action_confirmation.html')
+
+        # Add form data and confirm the action:
+        request_data['new_name'] = 'RENAMED'
+        request_data['action_confirmed'] = '1'
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        # Should have been returned to the changelist:
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.obj.refresh_from_db()
+        self.assertEqual(self.obj.band_name, 'RENAMED')
+
+    def test_action_not_allowed(self):
+        """The user should be redirected back to the changelist, if the action is not allowed."""
+        request_data = {
+            'action': 'rename_band',
+            'index': '0',  # index which action form was posted (f.ex. 0=top, 1=bottom)
+            helpers.ACTION_CHECKBOX_NAME: [str(self.inactive.pk)]  # selected objects
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+
+
+class ActionViewTestCase(AdminTestCase, ViewTestCase):
+
+    action_name = ''
+
+    def get_view(self, request=None, args=None, kwargs=None, action_name=None, **initkwargs):
+        # Allow setting the action_name and fields attribute and assure
+        # model_admin and queryset are passed as initkwargs.
+        initkwargs = {
+            'model_admin': self.model_admin, 'queryset': self.queryset.all(),
+            'action_name': action_name or self.action_name, **initkwargs
+        }
+        #
+        action_name = action_name or self.action_name  # TODO: add action_name to initkwargs - might have the same effect?
+        if action_name:
+            self.view_class.action_name = action_name
+
+        return super().get_view(request=request, args=args, kwargs=kwargs, **initkwargs)
+
+
 def outside_check(view):
     return True
 
@@ -84,10 +167,10 @@ class TestConfirmationViewMixin(ActionViewTestCase):
         action_allowed_checks = ['not_callable', 'check_true', outside_check]
         not_callable = ()
 
-        def check_true(view):
+        def check_true(view):  # noqa
             return True
 
-        def check_false(view):
+        def check_false(view):  # noqa
             return False
 
     admin_site = admin_site
@@ -110,7 +193,7 @@ class TestConfirmationViewMixin(ActionViewTestCase):
             self.assertEqual(view.action_name, 'test')
 
     def test_get_action_allowed_checks(self):
-        """get_action_allowed_checks should yield function callables."""
+        """get_action_allowed_checks should yield unbound methods or function callables."""
         view = self.get_view()
         self.assertEqual(
             [self.view_class.check_true, outside_check],
@@ -224,7 +307,7 @@ class TestActionConfirmationView(ActionViewTestCase):
 
     class DummyView(ActionConfirmationView):
         admin_site = admin_site
-        form_class = DummyForm  # ActionConfirmationView is a FormView
+        form_class = DummyForm  # ActionConfirmationView is a FormView'
 
     admin_site = admin_site
     model = Band
@@ -343,8 +426,6 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view(self.get_request())
         with patch.object(view, 'compile_affected_objects'):
             self.assertIn('affected_objects', view.get_context_data())
-
-    # TODO: needs integration tests: test responses to requests
 
 
 @skip("Has not been reworked yet.")
