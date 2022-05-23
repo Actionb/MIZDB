@@ -87,7 +87,7 @@ class TextSearchQuerySetMixin(object):
 
         filters = Q()
         if q.isnumeric():
-            filters |= Q(pk=q)
+            filters |= Q(pk=q)  # TODO: use model._meta.pk_name in place of 'pk'
         model_search_rank = related_search_rank = None
         model = self.model  # type: ignore[attr-defined]
         search_field = _get_search_vector_field(model)
@@ -160,6 +160,7 @@ class TextSearchQuerySetMixin(object):
                 if q.isnumeric():
                     # Prepend an ordering for exact pk matches:
                     ordering.insert(
+                        # TODO: use model._meta.pk_name in place of 'pk'
                         0, ExpressionWrapper(Q(pk=q), output_field=BooleanField()).desc()
                     )
             results = results.order_by(*ordering)
