@@ -16,11 +16,7 @@ from tests.test_autocomplete.models import Band, Genre, Musiker
 
 def get_result_ids(response):
     """Return the ids of the results of an autocomplete request."""
-    return [
-        d['id']
-        for d in json.loads(response.content)['results']
-        if not d.get('create_id', False)
-    ]
+    return [d['id'] for d in response.json()['results'] if not d.get('create_id', False)]
 
 
 class ACViewTestCase(ViewTestCase):
@@ -394,7 +390,7 @@ class TestACTabular(ACViewTestCase):
 
         response = view.render_to_response(context)
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results']
+        results = json.loads(response.content.decode(response.charset))['results']
 
         # 'results' should be a JSON object with the necessary items to
         # create the optgroup. The first item should be the headers of the
@@ -425,7 +421,7 @@ class TestACTabular(ACViewTestCase):
 
         response = view.render_to_response(context)
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results']
+        results = json.loads(response.content.decode(response.charset))['results']
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['optgroup_headers'], [])
 
@@ -443,7 +439,7 @@ class TestACTabular(ACViewTestCase):
         response = view.render_to_response(context)
         self.assertEqual(response.status_code, 200)
         # 'results' should be a just an empty list:
-        self.assertFalse(json.loads(response.content)['results'])
+        self.assertFalse(json.loads(response.content.decode(response.charset))['results'])
 
 
 class TestACBand(RequestTestCase):
@@ -475,7 +471,7 @@ class TestACBand(RequestTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.create_path, data={'text': 'Foo Bars'})
         self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
+        created = response.json()
         self.assertTrue(created['id'])
         self.assertEqual(created['text'], 'Foo Bars')
         self.assertTrue(self.model.objects.filter(band_name='Foo Bars').exists())
@@ -509,7 +505,7 @@ class TestACBand(RequestTestCase):
         path = reverse('acband', kwargs={'create_field': 'band_name'})
         response = self.client.get(path, data={'q': 'Fighters'})
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results']
+        results = response.json()['results']
         self.assertEqual(
             results[-1],
             {'id': 'Fighters', 'text': 'Create "Fighters"', 'create_id': True},
@@ -520,7 +516,7 @@ class TestACBand(RequestTestCase):
         path = reverse('acband', kwargs={'create_field': 'band_name'})
         response = self.client.get(path, data={'q': 'Fee Fighters', 'tabular': True})
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results'][0]
+        results = response.json()['results'][0]
 
         self.assertIn('text', results.keys())
         self.assertEqual(results['text'], 'Band')
@@ -659,7 +655,7 @@ class TestACAusgabe(ACViewTestCase):
         """Assert that the results contain extra data for the tabular display."""
         response = self.client.get(self.path, data={'q': str(self.obj_num), 'tabular': True})
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results'][0]
+        results = response.json()['results'][0]
 
         self.assertIn('text', results.keys())
         self.assertEqual(results['text'], 'Ausgabe')
@@ -697,7 +693,7 @@ class TestACAutor(ACViewTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.path, data={'text': 'Bob Tester (BT)'})
         self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
+        created = response.json()
         self.assertTrue(created['id'])
         self.assertEqual(created['text'], 'Bob Tester (BT)')
         self.assertTrue(
@@ -831,7 +827,7 @@ class TestACMagazin(ACViewTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.create_path, data={'text': 'Good Times'})
         self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
+        created = response.json()
         self.assertTrue(created['id'])
         self.assertEqual(created['text'], 'Good Times')
         self.assertTrue(self.model.objects.filter(magazin_name='Good Times').exists())
@@ -868,7 +864,7 @@ class TestACMusiker(RequestTestCase):
         """Assert that the results contain extra data for the tabular display."""
         response = self.get_response(self.path, data={'q': 'Prince', 'tabular': True})
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results'][0]
+        results = response.json()['results'][0]
 
         self.assertIn('text', results.keys())
         self.assertEqual(results['text'], 'Musiker')
@@ -889,7 +885,7 @@ class TestACMusiker(RequestTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.create_path, data={'text': 'Princess'})
         self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
+        created = response.json()
         self.assertTrue(created['id'])
         self.assertEqual(created['text'], 'Princess')
         self.assertTrue(self.model.objects.filter(kuenstler_name='Princess').exists())
@@ -972,7 +968,7 @@ class TestACSpielort(RequestTestCase):
         """Assert that the results contain extra data for the tabular display."""
         response = self.get_response(self.path, data={'q': 'FZW', 'tabular': True})
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results'][0]
+        results = response.json()['results'][0]
 
         self.assertIn('text', results.keys())
         self.assertEqual(results['text'], 'Spielort')
@@ -1018,7 +1014,7 @@ class TestACVeranstaltung(RequestTestCase):
         """Assert that the results contain extra data for the tabular display."""
         response = self.get_response(self.path, data={'q': 'Woodstock', 'tabular': True})
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)['results'][0]
+        results = response.json()['results'][0]
 
         self.assertIn('text', results.keys())
         self.assertEqual(results['text'], 'Veranstaltung')
@@ -1044,7 +1040,7 @@ class TestGND(ViewTestCase):
         """Assert that the response contains the expected results."""
         query_mock.return_value = ([('134485904', 'Plant, Robert')], 1)
         response = self.client.get(self.path, data={'q': 'Robert Plant'})
-        results = json.loads(response.content)['results']
+        results = response.json()['results']
         self.assertEqual(len(results), 1)
         expected = [{
             'id': '134485904',
@@ -1264,7 +1260,7 @@ class TestACGenre(RequestTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.create_path, data={'text': 'Rock'})
         self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
+        created = response.json()
         self.assertTrue(created['id'])
         self.assertEqual(created['text'], 'Rock')
         self.assertTrue(self.model.objects.filter(genre='Rock').exists())
@@ -1294,7 +1290,7 @@ class TestACSchlagwort(RequestTestCase):
         """Assert that a new object can be created using a POST request."""
         response = self.post_response(self.create_path, data={'text': 'History'})
         self.assertEqual(response.status_code, 200)
-        created = json.loads(response.content)
+        created = response.json()
         self.assertTrue(created['id'])
         self.assertEqual(created['text'], 'History')
         self.assertTrue(self.model.objects.filter(schlagwort='History').exists())
