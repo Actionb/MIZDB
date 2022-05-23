@@ -18,6 +18,9 @@ from dbentry.utils import get_obj_link
 
 SafeTextOrStr = Union[str, SafeText]
 
+# TODO: remove MIZAdminMixin inheritance? If MIZAdminMixin is not required by
+#  ConfirmationViewMixin methods or processes, it should be removed.
+
 
 class ConfirmationViewMixin(MIZAdminMixin):
     """
@@ -35,8 +38,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
           dropdown menu.
         - ``action_name`` (str): name of the action as registered with the
           ModelAdmin. This is the value for the hidden input named "action"
-          with which the ModelAdmin resolves the right action to use. With an
-          invalid form ModelAdmin.response_action will return here.
+          with which the ModelAdmin.response_action resolves the action to use.
         - ``view_helptext`` (str): a help text for this view
         - ``action_allowed_checks`` (list or tuple): list of callables or names
           of view methods that assess if the action is allowed. These checks
@@ -49,6 +51,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
     action_reversible: bool = False
     short_description: str = ''
     action_name: Optional[str] = None
+    # TODO: remove view_helptext - add help texts to context data directly where
+    #  needed/declared
     view_helptext: str = ''
     action_allowed_checks: Sequence = ()
 
@@ -105,6 +109,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Optional[HttpResponse]:
         if not self.action_allowed:
             # The action is not allowed, redirect back to the changelist
+            # TODO: shouldn't the user at least get a message that the action is not allowed?
             return None
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
 
@@ -171,7 +176,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         - ``affected_fields`` (list): the model fields whose values should be
           displayed in the summary of objects affected by this action
     """
-
+    # TODO: mention that the template expects a MIZAdminForm (a form with fieldsets)!
     template_name: str = 'admin/action_confirmation.html'
 
     affected_fields: list
@@ -187,6 +192,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         # TODO: wouldn't it be smarter to just check what kind of request it is
         #  and act accordingly (GET: no data form, POST: data form)?
         #  It makes no sense to validate the form on a GET request?
+        # Note that actions are initiated by POSTing the action select form!
         if 'action_confirmed' not in self.request.POST:
             # Only pass in 'data' if the user tries to confirm an action.
             # Do not try to validate the form if it is the first time the
@@ -283,8 +289,6 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
     template_name: str = 'admin/action_confirmation_wizard.html'
 
     # A dictionary of helptexts for every step: {step:helptext}
-    # TODO: remove view_helptext - add helptexts to context data directly where
-    #  needed/declared
     view_helptext: dict  # type: ignore[assignment]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
