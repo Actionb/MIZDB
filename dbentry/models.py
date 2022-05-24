@@ -373,11 +373,11 @@ class Ausgabe(ComputedNameModel):
         if 'magazin__ausgaben_merkmal' in data:
             merkmal = data['magazin__ausgaben_merkmal'][0]
         if merkmal:
-            if merkmal == 'e_datum' and e_datum:
+            if merkmal == Magazin.Merkmal.E_DATUM and e_datum:
                 return str(e_datum)
-            elif merkmal == 'monat' and monate:
+            elif merkmal == Magazin.Merkmal.MONAT and monate:
                 return "{}-{}".format(jahre, monate)
-            elif merkmal == 'lnum' and lnums:
+            elif merkmal == Magazin.Merkmal.LNUM and lnums:
                 if jahre == "k.A.":
                     return lnums
                 else:
@@ -476,17 +476,15 @@ class Monat(BaseModel):
 
 
 class Magazin(BaseModel):
-    NUM = 'num'
-    LNUM = 'lnum'
-    MONAT = 'monat'
-    E_DATUM = 'e_datum'
-    MERKMAL_CHOICES = [
-        (NUM, 'Nummer'), (LNUM, 'Lfd.Nummer'), (MONAT, 'Monat'), (E_DATUM, 'Ersch.Datum')
-    ]
+    class Merkmal(models.TextChoices):
+        NUM = ('num', 'Nummer')
+        LNUM = ('lnum', 'Lfd.Nummer')
+        MONAT = ('monat', 'Monat')
+        E_DATUM = ('e_datum', 'Ersch.Datum')
 
     magazin_name = models.CharField('Magazin', max_length=200)
     ausgaben_merkmal = models.CharField(
-        'Ausgaben Merkmal', max_length=8, blank=True, choices=MERKMAL_CHOICES,
+        'Ausgaben Merkmal', max_length=8, blank=True, choices=Merkmal.choices,
         help_text=(
             'Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die '
             'Darstellung der Ausgaben in der Änderungsliste.'
