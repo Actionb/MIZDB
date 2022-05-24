@@ -1287,18 +1287,15 @@ class VideoMedium(BaseModel):
 
 
 class Provenienz(BaseModel):
-    SCHENK = 'Schenkung'
-    SPENDE = 'Spende'
-    FUND = 'Fund'
-    LEIHG = 'Leihgabe'
-    DAUERLEIHG = 'Dauerleihgabe'
-    TYP_CHOICES = [
-        (SCHENK, 'Schenkung'), (SPENDE, 'Spende'), (FUND, 'Fund'),
-        (LEIHG, 'Leihgabe'), (DAUERLEIHG, 'Dauerleihgabe')
-    ]
+    class Types(models.TextChoices):
+        SCHENKUNG = 'Schenkung'
+        SPENDE = 'Spende'
+        FUND = 'Fund'
+        LEIHGABE = 'Leihgabe'
+        DAUERLEIHGABE = 'Dauerleihgabe'
 
     typ = models.CharField(
-        'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=SCHENK
+        'Art der Provenienz', max_length=100, choices=Types.choices, default=Types.SCHENKUNG
     )
 
     geber = models.ForeignKey('Geber', models.PROTECT)
