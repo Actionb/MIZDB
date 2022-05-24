@@ -257,17 +257,14 @@ class AutorURL(AbstractURLModel):
 
 
 class Ausgabe(ComputedNameModel):
-    UNBEARBEITET = 'unb'
-    INBEARBEITUNG = 'iB'
-    ABGESCHLOSSEN = 'abg'
-    KEINEBEARBEITUNG = 'kB'
-    STATUS_CHOICES = [
-        (UNBEARBEITET, 'unbearbeitet'), (INBEARBEITUNG, 'in Bearbeitung'),
-        (ABGESCHLOSSEN, 'abgeschlossen'), (KEINEBEARBEITUNG, 'keine Bearbeitung vorgesehen')
-    ]
+    class Status(models.TextChoices):
+        UNBEARBEITET = ('unb', 'unbearbeitet')
+        INBEARBEITUNG = ('iB', 'in Bearbeitung')
+        ABGESCHLOSSEN = ('abg', 'abgeschlossen')
+        KEINEBEARBEITUNG = ('kB', 'keine Bearbeitung vorgesehen')
 
     status = models.CharField(
-        'Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=UNBEARBEITET
+        'Bearbeitungsstatus', max_length=40, choices=Status.choices, default=Status.UNBEARBEITET
     )
     e_datum = models.DateField(
         'Erscheinungsdatum', null=True, blank=True,
