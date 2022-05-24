@@ -691,14 +691,14 @@ class SchlagwortAlias(BaseAliasModel):
 
 
 class Artikel(BaseModel):
-    F = 'f'
-    FF = 'ff'
-    SU_CHOICES = [(F, 'f'), (FF, 'ff')]
+    class Umfang(models.TextChoices):
+        F = ('f', 'f')
+        FF = ('ff', 'ff')
 
     schlagzeile = models.CharField(max_length=200)  # TODO: use TextField?
     seite = models.PositiveSmallIntegerField()
     seitenumfang = models.CharField(
-        max_length=3, blank=True, choices=SU_CHOICES, default='',
+        max_length=3, blank=True, choices=Umfang.choices, default='',
         help_text='Zwei Seiten: f; mehr als zwei Seiten: ff.'
     )
     zusammenfassung = models.TextField(blank=True)

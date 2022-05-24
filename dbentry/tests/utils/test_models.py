@@ -68,7 +68,7 @@ class TestModelUtils(MyTestCase):
             ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen']
         )
 
-        obj.seitenumfang = 'f'
+        obj.seitenumfang = _models.Artikel.Umfang.F
         obj.beschreibung = 'Beep'
         self.assertEqual(utils.get_updatable_fields(obj), ['zusammenfassung', 'bemerkungen'])
         obj.zusammenfassung = 'Boop'
