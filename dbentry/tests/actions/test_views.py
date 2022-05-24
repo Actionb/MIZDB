@@ -156,7 +156,7 @@ class TestActionConfirmationView(ActionViewTestCase):
 
     def test_compile_affected_objects_choices(self):
         # Assert that for fields with choices the human readable part is displayed.
-        obj = make(_models.Ausgabe, status=_models.Ausgabe.INBEARBEITUNG)
+        obj = make(_models.Ausgabe, status=_models.Ausgabe.Status.INBEARBEITUNG)
         view = self.get_view(
             request=self.get_request(),
             model_admin=AusgabenAdmin(_models.Ausgabe, miz_site),
@@ -166,7 +166,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         status_field = _models.Ausgabe._meta.get_field('status')
         expected = "%s: %s" % (  # "Bearbeitungsstatus: in Bearbeitung"
             status_field.verbose_name,
-            dict(status_field.choices)[_models.Ausgabe.INBEARBEITUNG]
+            dict(status_field.choices)[_models.Ausgabe.Status.INBEARBEITUNG]
         )
         self.assertEqual(view.compile_affected_objects()[0][1][0], expected)
 
@@ -905,7 +905,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Katalog.objects.count(), 1)
-        self.assertEqual(_models.Katalog.objects.get().art, 'merch')
+        self.assertEqual(_models.Katalog.objects.get().art, _models.Katalog.Types.MERCH)
 
     def test_perform_action_kalender(self):
         options_form_cleaned_data = {'brochure_art': 'kalender'}

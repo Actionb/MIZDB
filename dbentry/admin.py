@@ -313,7 +313,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         UNBEARBEITET.
         """
-        self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
+        self._change_status(request, queryset, _models.Ausgabe.Status.UNBEARBEITET)
     change_status_unbearbeitet.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
     change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'  # type: ignore[attr-defined]  # noqa
 
@@ -322,7 +322,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         INBEARBEITUNG.
         """
-        self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
+        self._change_status(request, queryset, _models.Ausgabe.Status.INBEARBEITUNG)
     change_status_inbearbeitung.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
     change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'  # type: ignore[attr-defined]  # noqa
 
@@ -331,7 +331,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         ABGESCHLOSSEN.
         """
-        self._change_status(request, queryset, _models.Ausgabe.ABGESCHLOSSEN)
+        self._change_status(request, queryset, _models.Ausgabe.Status.ABGESCHLOSSEN)
     change_status_abgeschlossen.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'  # type: ignore[attr-defined]  # noqa
 

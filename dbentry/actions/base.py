@@ -289,6 +289,8 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
     template_name: str = 'admin/action_confirmation_wizard.html'
 
     # A dictionary of helptexts for every step: {step:helptext}
+    # TODO: remove view_helptext - add helptexts to context data directly where
+    #  needed/declared
     view_helptext: dict  # type: ignore[assignment]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
