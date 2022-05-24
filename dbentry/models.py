@@ -1617,20 +1617,17 @@ class Katalog(BaseBrochure):
 
 
 class Foto(BaseModel):
-    ART_NEGATIV = 'negativ'
-    ART_POSITIV = 'positiv'
-    ART_REPRINT = 'reprint'
-    ART_POLAROID = 'polaroid'
-    ART_CHOICES = [
-        (ART_NEGATIV, 'negativ'), (ART_POSITIV, 'positiv'),
-        (ART_REPRINT, 'Neuabzug (reprint)'), (ART_POLAROID, 'Polaroid')
-    ]
+    class Types(models.TextChoices):
+        NEGATIV = ('negativ', 'negativ')
+        POSITIV = ('positiv', 'positiv')
+        REPRINT = ('reprint', 'Neuabzug (reprint)')
+        POLAROID = ('polaroid', 'Polaroid')
 
     titel = models.CharField(max_length=200)  # TODO: use TextField
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
     typ = models.CharField(
-        'Art des Fotos', max_length=100, choices=ART_CHOICES, default=ART_NEGATIV
+        'Art des Fotos', max_length=100, choices=Types.choices, default=Types.NEGATIV
     )
     farbe = models.BooleanField('Farbfoto')
     owner = models.CharField('Rechteinhaber', max_length=200, blank=True)
