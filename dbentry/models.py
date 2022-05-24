@@ -1592,19 +1592,16 @@ class Kalender(BaseBrochure):
 
 
 class Katalog(BaseBrochure):
-    ART_BUCH = 'buch'
-    ART_MERCH = 'merch'
-    ART_OTHER = 'other'
-    ART_TECH = 'tech'
-    ART_TON = 'ton'
-    ART_CHOICES = [
-        (ART_MERCH, 'Merchandise'), (ART_TECH, 'Instrumente & Technik'),
-        (ART_TON, 'Tonträger'), (ART_BUCH, 'Bücher'), (ART_OTHER, 'Anderes')
-    ]
+    class Types(models.TextChoices):
+        MERCH = ('merch', 'Merchandise')
+        TECH = ('tech', 'Instrumente & Technik')
+        TON = ('ton', 'Tonträger')
+        BUCH = ('buch', 'Bücher')
+        OTHER = ('other', 'Anderes')
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Kataloges')
     art = models.CharField(
-        'Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH
+        'Art d. Kataloges', max_length=40, choices=Types.choices, default=Types.MERCH
     )
 
     _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
