@@ -1428,20 +1428,18 @@ class Bestand(BaseModel):
 
 
 class Datei(BaseModel):
-    MEDIA_AUDIO = 'audio'
-    MEDIA_BILD = 'bild'
-    MEDIA_SONSTIGE = 'sonstige'
-    MEDIA_TEXT = 'text'
-    MEDIA_VIDEO = 'video'
-    MEDIA_TYP_CHOICES = [
-        (MEDIA_AUDIO, 'Audio'), (MEDIA_VIDEO, 'Video'), (MEDIA_BILD, 'Bild'),
-        (MEDIA_TEXT, 'Text'), (MEDIA_SONSTIGE, 'Sonstige')
-    ]
+    class Media(models.TextChoices):
+        # TODO: consider using values in all capitals and in alphabetical order
+        #  (this would require a migration)
+        AUDIO = 'audio'
+        VIDEO = 'video'
+        BILD = 'bild'
+        TEXT = 'text'
+        SONSTIGE = 'sonstige'
 
     titel = models.CharField(max_length=200)  # TODO: use TextField
     media_typ = models.CharField(
-        'Media Typ', max_length=200, choices=MEDIA_TYP_CHOICES,
-        default=MEDIA_AUDIO
+        'Media Typ', max_length=200, choices=Media.choices, default=Media.AUDIO
     )
     datei_media = models.FileField(  # Datei Media Server
         'Datei', blank=True, null=True, editable=False,
