@@ -391,10 +391,10 @@ class TestModelAusgabe(MIZTestCase):
             'e_datum': ('02.05.2018',),
         }
         test_data = [
-            ('e_datum', '02.05.2018'),
-            ('monat', '2020-Dez'),
-            ('num', '2020-20'),
-            ('lnum', '21 (2020)'),
+            (_models.Magazin.Merkmal.E_DATUM, '02.05.2018'),
+            (_models.Magazin.Merkmal.MONAT, '2020-Dez'),
+            (_models.Magazin.Merkmal.NUM, '2020-20'),
+            (_models.Magazin.Merkmal.LNUM, '21 (2020)'),
         ]
         for merkmal, expected in test_data:
             name_data['magazin__ausgaben_merkmal'] = (merkmal,)
@@ -403,6 +403,7 @@ class TestModelAusgabe(MIZTestCase):
                 self.assertEqual(name, expected)
 
         # Some edge case tests:
+        # LNUM but no jahr or jahrgang:
         name_data = {
             'magazin__ausgaben_merkmal': ('lnum',),
             'ausgabelnum__lnum': ('21',)
@@ -412,6 +413,7 @@ class TestModelAusgabe(MIZTestCase):
             msg="get_name should just return the lnum if ausgaben_merkmal is"
                 " set to lnum and neither jahr nor jahrgang are set."
         )
+        # Merkmal attribute is not set:
         name_data = {
             'magazin__ausgaben_merkmal': ('num',),
             'beschreibung': ('Whoops!',)
@@ -432,9 +434,9 @@ class TestModelAusgabe(MIZTestCase):
             'ausgabenum__num': ('21', '20'),
         }
         test_data = [
-            ('monat', '2020/21-Jan/Dez'),
-            ('num', '2020/21-20/21'),
-            ('lnum', '21/22 (2020/21)'),
+            (_models.Magazin.Merkmal.MONAT, '2020/21-Jan/Dez'),
+            (_models.Magazin.Merkmal.NUM, '2020/21-20/21'),
+            (_models.Magazin.Merkmal.LNUM, '21/22 (2020/21)'),
         ]
         for merkmal, expected in test_data:
             name_data['magazin__ausgaben_merkmal'] = (merkmal,)
@@ -1186,7 +1188,7 @@ class TestModelProvenienz(MIZTestCase):
     model = _models.Provenienz
 
     def test_str(self):
-        obj = make(self.model, geber__name='TestGeber', typ='Fund')
+        obj = make(self.model, geber__name='TestGeber', typ=self.model.Types.FUND)
         self.assertEqual(str(obj), 'TestGeber (Fund)')
 
     def test_meta_ordering(self):
