@@ -1544,6 +1544,9 @@ class BaseBrochure(BaseModel):
 
     def resolve_child(self) -> models.Model:
         """Fetch a child instance from this parent instance."""
+        # NOTE: technically a BaseBrochure can have more than one child (one
+        #  from each model that inherits it) - and this returns the first child
+        #  found.
         for rel in get_model_relations(self, forward=False, reverse=True):
             # Look for a reverse relation that is a PK and originates from a
             # subclass.
