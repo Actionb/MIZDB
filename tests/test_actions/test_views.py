@@ -1,7 +1,7 @@
 from unittest import expectedFailure, skip
-from unittest.mock import call, patch, Mock, PropertyMock
+from unittest.mock import call, patch, Mock, PropertyMock, DEFAULT
 
-from django import forms, views
+from django import forms
 from django.urls import path
 from django.utils.html import format_html
 from django.views.generic.base import ContextMixin, View
@@ -428,15 +428,18 @@ class TestActionConfirmationView(ActionViewTestCase):
             self.assertIn('affected_objects', view.get_context_data())
 
 
-@skip("Has not been reworked yet.")
+@override_settings(ROOT_URLCONF=URLConf)
 class TestWizardConfirmationView(ActionViewTestCase):
-    view_class = WizardConfirmationView
-    model = _models.Audio
-    model_admin_class = AudioAdmin
 
+    admin_site = admin_site
+    view_class = WizardConfirmationView
+    model = Band
+    model_admin_class = BandAdmin
+
+    @skip("Move this test to BulkEditJahrgang tests")
     @patch.object(ConfirmationViewMixin, 'get_context_data', return_value={})
     def test_get_context_data(self, _m):
-        # get_context_data should add helptext for the current step
+        # get_context_data should add help text for the current step
         view = self.get_view()
         view.steps = Mock(current='1')
         context = view.get_context_data()
@@ -454,26 +457,31 @@ class TestWizardConfirmationView(ActionViewTestCase):
         self.assertIn('view_helptext', context)
         self.assertEqual(context['view_helptext'], 'Step 2')
 
-    @patch.object(SessionWizardView, 'post', return_value='WizardForm!')
-    @patch.object(FixedSessionWizardView, '__init__')
-    def test_post(self, _x, _y):
-        # If there is no 'step' data in request.POST, post() should return the
-        # rendered first form of the wizard.
+    def test_post_first_visit(self):
+        """
+        If there is no 'step' data in request.POST, post() should prepare the
+        storage engine and render the first form.
+        """
+        view = self.get_view()
         request = self.post_request()
-        view = self.get_view(request)
-        view.storage = Mock()
-        view.steps = Mock(first='1')
-        view.get_form = mockv('The first form!')
-        view.render = mockv('Rendered form.')
-        self.assertEqual(view.post(request), 'Rendered form.')
-        self.assertEqual(view.storage.reset.call_count, 1)
-        self.assertEqual(view.render.call_count, 1)
-        view.storage.current_step = '1'
+        with patch.multiple(view, storage=DEFAULT, steps=Mock(first='first step'), get_form=DEFAULT,
+                            render=Mock(return_value='Rendered form.'), create=True):
+            self.assertEqual(view.post(request), 'Rendered form.')
+            self.assertEqual(view.storage.reset.call_count, 1)
+            self.assertEqual(view.storage.current_step, 'first step')
 
-        # SessionWizardView -> WizardView -> normalize_name
-        prefix = 'wizard_confirmation_view'
-        request = self.post_request(data={prefix + '-current_step': '2'})
-        self.assertEqual(view.post(request), 'WizardForm!')
+    def test_post_step_data(self):
+        """
+        If the request contains data about the current step, post should call
+        the super method.
+        """
+        view = self.get_view()
+        # The key for the current step consists of a 'normalized' version of
+        # the view class name plus '-current_step':
+        normalized_name = 'wizard_confirmation_view'
+        request = self.post_request(data={normalized_name + '-current_step': '2'})
+        with patch.object(SessionWizardView, 'post', return_value='WizardForm!'):
+            self.assertEqual(view.post(request), 'WizardForm!')
 
 
 @skip("Has not been reworked yet.")
