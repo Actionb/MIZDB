@@ -2,6 +2,7 @@ from unittest import expectedFailure, skip
 from unittest.mock import call, patch, Mock, PropertyMock, DEFAULT
 
 from django import forms
+from django.contrib.auth.models import Permission
 from django.urls import path
 from django.utils.html import format_html
 from django.views.generic.base import ContextMixin, View
@@ -285,8 +286,8 @@ class TestConfirmationViewMixin(ActionViewTestCase):
                 self.assertEqual(context['objects_name'], 'Bands')
 
 
-# noinspection PyRedeclaration,PyUnusedLocal
-def get_obj_link(obj, user, site_name, blank):
+# noinspection PyUnusedLocal
+def get_obj_link_mock(obj, user, site_name, blank):
     """Mock version of dbentry.admin.utils.get_obj_link"""
     target = ''
     if blank:
@@ -327,7 +328,7 @@ class TestActionConfirmationView(ActionViewTestCase):
 
     @patch('dbentry.actions.base.get_obj_link')
     def test_compile_affected_objects(self, get_link_mock):
-        get_link_mock.side_effect = get_obj_link
+        get_link_mock.side_effect = get_obj_link_mock
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
@@ -477,175 +478,134 @@ class TestWizardConfirmationView(ActionViewTestCase):
             self.assertEqual(view.post(request), 'WizardForm!')
 
 
-@skip("Has not been reworked yet.")
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
+    admin_site = miz_site
     view_class = BulkEditJahrgang
     model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
-    raw_data = [
-        {  # obj1: jg + 0
-            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000, 2001],
-            'e_datum': '2000-06-12', 'ausgabemonat__monat__ordinal': [6]
-        },
-        {  # obj2: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
-            'e_datum': '2001-06-12', 'ausgabemonat__monat__ordinal': [6]
-        },
-        {  # obj3: ignored
-            'magazin__magazin_name': 'Bad', 'jahrgang': 20, 'ausgabejahr__jahr': [2001]
-        },
-        {  # obj4: ignored?
-            'magazin__magazin_name': 'Testmagazin'
-        },
-        {  # obj5: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
-            'e_datum': '2002-05-11', 'ausgabemonat__monat__ordinal': [5],
-        },
-        {  # obj6: jg + 2 when using e_datum, jg + 1 when using monat
-            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
-            'e_datum': '2002-06-12', 'ausgabemonat__monat__ordinal': [5]
-        },
-        {  # obj7: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001]
-        },
-        {  # obj8: jg + 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002]
-        },
-    ]
 
-    def setUp(self):
-        super(TestBulkEditJahrgang, self).setUp()
-        # noinspection PyUnresolvedReferences
-        self.queryset = self.model.objects.exclude(pk=self.obj3.pk)
+    @classmethod
+    def setUpTestData(cls):
+        mag = make(_models.Magazin, magazin_name='Testmagazin')
+        # obj1 should be in the initial jahrgang (i.e. jg + 0) starting in year 2000:
+        cls.obj1 = make(
+            cls.model, magazin=mag, ausgabejahr__jahr=[2000, 2001], e_datum='2000-06-12',
+            ausgabemonat__monat__ordinal=[6]
+        )
+        # obj2 should be in the next jahrgang because it's one year later: jg + 1
+        cls.obj2 = make(
+            cls.model, magazin=mag, ausgabejahr__jahr=[2001], e_datum='2001-06-12',
+            ausgabemonat__monat__ordinal=[6]
+        )
+        cls.other = make(cls.model, magazin=make(_models.Magazin, magazin_name='Other'))
+        super().setUpTestData()
 
-    def test_action_allowed(self):
-        self.assertTrue(self.get_view().action_allowed)
-
-        request = self.get_request()
-        # Objects in this queryset have different magazines.
-        queryset = self.model.objects.filter(ausgabejahr__jahr=2001)
-        view = self.get_view(request, queryset=queryset)
-        with patch.object(view.model_admin, 'message_user') as mocked_message:
-            self.assertFalse(view.action_allowed)
-            expected_message = (
-                'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu'
-                ' unterschiedlichen Magazinen.'
-            )
-            mocked_message.assert_called_once_with(
-                request=request,
-                message=expected_message,
-                level=messages.ERROR
-            )
-
-    def test_compile_affected_objects(self):
-        # result 0 0 => obj1
-        # result 0 1 => obj1.affected_fields
-        # result 1 0 => obj2
-        # result 1 1 => obj2.affected_fields
-        # affected_fields for this view: ['jahrgang','ausgabejahr__jahr']
-        request = self.get_request()
-
-        # noinspection PyUnresolvedReferences
-        view = self.get_view(request, queryset=self.qs_obj1)
-        result = view.compile_affected_objects()
-        expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
-        self.assertEqual(result[0][1], expected)
-
-        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
-        result = view.compile_affected_objects()
-        expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
-        self.assertEqual(result[0][1], expected)
-        expected = ["Jahrgang: ---", "Jahr: 2001"]
-        self.assertEqual(result[1][1], expected)
-
-        # noinspection PyUnresolvedReferences
-        view = self.get_view(request, queryset=self.qs_obj3)
-        result = view.compile_affected_objects()
-        expected = ["Jahrgang: 20", "Jahr: 2001"]
-        self.assertEqual(result[0][1], expected)
-
-    def test_post_action_not_allowed(self):
-        # If the action is not allowed, post should REDIRECT us back to the changelist
-        # noinspection PyUnresolvedReferences
+    def test(self):
+        """Request updating the jahrgang values of Ausgabe instances."""
+        # Request the initial form where you set the jahrgang value:
         request_data = {
             'action': 'bulk_jg',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj3.pk]
+            'index': '0',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
         }
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, self.changelist_path)
-        expected_message = (
-            'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu '
-            'unterschiedlichen Magazinen.'
+        user = self.super_user
+        response = self.post_response(
+            self.changelist_path, data=request_data, user=user, follow=True
         )
-        self.assertMessageSent(response.wsgi_request, expected_message)
-
-    def test_post_show_confirmation_page(self):
-        # get an ACTUAL response
-        request = self.post_request()
-        view = self.get_view(request)
-        response = view.post(request)
         self.assertEqual(response.status_code, 200)
-        from django.template.response import TemplateResponse
-        self.assertEqual(response.__class__, TemplateResponse)
+        self.assertEqual(response.templates[0].name, 'admin/action_confirmation.html')
 
-    @tag('logging')
-    def test_perform_action(self):
-        request = self.get_request()
-        view = self.get_view(request)
-        # noinspection PyUnresolvedReferences
-        view.perform_action({'jahrgang': 31416, 'start': self.obj1.pk})
-        new_jg = (self.queryset
-                  .values_list('jahrgang', flat=True)
-                  .exclude(jahrgang=None)
-                  .order_by('jahrgang')
-                  .distinct())
-        self.assertEqual(list(new_jg), [31416, 31417, 31418])
-        for obj in self.queryset.all():
-            self.assertLoggedChange(
-                obj,
-                change_message=[{"changed": {'fields': ['Jahrgang']}}]
-            )
+        # Check the contents of the 'affected_objects' context item.
+        # It should be a list of 2-tuples. The first item of that tuple should
+        # be a link to the Ausgabe instance. The second item should be the
+        # values of the affected fields. The affected_fields for this view are
+        # 'jahrgang' and 'ausgabejahr__jahr'.
+        self.assertIn('affected_objects', response.context)
+        self.assertEqual(len(response.context['affected_objects']), 2)
+        (obj1_link, obj1_values), (obj2_link, obj2_values) = response.context['affected_objects']
+        link = get_obj_link(self.obj1, user, miz_site.name, blank=True)
+        self.assertEqual(obj1_link, f"Ausgabe: {link}")
+        self.assertEqual(obj1_values, ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"])
+        link = get_obj_link(self.obj2, user, miz_site.name, blank=True)
+        self.assertEqual(obj2_link, f"Ausgabe: {link}")
+        self.assertEqual(obj2_values, ["Jahrgang: ---", "Jahr: 2001"])
 
-    @tag('logging')
-    def test_perform_action_no_years(self):
-        # obj4 has no years assigned, perform_action should assign it the
-        # jahrgang value given by 'form_cleaned_data'.
-        request = self.get_request()
-        # noinspection PyUnresolvedReferences
-        view = self.get_view(request, queryset=self.qs_obj4)
-        # noinspection PyUnresolvedReferences
-        form_cleaned_data = {'jahrgang': 31416, 'start': self.obj4.pk}
-        view.perform_action(form_cleaned_data)
-        # noinspection PyUnresolvedReferences
-        new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
-        self.assertEqual(new_jg, [31416])
-        # noinspection PyUnresolvedReferences
-        self.assertLoggedChange(
-            self.obj4,
-            change_message=[{"changed": {'fields': ['Jahrgang']}}]
+        # Confirm and proceed with the jahrgang update
+        request_data['jahrgang'] = '1'
+        request_data['start'] = self.obj1.pk
+        request_data['action_confirmed'] = '1'
+        response = self.post_response(
+            self.changelist_path, data=request_data, user=user, follow=True
         )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        # Check updated values and assert that log entry objects were added
+        self.obj1.refresh_from_db()
+        self.assertEqual(self.obj1.jahrgang, 1)
+        self.obj2.refresh_from_db()
+        self.assertEqual(self.obj2.jahrgang, 2)
+        self.assertLoggedChange(self.obj1, change_message=[{"changed": {'fields': ['Jahrgang']}}])
+        self.assertLoggedChange(self.obj2, change_message=[{"changed": {'fields': ['Jahrgang']}}])
 
-    @tag('logging')
-    def test_perform_action_jahrgang_zero(self):
-        request = self.get_request()
-        view = self.get_view(request)
-        # noinspection PyUnresolvedReferences
-        view.perform_action({'jahrgang': 0, 'start': self.obj1.pk})
-        new_jg = list(self.queryset.values_list('jahrgang', flat=True).distinct())
-        self.assertEqual(new_jg, [None])
-        for obj in self.queryset.all():
-            self.assertLoggedChange(
-                obj,
-                change_message=[{"changed": {'fields': ['Jahrgang']}}]
-            )
+    def test_jahrgang_zero(self):
+        """
+        Choosing 0 as the desired value for jahrgang should set the jahrgang
+        for the selected objects to None.
+        """
+        self.obj1.jahrgang = 1
+        self.obj1.save()
+        self.obj2.jahrgang = 2
+        self.obj2.save()
+        request_data = {
+            'action': 'bulk_jg',
+            'index': '0',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
+            'jahrgang': '0',
+            'start': self.obj1.pk,
+            'action_confirmed': '1'
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.obj1.refresh_from_db()
+        self.assertIsNone(self.obj1.jahrgang)
+        self.obj2.refresh_from_db()
+        self.assertIsNone(self.obj2.jahrgang)
+
+    def test_not_same_magazin(self):
+        """
+        The action should be aborted, if the selected objects are not related
+        to the same Magazin object.
+        """
+        request_data = {
+            'action': 'bulk_jg',
+            'index': '0',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.other.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertMessageSent(
+            response.wsgi_request,
+            'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+        )
 
     def test_permissions_required(self):
-        # Assert that specific permissions are required to access this action.
-        view = self.get_view()
-        self.assertTrue(hasattr(view, 'allowed_permissions'))
-        self.assertEqual(view.allowed_permissions, ['change'])
+        """Assert that specific permissions are required to access this action."""
+        request_data = {
+            'action': 'bulk_jg',
+            'index': '0',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
+        self.assertEqual(response.status_code, 403)
+
+        # Give the user the needed permission:
+        ct = ContentType.objects.get_for_model(self.model)
+        perm = Permission.objects.get(codename='change_ausgabe', content_type=ct)
+        self.staff_user.user_permissions.add(perm)
+        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
+        self.assertNotEqual(response.status_code, 403)
 
 
 @skip("Has not been reworked yet.")
