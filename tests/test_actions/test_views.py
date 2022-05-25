@@ -16,7 +16,7 @@ from django.test import tag, override_settings
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
-from dbentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
+from dbentry.admin import AusgabenAdmin, ArtikelAdmin
 from dbentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
 from dbentry.actions.views import (
@@ -26,7 +26,6 @@ from dbentry.actions.views import (
 from dbentry.actions.forms import (
     MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions)
 from dbentry.base.forms import MIZAdminForm
-from dbentry.base.views import MIZAdminMixin, FixedSessionWizardView
 from dbentry.sites import miz_site
 from dbentry.tests.mixins import LoggingTestMixin
 from dbentry.utils import get_obj_link
@@ -47,7 +46,6 @@ class RenameBandActionView(ActionConfirmationView):
 
     title = 'Rename Band'
     breadcrumbs_title = 'Rename'
-    # TODO: check for that 'reversible' specific stuff?
     short_description = 'Rename all Band objects for fun and profit!'
     action_name = 'rename_band'
     allowed_permissions = ('change',)  # Require that the user has change permission
@@ -90,7 +88,7 @@ class URLConf:
 
 
 @override_settings(ROOT_URLCONF=URLConf)
-class Test(AdminTestCase):
+class TestConfirmations(AdminTestCase):
     """Integration test for ActionConfirmationView (and ConfirmationViewMixin)."""
 
     admin_site = admin_site
@@ -141,21 +139,16 @@ class ActionViewTestCase(AdminTestCase, ViewTestCase):
     action_name = ''
 
     def get_view(self, request=None, args=None, kwargs=None, action_name=None, **initkwargs):
-        # Allow setting the action_name and fields attribute and assure
-        # model_admin and queryset are passed as initkwargs.
         initkwargs = {
             'model_admin': self.model_admin, 'queryset': self.queryset.all(),
             'action_name': action_name or self.action_name, **initkwargs
         }
-        #
-        action_name = action_name or self.action_name  # TODO: add action_name to initkwargs - might have the same effect?
-        if action_name:
-            self.view_class.action_name = action_name
-
         return super().get_view(request=request, args=args, kwargs=kwargs, **initkwargs)
 
 
+# noinspection PyUnusedLocal
 def outside_check(view):
+    """A function for the action_allowed_checks of 'DummyView'."""
     return True
 
 
@@ -168,9 +161,11 @@ class TestConfirmationViewMixin(ActionViewTestCase):
         not_callable = ()
 
         def check_true(view):  # noqa
+            """A function for the action_allowed_checks"""
             return True
 
         def check_false(view):  # noqa
+            """A function for the action_allowed_checks"""
             return False
 
     admin_site = admin_site
@@ -290,6 +285,7 @@ class TestConfirmationViewMixin(ActionViewTestCase):
                 self.assertEqual(context['objects_name'], 'Bands')
 
 
+# noinspection PyRedeclaration,PyUnusedLocal
 def get_obj_link(obj, user, site_name, blank):
     """Mock version of dbentry.admin.utils.get_obj_link"""
     target = ''
@@ -298,16 +294,12 @@ def get_obj_link(obj, user, site_name, blank):
     return format_html('<a href="URL"{target}>{obj}</a>', target=target, obj=obj)
 
 
-class DummyForm(forms.Form):
-    pass
-
-
 @override_settings(ROOT_URLCONF=URLConf)
 class TestActionConfirmationView(ActionViewTestCase):
 
     class DummyView(ActionConfirmationView):
         admin_site = admin_site
-        form_class = DummyForm  # ActionConfirmationView is a FormView'
+        form_class = type('DummyForm', (forms.Form,), {})  # ActionConfirmationView is a FormView
 
     admin_site = admin_site
     model = Band
@@ -339,7 +331,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),
+            queryset=self.model.objects.all(),  # noqa
             affected_fields=['band_name', 'genres', 'status']
         )
         user = view.request.user
@@ -368,6 +360,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertEqual(affected_field_values[0], 'Bandname: ' + self.obj.band_name)
         
         # The next two items should be links to the Genre objects:
+        # noinspection PyUnresolvedReferences
         genres = Genre.objects.all().order_by('genre')
         self.assertEqual(
             affected_field_values[1], f'Genre: <a href="URL" target="_blank">{genres[0]}</a>'
@@ -393,7 +386,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),
+            queryset=self.model.objects.all(),  # noqa
             affected_fields=[]
         )
         self.assertEqual(view.compile_affected_objects(), [('Band: <a href="URL">a link</a>',)])
@@ -407,7 +400,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),
+            queryset=self.model.objects.all(),  # noqa
             affected_fields=[]
         )
         self.assertEqual(view.compile_affected_objects(), [(f'Band: {self.obj}', )])
