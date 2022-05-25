@@ -162,21 +162,25 @@ class RequestTestCase(UserTestCase):
     rf = RequestFactory()
 
     def get_response(self, path, data=None, user=None, **kwargs):
+        """Return the response to a GET request using the django test client."""
         if user:
             self.client.force_login(user)
         return self.client.get(path, data, **kwargs)
 
     def post_response(self, path, data=None, user=None, **kwargs):
+        """Return the response to a POST request using the django test client."""
         if user:
             self.client.force_login(user)
         return self.client.post(path, data, **kwargs)
 
     def post_request(self, path='', data=None, user=None, **kwargs):
+        """Construct a POST request using the django RequestFactory."""
         request = self.rf.post(path, data, **kwargs)
         request.user = user or self.super_user
         return request
 
     def get_request(self, path='', data=None, user=None, **kwargs):
+        """Construct a GET request using the django RequestFactory."""
         request = self.rf.get(path, data, **kwargs)
         request.user = user or self.super_user
         return request
