@@ -239,6 +239,7 @@ class AdminTestCase(DataTestCase, RequestTestCase):
 
     @classmethod
     def setUpTestData(cls):
+        assert cls.admin_site is not None, "admin_site attribute must be set"
         super().setUpTestData()
         opts = cls.model._meta
         url_name = f"{cls.admin_site.name}:{opts.app_label}_{opts.model_name}"
