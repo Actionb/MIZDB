@@ -120,11 +120,12 @@ class DataTestCase(MIZTestCase):
 
     def setUp(self):
         super().setUp()
+        # TODO: remove this
         # Refresh each test_data instance and prepare an instance-only queryset
-        # for each instance.
-        for c, obj in enumerate(self.test_data, 1):
-            obj.refresh_from_db()  # TODO: is this even necessary?
-            setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk))
+        # # for each instance.
+        # for c, obj in enumerate(self.test_data, 1):
+        #     obj.refresh_from_db()
+        #     setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk))
         self.queryset = self.model.objects.all()
 
     def assertQuerysetEqual(self, queryset, values, transform=repr, ordered=False, msg=None):

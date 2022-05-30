@@ -2,6 +2,7 @@ from unittest import expectedFailure, skip
 from unittest.mock import call, patch, Mock, PropertyMock, DEFAULT
 
 from django import forms
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.urls import path
 from django.utils.html import format_html
@@ -17,7 +18,7 @@ from django.test import tag, override_settings
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
-from dbentry.admin import AusgabenAdmin, ArtikelAdmin
+import dbentry.admin as _admin
 from dbentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
 from dbentry.actions.views import (
@@ -482,7 +483,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     admin_site = miz_site
     view_class = BulkEditJahrgang
     model = _models.Ausgabe
-    model_admin_class = AusgabenAdmin
+    model_admin_class = _admin.AusgabenAdmin
 
     @classmethod
     def setUpTestData(cls):
@@ -608,256 +609,144 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.assertNotEqual(response.status_code, 403)
 
 
-@skip("Has not been reworked yet.")
-class TestMergeViewWizardedAusgabe(ActionViewTestCase):
-    # Note that tests concerning logging for this view are done on
-    # test_utils.merge_records directly.
+class TestMergeViewAusgabe(ActionViewTestCase):
 
+    admin_site = miz_site
     view_class = MergeViewWizarded
     model = _models.Ausgabe
-    model_admin_class = AusgabenAdmin
-    raw_data = [
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000]},
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001], 'jahrgang': 1},
-        {'magazin__magazin_name': 'Bad', 'ausgabejahr__jahr': [2001], 'jahrgang': 20},
-        {'magazin__magazin_name': 'Testmagazin', 'jahrgang': 2}
-    ]
+    model_admin_class = _admin.AusgabenAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        mag = make(_models.Magazin, magazin_name='Testmagazin')
+        cls.obj1 = make(cls.model, magazin=mag, ausgabejahr__jahr=[2000])
+        cls.obj2 = make(cls.model, magazin=mag, ausgabejahr__jahr=[2001], jahrgang=1)
+        cls.obj3 = make(cls.model, ausgabejahr__jahr=[2001], jahrgang=20)
+        cls.obj4 = make(cls.model, magazin=mag, jahrgang=2)
+        super().setUpTestData()
 
     def test_action_allowed(self):
-        # noinspection PyUnresolvedReferences
         queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view = self.get_view(queryset=queryset)
         self.assertTrue(view.action_allowed)
 
-    def test_action_allowed_low_qs_count(self):
-        request = self.post_request()
-        # noinspection PyUnresolvedReferences
-        view = self.get_view(request=request, queryset=self.qs_obj1)
-        self.assertFalse(view.action_allowed)
-        expected_message = (
-            'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden,'
-            ' um diese Aktion durchzuführen.'
+    @patch.object(WizardView, 'get_form_prefix')
+    def test_has_merge_conflicts(self, get_prefix_mock):
+        get_prefix_mock.return_value = '0'
+        view = self.get_view(
+            queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk])
         )
-        self.assertMessageSent(request, expected_message)
+        with patch('dbentry.actions.views.get_updatable_fields') as get_fields_mock:
+            get_fields_mock.return_value = ['jahrgang']
+            # The values are initially collected in a set. That set is then
+            # turned into a list (for serialization) - the order of the items
+            # in that list
+            has_conflict, updates = view._has_merge_conflicts(data={'0-primary': self.obj1.pk})
+            self.assertTrue(has_conflict)
+            self.assertEqual(sorted(updates['jahrgang']), ['1', '2'])
 
-    def test_action_allowed_different_magazin(self):
-        request = self.post_request()
-        view = self.get_view(request=request, queryset=self.queryset)
-        self.assertFalse(view.action_allowed)
-        expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
-        self.assertMessageSent(request, expected_message)
-
-    def test_post_action_not_allowed(self):
-        # If the action is not allowed, post should REDIRECT us back to the changelist
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj3.pk]
-        }
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, self.changelist_path)
-        expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
-        self.assertMessageSent(response.wsgi_request, expected_message)
-
-    def test_post_first_visit(self):
-        # post should return the first form (form_class: MergeFormSelectPrimary) of the Wizard
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
-        }
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.templates[0].name, 'admin/merge_records.html')
-        self.assertIsInstance(
-            response.context_data.get('form'), MergeFormSelectPrimary)
-        self.assertIsInstance(
-            response.context.get('wizard').get('form'), MergeFormSelectPrimary)
-
-    def test_post_merge_conflict(self):
-        # post should return the form that handles merge conflicts
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
-        }
-        management_form = {'merge_view_wizarded-current_step': 0}
-        request_data.update(management_form)
-        # noinspection PyUnresolvedReferences
-        form_data = {'0-primary': self.obj1.pk, '0-expand_primary': True}
-        request_data.update(form_data)
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.context_data.get('form'), MergeConflictsFormSet)
-        self.assertIsInstance(
-            response.context.get('wizard').get('form'), MergeConflictsFormSet)
-
-    def test_post_merge_conflict_success(self):
-        # merge_conflicts have been resolved, post should REDIRECT
-        # (through response_action) us back to the changelist
-
-        # Step 0
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
-        }
-        management_form = {'merge_view_wizarded-current_step': 0}
-        request_data.update(management_form)
-        # noinspection PyUnresolvedReferences
-        form_data = {'0-primary': self.obj1.pk, '0-expand_primary': True}
-        request_data.update(form_data)
-
-        self.client.post(self.changelist_path, data=request_data)
-
-        # Step 1
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
-        }
-        management_form = {
-            'merge_view_wizarded-current_step': 1,
-            '1-INITIAL_FORMS': '0',
-            '1-MAX_NUM_FORMS': '',
-            '1-MIN_NUM_FORMS': '',
-            '1-TOTAL_FORMS': '1',
-        }
-        request_data.update(management_form)
-        form_data = {
-            '1-0-verbose_fld_name': 'Jahrgang',
-            '1-0-original_fld_name': 'jahrgang',
-            '1-0-posvals': 0,
-        }
-        request_data.update(form_data)
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, self.changelist_path)
-
-    def test_post_first_form_valid_and_no_merge_conflict(self):
-        # post should return us back to the changelist
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
-        }
-        management_form = {'merge_view_wizarded-current_step': 0}
-        request_data.update(management_form)
-        # noinspection PyUnresolvedReferences
-        form_data = {'0-primary': self.obj1.pk, '0-expand_primary': True}
-        request_data.update(form_data)
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, self.changelist_path)
-
-    def test_merge_not_updating_fields_it_should_not(self):
-        # Check that the whole process does *NOT* change already present data
-        # of the selected primary object.
-        # spice up obj1 so we can verify that a merge has happened:
-        # noinspection PyUnresolvedReferences
-        self.qs_obj1.update(beschreibung='I really should not be here.')
-        # noinspection PyUnresolvedReferences
-        request_data = {
-            'action': 'merge_records',
-            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
-        }
-        management_form = {'merge_view_wizarded-current_step': 0}
-        request_data.update(management_form)
-        # Select obj2 (or obj4) here as primary as it already has a value for
-        # jahrgang (our only 'source' of conflict):
-        # noinspection PyUnresolvedReferences
-        form_data = {'0-primary': self.obj2.pk, '0-expand_primary': True}
-        request_data.update(form_data)
-
-        response = self.client.post(self.changelist_path, data=request_data)
-
-        self.assertEqual(response.status_code, 302, msg="Redirect expected.")
-        self.assertEqual(
-            response.url, self.changelist_path,
-            msg="Redirect back to changelist expected."
-        )
-
-        # noinspection PyUnresolvedReferences
-        self.obj2.refresh_from_db()
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.obj2.jahrgang, 1)
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
-
-    @patch('dbentry.actions.views.get_updatable_fields', return_value=[])
-    @patch.object(SessionWizardView, 'process_step', return_value={})
-    def test_process_step(self, super_process_step, updatable_fields):
+    @patch.object(WizardView, 'get_form_prefix')
+    def test_has_merge_conflicts_no_primary_object(self, get_prefix_mock):
+        """
+        Assert that _has_merge_conflicts returns early, if the primary object
+        could not be resolved.
+        """
+        get_prefix_mock.return_value = '0'
         view = self.get_view()
-        view.get_form_prefix = mockv('0')
-        view.storage = Mock(current_step='')
-        last_step = MergeViewWizarded.CONFLICT_RESOLUTION_STEP
-        view.steps = Mock(last=last_step)
+        # No primary key data for the primary object:
+        self.assertEqual(view._has_merge_conflicts(data={}), (False, None))
+        # No model object with that primary key:
+        self.assertEqual(view._has_merge_conflicts(data={'0-primary': 0}), (False, None))
+
+    @patch.object(WizardView, 'get_form_prefix')
+    def test_has_merge_conflicts_no_updatable_fields(self, get_prefix_mock):
+        """
+        Assert that _has_merge_conflicts returns early, if the primary object
+        has no fields that can be updated.
+        """
+        get_prefix_mock.return_value = '0'
+        view = self.get_view()
+        with patch('dbentry.actions.views.get_updatable_fields', new=Mock(return_value=[])):
+            self.assertEqual(
+                view._has_merge_conflicts(data={'0-primary': self.obj1.pk}),
+                (False, None)
+            )
+
+    def test_process_step_adds_update_data(self):
+        """Assert that process_step adds data needed for the updates."""
+        # obj1 can be updated on the field 'jahrgang' with obj2's value.
+        view = self.get_view(
+            queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
+        )
+        view.steps = Mock(
+            current=MergeViewWizarded.SELECT_PRIMARY_STEP,
+            last=MergeViewWizarded.CONFLICT_RESOLUTION_STEP
+        )
+        view.storage = Mock(current_step=MergeViewWizarded.SELECT_PRIMARY_STEP)
         form = MergeFormSelectPrimary()
+        form.cleaned_data = {'expand_primary': True}
+        with patch.object(view, '_has_merge_conflicts') as has_conflict_mock:
+            has_conflict_mock.return_value = (False, {'jahrgang': ['1']})
+            data = view.process_step(form)
+            self.assertIn('updates', data)
+            self.assertEqual(data['updates'], {'jahrgang': ['1']})
 
-        # If expand_primary is False in MergeFormSelectPrimary, there cannot be
-        # any conflicts and the last step should be up next.
+    def test_process_step_conflict_step(self):
+        """
+        If the current step is the conflict resolution step, no special
+        processing is needed and the data should simply be returned.
+        """
+        view = self.get_view()
+        view.steps = Mock(current=MergeViewWizarded.CONFLICT_RESOLUTION_STEP)
+        with patch.object(WizardView, 'process_step', new=Mock(return_value={'foo': 'bar'})):
+            self.assertEqual(view.process_step(None), {'foo': 'bar'})
+
+    def test_process_step_no_expand(self):
+        """
+        If expand_primary is False, there can be no conflicts, and process_step
+        should set the current step to the last step to skip the conflict
+        resolution step.
+        """
+        view = self.get_view()
+        view.steps = Mock(
+            current=MergeViewWizarded.SELECT_PRIMARY_STEP,
+            last=MergeViewWizarded.CONFLICT_RESOLUTION_STEP
+        )
+        view.storage = Mock(current_step=MergeViewWizarded.SELECT_PRIMARY_STEP)
+        form = MergeFormSelectPrimary()
         form.cleaned_data = {'expand_primary': False}
-        self.assertEqual(view.process_step(form), {})
-        self.assertEqual(view.storage.current_step, last_step)
-
-        # If the 'primary' has no fields that can be updated, the returned dict
-        # should not contain 'updates'.
-        # noinspection PyUnresolvedReferences
-        super_process_step.return_value = {'0-primary': self.obj1.pk}
-        # noinspection PyUnresolvedReferences
-        form.cleaned_data = {'0-primary': self.obj1.pk, 'expand_primary': True}
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(view.process_step(form), {'0-primary': self.obj1.pk})
-
-        # obj1 can be updated on the field 'jahrgang' with obj2's value
-        updatable_fields.return_value = ['jahrgang']
-        # noinspection PyUnresolvedReferences
-        view.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
-        view.storage.current_step = ''
-        processed_data = view.process_step(form)
-        self.assertIn('updates', processed_data)
-        self.assertIn('jahrgang', processed_data['updates'])
-        self.assertEqual(processed_data['updates']['jahrgang'], ['1'])
-        self.assertEqual(view.storage.current_step, last_step)
-
-        # same as above, but with a conflict due to involving obj4 as well
-        # noinspection PyUnresolvedReferences
-        view.queryset = self.model.objects.filter(
-            pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk])
-        view.storage.current_step = ''
-        processed_data = view.process_step(form)
-        self.assertIn('updates', processed_data)
-        self.assertIn('jahrgang', processed_data['updates'])
-        self.assertEqual(sorted(processed_data['updates']['jahrgang']), ['1', '2'])
-        self.assertEqual(view.storage.current_step, '')
+        data = view.process_step(form)
+        self.assertFalse(data)
+        self.assertEqual(view.storage.current_step, MergeViewWizarded.CONFLICT_RESOLUTION_STEP)
 
     @translation_override(language=None)
     @patch.object(WizardConfirmationView, 'get_context_data')
-    def test_get_context_data_primary_step(self, super_get_context_data):
-        # Assert that the context contains a 'cl' and 'primary_label' item.
+    def test_get_context_data_select_primary_step(self, super_mock):
+        """
+        Assert that get_context_data adds various items for the select primary
+        step template.
+        """
         view = self.get_view()
-        view.steps = Mock(current='0')
-        super_get_context_data.return_value = {'form': MergeFormSelectPrimary()}
+        view.steps = Mock(current=MergeViewWizarded.SELECT_PRIMARY_STEP)
+        super_mock.return_value = {'form': MergeFormSelectPrimary()}
         with patch.object(view.model_admin, 'get_changelist_instance'):
             data = view.get_context_data()
             self.assertIn('cl', data)
             self.assertIn('primary_label', data)
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
-    def test_get_form_kwargs_select_primary(self, _super_get_form_kwargs):
-        # noinspection PyUnresolvedReferences
-        ids = [self.obj1.pk, self.obj2.pk, self.obj4.pk]
-        view = self.get_view(queryset=self.model.objects.filter(pk__in=ids))
-        # MergeFormSelectPrimary step
-        view.form_list = {MergeViewWizarded.SELECT_PRIMARY_STEP: MergeFormSelectPrimary}
-        form_kwargs = view.get_form_kwargs(step='0')
+    def test_get_form_kwargs_select_primary_step(self, _super_mock):
+        """
+        Assert that get_form_kwargs adds the expected choices for the select
+        primary step.
+        """
+        view = self.get_view(
+            queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]),
+            # The wizard view expects form_list to be a dictionary:
+            # (WizardView.get_initkwargs turns the form_list list into an OrderedDict)
+            form_list={MergeViewWizarded.SELECT_PRIMARY_STEP: MergeFormSelectPrimary}
+        )
+        form_kwargs = view.get_form_kwargs(step=MergeViewWizarded.SELECT_PRIMARY_STEP)
         self.assertIn('choices', form_kwargs)
         formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
         self.assertEqual(
@@ -866,14 +755,20 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         )
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
-    def test_get_form_kwargs_conflicts(self, _super_get_form_kwargs):
-        # noinspection PyUnresolvedReferences
-        ids = [self.obj1.pk, self.obj2.pk, self.obj4.pk]
-        view = self.get_view(queryset=self.model.objects.filter(pk__in=ids))
-        # MergeConflictsFormSet step
-        view.form_list = {MergeViewWizarded.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
+    def test_get_form_kwargs_conflict_step(self, _super_mock):
+        """
+        Assert that get_form_kwargs adds the expected form data for the conflict
+        resolution step.
+        """
+        view = self.get_view(
+            queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]),
+            # The wizard view expects form_list to be a dictionary:
+            # (WizardView.get_initkwargs turns the form_list list into an OrderedDict)
+            form_list={MergeViewWizarded.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
+        )
+        # Conflict for 'jahrgang':
         view._updates = {'jahrgang': ['1', '2'], 'beschreibung': ['Test']}
-        form_kwargs = view.get_form_kwargs(step='1')
+        form_kwargs = view.get_form_kwargs(step=MergeViewWizarded.CONFLICT_RESOLUTION_STEP)
         self.assertIn('data', form_kwargs)
         expected = {
             '1-TOTAL_FORMS': 1, '1-MAX_NUM_FORMS': '', '1-0-original_fld_name': 'jahrgang',
@@ -883,86 +778,222 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertIn('form_kwargs', form_kwargs)
         self.assertIn('choices', form_kwargs['form_kwargs'])
         self.assertEqual(
-            form_kwargs['form_kwargs']['choices'], {'1-0-posvals': [(0, '1'), (1, '2')]})
+            form_kwargs['form_kwargs']['choices'], {'1-0-posvals': [(0, '1'), (1, '2')]}
+        )
 
-    @translation_override(language=None)
-    @patch.object(
-        MergeViewWizarded,
-        'perform_action',
-        new=Mock(
-            side_effect=models.deletion.ProtectedError('msg', _models.Artikel.objects.all()))
-    )
-    def test_done(self):
-        # Assert that an admin message is send to user upon encountering a
-        # ProtectedError during done.
-        request = self.get_request()
-        view = self.get_view(request=request)
-        view.done()
+    def test_action_not_allowed_single_object(self):
+        """
+        If only one object was selected, the user should be sent back to the
+        changelist with an error message.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        expected_message = (
+            'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden,'
+            ' um diese Aktion durchzuführen.'
+        )
+        self.assertMessageSent(response.wsgi_request, expected_message)
+
+    def test_action_not_allowed_different_magazin(self):
+        """
+        If the selected objects are not related to the same magazine instance,
+        the user should be sent back to the changelist with an error message.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj3.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+        self.assertMessageSent(response.wsgi_request, expected_message)
+
+    def test_post_first_step(self):
+        """The first step should be the form to select the primary object."""
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/merge_records.html')
+        self.assertIsInstance(response.context['wizard']['form'], MergeFormSelectPrimary)
+
+    def test_post_first_form_valid_and_no_merge_conflict(self):
+        """
+        Upon a successful merge without conflicts, the user should be returned
+        to the changelist.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
+            # Management form:
+            'merge_view_wizarded-current_step': 0,
+            # Form data:
+            '0-primary': self.obj1.pk,
+            '0-expand_primary': True
+        }
+        with patch('dbentry.actions.views.merge_records'):
+            response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+
+    def test_post_second_step(self):
+        """The second step should be the form for handling conflicts."""
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
+            # Management form:
+            'merge_view_wizarded-current_step': 0,
+            # Form data:
+            '0-primary': self.obj1.pk,
+            '0-expand_primary': True
+        }
+        response = self.post_response(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/merge_records.html')
+        self.assertIsInstance(response.context['wizard']['form'], MergeConflictsFormSet)
+
+    def test_post_merge_conflict_handled(self):
+        """
+        If conflicts were handled successfully, the user should be returned to
+        the changelist.
+        """
+        # Set up the session data for the first step (get_step_data).
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
+            # Management form:
+            'merge_view_wizarded-current_step': 0,
+            # Form data:
+            '0-primary': self.obj1.pk,
+            '0-expand_primary': True
+        }
+        self.post_response(self.changelist_path, data=request_data)
+
+        # Handle the merge conflicts:
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
+            # Management form:
+            'merge_view_wizarded-current_step': 1,
+            '1-INITIAL_FORMS': '0',
+            '1-MAX_NUM_FORMS': '',
+            '1-MIN_NUM_FORMS': '',
+            '1-TOTAL_FORMS': '1',
+            # Form data:
+            '1-0-verbose_fld_name': 'Jahrgang',
+            '1-0-original_fld_name': 'jahrgang',
+            '1-0-posvals': 0,
+        }
+        with patch('dbentry.actions.views.merge_records'):
+            response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+
+    def test_done_error(self):
+        """
+        Assert that an admin message is sent to user upon encountering a
+        ProtectedError during merging.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
+            # Management form:
+            'merge_view_wizarded-current_step': 0,
+            # Form data:
+            '0-primary': self.obj1.pk,
+            '0-expand_primary': True
+        }
+        with patch.object(MergeViewWizarded, 'perform_action') as m:
+            m.side_effect = models.deletion.ProtectedError('msg', self.model.objects.all())
+            response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
         self.assertMessageSent(
-            request, 'Folgende verwandte Artikel verhinderten die Zusammenführung:')
+            response.wsgi_request, 'Folgende verwandte Ausgaben verhinderten die Zusammenführung:'
+        )
 
     def test_permissions_required(self):
-        # Assert that specific permissions are required to access this action.
-        view = self.get_view()
-        self.assertTrue(hasattr(view, 'allowed_permissions'))
-        self.assertEqual(view.allowed_permissions, ['merge'])
+        """Assert that specific permissions are required to access this action."""
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
+        }
+        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
+        self.assertEqual(response.status_code, 403)
 
-    @patch('dbentry.actions.views.merge_records')
-    @patch.object(MergeViewWizarded, 'get_cleaned_data_for_step')
-    def test_perform_action_no_expand(self, mocked_step_data, mocked_merge_records):
-        # Assert that merge_records is called with the correct arguments.
-        # Also check that no 'updates' are passed to merge_records if
-        # expand_primary is False.
-        # noinspection PyUnresolvedReferences
-        step_data = {'primary': self.obj1.pk, 'expand_primary': False}
-        mocked_step_data.return_value = step_data
+        # Give the user the required permissions:
+        ct = ContentType.objects.get_for_model(self.model)
+        change_perm = Permission.objects.get(codename='change_ausgabe', content_type=ct)
+        merge_perm = Permission.objects.get(codename='merge_ausgabe', content_type=ct)
+        self.staff_user.user_permissions.add(change_perm, merge_perm)
+        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
+        self.assertNotEqual(response.status_code, 403)
 
-        view = self.get_view(request=self.get_request(), queryset=self.queryset)
-        # Set the property's private attribute:
-        view._updates = {'some_update': 'that_should not be used'}
-        view.perform_action()
-        self.assertTrue(mocked_merge_records.called)
-        args, kwargs = mocked_merge_records.call_args
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(
-            args[0], self.obj1,
-            msg="First argument to merge_records should be the primary model instance."
-        )
-        self.assertIsInstance(
-            args[1], models.QuerySet,
-            msg="Second argument should be the queryset."
-        )
+    def test_perform_action_no_expand(self):
+        """
+        Assert that merge_records is called with expand=False, if
+        'expand_primary' on the first form is False.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
+            # Management form:
+            'merge_view_wizarded-current_step': 0,
+            # Form data:
+            '0-primary': self.obj1.pk,
+            '0-expand_primary': False
+        }
+        with patch('dbentry.actions.views.merge_records') as merge_mock:
+            self.post_response(self.changelist_path, data=request_data, user=self.super_user)
+        args, _kwargs = merge_mock.call_args
+        # Not interested in the first and second argument. (primary object and queryset)
         self.assertFalse(
-            args[2],
-            msg="Third argument 'update_data' should be empty if "
-                "expand_primary is False."
+            args[2], msg="Third argument 'update_data' should be empty if expand_primary is False."
         )
-        self.assertFalse(
-            args[3],
-            msg="Fourth argument 'expand' should be False."
-        )
+        self.assertFalse(args[3], msg="Fourth argument 'expand' should be False.")
 
 
-@skip("Has not been reworked yet.")
-class TestMergeViewWizardedArtikel(ActionViewTestCase):
+class TestMergeViewArtikel(ActionViewTestCase):
+
+    admin_site = miz_site
     view_class = MergeViewWizarded
     model = _models.Artikel
-    model_admin_class = ArtikelAdmin
-    test_data_count = 2
+    model_admin_class = _admin.ArtikelAdmin
 
-    def test_action_allowed_different_magazin(self):
-        request = self.post_request()
-        view = self.get_view(request=request, queryset=self.queryset)
-        self.assertFalse(view.action_allowed)
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(cls.model, ausgabe=make(_models.Ausgabe))
+        cls.obj2 = make(cls.model, ausgabe=make(_models.Ausgabe))
+        super().setUpTestData()
+
+    def test_action_allowed_different_ausgabe_instances(self):
+        """
+        The action should not be allowed, if the Artikel objects are related to
+        different Ausgabe objects.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
         expected_message = 'Die ausgewählten Artikel gehören zu unterschiedlichen Ausgaben.'
-        self.assertMessageSent(request, expected_message)
+        self.assertMessageSent(response.wsgi_request, expected_message)
 
 
 @skip("Has not been reworked yet.")
 class TestMoveToBrochureBase(ActionViewTestCase):
     view_class = MoveToBrochureBase
     model = _models.Ausgabe
-    model_admin_class = AusgabenAdmin
+    model_admin_class = _admin.AusgabenAdmin
 
     raw_data = [
         {
@@ -1348,7 +1379,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
     view_class = ChangeBestand
     model = _models.Ausgabe
-    model_admin_class = AusgabenAdmin
+    model_admin_class = _admin.AusgabenAdmin
     action_name = 'change_bestand'
 
     @classmethod
