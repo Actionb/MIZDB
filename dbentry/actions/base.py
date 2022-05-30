@@ -179,7 +179,9 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
     # TODO: mention that the template expects a MIZAdminForm (a form with fieldsets)!
     template_name: str = 'admin/action_confirmation.html'
 
-    affected_fields: list
+    # TODO: only BulkEditJahrgang uses this - and with that, it is the only
+    #   view that uses compile_affected_objects!
+    affected_fields: list  # TODO: rename 'important_fields'?
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -297,6 +299,7 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         super(WizardConfirmationView, self).__init__(*args, **kwargs)
         if not hasattr(self, 'view_helptext') or self.view_helptext is None:
             self.view_helptext = {}
+        # TODO: pretty sure self.qs isn't required anymore
         self.qs = self.queryset  # WizardView wants it so
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -314,6 +317,7 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
             # the 'previous' form was a wizard form, call WizardView.post()
             return super().post(request, *args, **kwargs)
         else:
+            # TODO: just call self.get(request)???
             # we just got here from the changelist -- prepare the storage engine
             self.storage.reset()
 
@@ -325,6 +329,8 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         # The 'final' method of a WizardView. It is called from render_done
         # with some args and kwargs we do not care about.
         # By default, force a redirect back to the changelist by returning None
+        # TODO: then just do in done what perform_action is doing - and then
+        #  return None
         try:
             self.perform_action()
         finally:
