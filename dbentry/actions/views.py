@@ -109,7 +109,7 @@ class BulkEditJahrgang(ActionConfirmationView):
             )
 
 
-class MergeViewWizarded(WizardConfirmationView):
+class MergeViewWizarded(WizardConfirmationView):  # TODO: rename: 'MergeView'
     """
     View that merges model instances.
 
@@ -189,7 +189,7 @@ class MergeViewWizarded(WizardConfirmationView):
         return context
 
     # noinspection PyMethodParameters
-    def _check_too_few_objects(view, **_kwargs: Any) -> bool:
+    def _check_too_few_objects(view, **_kwargs: Any) -> bool:  # TODO: rename: check_single_object?
         """Check whether an insufficient number of objects has been selected."""
         if view.queryset.count() == 1:
             view.model_admin.message_user(
@@ -352,6 +352,8 @@ class MergeViewWizarded(WizardConfirmationView):
             step = self.steps.current
         # Note that WizardView.get_initkwargs turns the form_list into an
         # OrderedDict.
+        # TODO: wrong type hint for form_class - it could also be
+        #  MergeConflictsFormSet for the second step
         # noinspection PyTypeChecker
         form_class: MergeFormSelectPrimary = self.form_list[step]  # type: ignore[assignment]
         prefix = self.get_form_prefix(step, form_class)
@@ -366,8 +368,8 @@ class MergeViewWizarded(WizardConfirmationView):
 
             for fld_name, values in sorted(self.updates.items()):
                 if len(values) > 1:
-                    # We do not care about values with len <= 1 do not
-                    # cause merge conflicts (see _has_merge_conflicts).
+                    # Multiple different values possible for this field; let
+                    # the user choose one.
                     model_field = self.opts.get_field(fld_name)
                     verbose_fld_name = model_field.verbose_name.capitalize()
                     data[add_prefix('original_fld_name')] = fld_name
