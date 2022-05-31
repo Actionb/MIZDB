@@ -586,21 +586,47 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
             'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         )
 
+    @translation_override(language=None)
     def test_permissions_required(self):
         """Assert that specific permissions are required to access this action."""
+        # User needs view permission to have access to the change list. User
+        # also needs access to at least one action for the action form to be
+        # included (here: delete selected action).
+        # noinspection PyUnresolvedReferences
+        opts = self.model._meta
+        ct = ContentType.objects.get_for_model(self.model)
+        view_perm = Permission.objects.get(
+            codename=get_permission_codename('view', opts), content_type=ct
+        )
+        delete_perm = Permission.objects.get(
+            codename=get_permission_codename('delete', opts), content_type=ct
+        )
+        self.staff_user.user_permissions.set([view_perm, delete_perm])
+
+        # The action should not be an option in the action form - a request
+        # with that action should send us back to the change list with a
+        # 'No action selected.' admin message.
         request_data = {
             'action': 'bulk_jg',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
         }
-        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
-        self.assertEqual(response.status_code, 403)
+        response = self.post_response(
+            self.changelist_path, data=request_data, user=self.staff_user, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertMessageSent(response.wsgi_request, 'No action selected.')
 
-        # Give the user the needed permission:
-        ct = ContentType.objects.get_for_model(self.model)
-        perm = Permission.objects.get(codename='change_ausgabe', content_type=ct)
-        self.staff_user.user_permissions.add(perm)
-        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
-        self.assertNotEqual(response.status_code, 403)
+        # Give the user the permissions required for the action:
+        change_perm = Permission.objects.get(
+            codename=get_permission_codename('change', opts), content_type=ct
+        )
+        self.staff_user.user_permissions.add(change_perm)
+        response = self.post_response(
+            self.changelist_path, data=request_data, user=self.staff_user, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/action_confirmation.html')
 
 
 class TestMergeViewAusgabe(ActionViewTestCase):
@@ -913,22 +939,47 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             response.wsgi_request, 'Folgende verwandte Ausgaben verhinderten die Zusammenführung:'
         )
 
+    @translation_override(language=None)
     def test_permissions_required(self):
         """Assert that specific permissions are required to access this action."""
+        # User needs view permission to have access to the change list. User
+        # also needs access to at least one action for the action form to be
+        # included (here: delete selected action).
+        # noinspection PyUnresolvedReferences
+        opts = self.model._meta
+        ct = ContentType.objects.get_for_model(self.model)
+        view_perm = Permission.objects.get(
+            codename=get_permission_codename('view', opts), content_type=ct
+        )
+        delete_perm = Permission.objects.get(
+            codename=get_permission_codename('delete', opts), content_type=ct
+        )
+        self.staff_user.user_permissions.set([view_perm, delete_perm])
+
+        # The action should not be an option in the action form - a request
+        # with that action should send us back to the change list with a
+        # 'No action selected.' admin message.
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
         }
-        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
-        self.assertEqual(response.status_code, 403)
+        response = self.post_response(
+            self.changelist_path, data=request_data, user=self.staff_user, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertMessageSent(response.wsgi_request, 'No action selected.')
 
-        # Give the user the required permissions:
-        ct = ContentType.objects.get_for_model(self.model)
-        change_perm = Permission.objects.get(codename='change_ausgabe', content_type=ct)
-        merge_perm = Permission.objects.get(codename='merge_ausgabe', content_type=ct)
-        self.staff_user.user_permissions.add(change_perm, merge_perm)
-        response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
-        self.assertNotEqual(response.status_code, 403)
+        # Give the user the permissions required for the action:
+        merge_perm = Permission.objects.get(
+            codename=get_permission_codename('merge', opts), content_type=ct
+        )
+        self.staff_user.user_permissions.add(merge_perm)
+        response = self.post_response(
+            self.changelist_path, data=request_data, user=self.staff_user, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/merge_records.html')
 
     def test_perform_action_no_expand(self):
         """
