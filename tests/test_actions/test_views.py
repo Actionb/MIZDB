@@ -107,7 +107,6 @@ class TestConfirmations(AdminTestCase):
         """Assert that the confirmation form is displayed before proceeding with the action."""
         request_data = {
             'action': 'rename_band',
-            'index': '0',  # index which action form was posted (f.ex. 0=top, 1=bottom)
             helpers.ACTION_CHECKBOX_NAME: [str(self.obj.pk)]  # selected objects
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
@@ -128,7 +127,6 @@ class TestConfirmations(AdminTestCase):
         """The user should be redirected back to the changelist, if the action is not allowed."""
         request_data = {
             'action': 'rename_band',
-            'index': '0',  # index which action form was posted (f.ex. 0=top, 1=bottom)
             helpers.ACTION_CHECKBOX_NAME: [str(self.inactive.pk)]  # selected objects
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
@@ -506,7 +504,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # Request the initial form where you set the jahrgang value:
         request_data = {
             'action': 'bulk_jg',
-            'index': '0',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
         }
         user = self.super_user
@@ -559,7 +556,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.obj2.save()
         request_data = {
             'action': 'bulk_jg',
-            'index': '0',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
             'jahrgang': '0',
             'start': self.obj1.pk,
@@ -580,7 +576,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         """
         request_data = {
             'action': 'bulk_jg',
-            'index': '0',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.other.pk]
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
@@ -595,7 +590,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         """Assert that specific permissions are required to access this action."""
         request_data = {
             'action': 'bulk_jg',
-            'index': '0',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
         }
         response = self.post_response(self.changelist_path, data=request_data, user=self.staff_user)
