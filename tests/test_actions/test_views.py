@@ -1056,15 +1056,6 @@ class TestMoveToBrochure(ActionViewTestCase):
         cls.other = make(cls.model, magazin__magazin_name='The Other')
         super().setUpTestData()
 
-    def setUp(self):
-        super().setUp()
-        # noinspection PyUnresolvedReferences
-        self.form_cleaned_data = [
-            {
-                'titel': 'Testausgabe', 'ausgabe_id': self.obj1.pk, 'accept': True,
-            }
-        ]
-
     def test(self):
         """Test moving Ausgabe objects."""
         # Add some more test data:
@@ -1679,8 +1670,9 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertEqual(response.templates[0].name, 'admin/movetobrochure.html')
 
 
-@skip("Has not been reworked yet.")
 class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
+
+    admin_site = miz_site
     view_class = ChangeBestand
     model = _models.Ausgabe
     model_admin_class = _admin.AusgabenAdmin
@@ -1691,19 +1683,11 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         cls.lagerort1 = make(_models.Lagerort)
         cls.lagerort2 = make(_models.Lagerort)
         mag = make(_models.Magazin, magazin_name='Testmagazin')
-
         cls.obj1 = make(cls.model, magazin=mag)
         super().setUpTestData()
 
-    def get_request_data(self, **kwargs):
-        return {
-            'action': 'change_bestand',
-            helpers.ACTION_CHECKBOX_NAME: '%s' % self.obj1.pk,
-            **kwargs
-        }
-
     @staticmethod
-    def get_form_data(parent_obj, *bestand_objects):
+    def get_form_data(parent_obj: _models.Ausgabe, *bestand_objects):
         prefix = 'bestand_set-%s' % parent_obj.pk
         management_form_data = {
             prefix + '-TOTAL_FORMS': len(bestand_objects),
@@ -1722,45 +1706,49 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         return {**management_form_data, **form_data}
 
     def test_success_add(self):
-        # Assert that Bestand instances are added to obj1's bestand_set.
-        response = self.client.post(
+        """Assert that Bestand instances can be added to obj1's bestand_set."""
+        response = self.post_response(
             path=self.changelist_path,
             data={
-                **self.get_request_data(action_confirmed='Yes'),
+                'action': 'change_bestand',
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+                'action_confirmed': 'Yes',
                 **self.get_form_data(self.obj1, (None, self.lagerort1.pk))
             },
-            follow=False
+            follow=True
         )
-        self.assertEqual(
-            response.status_code, 302,
-            msg="Expected a redirect back to the changelist."
-        )
-        self.assertEqual(self.obj1.bestand_set.count(), 1)
-        b = self.obj1.bestand_set.get()
-        self.assertEqual(b.lagerort, self.lagerort1)
+        # A successful action should send us back to the changelist:
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        # noinspection PyUnresolvedReferences
+        bestand_set = self.obj1.bestand_set
+        self.assertEqual(bestand_set.count(), 1)
+        self.assertEqual(bestand_set.get().lagerort, self.lagerort1)
 
     def test_success_update(self):
-        # Assert that Bestand instances in obj1's bestand_set can be updated.
+        """Assert that Bestand instances in obj1's bestand_set can be updated."""
         b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
         b.save()
-        response = self.client.post(
+        response = self.post_response(
             path=self.changelist_path,
             data={
-                **self.get_request_data(action_confirmed='Yes'),
+                'action': 'change_bestand',
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+                'action_confirmed': 'Yes',
                 **self.get_form_data(self.obj1, (b.pk, self.lagerort2.pk))
             },
-            follow=False
+            follow=True
         )
-        self.assertEqual(
-            response.status_code, 302,
-            msg="Expected a redirect back to the changelist."
-        )
-        self.assertEqual(self.obj1.bestand_set.count(), 1)
-        new_bestand = self.obj1.bestand_set.get()
-        self.assertEqual(new_bestand.lagerort, self.lagerort2)
+        # A successful action should send us back to the changelist:
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        # noinspection PyUnresolvedReferences
+        bestand_set = self.obj1.bestand_set
+        self.assertEqual(bestand_set.count(), 1)
+        self.assertEqual(bestand_set.get().lagerort, self.lagerort2)
 
     def test_success_delete(self):
-        # Test that Bestand relations can be deleted:
+        """Assert that Bestand relations can be deleted."""
         b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
         b.save()
         form_data = self.get_form_data(self.obj1, (b.pk, self.lagerort1.pk))
@@ -1768,7 +1756,9 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         response = self.client.post(
             path=self.changelist_path,
             data={
-                **self.get_request_data(action_confirmed='Yes'),
+                'action': 'change_bestand',
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+                'action_confirmed': 'Yes',
                 **form_data
             },
             follow=False
@@ -1777,84 +1767,91 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             response.status_code, 302,
             msg="Expected a redirect back to the changelist."
         )
+        # noinspection PyUnresolvedReferences
         self.assertFalse(self.obj1.bestand_set.exists())
 
     def test_post_stops_on_invalid(self):
-        # A post request with invalid formsets should not post successfully,
-        # i.e. not return back to the changelist.
+        """A post request with invalid formsets should not post successfully."""
         # Two formsets, of which the second has an invalid lagerort:
-        form_data = self.get_form_data(
-            self.obj1, (None, self.lagerort1.pk), (None, -1))
+        form_data = self.get_form_data(self.obj1, (None, self.lagerort1.pk), (None, -1))
         response = self.client.post(
             path=self.changelist_path,
-            data={**self.get_request_data(action_confirmed='Yes'), **form_data},
+            data={
+                'action': 'change_bestand',
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+                'action_confirmed': 'Yes',
+                **form_data
+            },
             follow=False
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, self.view_class.template_name)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
     def test_get_bestand_formset(self):
-        # Check that get_bestand_formset returns the expected formset & inline.
-        self.obj1.bestand_set.create(lagerort=self.lagerort1)
+        """Check that get_bestand_formset returns the expected formset & inline."""
+        b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
+        b.save()
         request = self.post_request(
             path=self.changelist_path,
-            data=self.get_request_data()
+            data={'action': 'change_bestand', helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]}
         )
         view = self.get_view(request)
         formset, inline = view.get_bestand_formset(request, self.obj1)
         # Check some attributes of the formset/inline.
         self.assertEqual(inline.model, _models.Bestand)
         self.assertEqual(formset.instance, self.obj1)
-        self.assertEqual(list(formset.queryset.all()), list(self.obj1.bestand_set.all()))
+        self.assertQuerysetEqual(formset.queryset.all(), self.obj1.bestand_set.all())
 
     def test_get_bestand_formset_form_data(self):
-        # Assert that get_bestand_formset only adds formset data if the
-        # submit keyword ('action_confirmed') is present in the request.
-        request = self.post_request(
-            path=self.changelist_path,
-            data=self.get_request_data()
-        )
+        """
+        Assert that get_bestand_formset only adds formset data, if the keyword
+        'action_confirmed' is present in the request.
+        """
+        request_data = {'action': 'change_bestand', helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]}
+        request = self.post_request(path=self.changelist_path, data=request_data)
         view = self.get_view(request)
         formset, inline = view.get_bestand_formset(request, self.obj1)
         self.assertFalse(formset.data)
+
+        request_data['action_confirmed'] = '1'
         request = self.post_request(
             path=self.changelist_path,
             data={
-                **self.get_request_data(action_confirmed='Yes'),
+                **request_data,
                 **self.get_form_data(self.obj1, (None, self.lagerort1.pk))
             }
         )
-        view = self.get_view(request)
         formset, inline = view.get_bestand_formset(request, self.obj1)
         self.assertTrue(formset.data)
 
-    def test_media(self):
-        # Assert that the formset's media is added to the context.
+    @patch('dbentry.actions.views.get_obj_link')
+    def test_media(self, *_mocks):
+        """Assert that the formset's media is added to the context."""
         other = make(self.model)
-        response = self.client.post(
+        response = self.post_response(
             path=self.changelist_path,
-            data=self.get_request_data(**{
+            data={
+                'action': 'change_bestand',
                 # Use a queryset with two objects to check the coverage on that
                 # 'media_updated condition'.
-                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, other.pk]
-            }),
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, other.pk],
+            },
             follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn('media', response.context)
-        from django.conf import settings
-        self.assertIn(
-            'admin/js/inlines.js',
-            response.context['media']._js
-        )
+        self.assertIn('admin/js/inlines.js', response.context['media']._js)
 
     def test_get_bestand_formset_no_inline(self):
-        # get_bestand_formset should throw an error when attempting to get the
-        # Bestand inline for a model_admin_class that doesn't have such an
-        # inline.
+        """
+        get_bestand_formset should throw an error when attempting to get the
+        Bestand inline for a model_admin_class that doesn't have such an inline.
+        """
         mocked_inlines = Mock(return_value=[])
         with patch.object(self.model_admin, 'get_formsets_with_inlines', new=mocked_inlines):
             with self.assertRaises(ValueError):
                 request = self.get_request()
-                view = self.get_view(request=request)
+                view = self.get_view(self.get_request())
                 view.get_bestand_formset(request, None)
+
+    def test_create_log_entries(self):  # TODO: write this test
+        self.fail("Write me!")
