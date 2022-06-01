@@ -413,7 +413,7 @@ class MergeViewWizarded(WizardConfirmationView):  # TODO: rename: 'MergeView'
                     if isinstance(value, (list, tuple)):
                         update_data[fld_name] = value[0]
                     else:
-                        update_data[fld_name] = value
+                        update_data[fld_name] = value  # pragma: no cover
         original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
         primary = self.opts.model.objects.get(pk=original_pk)
         merge_records(primary, self.queryset, update_data, expand, user_id=self.request.user.pk)
@@ -448,8 +448,8 @@ class MergeViewWizarded(WizardConfirmationView):  # TODO: rename: 'MergeView'
         return None
 
 
-class MoveToBrochureBase(ActionConfirmationView):
-    """Moves a set of ausgabe instances to a BaseBrochure child model."""
+class MoveToBrochureBase(ActionConfirmationView):  # TODO: rename -- 'base' in name feels off
+    """Moves a set of Ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
@@ -475,7 +475,7 @@ class MoveToBrochureBase(ActionConfirmationView):
             initial.append(
                 {
                     'ausgabe_id': pk,
-                    'titel': magazin_name,
+                    'titel': magazin_name,  # TODO: include Ausgabe._name in 'titel'
                     'zusammenfassung': magazin_beschreibung,
                     'beschreibung': beschreibung,
                     'bemerkungen': bemerkungen,
@@ -491,6 +491,7 @@ class MoveToBrochureBase(ActionConfirmationView):
         # that the queryset contains more than one magazin.
         if not hasattr(self, '_magazin_instance'):
             ausgabe_instance = self.queryset.select_related('magazin').first()
+            # TODO: ausgabe_instance can't realistically be None here - remove the if statement
             if ausgabe_instance:
                 self._magazin_instance = ausgabe_instance.magazin
             else:
@@ -503,6 +504,8 @@ class MoveToBrochureBase(ActionConfirmationView):
         Assess if the magazin instance can be deleted following the action.
         """
         if not hasattr(self, '_can_delete_magazin'):
+            # TODO: remove the if statement: all Ausgabe instances MUST be
+            #  related to a Magazin instance.
             if not self.magazin_instance:
                 # This should be virtually impossible at this stage:
                 # every ausgabe instance must have a magazin and django
@@ -518,15 +521,16 @@ class MoveToBrochureBase(ActionConfirmationView):
                 magazin_ausgabe_set = set(
                     self.magazin_instance.ausgabe_set.values_list('pk', flat=True)
                 )
-                selected = set(
-                    self.queryset.values_list('pk', flat=True)
-                )
+                selected = set(self.queryset.values_list('pk', flat=True))
                 self._can_delete_magazin = magazin_ausgabe_set == selected
         return self._can_delete_magazin
 
     # noinspection PyMethodParameters
     def _check_protected_artikel(view, **_kwargs: Any) -> bool:
-        """Check whether any of the Artikel instances cannot be deleted."""
+        """
+        Check whether any of the Ausgabe are referenced through protected
+        foreign keys on Artikel objects.
+        """
         ausgaben_with_artikel = (
             view.queryset
                 .annotate(artikel_count=Count('artikel'))
@@ -582,9 +586,7 @@ class MoveToBrochureBase(ActionConfirmationView):
 
             # Verify that the ausgabe exists and can be deleted
             try:
-                ausgabe_instance = _models.Ausgabe.objects.get(
-                    pk=data['ausgabe_id']
-                )
+                ausgabe_instance = _models.Ausgabe.objects.get(pk=data['ausgabe_id'])
             except (_models.Ausgabe.DoesNotExist, _models.Ausgabe.MultipleObjectsReturned):  # noqa
                 continue
             if is_protected([ausgabe_instance]):
@@ -748,9 +750,7 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
         # construct_change_message method, which requires a form argument.
         # Since we're not changing anything on the instance itself, an empty
         # model form will do.
-        form = self.model_admin.get_form(
-            self.request, obj=formset.instance, change=True
-        )()
+        form = self.model_admin.get_form(self.request, obj=formset.instance, change=True)()
         # 'add' argument is always False as we are always working on an already
         # existing parent instance.
         change_message = self.model_admin.construct_change_message(
@@ -770,16 +770,12 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
             self, request: HttpRequest, obj: Model
     ) -> Tuple[BaseInlineFormSet, InlineModelAdmin]:
         """Return the Bestand formset and model admin inline for this object."""
-        formsets_with_inlines = self.model_admin.get_formsets_with_inlines(
-            request, obj
-        )
+        formsets_with_inlines = self.model_admin.get_formsets_with_inlines(request, obj)
         for formset_class, inline in formsets_with_inlines:
             if inline.model == _models.Bestand:
                 break
         else:
-            raise ValueError(
-                "Model admin '%s' has no inline for model Bestand!" % self.model_admin
-            )
+            raise ValueError(f"Model admin '{self.model_admin}' has no inline for model Bestand!")
         formset_params = {
             'instance': obj,
             'prefix': "%s-%s" % (formset_class.get_default_prefix(), obj.pk),
