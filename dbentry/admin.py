@@ -341,7 +341,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Check that the request's user has permission to add Brochure objects
         and permission to delete Ausgabe objects.
         """
-        from django.contrib.auth import get_permission_codename
+        from django.contrib.auth import get_permission_codename  # TODO: move import to the top
         perms = []
         # noinspection PyUnresolvedReferences
         for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:

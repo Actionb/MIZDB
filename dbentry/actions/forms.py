@@ -199,6 +199,7 @@ class BrochureActionFormOptions(MIZAdminForm):
     def __init__(self, can_delete_magazin: bool = True, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if not can_delete_magazin:
+            # TODO: make field hidden instead of deleting it?
             del self.fields['delete_magazin']
 
     def clean_brochure_art(self) -> str:
