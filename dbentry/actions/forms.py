@@ -199,11 +199,15 @@ class BrochureActionFormOptions(MIZAdminForm):
     def __init__(self, can_delete_magazin: bool = True, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if not can_delete_magazin:
-            # TODO: make field hidden instead of deleting it?
+            # TODO: disable field instead of deleting it:
+            # self.fields['delete_magazin'].disabled = not can_delete_magazin
             del self.fields['delete_magazin']
 
     def clean_brochure_art(self) -> str:
         """Make sure the user has selected a valid model."""
+        # TODO: remove this: the field is restricted to choices. The user can't
+        #  select an invalid model unless it's included in the choices - in
+        #  which case it's not a user error.
         value = self.cleaned_data.get('brochure_art')
         try:
             get_model_from_string(value)
