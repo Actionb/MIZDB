@@ -132,6 +132,8 @@ class BaseAliasModel(BaseModel):
     # the field that will hold the ForeignKey:
     parent: models.ForeignKey = None  # type: ignore[assignment]
 
+    name_field = 'alias'
+
     class Meta(BaseModel.Meta):
         ordering = ['alias']
         verbose_name = 'Alias'
@@ -294,6 +296,8 @@ class AbstractJahrModel(BaseModel):
 
     jahr = YearField('Jahr')
 
+    name_field = 'jahr'
+
     class Meta(BaseModel.Meta):
         abstract = True
         verbose_name = 'Jahr'
@@ -305,6 +309,8 @@ class AbstractURLModel(BaseModel):
     """Abstract model that adds an URLField."""
 
     url = models.URLField(verbose_name='Webpage', blank=True)
+
+    name_field = 'url'
 
     class Meta(BaseModel.Meta):
         abstract = True
