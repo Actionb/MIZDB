@@ -18,6 +18,11 @@ class MIZAdminMixin(object):
     breadcrumbs_title: str = ''
     admin_site: AdminSite = miz_site
 
+    def __init__(self, *args, admin_site=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if admin_site:
+            self.admin_site = admin_site
+
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)  # type: ignore[misc]
         # Add admin site context.
