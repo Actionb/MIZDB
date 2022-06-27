@@ -465,6 +465,8 @@ class Monat(BaseModel):
         ]
     )
 
+    name_field = 'monat'
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
@@ -1299,6 +1301,7 @@ class Provenienz(BaseModel):
 
     geber = models.ForeignKey('Geber', models.PROTECT)
 
+    name_field = 'geber'
     related_search_vectors = [('geber___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
