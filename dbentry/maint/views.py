@@ -300,7 +300,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         less than ``limit`` reverse related objects.
 
         Returns a 2-tuple:
-            - a OrderedDict containing information to each reverse relation
+            - a OrderedDict containing information for each reverse relation
             - queryset of the 'unused' objects
         """
         relations = OrderedDict()
