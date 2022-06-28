@@ -255,7 +255,7 @@ def create_config(venv_directory, project_directory, port, host, db_name, db_use
     with open(f"{project_directory}/config.yaml", 'w') as f:
         f.write(
             app_config.format(
-                secret=secret.stdout.decode(),
+                secret=secret.stdout.decode().strip(),
                 host=host,
                 port=port,
                 db_name=db_name,
