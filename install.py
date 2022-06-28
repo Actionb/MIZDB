@@ -134,6 +134,12 @@ def confirm(prompt):
 def password_prompt():
     while True:
         try:
+            # FIXME: shlex.quote('m!zdb') returns "'m!zdb'". If you feed that
+            #  into the string like f'"\'{db_password}\';"' (create_database)
+            #  you get "\'\'m!zdb\'\'" - which psql reads as ''m!zdb - which
+            #  obviously fails.
+            #  The same issue applies in the config.yaml; the password value
+            #  would be ''m!zdb''
             db_password = shlex.quote(getpass.getpass(
                 "Geben Sie das Passwort für den neuen Datenbankbenutzer ein: "))
             if db_password == shlex.quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
