@@ -13,8 +13,7 @@ from subprocess import run
 MIN_POSTGRES_VERSION = 13
 
 # noinspection SpellCheckingInspection
-app_config = """
-# Konfigurationsdatei für die MIZDB Datenbank App.
+app_config = """# Konfigurationsdatei für die MIZDB Datenbank App.
 
 # Der Secret Key ist eine zufällige Zeichenfolge, die für kryptografische
 # Signierung verwendet wird. Ein neuer Schlüssel kann mit diesem Befehl
