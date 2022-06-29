@@ -28,7 +28,7 @@ ALLOWED_HOSTS: ['{host}']
 # Benutzername und Passwort des erstellten Datenbankbenutzers, dem die
 # Datenbank gehört:
 DATABASE_USER: '{db_user}'
-DATABASE_PASSWORD: '{db_password}'
+DATABASE_PASSWORD: {db_password}
 # Weitere Datenbankeinstellungen:
 DATABASE_NAME: '{db_name}'
 DATABASE_HOST: 'localhost'
@@ -132,17 +132,17 @@ def confirm(prompt):
 
 
 def password_prompt():
+    def quote(s):
+        """Return a shell-escaped version of the string *s*."""
+        # Based on shlex.quote. Bun unlike shlex, it quotes every string and
+        # not just the ones that contain unsafe characters.
+        return "'" + s.replace("'", "'\"'\"'") + "'"
+
     while True:
         try:
-            # FIXME: shlex.quote('m!zdb') returns "'m!zdb'". If you feed that
-            #  into the string like f'"\'{db_password}\';"' (create_database)
-            #  you get "\'\'m!zdb\'\'" - which psql reads as ''m!zdb - which
-            #  obviously fails.
-            #  The same issue applies in the config.yaml; the password value
-            #  would be ''m!zdb''
-            db_password = shlex.quote(getpass.getpass(
+            db_password = quote(getpass.getpass(
                 "Geben Sie das Passwort für den neuen Datenbankbenutzer ein: "))
-            if db_password == shlex.quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
+            if db_password == quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
                 return db_password
             else:
                 print("Passwörter stimmten nicht überein.", end="\n\n")
@@ -214,7 +214,7 @@ def create_database(port, db_name, db_user, db_password):
     # Create the user and the database:
     _run(
         'sudo -u postgres psql -c '
-        f'"CREATE USER {db_user} CREATEDB ENCRYPTED PASSWORD \'{db_password}\';"',
+        f'"CREATE USER {db_user} CREATEDB ENCRYPTED PASSWORD {db_password};"',
         capture_output=True, raise_on_error=False
     )
     created_db = _run(
