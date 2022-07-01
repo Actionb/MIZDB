@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 from subprocess import run
 
-
 MIN_POSTGRES_VERSION = 13
 
 # noinspection SpellCheckingInspection
@@ -39,7 +38,7 @@ WIKI_URL: 'http://{host}/wiki/Hauptseite'
 """
 
 # noinspection SpellCheckingInspection
-site_config = """
+site_config = r"""
 <Macro VHost \$VENV_ROOT \$PROJECT_ROOT>
     <VirtualHost *:80>
         # Name of the host. The name must be included in the ALLOWED_HOSTS django settings.
@@ -85,7 +84,6 @@ USE VHost {venv_directory} {project_directory}
 UndefMacro VHost
 """
 
-
 parser = argparse.ArgumentParser(description="MIZDB installieren.")
 parser.add_argument('-V', '--venv', dest='venv_directory',
                     help="Pfad zur virtuellen Umgebung")
@@ -100,7 +98,6 @@ parser.add_argument('--db-user', default='mizdb', dest='db_user',
 
 
 class InstallationAborted(Exception):
-
     default_message = "Installation abgebrochen."
 
     def __init__(self, msg: str = '') -> None:
@@ -140,8 +137,9 @@ def password_prompt():
 
     while True:
         try:
-            db_password = quote(getpass.getpass(
-                "Geben Sie das Passwort für den neuen Datenbankbenutzer ein: "))
+            db_password = quote(
+                getpass.getpass("Geben Sie das Passwort für den neuen Datenbankbenutzer ein: ")
+            )
             if db_password == quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
                 return db_password
             else:
@@ -187,8 +185,9 @@ def check_postgres_server(port):
             f"{query_result}"
         )
         if confirm(
-            "Trotzdem fortfahren? (Hinweis: Datenbankmigrationen werden dann "
-                "nicht angewandt) [J/n] "):
+                "Trotzdem fortfahren? (Hinweis: Datenbankmigrationen werden dann "
+                "nicht angewandt) [J/n] "
+        ):
             # Migrations will fail with this postgres version, so skip it.
             can_migrate = False
         else:
@@ -231,7 +230,8 @@ def create_database(port, db_name, db_user, db_password):
 
 def create_venv(venv_directory):
     if os.path.exists(venv_directory) and not confirm(
-            f"{venv_directory} existiert bereits. Überschreiben? [J/n] "):
+            f"{venv_directory} existiert bereits. Überschreiben? [J/n] "
+    ):
         return
     print("Erstelle virtuelle Umgebung...", end="", flush=True)
     _run(f"python3 -m venv {venv_directory}")
@@ -345,7 +345,8 @@ def install(venv_directory, port, host, db_name, db_user):
 
     print("\n###################################################################\n")
     config_created = create_config(
-        venv_directory, project_directory, port, host, db_name, db_user, db_password)
+        venv_directory, project_directory, port, host, db_name, db_user, db_password
+    )
     manage = f"{venv_directory}/bin/python3 {project_directory}/manage.py"
     if config_created:
         if can_migrate:
