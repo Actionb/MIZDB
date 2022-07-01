@@ -127,7 +127,7 @@ class TestFuncs(unittest.TestCase):
     def test_create_database(self, run, version_check):
         run.return_value = mock.Mock(returncode=0)
         version_check.return_value = True
-        db_password = 'test_password'
+        db_password = "'test_password'"   # a quoted string is expected
         port = 1
         db_name = "test_db"
         db_user = "test_user"
@@ -136,7 +136,7 @@ class TestFuncs(unittest.TestCase):
         )
         self.assertCMDCalled(
             'sudo -u postgres psql -c '
-            f'"CREATE USER {db_user} CREATEDB ENCRYPTED PASSWORD \'{db_password}\';"',
+            f'"CREATE USER {db_user} CREATEDB ENCRYPTED PASSWORD {db_password};"',
             run.call_args_list
         )
         self.assertCMDCalled(
@@ -218,7 +218,7 @@ class TestFuncs(unittest.TestCase):
                 host="notlocalhost",
                 db_name="mizdb",
                 db_user="mizdb",
-                db_password="hunter2"
+                db_password="'hunter2'"  # a quoted string is expected
             )
         self.assertCMDCalled(
             f"{venv_directory}/bin/python3 -c "
@@ -252,7 +252,7 @@ class TestFuncs(unittest.TestCase):
                 host="notlocalhost",
                 db_name="mizdb",
                 db_user="mizdb",
-                db_password="hunter2"
+                db_password="'hunter2'"  # a quoted string is expected
             )
             self.assertFalse(success)
 

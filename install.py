@@ -12,8 +12,7 @@ from subprocess import run
 MIN_POSTGRES_VERSION = 13
 
 # noinspection SpellCheckingInspection
-app_config = """
-# Konfigurationsdatei für die MIZDB Datenbank App.
+app_config = """# Konfigurationsdatei für die MIZDB Datenbank App.
 
 # Der Secret Key ist eine zufällige Zeichenfolge, die für kryptografische
 # Signierung verwendet wird. Ein neuer Schlüssel kann mit diesem Befehl
@@ -28,7 +27,7 @@ ALLOWED_HOSTS: ['{host}']
 # Benutzername und Passwort des erstellten Datenbankbenutzers, dem die
 # Datenbank gehört:
 DATABASE_USER: '{db_user}'
-DATABASE_PASSWORD: '{db_password}'
+DATABASE_PASSWORD: {db_password}
 # Weitere Datenbankeinstellungen:
 DATABASE_NAME: '{db_name}'
 DATABASE_HOST: 'localhost'
@@ -130,12 +129,18 @@ def confirm(prompt):
 
 
 def password_prompt():
+    def quote(s):
+        """Return a shell-escaped version of the string *s*."""
+        # Based on shlex.quote. Bun unlike shlex, it quotes every string and
+        # not just the ones that contain unsafe characters.
+        return "'" + s.replace("'", "'\"'\"'") + "'"
+
     while True:
         try:
-            db_password = shlex.quote(
+            db_password = quote(
                 getpass.getpass("Geben Sie das Passwort für den neuen Datenbankbenutzer ein: ")
             )
-            if db_password == shlex.quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
+            if db_password == quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
                 return db_password
             else:
                 print("Passwörter stimmten nicht überein.", end="\n\n")
@@ -183,8 +188,9 @@ def check_postgres_server(port):
             f"{query_result}"
         )
         if confirm(
-            "Trotzdem fortfahren? (Hinweis: Datenbankmigrationen werden dann "
-                "nicht angewandt) [J/n] "):
+                "Trotzdem fortfahren? (Hinweis: Datenbankmigrationen werden dann "
+                "nicht angewandt) [J/n] "
+        ):
             # Migrations will fail with this postgres version, so skip it.
             can_migrate = False
         else:
@@ -210,7 +216,7 @@ def create_database(port, db_name, db_user, db_password):
     # Create the user and the database:
     _run(
         'sudo -u postgres psql -c '
-        f'"CREATE USER {db_user} CREATEDB ENCRYPTED PASSWORD \'{db_password}\';"',
+        f'"CREATE USER {db_user} CREATEDB ENCRYPTED PASSWORD {db_password};"',
         capture_output=True, raise_on_error=False
     )
     created_db = _run(
@@ -228,7 +234,8 @@ def create_database(port, db_name, db_user, db_password):
 def create_venv(venv_directory):
     """Create a virtual environment to install into and update pip."""
     if os.path.exists(venv_directory) and not confirm(
-            f"{venv_directory} existiert bereits. Überschreiben? [J/n] "):
+            f"{venv_directory} existiert bereits. Überschreiben? [J/n] "
+    ):
         return
     print("Erstelle virtuelle Umgebung...", end="", flush=True)
     _run(f"python3 -m venv {venv_directory}")
@@ -258,7 +265,7 @@ def create_config(venv_directory, project_directory, port, host, db_name, db_use
     with open(f"{project_directory}/config.yaml", 'w') as f:
         f.write(
             app_config.format(
-                secret=secret.stdout.decode(),
+                secret=secret.stdout.decode().strip(),
                 host=host,
                 port=port,
                 db_name=db_name,
