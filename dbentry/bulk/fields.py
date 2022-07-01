@@ -32,9 +32,7 @@ class BaseSplitField(forms.CharField):
 
     separator_pattern: str = r','
     item_handlers: Sequence = ()
-    default_error_messages: Dict[str, str] = {
-        'invalid': 'Ungültige Angabe(n): %(invalid)s.'
-    }
+    default_error_messages: Dict[str, str] = {'invalid': 'Ungültige Angabe(n): %(invalid)s.'}
 
     def __init__(
             self,
@@ -44,9 +42,9 @@ class BaseSplitField(forms.CharField):
             **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
-        if separator_pattern is not None:
+        if separator_pattern is not None:  # pragma: no cover
             self.separator_pattern = separator_pattern
-        if item_handlers is not None:
+        if item_handlers is not None:  # pragma: no cover
             self.item_handlers = item_handlers
         self.separator_regex = re.compile(self.separator_pattern)
 
