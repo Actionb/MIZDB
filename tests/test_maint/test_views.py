@@ -128,7 +128,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/dupes.html')
+        self.assertTemplateUsed(response, 'admin/dupes.html')
         context = response.context
         self.assertEqual(context['title'], 'Duplikate: Musiker')
         self.assertEqual(context['breadcrumbs_title'], 'Musiker')
@@ -146,7 +146,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             }
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/dupes.html')
+        self.assertTemplateUsed(response, 'admin/dupes.html')
         context = response.context
         self.assertEqual(context['title'], 'Duplikate: Musiker')
         self.assertEqual(context['breadcrumbs_title'], 'Musiker')

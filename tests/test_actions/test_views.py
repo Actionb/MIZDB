@@ -113,7 +113,7 @@ class TestConfirmations(AdminTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/action_confirmation.html')
+        self.assertTemplateUsed(response, 'admin/action_confirmation.html')
 
         # Add form data and confirm the action:
         request_data['new_name'] = 'RENAMED'
@@ -121,7 +121,7 @@ class TestConfirmations(AdminTestCase):
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
         # Should have been returned to the changelist:
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.obj.refresh_from_db()
         self.assertEqual(self.obj.band_name, 'RENAMED')
 
@@ -133,7 +133,7 @@ class TestConfirmations(AdminTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
 
 
 class ActionViewTestCase(AdminTestCase, ViewTestCase):
@@ -513,7 +513,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
             self.changelist_path, data=request_data, user=user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/action_confirmation.html')
+        self.assertTemplateUsed(response, 'admin/action_confirmation.html')
 
         # Check the contents of the 'affected_objects' context item.
         # It should be a list of 2-tuples. The first item of that tuple should
@@ -538,7 +538,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
             self.changelist_path, data=request_data, user=user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         # Check updated values and assert that log entry objects were added
         self.obj1.refresh_from_db()
         self.assertEqual(self.obj1.jahrgang, 1)
@@ -565,7 +565,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.obj1.refresh_from_db()
         self.assertIsNone(self.obj1.jahrgang)
         self.obj2.refresh_from_db()
@@ -582,7 +582,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.assertMessageSent(
             response.wsgi_request,
             'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
@@ -616,7 +616,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
             self.changelist_path, data=request_data, user=self.staff_user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.assertMessageSent(response.wsgi_request, 'No action selected.')
 
         # Give the user the permissions required for the action:
@@ -628,7 +628,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
             self.changelist_path, data=request_data, user=self.staff_user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/action_confirmation.html')
+        self.assertTemplateUsed(response, 'admin/action_confirmation.html')
 
 
 class TestMergeViewAusgabe(ActionViewTestCase):
@@ -814,7 +814,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         expected_message = (
             'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden,'
             ' um diese Aktion durchzuführen.'
@@ -832,7 +832,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(response.wsgi_request, expected_message)
 
@@ -844,7 +844,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/merge_records.html')
+        self.assertTemplateUsed(response, 'admin/merge_records.html')
         self.assertIsInstance(response.context['wizard']['form'], MergeFormSelectPrimary)
 
     def test_post_first_form_valid_and_no_merge_conflict(self):
@@ -864,7 +864,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         with patch('dbentry.actions.views.merge_records'):
             response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
 
     def test_post_second_step(self):
         """The second step should be the form for handling conflicts."""
@@ -879,7 +879,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/merge_records.html')
+        self.assertTemplateUsed(response, 'admin/merge_records.html')
         self.assertIsInstance(response.context['wizard']['form'], MergeConflictsFormSet)
 
     def test_post_merge_conflict_handled(self):
@@ -917,7 +917,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         with patch('dbentry.actions.views.merge_records'):
             response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
 
     def test_done_error(self):
         """
@@ -969,7 +969,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             self.changelist_path, data=request_data, user=self.staff_user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.assertMessageSent(response.wsgi_request, 'No action selected.')
 
         # Give the user the permissions required for the action:
@@ -981,7 +981,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             self.changelist_path, data=request_data, user=self.staff_user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/merge_records.html')
+        self.assertTemplateUsed(response, 'admin/merge_records.html')
 
     def test_perform_action_no_expand(self):
         """
@@ -1031,7 +1031,7 @@ class TestMergeViewArtikel(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         expected_message = 'Die ausgewählten Artikel gehören zu unterschiedlichen Ausgaben.'
         self.assertMessageSent(response.wsgi_request, expected_message)
 
@@ -1077,7 +1077,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=action_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         expected_message = (
             'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu '
             'unterschiedlichen Magazinen.'
@@ -1088,19 +1088,19 @@ class TestMoveToBrochure(ActionViewTestCase):
         action_data[helpers.ACTION_CHECKBOX_NAME] = [self.obj1.pk]
         response = self.post_response(self.changelist_path, data=action_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/movetobrochure.html')
+        self.assertTemplateUsed(response, 'admin/movetobrochure.html')
 
         # User aborts and is directed back to the changelist
         response = self.get_response(path=self.changelist_path)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
 
         # User selects another valid ausgabe and returns to the selection with
         # the two instances.
         action_data[helpers.ACTION_CHECKBOX_NAME] = [self.obj1.pk, obj2.pk, obj3.pk]
         response = self.post_response(self.changelist_path, data=action_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/movetobrochure.html')
+        self.assertTemplateUsed(response, 'admin/movetobrochure.html')
 
         # User selects the 'Katalog' category and confirms, without having
         # checked the delete_magazin checkbox.
@@ -1128,7 +1128,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         # User is redirected back to the changelist:
         self.assertEqual(response.status_code, 200)
-        self.assertIn(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         # The magazin should still exist:
         self.assertTrue(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
         # But the Ausgabe instances should have been moved:
@@ -1168,7 +1168,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertFalse(_models.Magazin.objects.filter(pk=other_mag.pk).exists())
         # User is redirected back to the changelist:
         self.assertEqual(response.status_code, 200)
-        self.assertIn(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         # The other magazin should have been deleted:
         self.assertFalse(_models.Magazin.objects.filter(pk=other_mag.pk).exists())
         
@@ -1184,7 +1184,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         expected_message = (
             'Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht '
             'verschoben werden können: '
@@ -1203,7 +1203,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         }
         response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.assertMessageSent(
             response.wsgi_request,
             'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
@@ -1650,7 +1650,7 @@ class TestMoveToBrochure(ActionViewTestCase):
             self.changelist_path, data=request_data, user=self.staff_user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         self.assertMessageSent(response.wsgi_request, 'No action selected.')
 
         # Give the user the permissions required for the action:
@@ -1667,7 +1667,7 @@ class TestMoveToBrochure(ActionViewTestCase):
             self.changelist_path, data=request_data, user=self.staff_user, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/movetobrochure.html')
+        self.assertTemplateUsed(response, 'admin/movetobrochure.html')
 
 
 class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
@@ -1719,7 +1719,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         )
         # A successful action should send us back to the changelist:
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         # noinspection PyUnresolvedReferences
         bestand_set = self.obj1.bestand_set
         self.assertEqual(bestand_set.count(), 1)
@@ -1741,7 +1741,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         )
         # A successful action should send us back to the changelist:
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
         # noinspection PyUnresolvedReferences
         bestand_set = self.obj1.bestand_set
         self.assertEqual(bestand_set.count(), 1)
@@ -1785,7 +1785,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             follow=False
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
     def test_get_bestand_formset(self):
         """Check that get_bestand_formset returns the expected formset & inline."""

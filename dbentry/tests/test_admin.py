@@ -804,7 +804,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1237,7 +1237,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1372,7 +1372,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 class TestBaseBrochureAdmin(AdminTestCase):
@@ -1436,7 +1436,7 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
     def test_search_form_ausgabe_requires_magazin(self):
         # Assert that on the search form the ausgabe field requires a magazin
@@ -1475,7 +1475,7 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
     def test_search_form_ausgabe_requires_magazin(self):
         # Assert that on the search form the ausgabe field requires a magazin
@@ -1504,7 +1504,7 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
     def test_search_form_ausgabe_requires_magazin(self):
         # Assert that on the search form the ausgabe field requires a magazin
@@ -1534,7 +1534,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1557,7 +1557,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1580,7 +1580,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1608,7 +1608,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1772,7 +1772,7 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         with self.assertNotRaises(exceptions.FieldError):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+        self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
     def test_search_form_id_cleans_prefix(self):
         # Assert that the changelist search form can handle ID input that

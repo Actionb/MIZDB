@@ -457,8 +457,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
         response = self.client.post(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.templates[0].name, 'admin/merge_records.html')
+        self.assertTemplateUsed(response, 'admin/merge_records.html')
         self.assertIsInstance(
             response.context_data.get('form'), MergeFormSelectPrimary)
         self.assertIsInstance(
@@ -1239,7 +1238,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             follow=False
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, self.view_class.template_name)
+        self.assertTemplateUsed(response, self.view_class.template_name)
 
     def test_get_bestand_formset(self):
         # Check that get_bestand_formset returns the expected formset & inline.
