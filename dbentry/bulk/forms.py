@@ -108,9 +108,7 @@ class BulkForm(MIZAdminForm):
                 # noinspection PyUnresolvedReferences
                 self.add_error(
                     field=fld_name,
-                    error='Ungleiche Anzahl an {}.'.format(
-                        self.model._meta.verbose_name_plural
-                    )
+                    error=f'Ungleiche Anzahl an {self.model._meta.verbose_name_plural}.'
                 )
             else:
                 # Either:
@@ -263,9 +261,10 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
             # If we can only find instances with jahre, but not with jahre and 
             # jahrgang, then use the queryset that only uses jahre.
             # jahre should take priority, since issues rarely specify a value 
-            # for  jahrgang. Instead, a value for jahrgang is usually *derived*
-            # from the jahre values: first issue appeared in the year 2000, that
-            # would make issues published in 2010 to be of the 10th jahrgang.
+            # for  jahrgang. Instead, a value for jahrgang is usually derived
+            # from the jahre values, f.ex.: first issue appeared in the year
+            # 2000, that would make issues published in 2010 to be of the
+            # 10th jahrgang.
             qs = qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre)
         elif jahre:
             qs = qs.filter(ausgabejahr__jahr__in=jahre)
