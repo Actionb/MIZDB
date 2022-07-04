@@ -225,7 +225,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     continue
                 data = row[field_name]
                 if isinstance(data, tuple):
-                    data = list(data)
+                    data = list(data)  # pragma: no cover
                 if not isinstance(data, list):
                     data = [data]
                 accessor_name = "ausgabe{}_set".format(field_name)
@@ -239,7 +239,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                             data[i] = _models.Monat.objects.filter(ordinal=value).first()
                 for value in data:
                     if not value:
-                        continue
+                        continue  # pragma: no cover
                     try:
                         with transaction.atomic():
                             related_obj = related_manager.create(
@@ -306,6 +306,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     # noinspection PyMethodMayBeStatic
     def next_initial_data(self, form: Form) -> dict:
+        """Prepare data for the next form based on this form's data."""
         # Use the form's uncleaned data as basis for the next form.
         # form.cleaned_data contains model instances (from using ModelChoiceFields)
         # which are not JSON serializable and thus is unsuitable for storage
@@ -357,8 +358,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         # 'Bereits vorhanden' and 'Datenbank' headers that will contain those
         # instances and a warning message.
         any_row_has_instances = any(
-            'instance' in row or 'multiples' in row
-            for row in form.row_data
+            'instance' in row or 'multiples' in row for row in form.row_data
         )
         # Construct the preview row for the form's rows.
         preview_data = []
@@ -379,7 +379,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 elif field_name == 'audio_lagerort' and 'audio' not in row:
                     # No need to add anything for column 'audio_lagerort' if
                     # the user does not wish to add audio instances.
-                    continue
+                    continue  # pragma: no cover
                 else:
                     values_list = row[field_name] or []
                     if isinstance(values_list, list):
@@ -389,7 +389,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                             preview_row[field_name] = ", ".join(values_list)
                     else:
                         preview_row[field_name] = values_list or ''
-                # Record the field's appearance for the headers creation.
+                # Record the field's appearance for the header creation.
                 preview_fields_used.add(field_name)
 
             # Add warning messages if either:
