@@ -23,11 +23,11 @@ class ItemHandler(object):
             self.regex = re.compile(self.regex)
 
     def __call__(self, item: str) -> Iterator[Any]:
-        return self.handle(item)
+        return self.handle(item)  # pragma: no cover
 
     def handle(self, item: str) -> Iterator[Any]:
         """Extract value(s) from the string item."""
-        raise NotImplementedError("Subclasses must implement this method.")
+        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
     def is_valid(self, item: str) -> Optional[re.Match]:
         """Validate that this handler can handle the item."""
