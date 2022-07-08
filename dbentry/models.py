@@ -1,6 +1,7 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
 from typing import Optional
 
+from django.contrib.postgres.indexes import GinIndex
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -46,6 +47,9 @@ class Person(ComputedNameModel):
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
         verbose_name_plural = 'Personen'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     @classmethod
     def _get_name(cls, **data: tuple) -> str:
@@ -106,6 +110,9 @@ class Musiker(BaseModel):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class MusikerAlias(BaseAliasModel):
@@ -114,6 +121,11 @@ class MusikerAlias(BaseAliasModel):
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'B', SIMPLE)], blank=True, null=True, editable=False
     )
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class MusikerURL(AbstractURLModel):
@@ -135,6 +147,9 @@ class Genre(BaseModel):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class GenreAlias(BaseAliasModel):
@@ -143,6 +158,11 @@ class GenreAlias(BaseAliasModel):
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'B', SIMPLE)], blank=True, null=True, editable=False
     )
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Band(BaseModel):
@@ -171,6 +191,9 @@ class Band(BaseModel):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class BandAlias(BaseAliasModel):
@@ -179,6 +202,11 @@ class BandAlias(BaseAliasModel):
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'B', SIMPLE)], blank=True, null=True, editable=False
     )
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class BandURL(AbstractURLModel):
@@ -209,6 +237,9 @@ class Autor(ComputedNameModel):
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'
         verbose_name_plural = 'Autoren'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     @classmethod
     def _get_name(cls, **data: tuple) -> str:
@@ -301,6 +332,9 @@ class Ausgabe(ComputedNameModel):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
         ordering = ['magazin']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     @classmethod
     def _get_name(cls, **data: tuple) -> str:
@@ -469,6 +503,9 @@ class Monat(BaseModel):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
         ordering = ['ordinal']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         return str(self.monat)
@@ -519,6 +556,9 @@ class Magazin(BaseModel):
         verbose_name = 'Magazin'
         verbose_name_plural = 'Magazine'
         ordering = ['magazin_name']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         return str(self.magazin_name)
@@ -544,6 +584,9 @@ class Verlag(BaseModel):
         verbose_name = 'Verlag'
         verbose_name_plural = 'Verlage'
         ordering = ['verlag_name', 'sitz']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Ort(ComputedNameModel):
@@ -567,6 +610,9 @@ class Ort(ComputedNameModel):
         verbose_name_plural = 'Orte'
         unique_together = ('stadt', 'bland', 'land')
         ordering = ['land', 'bland', 'stadt']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     @classmethod
     def _get_name(cls, **data: tuple) -> str:
@@ -630,6 +676,9 @@ class Bundesland(BaseModel):
         verbose_name_plural = 'Bundesländer'
         unique_together = ('bland_name', 'land')
         ordering = ['land', 'bland_name']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Land(BaseModel):
@@ -650,6 +699,9 @@ class Land(BaseModel):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 # TODO: make schlagwort 'view-only' in admin (meta.default_permissions)
@@ -668,6 +720,9 @@ class Schlagwort(BaseModel):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class SchlagwortAlias(BaseAliasModel):
@@ -676,6 +731,11 @@ class SchlagwortAlias(BaseAliasModel):
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Artikel(BaseModel):
@@ -726,6 +786,9 @@ class Artikel(BaseModel):
             # (might be a PRO for introducing an order column on Ausgabe?)
             'ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite',
             'schlagzeile'
+        ]
+        indexes = [
+            GinIndex(fields=['_fts'])
         ]
 
     def __str__(self) -> str:
@@ -790,6 +853,9 @@ class Buch(BaseModel):
         ordering = ['titel']
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         return str(self.titel)
@@ -809,6 +875,9 @@ class Herausgeber(BaseModel):
         ordering = ['herausgeber']
         verbose_name = 'Herausgeber'
         verbose_name_plural = 'Herausgeber'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Instrument(BaseModel):
@@ -826,6 +895,9 @@ class Instrument(BaseModel):
         ordering = ['instrument', 'kuerzel']
         verbose_name = 'Instrument'
         verbose_name_plural = 'Instrumente'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         if self.kuerzel:
@@ -894,6 +966,9 @@ class Audio(BaseModel):
         ordering = ['titel']
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         return str(self.titel)
@@ -913,6 +988,9 @@ class AudioMedium(BaseModel):
         verbose_name = 'Audio-Medium'
         verbose_name_plural = 'Audio-Medium'
         ordering = ['medium']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Plakat(BaseModel):
@@ -959,6 +1037,9 @@ class Plakat(BaseModel):
         ordering = ['titel']
         verbose_name = 'Plakat'
         verbose_name_plural = 'Plakate'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Bildreihe(BaseModel):
@@ -975,6 +1056,9 @@ class Bildreihe(BaseModel):
         ordering = ['name']
         verbose_name = 'Bildreihe'
         verbose_name_plural = 'Bildreihen'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Schriftenreihe(BaseModel):
@@ -991,6 +1075,9 @@ class Schriftenreihe(BaseModel):
         ordering = ['name']
         verbose_name = 'Schriftenreihe'
         verbose_name_plural = 'Schriftenreihen'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Dokument(BaseModel):
@@ -1022,6 +1109,9 @@ class Dokument(BaseModel):
         ordering = ['titel']
         verbose_name = 'Dokument'
         verbose_name_plural = 'Dokumente'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Memorabilien(BaseModel):
@@ -1053,6 +1143,9 @@ class Memorabilien(BaseModel):
         verbose_name = 'Memorabilia'
         verbose_name_plural = 'Memorabilien'
         ordering = ['titel']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Spielort(BaseModel):
@@ -1081,6 +1174,9 @@ class Spielort(BaseModel):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class SpielortURL(AbstractURLModel):
@@ -1093,6 +1189,11 @@ class SpielortAlias(BaseAliasModel):
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Technik(BaseModel):
@@ -1124,6 +1225,9 @@ class Technik(BaseModel):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'
         ordering = ['titel']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Veranstaltung(BaseModel):
@@ -1163,6 +1267,9 @@ class Veranstaltung(BaseModel):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'datum', 'spielort']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class VeranstaltungAlias(BaseAliasModel):
@@ -1171,6 +1278,11 @@ class VeranstaltungAlias(BaseAliasModel):
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class VeranstaltungURL(AbstractURLModel):
@@ -1191,6 +1303,9 @@ class Veranstaltungsreihe(BaseModel):
         ordering = ['name']
         verbose_name = 'Veranstaltungsreihe'
         verbose_name_plural = 'Veranstaltungsreihen'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Video(BaseModel):
@@ -1248,6 +1363,9 @@ class Video(BaseModel):
         verbose_name = 'Video Material'
         verbose_name_plural = 'Video Materialien'
         ordering = ['titel']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class VideoMedium(BaseModel):
@@ -1264,6 +1382,9 @@ class VideoMedium(BaseModel):
         verbose_name = 'Video-Medium'
         verbose_name_plural = 'Video-Medium'
         ordering = ['medium']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Provenienz(BaseModel):
@@ -1305,6 +1426,9 @@ class Geber(BaseModel):
         ordering = ['name']
         verbose_name = 'Geber'
         verbose_name_plural = 'Geber'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Lagerort(ComputedNameModel):
@@ -1324,6 +1448,9 @@ class Lagerort(ComputedNameModel):
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
         ordering = ['_name']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     @classmethod
     def _get_name(cls, **data: tuple) -> str:
@@ -1387,6 +1514,9 @@ class Bestand(BaseModel):
         verbose_name = 'Bestand'
         verbose_name_plural = 'Bestände'
         ordering = ['pk']
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         return str(self.lagerort)
@@ -1462,6 +1592,9 @@ class Datei(BaseModel):
         ordering = ['titel']
         verbose_name = 'Datei'
         verbose_name_plural = 'Dateien'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
     def __str__(self) -> str:
         return str(self.titel)
@@ -1480,6 +1613,9 @@ class Plattenfirma(BaseModel):
         ordering = ['name']
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class BrochureYear(AbstractJahrModel):
@@ -1513,6 +1649,12 @@ class BaseBrochure(BaseModel):
 
     name_field = 'titel'
 
+    class Meta(BaseModel.Meta):
+        ordering = ['titel']
+        indexes = [
+            GinIndex(fields=['_base_fts'])
+        ]
+
     def __str__(self) -> str:
         return str(self.titel)
 
@@ -1533,9 +1675,6 @@ class BaseBrochure(BaseModel):
             except getattr(self.__class__, rel.name).RelatedObjectDoesNotExist:
                 # This subclass is not related to this BaseBrochure instance.
                 continue
-
-    class Meta(BaseModel.Meta):
-        ordering = ['titel']
 
 
 class Brochure(BaseBrochure):
@@ -1558,6 +1697,9 @@ class Brochure(BaseBrochure):
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Kalender(BaseBrochure):
@@ -1579,6 +1721,9 @@ class Kalender(BaseBrochure):
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
         verbose_name_plural = 'Programmhefte'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Katalog(BaseBrochure):
@@ -1607,6 +1752,9 @@ class Katalog(BaseBrochure):
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
 
 
 class Foto(BaseModel):
@@ -1655,3 +1803,6 @@ class Foto(BaseModel):
         ordering = ['titel']
         verbose_name = 'Foto'
         verbose_name_plural = 'Fotos'
+        indexes = [
+            GinIndex(fields=['_fts'])
+        ]
