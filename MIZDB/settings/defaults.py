@@ -22,7 +22,7 @@ ALLOWED_HOSTS = config.get('ALLOWED_HOSTS', [])
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'dbentry.fts.db',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': config.get('DATABASE_NAME', 'mizdb'),
         'USER': config.get('DATABASE_USER', ''),
         'PASSWORD': config.get('DATABASE_PASSWORD', ''),

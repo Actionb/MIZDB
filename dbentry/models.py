@@ -37,7 +37,8 @@ class Person(ComputedNameModel):
             WeightedColumn('_name', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_composing_fields = ['vorname', 'nachname']
@@ -90,7 +91,8 @@ class Musiker(BaseModel):
             WeightedColumn('kuenstler_name', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     create_field = 'kuenstler_name'
@@ -110,9 +112,7 @@ class MusikerAlias(BaseAliasModel):
     parent = models.ForeignKey('Musiker', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('alias', 'B', SIMPLE),
-        ]
+        columns=[WeightedColumn('alias', 'B', SIMPLE)], blank=True, null=True, editable=False
     )
 
 
@@ -124,9 +124,7 @@ class Genre(BaseModel):
     genre = models.CharField('Genre', max_length=100, unique=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('genre', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('genre', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'genre'
@@ -143,9 +141,7 @@ class GenreAlias(BaseAliasModel):
     parent = models.ForeignKey('Genre', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('alias', 'B', SIMPLE),
-        ]
+        columns=[WeightedColumn('alias', 'B', SIMPLE)], blank=True, null=True, editable=False
     )
 
 
@@ -164,6 +160,7 @@ class Band(BaseModel):
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
         ],
+        blank=True, null=True, editable=False
     )
 
     create_field = 'band_name'
@@ -180,7 +177,7 @@ class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[WeightedColumn('alias', 'B', SIMPLE)],
+        columns=[WeightedColumn('alias', 'B', SIMPLE)], blank=True, null=True, editable=False
     )
 
 
@@ -202,7 +199,8 @@ class Autor(ComputedNameModel):
             WeightedColumn('_name', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_composing_fields = ['person___name', 'kuerzel']
@@ -287,7 +285,8 @@ class Ausgabe(ComputedNameModel):
             WeightedColumn('_name', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_composing_fields = [
@@ -460,10 +459,8 @@ class Monat(BaseModel):
     ordinal = models.PositiveSmallIntegerField(editable=False)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('monat', 'A', SIMPLE),
-            WeightedColumn('abk', 'A', SIMPLE)
-        ]
+        columns=[WeightedColumn('monat', 'A', SIMPLE), WeightedColumn('abk', 'A', SIMPLE)],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'monat'
@@ -511,7 +508,8 @@ class Magazin(BaseModel):
             WeightedColumn('issn', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     create_field = 'magazin_name'
@@ -536,9 +534,7 @@ class Verlag(BaseModel):
     sitz = models.ForeignKey('Ort', models.SET_NULL, null=True, blank=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('verlag_name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('verlag_name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'verlag_name'
@@ -559,9 +555,7 @@ class Ort(ComputedNameModel):
     land = models.ForeignKey('Land', models.PROTECT)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('_name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('_name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     name_composing_fields = [
@@ -622,10 +616,8 @@ class Bundesland(BaseModel):
     land = models.ForeignKey('Land', models.PROTECT)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('bland_name', 'A', SIMPLE),
-            WeightedColumn('code', 'A', SIMPLE)
-        ]
+        columns=[WeightedColumn('bland_name', 'A', SIMPLE), WeightedColumn('code', 'A', SIMPLE)],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'bland_name'
@@ -645,10 +637,8 @@ class Land(BaseModel):
     code = models.CharField(max_length=4, unique=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('land_name', 'A', SIMPLE),
-            WeightedColumn('code', 'A', SIMPLE)
-        ]
+        columns=[WeightedColumn('land_name', 'A', SIMPLE), WeightedColumn('code', 'A', SIMPLE)],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'land_name'
@@ -667,9 +657,7 @@ class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('schlagwort', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('schlagwort', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'schlagwort'
@@ -686,9 +674,7 @@ class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('alias', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('alias', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
 
@@ -725,7 +711,8 @@ class Artikel(BaseModel):
             WeightedColumn('zusammenfassung', 'B', STEMMING),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'schlagzeile'
@@ -793,7 +780,8 @@ class Buch(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -811,9 +799,7 @@ class Herausgeber(BaseModel):
     herausgeber = models.CharField(max_length=200)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('herausgeber', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('herausgeber', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     name_field = 'herausgeber'
@@ -830,10 +816,8 @@ class Instrument(BaseModel):
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('instrument', 'A', SIMPLE),
-            WeightedColumn('kuerzel', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('instrument', 'A', SIMPLE), WeightedColumn('kuerzel', 'A', SIMPLE)],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'instrument'
@@ -900,7 +884,8 @@ class Audio(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -918,9 +903,7 @@ class AudioMedium(BaseModel):
     medium = models.CharField(max_length=200, unique=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('medium', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('medium', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'medium'
@@ -966,7 +949,8 @@ class Plakat(BaseModel):
             WeightedColumn('signatur', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -981,9 +965,7 @@ class Bildreihe(BaseModel):
     name = models.CharField(max_length=200)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'name'
@@ -999,9 +981,7 @@ class Schriftenreihe(BaseModel):
     name = models.CharField(max_length=200)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'name'
@@ -1032,7 +1012,8 @@ class Dokument(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -1062,7 +1043,8 @@ class Memorabilien(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -1085,7 +1067,8 @@ class Spielort(BaseModel):
             WeightedColumn('name', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'name'
@@ -1108,9 +1091,7 @@ class SpielortAlias(BaseAliasModel):
     parent = models.ForeignKey('Spielort', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('alias', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('alias', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
 
@@ -1133,7 +1114,8 @@ class Technik(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -1166,7 +1148,8 @@ class Veranstaltung(BaseModel):
             WeightedColumn('datum', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'name'
@@ -1186,9 +1169,7 @@ class VeranstaltungAlias(BaseAliasModel):
     parent = models.ForeignKey('Veranstaltung', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('alias', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('alias', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
 
@@ -1200,9 +1181,7 @@ class Veranstaltungsreihe(BaseModel):
     name = models.CharField(max_length=200)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'name'
@@ -1259,7 +1238,8 @@ class Video(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -1274,9 +1254,7 @@ class VideoMedium(BaseModel):
     medium = models.CharField(max_length=200, unique=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('medium', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('medium', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     create_field = 'medium'
@@ -1317,7 +1295,9 @@ class Provenienz(BaseModel):
 class Geber(BaseModel):
     name = models.CharField(max_length=200)
 
-    _fts = SearchVectorField(columns=[WeightedColumn('name', 'A', SIMPLE)])
+    _fts = SearchVectorField(
+        columns=[WeightedColumn('name', 'A', SIMPLE)], blank=True, null=True, editable=False
+    )
 
     name_field = create_field = 'name'
 
@@ -1335,9 +1315,7 @@ class Lagerort(ComputedNameModel):
     ordner = models.CharField(max_length=200, blank=True)
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('_name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('_name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     name_composing_fields = ['ort', 'raum', 'regal', 'fach']
@@ -1400,7 +1378,10 @@ class Bestand(BaseModel):
     technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
-    _fts = SearchVectorField(columns=[WeightedColumn('anmerkungen', 'A', STEMMING)])
+    _fts = SearchVectorField(
+        columns=[WeightedColumn('anmerkungen', 'A', STEMMING)],
+        blank=True, null=True, editable=False
+    )
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
@@ -1471,7 +1452,8 @@ class Datei(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -1489,9 +1471,7 @@ class Plattenfirma(BaseModel):
     name = models.CharField(max_length=200)  # TODO: use TextField
 
     _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('name', 'A', SIMPLE),
-        ]
+        columns=[WeightedColumn('name', 'A', SIMPLE)], blank=True, null=True, editable=False
     )
 
     name_field = create_field = 'name'
@@ -1527,7 +1507,8 @@ class BaseBrochure(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('zusammenfassung', 'B', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'
@@ -1564,7 +1545,10 @@ class Brochure(BaseBrochure):
     # TODO: add spielort ManyToManyField or merge all the BaseBrochure models?
     # (assuming a Brochure is specifically about a venue/s)
 
-    _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
+    _fts = SearchVectorField(
+        columns=[WeightedColumn('beschreibung', 'C', STEMMING)],
+        blank=True, null=True, editable=False
+    )
 
     related_search_vectors = [
         ('basebrochure_ptr___base_fts', SIMPLE),
@@ -1582,7 +1566,10 @@ class Kalender(BaseBrochure):
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
 
-    _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
+    _fts = SearchVectorField(
+        columns=[WeightedColumn('beschreibung', 'C', STEMMING)],
+        blank=True, null=True, editable=False
+    )
 
     related_search_vectors = [
         ('basebrochure_ptr___base_fts', SIMPLE),
@@ -1607,7 +1594,10 @@ class Katalog(BaseBrochure):
         'Art d. Kataloges', max_length=40, choices=Types.choices, default=Types.MERCH
     )
 
-    _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
+    _fts = SearchVectorField(
+        columns=[WeightedColumn('beschreibung', 'C', STEMMING)],
+        blank=True, null=True, editable=False
+    )
 
     related_search_vectors = [
         ('basebrochure_ptr___base_fts', SIMPLE),
@@ -1655,7 +1645,8 @@ class Foto(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-        ]
+        ],
+        blank=True, null=True, editable=False
     )
 
     name_field = 'titel'

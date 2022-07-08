@@ -96,11 +96,11 @@ class TextSearchQuerySetMixin(object):
             # the search vector field's columns:
             configs_seen = set()
             for column in search_field.columns or ():
-                if column.language in configs_seen:
+                if column.config in configs_seen:
                     continue
-                configs_seen.add(column.language)
+                configs_seen.add(column.config)
                 query = self._get_search_query(
-                    q, config=column.language, search_type=search_type
+                    q, config=column.config, search_type=search_type
                 )
                 filters |= Q(**{search_field.name: query})
                 rank = SearchRank(F(search_field.name), query, normalization=16)
