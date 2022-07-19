@@ -748,9 +748,9 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
         # We can get the correct change message for the LogEntry objects
         # of the parent instance from the model_admin's
         # construct_change_message method, which requires a form argument.
-        # Since we're not changing anything on the instance itself, an empty
-        # model form will do.
-        form = self.model_admin.get_form(self.request, obj=formset.instance, change=True)()
+        # Since we are never changing anything on the instance itself, a very
+        # basic model form will do.
+        form = self.model_admin.get_form(self.request, obj=formset.instance, fields=['id'])()
         # 'add' argument is always False as we are always working on an already
         # existing parent instance.
         change_message = self.model_admin.construct_change_message(
