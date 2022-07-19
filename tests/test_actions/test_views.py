@@ -1582,8 +1582,8 @@ class TestMoveToBrochure(ActionViewTestCase):
     @patch('dbentry.actions.views.MoveToBrochureBase.can_delete_magazin', new_callable=PropertyMock)
     def test_conditionally_show_delete_magazin_option(self, can_delete_mock):
         """
-        Assert that the field 'delete_magazin' only shows up on the options_form,
-        if the magazin can be deleted.
+        Assert that the field 'delete_magazin' is only enabled on the
+        options_form, if the magazin can be deleted.
         """
         view = self.get_view()
         for can_be_deleted in (True, False):
@@ -1591,9 +1591,9 @@ class TestMoveToBrochure(ActionViewTestCase):
                 can_delete_mock.return_value = can_be_deleted
                 form = view.get_options_form()
                 if can_be_deleted:
-                    self.assertIn('delete_magazin', form.fields)
+                    self.assertFalse(form.fields['delete_magazin'].disabled)
                 else:
-                    self.assertNotIn('delete_magazin', form.fields)
+                    self.assertTrue(form.fields['delete_magazin'].disabled)
 
     def test_can_delete_magazin(self):
         """
