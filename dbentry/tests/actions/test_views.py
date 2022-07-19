@@ -990,18 +990,18 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         new_callable=PropertyMock
     )
     def test_conditionally_show_delete_magazin_option(self, mocked_can_delete):
-        # Assert that the field 'delete_magazin' only shows up on the options_form
-        # if the magazin can be deleted.
+        # Assert that the field 'delete_magazin' is only enabled, if the magazin
+        # can be deleted.
 
         # Can be deleted:
         mocked_can_delete.return_value = True
         form = self.get_view(self.get_request()).get_options_form()
-        self.assertIn('delete_magazin', form.fields)
+        self.assertFalse(form.fields['delete_magazin'].disabled)
 
         # Cannot be deleted:
         mocked_can_delete.return_value = False
         form = self.get_view(self.get_request()).get_options_form()
-        self.assertNotIn('delete_magazin', form.fields)
+        self.assertTrue(form.fields['delete_magazin'].disabled)
 
     def test_can_delete_magazin(self):
         # Assert that can_delete_magazin returns True when the magazin can be
