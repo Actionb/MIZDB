@@ -14,7 +14,7 @@ django-formtools
 # Standard number validation, etc. for EAN/ISBN/ISSN fields
 python-stdnum
 
-# Base factory for the app's test data factories
+# Base factory for the app's test data factories  # TODO: move to dev.txt requirements?
 factory-boy
 
 # Postgres Python
@@ -22,7 +22,7 @@ psycopg2
 
 # HTTP library handling the SRU requests to the DNB
 requests
-# Package for testing of requests
+# Package for testing of requests  # TODO: move to dev.txt requirements?
 requests-mock
 
 # Postgres Django SearchVectorField + Triggers
