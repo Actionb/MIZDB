@@ -1,33 +1,32 @@
 from unittest import expectedFailure, skip
-from unittest.mock import call, patch, Mock, PropertyMock, DEFAULT
+from unittest.mock import DEFAULT, Mock, PropertyMock, call, patch
 
 from django import forms
-from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import Permission
-from django.forms.formsets import ManagementForm
-from django.urls import path
-from django.utils.html import format_html
-from django.views.generic.base import ContextMixin, View
-from formtools.wizard.views import SessionWizardView, WizardView
-
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth import get_permission_codename
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.forms.formsets import ManagementForm
 from django.test import override_settings
+from django.urls import path
+from django.utils.html import format_html
 from django.utils.translation import override as translation_override
+from django.views.generic.base import ContextMixin, View
+from formtools.wizard.views import SessionWizardView, WizardView
 
-import dbentry.models as _models
 import dbentry.admin as _admin
+import dbentry.models as _models
 from dbentry.actions.base import (
-    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
-from dbentry.actions.views import (
-    BulkEditJahrgang, MergeViewWizarded, MoveToBrochureBase,
-    ChangeBestand
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 )
 from dbentry.actions.forms import (
-    BrochureActionFormSet, MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions
+    BrochureActionFormOptions, BrochureActionFormSet, MergeConflictsFormSet, MergeFormSelectPrimary
+)
+from dbentry.actions.views import (
+    BulkEditJahrgang, ChangeBestand, MergeViewWizarded, MoveToBrochureBase
 )
 from dbentry.base.forms import MIZAdminForm
 from dbentry.sites import miz_site
@@ -36,7 +35,6 @@ from dbentry.utils import get_obj_link
 from tests.case import AdminTestCase, ViewTestCase
 from tests.factory import make
 from tests.test_actions.models import Band, Genre
-
 
 admin_site = admin.AdminSite(name='test')
 
@@ -69,6 +67,8 @@ class RenameBandActionView(ActionConfirmationView):
 def rename_band(model_admin, request, queryset):
     """Dummy action view FUNCTION."""
     return RenameBandActionView.as_view(model_admin=model_admin, queryset=queryset)(request)
+
+
 rename_band.short_description = RenameBandActionView.short_description  # noqa
 rename_band.allowed_permissions = RenameBandActionView.allowed_permissions
 
@@ -137,7 +137,6 @@ class TestConfirmations(AdminTestCase):
 
 
 class ActionViewTestCase(AdminTestCase, ViewTestCase):
-
     action_name = ''
 
     def get_view(self, request=None, args=None, kwargs=None, action_name=None, **initkwargs):
@@ -156,7 +155,6 @@ def outside_check(view):
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestConfirmationViewMixin(ActionViewTestCase):
-
     class DummyView(ConfirmationViewMixin, ContextMixin, View):
         admin_site = admin_site
         action_allowed_checks = ['not_callable', 'check_true', outside_check]
@@ -298,7 +296,6 @@ def get_obj_link_mock(obj, user, site_name, blank):
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestActionConfirmationView(ActionViewTestCase):
-
     class DummyView(ActionConfirmationView):
         admin_site = admin_site
         form_class = type('DummyForm', (forms.Form,), {})  # ActionConfirmationView is a FormView
@@ -360,7 +357,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         # link_list[0][1] is the list of values for the affected fields:
         affected_field_values = link_list[0][1]
         self.assertEqual(affected_field_values[0], 'Bandname: ' + self.obj.band_name)
-        
+
         # The next two items should be links to the Genre objects:
         # noinspection PyUnresolvedReferences
         genres = Genre.objects.all().order_by('genre')
@@ -378,7 +375,7 @@ class TestActionConfirmationView(ActionViewTestCase):
             get_link_mock.call_args_list[1],
             call(genres[1], user, self.admin_site.name, blank=True)
         )
-        
+
         # And the last item should be the status:
         self.assertEqual(link_list[0][1][3], 'Status: Aktiv')
 
@@ -405,7 +402,7 @@ class TestActionConfirmationView(ActionViewTestCase):
             queryset=self.model.objects.all(),  # noqa
             affected_fields=[]
         )
-        self.assertEqual(view.compile_affected_objects(), [(f'Band: {self.obj}', )])
+        self.assertEqual(view.compile_affected_objects(), [(f'Band: {self.obj}',)])
 
     def test_form_valid(self):
         """
@@ -425,7 +422,6 @@ class TestActionConfirmationView(ActionViewTestCase):
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestWizardConfirmationView(ActionViewTestCase):
-
     admin_site = admin_site
     view_class = WizardConfirmationView
     model = Band
@@ -459,8 +455,10 @@ class TestWizardConfirmationView(ActionViewTestCase):
         """
         view = self.get_view()
         request = self.post_request()
-        with patch.multiple(view, storage=DEFAULT, steps=Mock(first='first step'), get_form=DEFAULT,
-                            render=Mock(return_value='Rendered form.'), create=True):
+        with patch.multiple(
+                view, storage=DEFAULT, steps=Mock(first='first step'), get_form=DEFAULT,
+                render=Mock(return_value='Rendered form.'), create=True
+        ):
             self.assertEqual(view.post(request), 'Rendered form.')
             self.assertEqual(view.storage.reset.call_count, 1)
             self.assertEqual(view.storage.current_step, 'first step')
@@ -632,7 +630,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
 
 class TestMergeViewAusgabe(ActionViewTestCase):
-
     admin_site = miz_site
     view_class = MergeViewWizarded
     model = _models.Ausgabe
@@ -1008,7 +1005,6 @@ class TestMergeViewAusgabe(ActionViewTestCase):
 
 
 class TestMergeViewArtikel(ActionViewTestCase):
-
     admin_site = miz_site
     view_class = MergeViewWizarded
     model = _models.Artikel
@@ -1037,7 +1033,6 @@ class TestMergeViewArtikel(ActionViewTestCase):
 
 
 class TestMoveToBrochure(ActionViewTestCase):
-
     admin_site = miz_site
     view_class = MoveToBrochureBase
     model = _models.Ausgabe
@@ -1171,7 +1166,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertTemplateUsed(response, 'admin/change_list.html')
         # The other magazin should have been deleted:
         self.assertFalse(_models.Magazin.objects.filter(pk=other_mag.pk).exists())
-        
+
     def test_action_allowed_has_artikels(self):
         """
         The action should not be allowed, if any of selected objects are
@@ -1671,7 +1666,6 @@ class TestMoveToBrochure(ActionViewTestCase):
 
 
 class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
-
     admin_site = miz_site
     view_class = ChangeBestand
     model = _models.Ausgabe
@@ -1689,6 +1683,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
     @staticmethod
     def get_form_data(parent_obj: _models.Ausgabe, *bestand_objects):
         prefix = 'bestand_set-%s' % parent_obj.pk
+        # noinspection PyUnresolvedReferences
         management_form_data = {
             prefix + '-TOTAL_FORMS': len(bestand_objects),
             prefix + '-INITIAL_FORMS': parent_obj.bestand_set.count(),
@@ -1698,11 +1693,13 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         form_data = {}
         for i, (bestand_obj_pk, lagerort_pk) in enumerate(bestand_objects):
             form_prefix = prefix + '-%s' % i
-            form_data.update({
-                form_prefix + '-ausgabe': parent_obj.pk,
-                form_prefix + '-signatur': bestand_obj_pk or '',
-                form_prefix + '-lagerort': lagerort_pk or ''
-            })
+            form_data.update(
+                {
+                    form_prefix + '-ausgabe': parent_obj.pk,
+                    form_prefix + '-signatur': bestand_obj_pk or '',
+                    form_prefix + '-lagerort': lagerort_pk or ''
+                }
+            )
         return {**management_form_data, **form_data}
 
     def test_success_add(self):
@@ -1800,6 +1797,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # Check some attributes of the formset/inline.
         self.assertEqual(inline.model, _models.Bestand)
         self.assertEqual(formset.instance, self.obj1)
+        # noinspection PyUnresolvedReferences
         self.assertQuerysetEqual(formset.queryset.all(), self.obj1.bestand_set.all())
 
     def test_get_bestand_formset_form_data(self):
@@ -1853,5 +1851,64 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
                 view = self.get_view(self.get_request())
                 view.get_bestand_formset(request, None)
 
-    def test_create_log_entries(self):  # TODO: write this test
-        self.fail("Write me!")
+    def test_create_log_entries(self):
+        """
+        Assert that LogEntry objects are created for the parent object and its
+        related objects.
+        """
+        # Add 3 bestand objects to obj1; one that will remain unchanged, one
+        # that will be changed and one that will be deleted. Then, using the
+        # action, add a new bestand object to obj1.
+        unchanged = make(_models.Bestand, lagerort=self.lagerort1, ausgabe=self.obj1)
+        changed = make(_models.Bestand, lagerort=self.lagerort1, ausgabe=self.obj1)
+        deleted = make(_models.Bestand, lagerort=self.lagerort1, ausgabe=self.obj1)
+
+        form_data = self.get_form_data(
+            self.obj1,
+            (unchanged.pk, unchanged.lagerort.pk),
+            (changed.pk, self.lagerort2.pk),
+            (deleted.pk, deleted.lagerort.pk),
+            (None, self.lagerort1.pk)
+        )
+        form_data['bestand_set-%s-2-DELETE' % self.obj1.pk] = True
+
+        patches = {
+            'log_addition': DEFAULT,
+            'log_change': DEFAULT,
+            'log_deletion': DEFAULT,
+        }
+        with patch.multiple('dbentry.actions.views', **patches) as mocks:
+            with patch('dbentry.admin.AusgabenAdmin.log_change') as admin_log_change:
+                self.post_response(
+                    path=self.changelist_path,
+                    data={
+                        'action': 'change_bestand',
+                        helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+                        'action_confirmed': 'Yes',
+                        **form_data
+                    },
+                    follow=False
+                )
+        added = _models.Bestand.objects.order_by('-pk').first()
+        changed.refresh_from_db()
+
+        # Check the log entry for the parent instance:
+        # noinspection PyUnresolvedReferences
+        name = _models.Bestand._meta.verbose_name
+        expected_change_message = [
+            {'added': {'name': name, 'object': str(added)}},
+            {'changed': {'name': name, 'object': str(changed), 'fields': ['lagerort']}},
+            {'deleted': {'name': name, 'object': str(deleted)}}
+        ]
+        admin_log_change.assert_called()
+        _request, formset_instance, change_message = admin_log_change.call_args[0]
+        self.assertEqual(formset_instance, self.obj1)
+        self.assertEqual(change_message, expected_change_message)
+
+        # Check the log entries for the Bestand instances:
+        mocks['log_addition'].assert_called_with(self.super_user.pk, added)
+        mocks['log_change'].assert_called_with(self.super_user.pk, changed, fields=['lagerort'])
+        # Can't compare the instances (second argument) directly, since one of
+        # them has been deleted.
+        args, kwargs = mocks['log_deletion'].call_args
+        self.assertEqual((args[0], str(args[1])), (self.super_user.pk, str(deleted)))
