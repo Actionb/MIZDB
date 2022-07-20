@@ -198,14 +198,4 @@ class BrochureActionFormOptions(MIZAdminForm):
 
     def __init__(self, can_delete_magazin: bool = True, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if not can_delete_magazin:
-            del self.fields['delete_magazin']
-
-    def clean_brochure_art(self) -> str:
-        """Make sure the user has selected a valid model."""
-        value = self.cleaned_data.get('brochure_art')
-        try:
-            get_model_from_string(value)
-        except LookupError:
-            raise ValidationError("%s ist kein zulässiges Model." % value)
-        return value
+        self.fields['delete_magazin'].disabled = not can_delete_magazin

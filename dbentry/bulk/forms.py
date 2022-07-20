@@ -200,7 +200,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         label='Bemerkungen'
     )
     status = forms.ChoiceField(
-        choices=_models.Ausgabe.STATUS_CHOICES,
+        choices=_models.Ausgabe.Status.choices,
         initial=1,
         label='Bearbeitungsstatus'
     )

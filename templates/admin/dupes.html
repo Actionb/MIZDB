@@ -24,17 +24,13 @@ form ul li {
 <h2 class="fieldset-name collapsible">Felder</h2>
 <form name="fields_select" method="get">
     {{ form.non_field_errors }}
-    <h3>Duplikat Felder</h2>
+    <h3>Duplikat Felder</h3>
     <span class="help" style="padding-left:10px;">Wähle die Felder, deren Werte in die Duplikatensuche miteinbezogen werden sollen.</span>
-    <table><tbody> <tr>
-        {% for field in form.selects %}<td>{{field}}</td>{% endfor %}
-    </tr> </tbody></table>
-    <h3>Übersicht Felder</h2>
+    {{form.select}}
+    <h3>Übersicht Felder</h3>
     <span class="help" style="padding-left:10px;">Wähle die Felder, deren Werte in der Übersicht dargestellt werden sollen.</span>
-    <table><tbody> <tr>
-        {% for field in form.displays %}<td>{{field}}</td>{% endfor %}
-    </tr> </tbody></table>
-        <input type="submit" name="get_duplicates" value="Suchen">
+    {{form.display}}
+    <input type="submit" name="get_duplicates" value="Suchen">
 </form>
 </fieldset>
 {% endblock form %}

@@ -781,7 +781,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             # An exception should not propagate:
             with self.assertNotRaises(Exception):
                 self.model_admin._change_status(
-                    request, self.queryset, status=_models.Ausgabe.INBEARBEITUNG)
+                    request, self.queryset, status=_models.Ausgabe.Status.INBEARBEITUNG)
         # An exception should not stop the updates:
         self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'iB'})
         # The user should have been messaged about the exception:
@@ -1997,7 +1997,7 @@ class TestChangelistAnnotations(AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj = make(
-            cls.model, status=_models.Ausgabe.UNBEARBEITET,
+            cls.model, status=_models.Ausgabe.Status.UNBEARBEITET,
             ausgabejahr__jahr=2022, ausgabenum__num=2
         )
         super().setUpTestData()
@@ -2024,7 +2024,7 @@ class TestChangelistAnnotations(AdminTestCase):
         self.client.post(self.changelist_path + query_string, data=request_data)
         self.obj.refresh_from_db()
         # noinspection PyUnresolvedReferences
-        self.assertEqual(self.obj.status, _models.Ausgabe.INBEARBEITUNG)
+        self.assertEqual(self.obj.status, _models.Ausgabe.Status.INBEARBEITUNG)
 
     def test_can_order_result_list(self):
         """Assert that the result list can be ordered against the annotated fields."""

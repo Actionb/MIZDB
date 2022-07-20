@@ -1,11 +1,14 @@
-from collections import Counter, OrderedDict, namedtuple
-from itertools import chain
+from collections import OrderedDict
 from typing import Any, Dict, List, OrderedDict as OrderedDictType, Sequence, Tuple, Type, Union
 
 from django import views
-from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Count, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet
+from django.contrib.admin.utils import get_fields_from_path
+from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import (
+    Count, F, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet,
+    Window
+)
+from django.db.models.query import RawQuerySet
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -17,76 +20,28 @@ from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
-from dbentry.query import MIZQuerySet
 from dbentry.sites import register_tool
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 
-Dupe = namedtuple(
-    'Dupe', ['instance', 'duplicate_values', 'display_values']
-)
 
-
-def find_duplicates(
-        queryset: MIZQuerySet,
-        dupe_fields: Sequence[str],
-        display_fields: Sequence[str]
-) -> List[List[Dupe]]:
+def find_duplicates(queryset: QuerySet, fields: Sequence[str]) -> RawQuerySet:
     """
-    Find records in the queryset that share values in the fields given
-    by dupe_fields.
+    Find records in the queryset that share values in the specified fields.
 
-    Returns a list of lists (groups of duplicates) where each list is made up of
-    'Dupe' named tuples.
-
-    'Dupe' has three attributes:
-        - instance: the model instance that is a duplicate of another
-        - duplicate_values: the values that are shared
-        - display_values: the values fetched to be displayed
+    Returns a raw queryset containing the duplicate instances.
     """
-    queried: OrderedDictType[int, Dict[str, Any]] = queryset.values_dict(
-        *dupe_fields, *display_fields
+    window_expression = Window(
+        expression=Count('*'),
+        partition_by=fields,
+        order_by=[F(field).desc() for field in fields]
     )
-    dupe_values: List[tuple] = []
-    display_values: Dict[int, list] = {}
-    # Separate duplicate_values and display_values which are both contained
-    # (as tuples) in the following tuple 'values':
-    for pk, values in queried.items():
-        item_dupe_values = []
-        for k, v in values.items():
-            if k in dupe_fields:
-                item_dupe_values.append((k, v))
-            elif k in display_fields:
-                if pk not in display_values:
-                    display_values[pk] = []
-                display_values[pk].append((k, v))
-        dupe_values.append(tuple(item_dupe_values))
-
-    results: List[List[Dupe]] = []
-    # Walk through the values, looking for non-empty values that appeared
-    # more than once.
-    # Preserve the display_values.
-    for elem, count in Counter(dupe_values).items():
-        dupe_group: List[Dupe] = []
-        if not elem or count < 2:
-            # Do not compare empty with empty.
-            continue
-        # Find all the pks that match these values.
-        for pk, values in queried.items():
-            item_dupe_values = tuple(  # type: ignore[assignment]
-                (k, v) for k, v in values.items() if k in dupe_fields
-            )
-            if elem == item_dupe_values:
-                item_display_values = dict(display_values.get(pk, ()))
-                dupe_group.append(
-                    Dupe(
-                        instance=queryset.get(pk=pk),
-                        duplicate_values=dict(item_dupe_values),
-                        display_values=item_display_values
-                    )
-                )
-        results.append(dupe_group)
-    return results
+    counts_query = queryset.annotate(c=window_expression).values('pk', 'c')
+    # Need to filter out rows without duplicates, but Window expressions are
+    # not allowed in the filter clause - so use this workaround:
+    # https://code.djangoproject.com/ticket/28333#comment:20
+    sql, params = counts_query.query.sql_with_params()
+    return queryset.raw(f"SELECT * FROM ({sql}) counts WHERE counts.c > 1", params)
 
 
 class ModelSelectView(views.generic.FormView):
@@ -127,26 +82,6 @@ class ModelSelectView(views.generic.FormView):
         return {'model_name': self.request.GET.get('model_select')}
 
 
-class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
-    """A mixin that sets up the view following a ModelSelectView."""
-
-    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
-        # noinspection PyUnresolvedReferences
-        super().setup(request, *args, **kwargs)
-        if not kwargs.get('model_name'):
-            raise TypeError("Model not provided.")
-        self.model = utils.get_model_from_string(kwargs['model_name'])
-        # noinspection PyUnresolvedReferences
-        self.opts = self.model._meta
-
-    def get_context_data(self, **kwargs: Any) -> dict:
-        return super().get_context_data(
-            breadcrumbs_title=self.opts.verbose_name,
-            title=self.opts.verbose_name,
-            **kwargs
-        )
-
-
 @register_tool(
     url_name='dupes_select',
     index_label='Duplikate finden',
@@ -162,9 +97,10 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
 
     title = 'Duplikate finden'
     next_view = 'dupes'
+    form_class = ModelSelectForm
 
 
-class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
+class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
     """
     A FormView that finds, displays and, if so requested, merges duplicates.
 
@@ -178,12 +114,22 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     template_name = 'admin/dupes.html'
     form_class = DuplicateFieldsSelectForm
 
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        super().setup(request, *args, **kwargs)
+        if not kwargs.get('model_name'):
+            raise TypeError("Model not provided.")
+        # noinspection PyAttributeOutsideInit
+        self.model = utils.get_model_from_string(kwargs['model_name'], app_label='dbentry')
+
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle the request to find duplicates."""
         form = self.get_form()
         context = self.get_context_data(form=form, **kwargs)
         if 'get_duplicates' in request.GET and form.is_valid():
-            context['headers'] = self.build_duplicates_headers(form)
+            # Use the human-readable part of the selected choices for the
+            # headers of the listing table:
+            choices = dict(form.fields['display'].choices)
+            context['headers'] = [choices[selected] for selected in form.cleaned_data['display']]
             # Calculate the (percentile) width of the headers; 25% of the width
             # is already taken up by the three headers 'merge','id','link'.
             context['headers_width'] = str(int(80 / len(context['headers'])))
@@ -192,11 +138,10 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
-        context['action_name'] = 'merge_records'
-        context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
-        # 'title' is a context variable for base_site.html:
-        # together with 'site_title' it makes up the <title> section of a page.
-        context['title'] = 'Duplikate: ' + self.opts.verbose_name
+        # noinspection PyUnresolvedReferences
+        context['title'] = 'Duplikate: ' + self.model._meta.verbose_name
+        # noinspection PyUnresolvedReferences
+        context['breadcrumbs_title'] = self.model._meta.verbose_name
         return context
 
     def get_form_kwargs(self) -> dict:
@@ -205,61 +150,6 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         kwargs['model'] = self.model
         kwargs['data'] = self.request.GET
         return kwargs
-
-    @staticmethod
-    def _get_group_field_names(form, formfield_group: List[str]) -> List[str]:
-        """
-        Return the field names of fields selected in the given formfield_group.
-
-        Check the given formfield_group (i.e. either select_fields or
-        display_fields) and create a list of all model field names selected in
-        that group.
-        """
-        field_names = []
-        for formfield_name in formfield_group:
-            if form.cleaned_data.get(formfield_name):
-                field_names.extend(form.cleaned_data[formfield_name])
-        return field_names
-
-    def get_select_fields(self, form: Form) -> List[str]:
-        """Return a list of the field names the user selected to be displayed."""
-        return self._get_group_field_names(form, form.select_fields)
-
-    def get_display_fields(self, form: Form) -> List[str]:
-        """Return a list of the field names the user selected to be displayed."""
-        return self._get_group_field_names(form, form.display_fields)
-
-    # noinspection PyMethodMayBeStatic
-    def build_duplicates_headers(self, form: Form) -> List[str]:
-        """
-        Extract the table headers for the table that lists the duplicates from
-        the selected display fields in 'form'.
-        The headers should be the human-readable part of the choices.
-        """
-        headers: List[str] = []
-        for field_name in form.display_fields:
-            formfield = form.fields[field_name]
-            selected = form.cleaned_data.get(field_name)
-            if not selected:
-                continue
-            choices = formfield.choices
-            if isinstance(choices[0][1], (list, tuple)):
-                # Grouped choices: [('group_name',[*choices]), ...].
-                # Get the actual choices:
-                choices = chain(
-                    *(
-                        group_choices
-                        for group_name, group_choices in choices
-                    )
-                )
-            # Acquire the human-readable parts of the choices that have been
-            # selected:
-            headers.extend(
-                human_readable
-                for value, human_readable in choices
-                if value in selected
-            )
-        return headers
 
     def build_duplicates_items(
             self, form: Form
@@ -271,73 +161,84 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         (model instance, change page URL, display values) tuples, and the last
         item is the link to the changelist of the duplicate instances.
         """
-        items = []
-        # Get the model fields that were selected in the form.
-        dupe_fields = self.get_select_fields(form)
-        display_fields = self.get_display_fields(form)
-        # Look for duplicates using the selected fields.
-        # A list of lists/group of 'Dupe' named tuples is returned.
+        # Optimize the query by using StringAgg on values for many_to_many and
+        # many_to_one relations. Use select_related for many_to_one relations.
+        annotations = {}
+        select_related = []
+        display_fields = []
+        for path in form.cleaned_data['display']:
+            fields = get_fields_from_path(self.model, path)
+            if not fields[0].is_relation:
+                display_fields.append(path)
+                continue
+            if len(fields) == 1:
+                # path is the name of a many_to_one (ForeignKey) relation field
+                # declared on this model.
+                select_related.append(path)
+            else:
+                # A many_to_many or many_to_one relation.
+                annotations[path] = StringAgg(path, ', ', distinct=True, ordering=path)
+            display_fields.append(path)
+
         # noinspection PyUnresolvedReferences
-        duplicates = find_duplicates(self.model.objects, dupe_fields, display_fields)
-        # Walk through each group of duplicates:
-        for dupe_group in duplicates:
-            group = []
-            instances = []
-            for dupe in dupe_group:
-                # 'Dupe' has these attributes:
-                # - 'instance': the duplicate model instance
-                # - 'duplicate_values': a list of field_name, field_values pairs
-                #       the values are shared by the duplicates
-                # - 'display_values': additional values for the tables
-                # Create a list of string values to display on the table.
-                display_values = []
-                for field_name in display_fields:
-                    if field_name in dupe.duplicate_values:
-                        values = dupe.duplicate_values[field_name]
-                    elif field_name in dupe.display_values:
-                        values = dupe.display_values[field_name]
-                    else:
-                        values = []
+        search_fields = form.cleaned_data['select']
+        # noinspection PyUnresolvedReferences
+        queryset = self.model.objects.all()
+        duplicates = (
+            queryset.filter(pk__in=[o.pk for o in find_duplicates(queryset, search_fields)])
+                    .select_related(*select_related)
+                    .annotate(**annotations)
+                    .order_by(*search_fields, 'pk')
+        )
 
-                    # Try to get the string representation of the related
-                    # objects.
-                    try:
-                        # noinspection PyUnresolvedReferences
-                        field = self.model._meta.get_field(field_name)
-                        if field.is_relation and values:
-                            values = [
-                                str(obj)
-                                for obj in field.related_model.objects.filter(pk__in=values)
-                            ]
-                    except (FieldDoesNotExist, ValueError):
-                        # Either the model has no field with that name or the
-                        # values could not be used in the filter; just use the
-                        # values as they are.
-                        pass
+        # noinspection PyShadowingNames
+        def make_dupe_item(obj):
+            """
+            Provide a tuple to add to a group of duplicates.
 
-                    display_values.append(
-                        ", ".join(str(v)[:100] for v in values)
-                    )
-                # Add this instance's data, including a change link, to the group.
-                group.append(
-                    (
-                        dupe.instance,
-                        utils.get_obj_link(dupe.instance, self.request.user, blank=True),
-                        display_values
-                    )
-                )
-                # Record the group's instances for the changelist link.
-                instances.append(dupe.instance)
-            # Add a link to the changelist page of this group.
+            The tuple consists of the duplicate model instance, a link to its
+            change page and the instance's values for the overview display.
+            """
+            values = []
+            for f in display_fields:
+                v = ''
+                if getattr(obj, f) is not None:
+                    v = str(getattr(obj, f))
+                    if len(v) > 100:
+                        v = v[:100] + ' [...]'
+                values.append(v)
+            return obj, utils.get_obj_link(obj, self.request.user, blank=True), values
+
+        # noinspection PyShadowingNames
+        def get_cl_link(dupe_group):
+            """Provide a link to the changelist page for this group of duplicate items."""
             cl_url = utils.get_changelist_url(
-                self.model, self.request.user, obj_list=instances
+                self.model, self.request.user, obj_list=[item[0] for item in dupe_group]
             )
-            link = utils.create_hyperlink(
+            return utils.create_hyperlink(
                 url=cl_url, content='Änderungsliste',
+                # 'class' cannot be a keyword argument, so wrap the element
+                # attribute arguments in a dictionary.
                 **{'target': '_blank', 'class': 'button', 'style': 'padding: 10px 15px;'}
             )
-            items.append((group, link))
-        return items
+
+        groups = []
+        # A group of duplicates and the data that makes them duplicates of each
+        # other.
+        dupe_group = dupe_data = None
+        for i, obj in enumerate(duplicates):
+            if {f: getattr(obj, f) for f in search_fields} == dupe_data:
+                dupe_group.append(make_dupe_item(obj))
+                if i == duplicates.count() - 1:
+                    # This is the last item in the queryset: append the group.
+                    groups.append((dupe_group, get_cl_link(dupe_group)))
+            else:
+                # A new set of duplicates begins here.
+                if dupe_group:
+                    groups.append((dupe_group, get_cl_link(dupe_group)))
+                dupe_data = {f: getattr(obj, f) for f in search_fields}
+                dupe_group = [make_dupe_item(obj)]
+        return groups
 
 
 @register_tool(

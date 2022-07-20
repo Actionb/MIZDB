@@ -91,10 +91,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if not hasattr(self, '_action_allowed'):
             self._action_allowed = True
             for check in self.get_action_allowed_checks():
-                # TODO: do not use is False:
-                #  https://peps.python.org/pep-0008/#programming-recommendations
-                #  at "Don’t compare boolean values to True or False using =="
-                if check(view=self) is False:  # TODO: just use self as first arg, not a kwarg
+                if not check(self):
+                    # noinspection PyAttributeOutsideInit
                     self._action_allowed = False
                     break
         return self._action_allowed
@@ -134,8 +132,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
             media = self.model_admin.media
         if hasattr(self, 'get_form') and self.get_form():  # type: ignore[attr-defined]
             media += self.get_form().media  # type: ignore[attr-defined]
-        # FIXME: need to remove 'media' from kwargs or the new default will be
-        #  overridden!
         defaults['media'] = media
 
         # Add view specific variables.
@@ -150,10 +146,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
         defaults['breadcrumbs_title'] = breadcrumbs_title
         if not self.action_reversible:
             defaults['non_reversible_warning'] = self.non_reversible_warning
-        else:
-            # TODO: remove else - the template won't complain if this item was
-            #  missing
-            defaults['non_reversible_warning'] = ''
 
         context.update({**defaults, **kwargs})
         return context
@@ -165,32 +157,24 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
 
     It provides the template with a list of changeform-links to objects that
     are going to be changed by this action. This list is created by the
-    ``compile_affected_objects`` method.
+    ``get_objects_list`` method.
 
     Attributes:
-        - ``affected_fields`` (list): the model fields whose values should be
+        - ``display_fields`` (tuple): the model fields whose values should be
           displayed in the summary of objects affected by this action
     """
 
     template_name: str = 'admin/action_confirmation.html'
 
-    affected_fields: list
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        # TODO: just make affected_fields a tuple - then this check won't be necessary:
-        if not hasattr(self, 'affected_fields') or self.affected_fields is None:
-            self.affected_fields = []
+    display_fields: tuple = ()
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
-        # TODO: wouldn't it be smarter to just check what kind of request it is
-        #  and act accordingly (GET: no data form, POST: data form)?
-        #  It makes no sense to validate the form on a GET request?
         if 'action_confirmed' not in self.request.POST:
             # Only pass in 'data' if the user tries to confirm an action.
             # Do not try to validate the form if it is the first time the
             # user sees the form.
+            # Note that action requests are always POST requests.
             if 'data' in kwargs:
                 del kwargs['data']
             if 'files' in kwargs:
@@ -205,15 +189,15 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         # the redirect for us.
         return None
 
-    def compile_affected_objects(self) -> List[Tuple[SafeTextOrStr, List[SafeTextOrStr]]]:
+    def get_objects_list(self) -> List[Tuple[SafeTextOrStr, List[SafeTextOrStr]]]:
         """
-        Compile a list of the objects that are affected by this action.
+        Compile a list of the objects that would be changed by this action.
 
         Display them as a link to that object's respective change page,
         if possible. If the action is aimed at the values of particular fields
         of the objects, present those values as a nested list.
         """
-        # TODO: this is only used by the edit jahrgang action
+
         def linkify(model_instance):
             object_link = get_obj_link(
                 model_instance, self.request.user,
@@ -234,12 +218,12 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
 
         objects = []
         for obj in self.queryset:
-            # Investigate the field paths in affected_fields:
+            # Investigate the field paths in display_fields:
             # - if the path follows a relation, add a link to each related
             #   object that is going to be impacted by the action's changes
             # - if it's a field of the object, get that field's value
             sub_list = []
-            for field_path in self.affected_fields:
+            for field_path in self.display_fields:
                 field = get_fields_from_path(self.opts.model, field_path)[0]
                 if field.is_relation:
                     related_pks = self.queryset.filter(pk=obj.pk).values_list(
@@ -258,7 +242,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                         # The field has the default django verbose_name
                         verbose_name = verbose_name.title()
                     sub_list.append("{}: {}".format(verbose_name, str(value)))
-            if self.affected_fields:
+            if self.display_fields:
                 links = (linkify(obj), sub_list)
             else:
                 links = (linkify(obj),)  # type: ignore[assignment]
@@ -267,13 +251,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
-
-        context.update(
-            {
-                'affected_objects': self.compile_affected_objects(),
-            }
-        )
-        context.update(**kwargs)
+        context['object_list'] = self.get_objects_list()
         return context
 
 
@@ -282,43 +260,20 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
 
     template_name: str = 'admin/action_confirmation_wizard.html'
 
-    # A dictionary of helptexts for every step: {step:helptext}
-    # TODO: remove view_helptext - add helptexts to context data directly where
-    #  needed/declared
-    view_helptext: dict  # type: ignore[assignment]
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super(WizardConfirmationView, self).__init__(*args, **kwargs)
-        if not hasattr(self, 'view_helptext') or self.view_helptext is None:
-            self.view_helptext = {}
-        self.qs = self.queryset  # WizardView wants it so
-
-    def get_context_data(self, **kwargs: Any) -> dict:
-        context = super().get_context_data(**kwargs)
-        if self.steps.current in self.view_helptext:
-            context['view_helptext'] = self.view_helptext.get(self.steps.current)
-        return context
-
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpRequest:
-        # Actions are always POSTED, but to initialize the SessionWizardView
-        # a GET request is expected.
-        # We work around this by checking if there's a 'current_step'
-        # in the request.
-        if request.POST.get(self.get_prefix(request) + '-current_step') is not None:
-            # the 'previous' form was a wizard form, call WizardView.post()
-            return super().post(request, *args, **kwargs)
+        # Note that action requests are always POST requests.
+        if request.POST.get(self.get_prefix(request) + '-current_step') is None:
+            # The previous form was not a wizard form, or it didn't have a step
+            # set. Assume that the user just got here from the changelist, and
+            # treat this as an initial get request for the WizardView.
+            return self.get(request)
         else:
-            # we just got here from the changelist -- prepare the storage engine
-            self.storage.reset()
-
-            # reset the current step to the first step.
-            self.storage.current_step = self.steps.first
-            return self.render(self.get_form())
+            # The previous form was most likely a wizard form.
+            return super().post(request, *args, **kwargs)
 
     def done(self, *args: Any, **kwargs: Any) -> None:
-        # The 'final' method of a WizardView. It is called from render_done
-        # with some args and kwargs we do not care about.
-        # By default, force a redirect back to the changelist by returning None
+        # The 'final' method of a WizardView.
+        # By default, redirect back to the changelist by returning None.
         try:
             self.perform_action()
         finally:

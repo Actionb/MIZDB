@@ -1,20 +1,20 @@
-from unittest.mock import patch
 from collections import OrderedDict
+from unittest.mock import patch
 
-from django.urls import reverse, resolve
+from django.urls import reverse
 from django.utils.http import unquote
 
 from dbentry import models as _models
 from dbentry.factory import make
 from dbentry.maint.views import (
-    DuplicateObjectsView, ModelSelectView, UnusedObjectsView, find_duplicates
+    DuplicateModelSelectView, DuplicateObjectsView, ModelSelectView, UnusedObjectsView,
+    find_duplicates
 )
-from dbentry.tests.base import ViewTestCase, DataTestCase
+from dbentry.tests.base import DataTestCase, ViewTestCase
 from dbentry.tests.mixins import TestDataMixin
 
 
 class TestModelSelectView(ViewTestCase):
-
     view_class = ModelSelectView
 
     def test_get_context_data(self):
@@ -52,163 +52,194 @@ class TestModelSelectView(ViewTestCase):
 
 
 class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
-
-    model = _models.Band
+    model = _models.Musiker
     view_class = DuplicateObjectsView
 
     @classmethod
     def setUpTestData(cls):
-        cls.genre1 = make(_models.Genre)
-        cls.genre2 = make(_models.Genre)
-        cls.test_data = []
-        for i in range(1, 4):
-            # Note that we are not using make() here, as the factory for the
-            # Band model uses get_or_create with the field 'band_name'.
-            # make(Band, band_name='Beep') will try to get() an existing Band
-            # instance with band_name = 'Beep' before creating a new one.
-            obj = _models.Band.objects.create(id=i, band_name='Beep')
-            obj.genre.set([cls.genre1, cls.genre2])
-            cls.test_data.append(obj)
+        beschreibung = (
+            "This description is rather long and should be truncated to 100 characters "
+            "so that it doesn't occupy too much space in the overview."
+        )
+        cls.genre1 = make(_models.Genre, genre='Rock')
+        cls.genre2 = make(_models.Genre, genre='Soul')
+        cls.person1 = person1 = make(_models.Person, vorname='Alice', nachname='Tester')
+        cls.person2 = person2 = make(_models.Person, vorname='Bob', nachname='Tester')
+        # Do not use make(); it would do a get_or_create(kuenstler_name='Dupe')
+        # when creating the second object, returning the first.
+        cls.dupe_1 = cls.model.objects.create(
+            kuenstler_name='Dupe', beschreibung=beschreibung, person=person1
+        )
+        cls.dupe_2 = cls.model.objects.create(
+            kuenstler_name='Dupe', beschreibung=beschreibung, person=person2
+        )
+        # Add another group of simple duplicates:
+        cls.dupe_3 = cls.model.objects.create(kuenstler_name='Zulu')
+        cls.dupe_4 = cls.model.objects.create(kuenstler_name='Zulu')
+        # And a control object that shouldn't show up as a duplicate:
+        cls.other = cls.model.objects.create(kuenstler_name='Other')
+
+        # noinspection PyUnresolvedReferences
+        cls.dupe_1.genre.set([cls.genre1, cls.genre2])
+        # noinspection PyUnresolvedReferences
+        cls.dupe_2.genre.set([cls.genre1, cls.genre2])
         super().setUpTestData()
 
-    def test_availability(self):
-        url = reverse('dupes', kwargs={'model_name': 'band'})
-        self.assertTrue(resolve(url))
+    def test(self):
+        # Go to the model select part:
+        response = self.client.get(reverse('dupes_select'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.resolver_match.func.__name__,
+            DuplicateModelSelectView.as_view().__name__
+        )
 
-        # Assert that no queries are being done accessing the page; an oversight
-        # led to the page querying for duplicates without any fields when request.
-        # one query each for: session, user (must be a client thing)
-        with self.assertNumQueries(2):
-            self.client.get(url)
+        # Select model 'musiker'. It should redirect us to the DuplicateObjectsView
+        # for that model to select the fields for the search and the overview.
+        response = self.client.get(
+            reverse('dupes_select'),
+            data={'submit': '1', 'model_select': 'musiker'},
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/dupes.html')
+        context = response.context
+        self.assertEqual(context['title'], 'Duplikate: Musiker')
+        self.assertEqual(context['breadcrumbs_title'], 'Musiker')
+        # no overview should be displayed yet:
+        self.assertNotIn('headers', context)
+        self.assertNotIn('items', context)
 
-    def test_setup_exception(self):
-        # Assert that setup() raises a TypeError when 'model_name' kwarg is
-        # missing.
-        view = self.view_class()
-        request = self.get_request()
-        with self.assertRaises(TypeError):
-            view.setup(request)
+        # Select the fields. The duplicates should then be displayed.
+        response = self.client.get(
+            reverse('dupes', kwargs={'model_name': 'musiker'}),
+            data={
+                'get_duplicates': '1',
+                'select': ['kuenstler_name'],
+                'display': ['kuenstler_name', 'genre__genre']
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/dupes.html')
+        context = response.context
+        self.assertEqual(context['title'], 'Duplikate: Musiker')
+        self.assertEqual(context['breadcrumbs_title'], 'Musiker')
+        self.assertEqual(context['headers'], ['Künstlername', 'Genre'])
+        self.assertTrue(context['items'])
 
     def test_build_duplicates_items(self):
-        # Assert that build_duplicates_items returns the correct items.
+        changelist_url = reverse('admin:dbentry_musiker_changelist')
         changeform_url = unquote(
-            reverse('admin:dbentry_band_change', args=['{pk}'])
+            reverse('admin:dbentry_musiker_change', args=['{pk}'])
         )
         link_template = '<a href="{url}" target="_blank">{name}</a>'
 
-        request = self.get_request(
-            data={
-                'base': ['band_name', 'beschreibung'], 'm2m': ['genre'],
-                'base_display': ['band_name', 'beschreibung'],
-                'm2m_display': ['genre']
-            }
-        )
-        view = self.get_view(request, kwargs={'model_name': 'band'})
+        def get_link(obj):
+            return link_template.format(url=changeform_url.format(pk=obj.pk), name=str(obj))
+
+        request_data = {
+            'select': ['kuenstler_name'],
+            'display': ['kuenstler_name', 'beschreibung', 'person', 'genre__genre']
+        }
+        request = self.get_request(data=request_data)
+        view = self.get_view(request, kwargs={'model_name': 'musiker'})
         form = view.get_form()
         # A validated and cleaned form is required.
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), msg=form.errors)
 
         items = view.build_duplicates_items(form)
         self.assertEqual(
-            len(items), 1,
-            msg="There should be only one set of duplicate objects. %r" % items
+            len(items), 2,
+            msg=f"There should be two sets of duplicate objects. {items}"
         )
+
+        ############################################################################################
+        # Check the first set of duplicates:
+        ############################################################################################
         self.assertEqual(
             len(items[0]), 2,
-            msg="Should contain one set of duplicate objects and the link to "
-            "their changelist."
+            msg="Should contain one set of duplicate objects and the link to their changelist."
         )
-        self.assertEqual(
-            len(items[0][0]), 3,
-            msg="Should contain the three duplicate objects."
-        )
-        for dupe_item in items[0][0]:
-            with self.subTest():
-                self.assertEqual(
-                    len(dupe_item), 3,
-                    msg="Each dupe item is expected to have 3 attributes."
-                )
-                self.assertIsInstance(
-                    dupe_item[0], self.model,
-                    msg="Duplicate object should be an instance of "
-                    "{!s}.".format(self.model)
-                )
-                expected_link = link_template.format(
-                    url=changeform_url.format(pk=dupe_item[0].pk),
-                    name=str(dupe_item[0])
-                )
-                self.assertEqual(
-                    dupe_item[1], expected_link,
-                    msg="Should be link to change form of object."
-                )
-                self.assertEqual(
-                    len(dupe_item[2]), 3,
-                    msg=(
-                        "Expected each dupe item to have three values: band_name,"
-                        " beschreibung, genres"
-                    )
-                )
-                # band_name:
-                self.assertEqual(
-                    dupe_item[2][0], 'Beep', msg="Band names do not match.")
-                # beschreibung:
-                self.assertEqual(
-                    dupe_item[2][1], '', msg="Beschreibung does not match.")
-                # genres:
-                genres = ", ".join(sorted([str(self.genre1), str(self.genre2)]))
-                self.assertEqual(
-                    # Enforce an alphabetical order.
-                    ", ".join(v for v in sorted(dupe_item[2][2].split(", "))),
-                    genres,
-                    msg="Genres do not match."
-                )
-        # Investigate the link to the changelist:
+        # Check the link to the changelist:
         cl_link = items[0][1]
         self.assertIsInstance(cl_link, str)
-        url = reverse('admin:dbentry_band_changelist')
-        query_params = "id__in=" + ",".join(str(o.pk) for o in self.test_data)
-        self.assertIn(f"{url}?{query_params}", cl_link)
+        self.assertIn(f"{changelist_url}?id__in={self.dupe_1.pk},{self.dupe_2.pk}", cl_link)
         self.assertIn('target="_blank"', cl_link)
         self.assertIn('class="button"', cl_link)
         self.assertIn('style="padding: 10px 15px;', cl_link)
         self.assertIn('>Änderungsliste</a>', cl_link)
 
-    def test_build_duplicates_headers(self):
-        # Assert that the correct (field.verbose_name capitalized) headers are
-        # returned. Headers are built from the labels of the established choices.
-        test_data = [
-            ({'base': ['band_name'], 'base_display': ['band_name']}, 'Bandname'),
-            ({'m2m': ['genre'], 'm2m_display': ['genre']}, 'Genre'),
-            ({'reverse': ['bandalias__alias'], 'reverse_display': ['bandalias__alias']}, 'Alias')
-        ]
-        for request_data, expected in test_data:
-            with self.subTest(data=request_data):
-                request = self.get_request(data=request_data)
-                view = self.get_view(request, kwargs={'model_name': 'band'})
-                form = view.get_form()
-                self.assertTrue(form.is_valid())
-                headers = view.build_duplicates_headers(form)
-                self.assertIn(expected, headers)
+        self.assertEqual(len(items[0][0]), 2, msg="Should contain the two duplicate objects.")
 
-    def test_build_duplicates_headers_grouped_choices(self):
-        request = self.get_request(
-            data={
-                'reverse': ['bandalias__alias'],
-                'reverse_display': ['bandalias__alias']
-            }
+        # Check the duplicate items:
+        expected_beschreibung = (
+            "This description is rather long and should be truncated to 100 characters so that it "
+            "doesn't occupy  [...]"
         )
+        dupe1, dupe2 = items[0][0]
+        expected = (
+            self.dupe_1,
+            get_link(self.dupe_1),
+            ['Dupe', expected_beschreibung, 'Alice Tester', 'Rock, Soul']
+        )
+        self.assertEqual(dupe1, expected)
+        expected = (
+            self.dupe_2,
+            get_link(self.dupe_2),
+            ['Dupe', expected_beschreibung, 'Bob Tester', 'Rock, Soul']
+        )
+        self.assertEqual(dupe2, expected)
+
+        ############################################################################################
+        # Check the second set of duplicates:
+        ############################################################################################
+        self.assertEqual(
+            len(items[1]), 2,
+            msg="Should contain one set of duplicate objects and the link to their changelist."
+        )
+        # Check the link to the changelist:
+        cl_link = items[1][1]
+        self.assertIsInstance(cl_link, str)
+        self.assertIn(f"{changelist_url}?id__in={self.dupe_3.pk},{self.dupe_4.pk}", cl_link)
+        self.assertIn('target="_blank"', cl_link)
+        self.assertIn('class="button"', cl_link)
+        self.assertIn('style="padding: 10px 15px;', cl_link)
+        self.assertIn('>Änderungsliste</a>', cl_link)
+
+        self.assertEqual(len(items[1][0]), 2, msg="Should contain the two duplicate objects.")
+        dupe1, dupe2 = items[1][0]
+        self.assertEqual(dupe1, (self.dupe_3, get_link(self.dupe_3), ['Zulu', '', '', '']))
+        self.assertEqual(dupe2, (self.dupe_4, get_link(self.dupe_4), ['Zulu', '', '', '']))
+
+    def test_setup_exception(self):
+        """Assert that setup() raises a TypeError when 'model_name' kwarg is missing."""
+        with self.assertRaises(TypeError):
+            self.view_class().setup(self.get_request())
+
+    def test_headers(self):
+        """Assert that the headers for the overview table are added to the template context."""
+        request_data = {
+            'get_duplicates': '1',
+            'select': ['band_name'],
+            'display': ['band_name', 'genre__genre']
+        }
+        request = self.get_request(data=request_data)
         view = self.get_view(request, kwargs={'model_name': 'band'})
-        form = view.get_form()
-        form.fields['reverse'].choices = [
-            ('Alias', [('bandalias__alias', 'Alias')])
-        ]
-        self.assertTrue(form.is_valid())
-        headers = view.build_duplicates_headers(form)
-        self.assertIn('Alias', headers)
+        with patch.object(view, 'build_duplicates_items'):
+            with patch.object(view, 'render_to_response') as render_mock:
+                view.get(request)
+                context = render_mock.call_args[0][0]
+                self.assertEqual(context['headers'], ['Bandname', 'Genre'])
+                self.assertEqual(context['headers_width'], '40')
+
+    def test_get_context_data(self):
+        view = self.get_view(self.get_request(), kwargs={'model_name': 'band'})
+        context = view.get_context_data()
+        self.assertEqual(context['title'], 'Duplikate: Band')
+        self.assertEqual(context['breadcrumbs_title'], 'Band')
 
 
 class TestUnusedObjectsView(ViewTestCase):
-
     view_class = UnusedObjectsView
 
     @classmethod
@@ -302,150 +333,50 @@ class TestUnusedObjectsView(ViewTestCase):
         self.assertIn(cl_url, link)
 
 
-class TestDuplicates(DataTestCase):
-
+class TestFindDuplicates(DataTestCase):
     model = _models.Musiker
 
     @classmethod
     def setUpTestData(cls):
-        cls.test_data = [
-            cls.model.objects.create(kuenstler_name='Bob'),
-            cls.model.objects.create(kuenstler_name='Bob'),
-            cls.model.objects.create(kuenstler_name='Bob'),
-        ]
-
+        # Do not use make(); it would do a get_or_create(kuenstler_name='Dupe')
+        # when creating the second object, returning the first.
+        cls.dupe_1 = cls.model.objects.create(kuenstler_name='Dupe', beschreibung='foo')
+        cls.dupe_2 = cls.model.objects.create(kuenstler_name='Dupe', beschreibung='bar')
+        cls.other = cls.model.objects.create(kuenstler_name='Test')
         super().setUpTestData()
 
-    def get_duplicate_instances(self, dupe_fields, display_fields=None, queryset=None):
-        # Query for the duplicates and return the duplicate model instances.
-        if queryset is None:
-            queryset = self.queryset
-        duplicates = find_duplicates(queryset, dupe_fields, display_fields or ())
-        instances = []
-        for dupe_group in duplicates:
-            for dupe in dupe_group:
-                instances.append(dupe.instance)
-        return instances
+    def test(self):
+        self.assertNotEqual(self.dupe_1.pk, self.dupe_2.pk)
+        duplicates = find_duplicates(self.model.objects.all(), fields=['kuenstler_name'])
+        self.assertEqual(len(duplicates), 2)
+        self.assertIn(self.dupe_1, duplicates)
+        self.assertIn(self.dupe_2, duplicates)
 
-    # noinspection PyUnresolvedReferences
-    def test_find_duplicates(self):
-        # Assert that the three duplicates instances are found.
-        duplicates = self.get_duplicate_instances(['kuenstler_name'])
-        msg = "Expected to find %r among the duplicate instances."
-        self.assertIn(self.obj1, duplicates, msg=msg % self.obj1)
-        self.assertIn(self.obj2, duplicates, msg=msg % self.obj2)
-        self.assertIn(self.obj3, duplicates, msg=msg % self.obj3)
+        # There should be no duplicates, if the 'beschreibung' field is included
+        # as the field values differ.
+        duplicates = find_duplicates(
+            self.model.objects.all(), fields=['kuenstler_name', 'beschreibung']
+        )
+        self.assertEqual(len(duplicates), 0)
 
-    def test_empty(self):
-        # Assert that duplicates are not found by comparing empty values.
-        duplicates = self.get_duplicate_instances(['beschreibung'])
-        msg = "Unexpectedly found %r as duplicate by querying an empty field."
-        for obj in self.test_data:
-            with self.subTest(obj=obj):
-                self.assertNotIn(obj, duplicates, msg=msg % obj)
+    def test_relations(self):
+        """Assert that values from relations can be included when checking for duplicates."""
+        self.dupe_1.musikeralias_set.create(alias='Foo')
+        duplicates = find_duplicates(
+            self.model.objects.all(), fields=['kuenstler_name', 'musikeralias__alias']
+        )
+        self.assertEqual(len(duplicates), 0)
 
-    # noinspection PyUnresolvedReferences
-    def test_duplicates_m2m(self):
-        # Assert that duplicates can be found by comparing m2m fields.
-        g1 = make(_models.Genre)
-        g2 = make(_models.Genre)
-
-        # Add identical genres to obj1 and obj2.
-        self.obj1.genre.add(g1)
-        self.obj2.genre.add(g1)
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'genre'])
-        self.assertIn(self.obj1, duplicates)
-        self.assertIn(self.obj2, duplicates)
-        # Comparing on the m2m field 'genre' should have failed for obj3:
-        self.assertNotIn(self.obj3, duplicates)
-
-        # Add a different genre to obj3.
-        # The results should be the same as above.
-        self.obj3.genre.add(g2)
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'genre'])
-        self.assertIn(self.obj1, duplicates)
-        self.assertIn(self.obj2, duplicates)
-        self.assertNotIn(self.obj3, duplicates)
-
-        # obj1 and obj2 share a genre, but their total genres are not the same.
-        self.obj1.genre.add(g2)
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'genre'])
-        self.assertNotIn(self.obj1, duplicates)
-        self.assertNotIn(self.obj2, duplicates)
-        self.assertNotIn(self.obj3, duplicates)
-
-    # noinspection PyUnresolvedReferences
-    def test_duplicates_reverse_fk(self):
-        # Assert that duplicates can be found by comparing reverse FK fields.
-        # Add the same alias to both obj1 and obj2:
-        self.obj1.musikeralias_set.create(alias='Beep')
-        self.obj2.musikeralias_set.create(alias='Beep')
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'musikeralias__alias'])
-        self.assertIn(self.obj1, duplicates)
-        self.assertIn(self.obj2, duplicates)
-        # obj3 does not share the aliases of obj1 or obj2:
-        self.assertNotIn(self.obj3, duplicates)
-
-        # Add a different alias to obj3.
-        # The results should be the same as above:
-        self.obj3.musikeralias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'musikeralias__alias'])
-        self.assertIn(self.obj1, duplicates)
-        self.assertIn(self.obj2, duplicates)
-        self.assertNotIn(self.obj3, duplicates)
-
-        # Add another alias to obj1.
-        # None of the Musiker instances should be duplicates now:
-        self.obj1.musikeralias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'musikeralias__alias'])
-        self.assertNotIn(self.obj1, duplicates)
-        self.assertNotIn(self.obj2, duplicates)
-        self.assertNotIn(self.obj3, duplicates)
-
-    # noinspection PyUnresolvedReferences
-    def test_duplicates_reverse_fk_joins(self):
-        # Assert that the number of duplicates found is not affected by table joins.
-        self.obj1.musikeralias_set.create(alias='Beep')
-        self.obj2.musikeralias_set.create(alias='Beep')
-        self.obj1.musikeralias_set.create(alias='Boop')
-        self.obj2.musikeralias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances(['kuenstler_name', 'musikeralias__alias'])
+        self.dupe_2.musikeralias_set.create(alias='Foo')
+        duplicates = find_duplicates(
+            self.model.objects.all(), fields=['kuenstler_name', 'musikeralias__alias']
+        )
         self.assertEqual(len(duplicates), 2)
 
-    def test_duplicate_values(self):
-        # Check the 'duplicate_values' returned by find_duplicates.
-        self.queryset.update(beschreibung='Rival Sons are pretty good.')
+        # other shouldn't be a duplicate just because of the matching alias
+        self.dupe_2.musikeralias_set.update(alias='Bar')  # aliases no longer match
+        self.other.musikeralias_set.create(alias='Foo')
         duplicates = find_duplicates(
-            self.queryset, dupe_fields=['kuenstler_name', 'beschreibung'], display_fields=())
-        self.assertEqual(len(duplicates), 1, msg="Expected only one dupe group.")
-        self.assertEqual(len(duplicates[0]), 3, msg="Expected three dupes.")
-        for dupe in duplicates[0]:
-            with self.subTest(dupe=dupe):
-                self.assertIn(
-                    'kuenstler_name', dupe.duplicate_values,
-                    msg="Expected field 'kuenstler_name' to be in dupe_values."
-                )
-                self.assertEqual(dupe.duplicate_values['kuenstler_name'], ('Bob', ))
-
-                self.assertIn(
-                    'beschreibung', dupe.duplicate_values,
-                    msg="Expected field 'beschreibung' to be in dupe_values."
-                )
-                self.assertEqual(
-                    dupe.duplicate_values['beschreibung'], ('Rival Sons are pretty good.', ))
-
-    def test_display_values(self):
-        # Check the 'display values' returned by find_duplicates.
-        self.queryset.update(beschreibung='Rival Sons are pretty good.')
-        duplicates = find_duplicates(
-            self.queryset, dupe_fields=['kuenstler_name'], display_fields=['beschreibung'])
-        self.assertEqual(len(duplicates), 1, msg="Expected only one dupe group.")
-        self.assertEqual(len(duplicates[0]), 3, msg="Expected three dupes.")
-        for dupe in duplicates[0]:
-            with self.subTest(dupe=dupe):
-                self.assertIn(
-                    'beschreibung', dupe.display_values,
-                    msg="Expected field 'beschreibung' to be in display_values."
-                )
-                self.assertEqual(
-                    dupe.display_values['beschreibung'], ('Rival Sons are pretty good.', ))
+            self.model.objects.all(), fields=['kuenstler_name', 'musikeralias__alias']
+        )
+        self.assertEqual(len(duplicates), 0)
