@@ -1,4 +1,4 @@
-from unittest import expectedFailure, skip
+from unittest import expectedFailure
 from unittest.mock import DEFAULT, Mock, PropertyMock, call, patch
 
 from django import forms
@@ -427,27 +427,6 @@ class TestWizardConfirmationView(ActionViewTestCase):
     model = Band
     model_admin_class = BandAdmin
 
-    @skip("Move this test to BulkEditJahrgang tests")
-    @patch.object(ConfirmationViewMixin, 'get_context_data', return_value={})
-    def test_get_context_data(self, _m):
-        # get_context_data should add help text for the current step
-        view = self.get_view()
-        view.steps = Mock(current='1')
-        context = view.get_context_data()
-        self.assertNotIn('view_helptext', context)
-
-        view.view_helptext = {
-            '1': 'Step 1',
-            '2': 'Step 2'
-        }
-        context = view.get_context_data()
-        self.assertIn('view_helptext', context)
-        self.assertEqual(context['view_helptext'], 'Step 1')
-        view.steps = Mock(current='2')
-        context = view.get_context_data()
-        self.assertIn('view_helptext', context)
-        self.assertEqual(context['view_helptext'], 'Step 2')
-
     def test_post_first_visit(self):
         """
         If there is no 'step' data in request.POST, post() should prepare the
@@ -628,6 +607,11 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/action_confirmation.html')
 
+    def test_get_context_data_contains_helptext(self):
+        """Assert that the help text(s) are included in the context data."""
+        view = self.get_view(self.get_request())
+        self.assertIn('view_helptext', view.get_context_data().keys())
+
 
 class TestMergeViewAusgabe(ActionViewTestCase):
     admin_site = miz_site
@@ -746,12 +730,30 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         step template.
         """
         view = self.get_view()
-        view.steps = Mock(current=MergeViewWizarded.SELECT_PRIMARY_STEP)
+        step = view.SELECT_PRIMARY_STEP
+        view.steps = Mock(current=step)
         super_mock.return_value = {'form': MergeFormSelectPrimary()}
-        with patch.object(view.model_admin, 'get_changelist_instance'):
-            data = view.get_context_data()
-            self.assertIn('cl', data)
-            self.assertIn('primary_label', data)
+        changelist_mock = Mock()
+        with patch.object(view.model_admin, 'get_changelist_instance') as get_changelist_mock:
+            get_changelist_mock.return_value = changelist_mock
+            context = view.get_context_data()
+            self.assertEqual(context['title'], 'Merge objects: step 1')
+            self.assertEqual(context['cl'], changelist_mock)
+            label_element = '<label class="required" for="id_primary" style="width: 100%;">'
+            self.assertTrue(context['primary_label'].startswith(label_element))
+            self.assertEqual(context['current_step'], '0')
+            self.assertEqual(context['view_helptext'], view.view_helptext[step])
+
+    @translation_override(language=None)
+    @patch.object(WizardConfirmationView, 'get_context_data')
+    def test_get_context_data_select_conflict_resolution_step(self, super_mock):
+        view = self.get_view()
+        step = view.CONFLICT_RESOLUTION_STEP
+        view.steps = Mock(current=step)
+        super_mock.return_value = {}
+        context = view.get_context_data()
+        self.assertEqual(context['title'], 'Merge objects: step 2')
+        self.assertEqual(context['view_helptext'], view.view_helptext[step])
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
     def test_get_form_kwargs_select_primary_step(self, _super_mock):
