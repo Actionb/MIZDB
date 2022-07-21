@@ -40,3 +40,12 @@ class Person(models.Model):
 
     class Meta:
         verbose_name = 'Person'
+
+
+class Kalender(models.Model):
+    class Meta:
+        verbose_name = 'Programmheft'
+
+
+class Unregistered(models.Model):
+    pass
