@@ -9,10 +9,10 @@ from dbentry.maint.forms import (
     get_dupe_field_choices
 )
 from dbentry.sites import miz_site
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestGetDupeFieldChoices(MyTestCase):
+class TestGetDupeFieldChoices(MIZTestCase):
 
     def test_select_choices(self):
         select, _display = get_dupe_field_choices(_models.Musiker)
@@ -67,7 +67,7 @@ class TestGetDupeFieldChoices(MyTestCase):
         self.assertIn(('musikeralias__alias', 'Alias'), display)
 
 
-class TestModelSelectForm(MyTestCase):
+class TestModelSelectForm(MIZTestCase):
     form_class = ModelSelectForm
 
     def test_init_passes_model_select_choices(self):
@@ -112,7 +112,7 @@ class TestModelSelectForm(MyTestCase):
                 )
 
 
-class TestDuplicateFieldsSelectForm(MyTestCase):
+class TestDuplicateFieldsSelectForm(MIZTestCase):
     form_class = DuplicateFieldsSelectForm
 
     def test_init_sets_choices(self):
