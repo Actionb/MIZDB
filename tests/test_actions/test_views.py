@@ -26,7 +26,7 @@ from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, MergeConflictsFormSet, MergeFormSelectPrimary
 )
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeViewWizarded, MoveToBrochureBase
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
 )
 from dbentry.base.forms import MIZAdminForm
 from dbentry.sites import miz_site
@@ -325,21 +325,21 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertIn('files', view.get_form_kwargs())
 
     @patch('dbentry.actions.base.get_obj_link')
-    def test_compile_affected_objects(self, get_link_mock):
+    def test_get_objects_list(self, get_link_mock):
         get_link_mock.side_effect = get_obj_link_mock
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
             queryset=self.model.objects.all(),  # noqa
-            affected_fields=['band_name', 'genres', 'status']
+            display_fields=['band_name', 'genres', 'status']
         )
         user = view.request.user
-        link_list = view.compile_affected_objects()
+        link_list = view.get_objects_list()
 
         # link_list should have a structure like this:
         # [
-        #       ('Band: <link of obj1>', [<affected objects>]),
-        #       ('Band: <link of obj2>', [<affected objects>]),
+        #       ('Band: <link of obj1>', [<additional info (display_fields)>]),
+        #       ('Band: <link of obj2>', [<additional info (display_fields)>]),
         #       ...
         # ]
 
@@ -354,22 +354,22 @@ class TestActionConfirmationView(ActionViewTestCase):
             get_link_mock.call_args_list[-1], call(self.obj, user, self.admin_site.name, blank=True)
         )
 
-        # link_list[0][1] is the list of values for the affected fields:
-        affected_field_values = link_list[0][1]
-        self.assertEqual(affected_field_values[0], 'Bandname: ' + self.obj.band_name)
+        # link_list[0][1] is the list of values for the display fields:
+        display_field_values = link_list[0][1]
+        self.assertEqual(display_field_values[0], 'Bandname: ' + self.obj.band_name)
 
         # The next two items should be links to the Genre objects:
         # noinspection PyUnresolvedReferences
         genres = Genre.objects.all().order_by('genre')
         self.assertEqual(
-            affected_field_values[1], f'Genre: <a href="URL" target="_blank">{genres[0]}</a>'
+            display_field_values[1], f'Genre: <a href="URL" target="_blank">{genres[0]}</a>'
         )
         self.assertEqual(
             get_link_mock.call_args_list[0],
             call(genres[0], user, self.admin_site.name, blank=True)
         )
         self.assertEqual(
-            affected_field_values[2], f'Genre: <a href="URL" target="_blank">{genres[1]}</a>'
+            display_field_values[2], f'Genre: <a href="URL" target="_blank">{genres[1]}</a>'
         )
         self.assertEqual(
             get_link_mock.call_args_list[1],
@@ -380,19 +380,20 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertEqual(link_list[0][1][3], 'Status: Aktiv')
 
     @patch('dbentry.actions.base.get_obj_link')
-    def test_compile_affected_objects_no_affected_fields(self, get_link_mock):
+    def test_get_objects_list_no_display_fields(self, get_link_mock):
         get_link_mock.return_value = format_html('<a href="URL">a link</a>')
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
             queryset=self.model.objects.all(),  # noqa
-            affected_fields=[]
+            display_fields=[]
         )
-        self.assertEqual(view.compile_affected_objects(), [('Band: <a href="URL">a link</a>',)])
+        self.assertEqual(view.get_objects_list(), [('Band: <a href="URL">a link</a>',)])
 
     @patch('dbentry.actions.base.get_obj_link')
-    def test_compile_affected_objects_no_link(self, get_link_mock):
-        """Assert that a string representation of the object is presented, if
+    def test_get_objects_list_no_link(self, get_link_mock):
+        """
+        Assert that a string representation of the object is presented, if
         no link could be created for it.
         """
         get_link_mock.return_value = f'Band: {self.obj}'
@@ -400,9 +401,9 @@ class TestActionConfirmationView(ActionViewTestCase):
             self.get_request(),
             model_admin=self.model_admin,
             queryset=self.model.objects.all(),  # noqa
-            affected_fields=[]
+            display_fields=[]
         )
-        self.assertEqual(view.compile_affected_objects(), [(f'Band: {self.obj}',)])
+        self.assertEqual(view.get_objects_list(), [(f'Band: {self.obj}',)])
 
     def test_form_valid(self):
         """
@@ -413,11 +414,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         view.perform_action = Mock()
         self.assertIsNone(view.form_valid(Mock()))
 
-    def test_get_context_data_adds_affected_objects(self):
-        """Assert that 'affected_objects' are added to the context data."""
+    def test_get_context_data_adds_objects_list(self):
+        """Assert that 'object_list' are added to the context data."""
         view = self.get_view(self.get_request())
-        with patch.object(view, 'compile_affected_objects'):
-            self.assertIn('affected_objects', view.get_context_data())
+        with patch.object(view, 'get_objects_list'):
+            self.assertIn('object_list', view.get_context_data())
 
 
 @override_settings(ROOT_URLCONF=URLConf)
@@ -492,14 +493,14 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/action_confirmation.html')
 
-        # Check the contents of the 'affected_objects' context item.
+        # Check the contents of the 'object_list' context item.
         # It should be a list of 2-tuples. The first item of that tuple should
         # be a link to the Ausgabe instance. The second item should be the
-        # values of the affected fields. The affected_fields for this view are
+        # values of the affected fields. The display_fields for this view are
         # 'jahrgang' and 'ausgabejahr__jahr'.
-        self.assertIn('affected_objects', response.context)
-        self.assertEqual(len(response.context['affected_objects']), 2)
-        (obj1_link, obj1_values), (obj2_link, obj2_values) = response.context['affected_objects']
+        self.assertIn('object_list', response.context)
+        self.assertEqual(len(response.context['object_list']), 2)
+        (obj1_link, obj1_values), (obj2_link, obj2_values) = response.context['object_list']
         link = get_obj_link(self.obj1, user, miz_site.name, blank=True)
         self.assertEqual(obj1_link, f"Ausgabe: {link}")
         self.assertEqual(obj1_values, ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"])
@@ -615,7 +616,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
 class TestMergeViewAusgabe(ActionViewTestCase):
     admin_site = miz_site
-    view_class = MergeViewWizarded
+    view_class = MergeView
     model = _models.Ausgabe
     model_admin_class = _admin.AusgabenAdmin
 
@@ -682,10 +683,10 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         )
         view.steps = Mock(
-            current=MergeViewWizarded.SELECT_PRIMARY_STEP,
-            last=MergeViewWizarded.CONFLICT_RESOLUTION_STEP
+            current=MergeView.SELECT_PRIMARY_STEP,
+            last=MergeView.CONFLICT_RESOLUTION_STEP
         )
-        view.storage = Mock(current_step=MergeViewWizarded.SELECT_PRIMARY_STEP)
+        view.storage = Mock(current_step=MergeView.SELECT_PRIMARY_STEP)
         form = MergeFormSelectPrimary()
         form.cleaned_data = {'expand_primary': True}
         with patch.object(view, '_has_merge_conflicts') as has_conflict_mock:
@@ -700,7 +701,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         processing is needed and the data should simply be returned.
         """
         view = self.get_view()
-        view.steps = Mock(current=MergeViewWizarded.CONFLICT_RESOLUTION_STEP)
+        view.steps = Mock(current=MergeView.CONFLICT_RESOLUTION_STEP)
         with patch.object(WizardView, 'process_step', new=Mock(return_value={'foo': 'bar'})):
             self.assertEqual(view.process_step(None), {'foo': 'bar'})
 
@@ -712,15 +713,15 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         """
         view = self.get_view()
         view.steps = Mock(
-            current=MergeViewWizarded.SELECT_PRIMARY_STEP,
-            last=MergeViewWizarded.CONFLICT_RESOLUTION_STEP
+            current=MergeView.SELECT_PRIMARY_STEP,
+            last=MergeView.CONFLICT_RESOLUTION_STEP
         )
-        view.storage = Mock(current_step=MergeViewWizarded.SELECT_PRIMARY_STEP)
+        view.storage = Mock(current_step=MergeView.SELECT_PRIMARY_STEP)
         form = MergeFormSelectPrimary()
         form.cleaned_data = {'expand_primary': False}
         data = view.process_step(form)
         self.assertFalse(data)
-        self.assertEqual(view.storage.current_step, MergeViewWizarded.CONFLICT_RESOLUTION_STEP)
+        self.assertEqual(view.storage.current_step, MergeView.CONFLICT_RESOLUTION_STEP)
 
     @translation_override(language=None)
     @patch.object(WizardConfirmationView, 'get_context_data')
@@ -765,9 +766,9 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]),
             # The wizard view expects form_list to be a dictionary:
             # (WizardView.get_initkwargs turns the form_list list into an OrderedDict)
-            form_list={MergeViewWizarded.SELECT_PRIMARY_STEP: MergeFormSelectPrimary}
+            form_list={MergeView.SELECT_PRIMARY_STEP: MergeFormSelectPrimary}
         )
-        form_kwargs = view.get_form_kwargs(step=MergeViewWizarded.SELECT_PRIMARY_STEP)
+        form_kwargs = view.get_form_kwargs(step=MergeView.SELECT_PRIMARY_STEP)
         self.assertIn('choices', form_kwargs)
         formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
         self.assertEqual(
@@ -785,11 +786,11 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]),
             # The wizard view expects form_list to be a dictionary:
             # (WizardView.get_initkwargs turns the form_list list into an OrderedDict)
-            form_list={MergeViewWizarded.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
+            form_list={MergeView.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
         )
         # Conflict for 'jahrgang':
         view._updates = {'jahrgang': ['1', '2'], 'beschreibung': ['Test']}
-        form_kwargs = view.get_form_kwargs(step=MergeViewWizarded.CONFLICT_RESOLUTION_STEP)
+        form_kwargs = view.get_form_kwargs(step=MergeView.CONFLICT_RESOLUTION_STEP)
         self.assertIn('data', form_kwargs)
         expected = {
             '1-TOTAL_FORMS': 1, '1-MAX_NUM_FORMS': '', '1-0-original_fld_name': 'jahrgang',
@@ -855,7 +856,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
             # Management form:
-            'merge_view_wizarded-current_step': 0,
+            'merge_view-current_step': 0,
             # Form data:
             '0-primary': self.obj1.pk,
             '0-expand_primary': True
@@ -871,7 +872,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
             # Management form:
-            'merge_view_wizarded-current_step': 0,
+            'merge_view-current_step': 0,
             # Form data:
             '0-primary': self.obj1.pk,
             '0-expand_primary': True
@@ -891,7 +892,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
             # Management form:
-            'merge_view_wizarded-current_step': 0,
+            'merge_view-current_step': 0,
             # Form data:
             '0-primary': self.obj1.pk,
             '0-expand_primary': True
@@ -903,7 +904,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
             # Management form:
-            'merge_view_wizarded-current_step': 1,
+            'merge_view-current_step': 1,
             '1-INITIAL_FORMS': '0',
             '1-MAX_NUM_FORMS': '',
             '1-MIN_NUM_FORMS': '',
@@ -927,12 +928,12 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
             # Management form:
-            'merge_view_wizarded-current_step': 0,
+            'merge_view-current_step': 0,
             # Form data:
             '0-primary': self.obj1.pk,
             '0-expand_primary': True
         }
-        with patch.object(MergeViewWizarded, 'perform_action') as m:
+        with patch.object(MergeView, 'perform_action') as m:
             m.side_effect = models.deletion.ProtectedError('msg', self.model.objects.all())
             response = self.post_response(self.changelist_path, data=request_data, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -991,7 +992,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk],
             # Management form:
-            'merge_view_wizarded-current_step': 0,
+            'merge_view-current_step': 0,
             # Form data:
             '0-primary': self.obj1.pk,
             '0-expand_primary': False
@@ -1008,7 +1009,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
 
 class TestMergeViewArtikel(ActionViewTestCase):
     admin_site = miz_site
-    view_class = MergeViewWizarded
+    view_class = MergeView
     model = _models.Artikel
     model_admin_class = _admin.ArtikelAdmin
 
@@ -1036,7 +1037,7 @@ class TestMergeViewArtikel(ActionViewTestCase):
 
 class TestMoveToBrochure(ActionViewTestCase):
     admin_site = miz_site
-    view_class = MoveToBrochureBase
+    view_class = MoveToBrochure
     model = _models.Ausgabe
     model_admin_class = _admin.AusgabenAdmin
 
@@ -1212,7 +1213,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         initial = view.get_initial()
         self.assertEqual(len(initial), 1)
         self.assertEqual(initial[0]['ausgabe_id'], self.obj1.pk)
-        self.assertEqual(initial[0]['titel'], 'Testmagazin')
+        self.assertEqual(initial[0]['titel'], f'Testmagazin {self.obj1}')
         self.assertEqual(initial[0]['zusammenfassung'], 'Ein Magazin für Tests.')
         self.assertEqual(initial[0]['beschreibung'], 'Foo')
         self.assertEqual(initial[0]['bemerkungen'], 'Do not use in production!')
@@ -1581,7 +1582,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertIsInstance(context['management_form'], ManagementForm)
         self.assertIsInstance(context['options_form'], BrochureActionFormOptions)
 
-    @patch('dbentry.actions.views.MoveToBrochureBase.can_delete_magazin', new_callable=PropertyMock)
+    @patch('dbentry.actions.views.MoveToBrochure.can_delete_magazin', new_callable=PropertyMock)
     def test_conditionally_show_delete_magazin_option(self, can_delete_mock):
         """
         Assert that the field 'delete_magazin' is only enabled on the

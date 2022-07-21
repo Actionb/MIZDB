@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from django.views import View
 
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeViewWizarded, MoveToBrochureBase
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
 )
 
 
@@ -36,14 +36,14 @@ def bulk_jg(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Cal
     return BulkEditJahrgang.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
-@add_cls_attrs(MergeViewWizarded)
+@add_cls_attrs(MergeView)
 def merge_records(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return MergeViewWizarded.as_view(model_admin=model_admin, queryset=queryset)(request)
+    return MergeView.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
-@add_cls_attrs(MoveToBrochureBase)
+@add_cls_attrs(MoveToBrochure)
 def moveto_brochure(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return MoveToBrochureBase.as_view(model_admin=model_admin, queryset=queryset)(request)
+    return MoveToBrochure.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(ChangeBestand)
