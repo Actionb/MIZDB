@@ -256,15 +256,6 @@ def _get_relation_change_message(obj: Model, parent_model: Type[Model]) -> Dict:
             parent_model = opts.auto_created
         for fld in opts.get_fields():
             if fld.is_relation and fld.related_model != parent_model:
-                # FIXME: the comparison fld.related_model != parent_model is
-                #  inaccurate when the relation field is inherited:
-                #  fld.related_model will be unequal to the parent model even
-                #  for the 'wrong' fields.
-                #  Example: Brochure genre objects: parent model for changes on
-                #  a Brochure is Brochure - but fld.related_model refers to
-                #  BaseBrochure, the model that declares the field.
-                #  The change message will thus include an incorrect object
-                #  name:  BaseBrochure instead of Genre.
                 return {
                     # Use the verbose_name of the model on the other end of the
                     # m2m relation as 'name'.
