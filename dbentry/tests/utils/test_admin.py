@@ -151,28 +151,43 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         # cannot be resolved.
         self.assertEqual(admin_utils.get_changelist_url(_models.BaseBrochure, self.super_user), "")
 
-    def test_get_relation_change_message_auto_created(self):
-        # Assert that _get_relation_change_message uses the Band model
-        # instead of the auto created m2m through table for the change message.
-        m2m = self.obj1.band.through.objects.create(
-            band=self.band, audio=self.obj1)
-        msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
-        self.assertEqual(msg_dict['name'], 'Band')
-        self.assertEqual(msg_dict['object'], 'Led Zeppelin')
-
     def test_get_relation_change_message(self):
-        # Assert that _get_relation_change_message uses the m2m through table
-        # for the change message if that table is not auto created.
+        """
+        Assert that _get_relation_change_message uses the m2m through table
+        for the change message, if that table is not auto created.
+        """
         m2m = self.obj1.musiker.through.objects.create(
             musiker=self.musiker, audio=self.obj1)
-        msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
-        self.assertEqual(msg_dict['name'], 'Audio-Musiker')
-        self.assertEqual(msg_dict['object'], 'Robert Plant')
-        with patch.object(m2m._meta, 'verbose_name', new='Mocked!'):
-            self.assertEqual(
-                admin_utils._get_relation_change_message(m2m, parent_model=self.model)['name'],
-                'Mocked!'
-            )
+        self.assertEqual(
+            admin_utils._get_relation_change_message(m2m, self.model),
+            {'name': 'Audio-Musiker', 'object': 'Robert Plant'}
+        )
+
+    def test_get_relation_change_message_auto_created(self):
+        """
+        Assert that _get_relation_change_message uses the Band model instead of
+        the auto created m2m through table for the change message.
+        """
+        m2m = self.obj1.band.through.objects.create(
+            band=self.band, audio=self.obj1)
+        self.assertEqual(
+            admin_utils._get_relation_change_message(m2m, self.model),
+            {'name': 'Band', 'object': 'Led Zeppelin'}
+        )
+
+    def test_get_relation_change_message_inherited(self):
+        """Assert that inherited relations are handled properly."""
+        genre = make(_models.Genre, genre='Rock')
+        obj = make(_models.Kalender, titel='Test-Programmheft')
+        m2m = obj.genre.through.objects.create(genre=genre, basebrochure=obj)
+        self.assertEqual(
+            admin_utils._get_relation_change_message(m2m, _models.Kalender),
+            {'name': 'Genre', 'object': 'Rock'}
+        )
+        self.assertEqual(
+            admin_utils._get_relation_change_message(m2m, _models.Genre),
+            {'name': 'base brochure', 'object': 'Test-Programmheft'}
+        )
 
     def test_construct_change_message(self):
         form = modelform_factory(self.model, fields=['titel', 'tracks'])()
