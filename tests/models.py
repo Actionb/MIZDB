@@ -150,3 +150,28 @@ class Person(ComputedNameModel):
 class Autor(models.Model):
     kuerzel = models.CharField('Kürzel', max_length=100)
     person = models.ForeignKey('tests.Person', on_delete=models.CASCADE, null=True, blank=True)
+
+
+class Genre(models.Model):
+    genre = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.genre
+
+    class Meta:
+        verbose_name = 'Genre'
+
+
+class Base(models.Model):
+    titel = models.CharField(max_length=100)
+
+    genre = models.ManyToManyField('tests.Genre')
+
+    def __str__(self):
+        return self.titel
+
+
+class Kalender(Base):
+    class Meta:
+        verbose_name = 'Programmheft'
+

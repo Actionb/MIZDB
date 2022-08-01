@@ -13,7 +13,7 @@ from django.urls import NoReverseMatch
 from dbentry.utils import admin as admin_utils
 from tests.case import RequestTestCase, add_urls, override_urls
 from tests.factory import make
-from tests.models import Audio, Band, Bestand, Lagerort, Musiker
+from tests.models import Audio, Band, Bestand, Genre, Kalender, Lagerort, Musiker
 
 
 class TestAdminUtils(RequestTestCase):
@@ -273,18 +273,6 @@ class TestAdminUtils(RequestTestCase):
         msg = admin_utils.construct_change_message(Mock(changed_data=None), formsets=[], add=True)
         self.assertEqual(msg, [{'added': {}}])
 
-    def test_get_relation_change_message_auto_created(self):
-        """
-        Assert that for relation changes via auto created m2m tables,
-        _get_relation_change_message uses verbose name and object representation
-        of the object at the other end of the m2m relation.
-        """
-        # noinspection PyUnresolvedReferences
-        m2m = self.obj1.band.through.objects.create(band=self.band, audio=self.obj1)
-        msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
-        self.assertEqual(msg_dict['name'], 'Band')
-        self.assertEqual(msg_dict['object'], 'Led Zeppelin')
-
     def test_get_relation_change_message(self):
         """
         Assert that _get_relation_change_message uses the m2m through table
@@ -300,6 +288,32 @@ class TestAdminUtils(RequestTestCase):
                 admin_utils._get_relation_change_message(m2m, parent_model=self.model)['name'],
                 'Mocked!'
             )
+
+    def test_get_relation_change_message_auto_created(self):
+        """
+        Assert that for relation changes via auto created m2m tables,
+        _get_relation_change_message uses verbose name and object representation
+        of the object at the other end of the m2m relation.
+        """
+        # noinspection PyUnresolvedReferences
+        m2m = self.obj1.band.through.objects.create(band=self.band, audio=self.obj1)
+        msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
+        self.assertEqual(msg_dict['name'], 'Band')
+        self.assertEqual(msg_dict['object'], 'Led Zeppelin')
+
+    def test_get_relation_change_message_inherited(self):
+        """Assert that inherited relations are handled properly."""
+        genre = make(Genre, genre='Rock')
+        obj = make(Kalender, titel='Test-Programmheft')
+        m2m = obj.genre.through.objects.create(genre=genre, base=obj)
+        self.assertEqual(
+            admin_utils._get_relation_change_message(m2m, Kalender),
+            {'name': 'Genre', 'object': 'Rock'}
+        )
+        self.assertEqual(
+            admin_utils._get_relation_change_message(m2m, Genre),
+            {'name': 'base', 'object': 'Test-Programmheft'}
+        )
 
     ################################################################################################
     # test AdminLog helper functions
