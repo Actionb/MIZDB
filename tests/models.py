@@ -17,6 +17,9 @@ class Musiker(models.Model):
 class Band(models.Model):
     band_name = models.CharField(max_length=100)
 
+    genre = models.ManyToManyField('tests.Genre')
+    musiker = models.ManyToManyField('tests.Musiker')
+
     def __str__(self):
         return self.band_name
 
