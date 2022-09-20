@@ -130,6 +130,10 @@ MEDIA_URL = '/media/'
 # Override maximum number of post parameters to allow handling of user input during imports
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
+# Avoid having the session cookie expire during work hours by adding 12 hours
+# to the default cookie age (2 weeks).
+SESSION_COOKIE_AGE = (14 * 24 + 12) * 60 * 60
+
 # URL to the wiki.
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context

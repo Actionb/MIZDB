@@ -43,8 +43,8 @@ class AdminSearchFormMixin(object):
         """
         Create a form class that will facilitate changelist searches.
 
-        By default, the form class is created by the searchform_factory, using
-        'search_form_kwargs' and the kwargs provided as keyword arguments.
+        The form class is created by the searchform_factory, using the
+        ModelAdmin's 'search_form_kwargs' and the provided keyword arguments.
         """
         factory_kwargs = self.search_form_kwargs or {}
         factory_kwargs.update(kwargs)
@@ -112,9 +112,7 @@ class AdminSearchFormMixin(object):
         # Allow lookups defined in advanced_search_form.
         # Extract the lookups from the field_path 'lookup':
         try:
-            _, lookups = utils.get_fields_and_lookups(
-                self.model, lookup  # type: ignore[attr-defined]
-            )
+            _, lookups = utils.get_fields_and_lookups(self.model, lookup)  # type: ignore[attr-defined]  # noqa
         except (exceptions.FieldDoesNotExist, exceptions.FieldError):
             return False
         # Remove all lookups from the field_path to end up with just a
@@ -124,7 +122,9 @@ class AdminSearchFormMixin(object):
         # by default.
         allowed = self.search_form.lookups.get(field_path, [])
         if Range.lookup_name in allowed:
-            # If the start of a range is not given, a __lte lookup will be used.
+            # Also allow lte lookups, if the form uses any range lookups.
+            # (lte is the lookup used when a RangeField has an end value but no
+            # start value).
             allowed.append(LessThanOrEqual.lookup_name)
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
@@ -148,47 +148,41 @@ class AdminSearchFormMixin(object):
 
     def _response_post_save(self, request: HttpRequest, obj: Model) -> HttpResponseRedirect:
         """
-        Restore query parameters dropped by add_preserved_filters.
-
-        ``_response_post_save`` is django's helper method that returns the user
-        back to the changelist (or index if no perms) after a save.
-        In its original form, the method uses
-        ``django.contrib.admin.templatetags.admin_urls.add_preserved_filters``
-        to tack on the changelist filters to the redirect url.
-        (add_preserved_filters is also used to modify the links of result items)
-
-        However, ``add_preserved_filters`` drops multiple values from a
-        SelectMultiple by calling dict() on a parsed query string with multiple
-        values:
-        given the query string '?_changelist_filters=genre%3D176%26genre%3D594',
-        ``add_preserved_filters`` will return '?genre=176', when it should be
-        '?genre=176&genre=594'
-
-        To preserve all the filters, we must restore these dropped values to
-        the query string.
+        Figure out where to redirect after the 'Save' button has been pressed.
+        If applicable, add preserved changelist filters to the query string.
         """
-        # Get the '_changelist_filters' part of the querystring.
-        preserved_filters = self.get_preserved_filters(request)  # type: ignore[attr-defined]
-        preserved_filters = dict(parse_qsl(preserved_filters))
+        preserved_filters = dict(parse_qsl(self.get_preserved_filters(request)))  # type: ignore[attr-defined]  # noqa
         response = super()._response_post_save(request, obj)  # type: ignore[misc]
         if (not isinstance(response, HttpResponseRedirect)
                 or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]
                 or '_changelist_filters' not in preserved_filters):
-            # Either the response is not a redirect (we need the url attribute) or
-            # it redirects back to the index due to missing perms or
-            # no changelist filters were preserved.
+            # Either the response is not a redirect (we need the url attribute)
+            # or it redirects back to the index due to missing perms or
+            # no changelist filters have been preserved.
             return response
+
+        # Rebuild the query string with lists of values:
+        # super._response_post_save calls add_preserved_filters to append the
+        # preserved filters to the query string of the response url.
+        # However, add_preserved_filters does not preserve multiple values of
+        # the same key: it calls dict() on the parsed list of (key, value)
+        # pairs - leaving each key with a single value instead of a list of
+        # values.
+        # Example:
+        #   Original query string is '?genre=123&genre=456'.
+        #   The parsed list will be [('genre', '123'), ('genre', '456')].
+        #   add_preserved_filters should produce the original query string,
+        #   but instead it only produces '?genre=456' due to the transformation
+        #   of the list into a simple dictionary.
+
         # Extract the query params for the search form from the redirect url.
         post_url = response.url
         parsed_url = urlparse(post_url)
         post_url_query = QueryDict(parsed_url.query, mutable=True)
-        # Create a QueryDict mapping of: search_form fields to
-        # lists of *all* their preserved values.
-        preserved = QueryDict(preserved_filters['_changelist_filters'])
-        for lookup, values_list in preserved.lists():
+        for lookup, values_list in QueryDict(preserved_filters['_changelist_filters']).lists():
             if lookup in post_url_query:
-                # Replace the list of values for this lookup, thereby
-                # adding the values that were dropped by add_preserved_filters.
+                # Replace the list of values for this lookup, adding the values
+                # that were dropped by add_preserved_filters.
                 post_url_query.setlist(lookup, values_list)
         # Reconstruct the url with the updated query string.
         parsed_url = list(parsed_url)
