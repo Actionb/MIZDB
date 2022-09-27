@@ -4,38 +4,40 @@ from urllib.parse import urlparse
 
 from django import forms
 from django.contrib import admin
-from django.contrib.admin.views.main import ALL_VAR
+from django.contrib.admin.views.main import ALL_VAR, ChangeList
 from django.core import checks
 from django.http.request import QueryDict
 from django.test import TestCase, override_settings
 from django.urls import path, reverse
 from django.utils.http import urlencode
 
-from dbentry import models as _models, admin as _admin
 from dbentry.factory import batch, make
-from dbentry.fields import PartialDate
-from dbentry.search.admin import AdminSearchFormMixin, MIZAdminSearchFormMixin
-from dbentry.search.forms import MIZAdminSearchForm, searchform_factory
-
-from tests.case import AdminTestCase
-from tests.models import Band, Musiker, Genre
-
+from dbentry.search.admin import (
+    AdminSearchFormMixin, ChangelistSearchFormMixin,
+    MIZAdminSearchFormMixin
+)
+from dbentry.search.forms import MIZAdminSearchForm
+from tests.case import AdminTestCase, RequestTestCase
+from tests.models import Artikel, Ausgabe, Band, Genre, Musiker
 
 admin_site = admin.AdminSite(name='test')
 
 
+class SearchChangelist(ChangelistSearchFormMixin, ChangeList):
+    pass
+
+
 @admin.register(Band, site=admin_site)
 class BandAdmin(AdminSearchFormMixin, admin.ModelAdmin):
-
     search_form_kwargs = {
         'fields': ['genre', 'musiker'],
-        # specify a widget class that doesn't require autocomplete views like
-        # the default widget would:
+        # Specify widget class so that the searchform factory doesn't attempt
+        # to create dal autocomplete widgets for these fields:
         'widgets': {
             'genre': forms.widgets.SelectMultiple,
             'musiker': forms.widgets.SelectMultiple
         },
-        # the changelist template expects a MIZAdminFormMixin form:
+        # The changelist template expects a MIZAdminFormMixin form:
         'form': MIZAdminSearchForm
     }
     fields = ['band_name']
@@ -43,8 +45,31 @@ class BandAdmin(AdminSearchFormMixin, admin.ModelAdmin):
 
 @admin.register(Musiker, site=admin_site)
 class MusikerAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
-
     search_form_kwargs = {'fields': ['kuenstler_name', 'genre']}
+
+
+@admin.register(Artikel, site=admin_site)
+class ArtikelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
+    search_form_kwargs = {
+        'fields': [
+            'schlagzeile',
+            'seite__range',
+            'genre',  # m2m
+            'ausgabe',  # FK
+            'id__in',  # primary key
+        ],
+        # Specify widget class so that the searchform factory doesn't attempt
+        # to create dal autocomplete widgets for these fields:
+        'widgets': {
+            'genre': forms.widgets.SelectMultiple,
+            'ausgabe': forms.widgets.Select
+        },
+        # The changelist template expects a MIZAdminFormMixin form:
+        'form': MIZAdminSearchForm
+    }
+
+    def get_changelist(self, request, **kwargs):
+        return SearchChangelist
 
 
 class URLConf:
@@ -53,7 +78,6 @@ class URLConf:
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestAdminMixin(AdminTestCase):
-
     admin_site = admin_site
     model = Band
     model_admin_class = BandAdmin
@@ -138,7 +162,7 @@ class TestAdminMixin(AdminTestCase):
         not allowed unless it is registered with the given formfield.
         """
         field_path = 'bandalias__alias'
-        with mock.patch.object(self.model_admin, 'search_form_kwargs',  {'fields': [field_path]}):
+        with mock.patch.object(self.model_admin, 'search_form_kwargs', {'fields': [field_path]}):
             form = self.model_admin.get_search_form()  # set the search_form attribute
             form.lookups = {}
             self.assertFalse(
@@ -153,7 +177,7 @@ class TestAdminMixin(AdminTestCase):
         they are registered.
         """
         field_path = 'bandalias__alias'
-        with mock.patch.object(self.model_admin, 'search_form_kwargs',  {'fields': [field_path]}):
+        with mock.patch.object(self.model_admin, 'search_form_kwargs', {'fields': [field_path]}):
             form = self.model_admin.get_search_form()  # set the search_form attribute
             form.lookups = {field_path: ['year']}
             self.assertFalse(
@@ -350,4 +374,267 @@ class TestAdminMixin(AdminTestCase):
                 errors[0].msg,
                 "Changelist search form is missing fields for relations:\n\t['genre']"
             )
-            
+
+
+class TestMIZAdminSearchFormMixin(TestCase):
+    class Dummy(MIZAdminSearchFormMixin):
+        class Inline(object):
+            tabular_autocomplete = ['some_field']
+
+        model = None  # 'model' attribute expected by get_search_form_class
+        search_form_kwargs = {}
+        inlines = [Inline]
+
+        def has_search_form(self):
+            return True
+
+    @mock.patch('dbentry.search.admin.searchform_factory')
+    def test_get_search_form_class_custom_form_class(self, factory_mock):
+        """
+        Assert that get_search_form_class calls the factory with the 
+        expected 'form' kwarg.
+        """
+        # Priorities for the form kwarg:
+        #   1. from get_search_form_class arguments
+        #   2. from ModelAdmin search_form_kwargs attribute
+        #   3. factory default argument
+        view = self.Dummy()
+        with mock.patch.object(view, 'search_form_kwargs', {}):
+            # Default:
+            view.get_search_form_class()
+            args, kwargs = factory_mock.call_args
+            self.assertEqual(
+                kwargs['form'], MIZAdminSearchForm,
+                msg="factory should be called with default form class %r if no"
+                    " other form class is provided." % MIZAdminSearchForm
+            )
+            # Prioritize the search_form_kwarg over the default:
+            view.search_form_kwargs = {'form': 'SearchFormKwargsForm'}
+            view.get_search_form_class()
+            args, kwargs = factory_mock.call_args
+            self.assertEqual(
+                kwargs['form'], 'SearchFormKwargsForm',
+                msg="factory should be called with the form class provided in "
+                    "the ModelAdmin's search_form_kwargs."
+            )
+            # Prioritize the call kwarg over the default:
+            view.search_form_kwargs = {}
+            view.get_search_form_class(form='CallKwargsForm')
+            args, kwargs = factory_mock.call_args
+            self.assertEqual(
+                kwargs['form'], 'CallKwargsForm',
+                msg="factory should be called with the form class provided in "
+                    "the kwargs to get_search_form_class."
+            )
+            # Prioritize the call kwarg over the search_form_kwarg:
+            view.search_form_kwargs = {'form': 'SearchFormKwargsForm'}
+            view.get_search_form_class(form='CallKwargsForm')
+            args, kwargs = factory_mock.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'CallKwargsForm',
+                msg="factory should be called with the form class provided in "
+                    "the kwargs to get_search_form_class."
+            )
+
+    def test_check_tabular_autocompletes_tabular_included(self):
+        """
+        Assert that the check passes for tabular inline fields that are included
+        in both the search form's fields and the search form's tabular fields.
+        """
+        search_form_kwargs = {'fields': ['some_field'], 'tabular': ['some_field']}
+        with patch.object(self.Dummy, 'search_form_kwargs', new=search_form_kwargs):
+            self.assertFalse(self.Dummy()._check_tabular_autocompletes())
+
+    def test_check_tabular_autocompletes_tabular_not_included(self):
+        """
+        Assert that the check creates Info messages for tabular inline fields
+        that are included in the search form's fields, but not in the search 
+        form's tabular fields (i.e. not flagged as tabular).
+        """
+        search_form_kwargs = {'fields': ['some_field'], 'tabular': []}
+        with patch.object(self.Dummy, 'search_form_kwargs', new=search_form_kwargs):
+            messages = self.Dummy()._check_tabular_autocompletes()
+            self.assertEqual(len(messages), 1)
+            self.assertIsInstance(messages[0], checks.CheckMessage)
+            self.assertIn('some_field', messages[0].msg)
+
+    def test_check_tabular_autocompletes_not_in_fields(self):
+        """
+        Assert that the check ignores tabular inline fields that are not 
+        included in the search form's fields.
+        """
+        search_form_kwargs = {'fields': []}
+        with patch.object(self.Dummy, 'search_form_kwargs', new=search_form_kwargs):
+            self.assertFalse(self.Dummy()._check_tabular_autocompletes())
+
+
+class TestChangelistSearchFormMixin(RequestTestCase):
+    class ModelAdmin(AdminSearchFormMixin):
+        pass
+
+    class BaseChangelist:
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        # noinspection PyMethodMayBeStatic
+        def get_filters_params(self, *_args, **_kwargs):
+            return 'default'
+
+    class SearchFormChangelist(ChangelistSearchFormMixin, BaseChangelist):
+        model_admin = ArtikelAdmin
+
+    def test_get_filters_params(self):
+        """
+        Assert that get_filters_params returns the filters created by the
+        search form.
+        """
+        request = self.get_request(
+            data={'schlagzeile': 'Schlagzeile', 'seite_0': '10', 'seite_1': '20'}
+        )
+        changelist = self.SearchFormChangelist(request)
+        changelist.model_admin = ArtikelAdmin(Artikel, admin_site)
+        self.assertEqual(
+            changelist.get_filters_params({}),
+            {'schlagzeile': 'Schlagzeile', 'seite__range': [10, 20]}
+        )
+
+    def test_get_filters_params_no_search_form_mixin(self):
+        """
+        Assert that get_filters_params returns default/unmodified filter
+        parameters, if the model admin is not a AdminSearchFormMixin.
+        """
+        request = self.get_request(
+            data={'schlagzeile': 'Schlagzeile', 'seite_0': '10', 'seite_1': '20'}
+        )
+        changelist = self.SearchFormChangelist(request)
+        changelist.model_admin = 1
+        self.assertEqual(changelist.get_filters_params({}), 'default')
+
+    def test_get_filters_params_no_search_form(self):
+        """
+        Assert that get_filters_params returns default/unmodified filter
+        parameters, if the model admin has no search form.
+        """
+        request = self.get_request(
+            data={'schlagzeile': 'Schlagzeile', 'seite_0': '10', 'seite_1': '20'}
+        )
+        changelist = self.SearchFormChangelist(request)
+        changelist.model_admin = ArtikelAdmin(Artikel, admin_site)
+        with mock.patch.object(changelist.model_admin, 'search_form_kwargs', {}):
+            self.assertEqual(changelist.get_filters_params({}), 'default')
+
+
+@override_settings(ROOT_URLCONF=URLConf)
+class TestSearchFormChangelist(AdminTestCase):
+    """Assert that the changelist's search form filters out results as expected."""
+
+    admin_site = admin_site
+    model = Artikel
+    model_admin_class = ArtikelAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.genre1, cls.genre2 = batch(Genre, 2)
+        cls.ausgabe = make(Ausgabe)
+        cls.obj1, cls.obj2, cls.obj3 = cls.test_data = [
+            make(
+                cls.model, schlagzeile='Object1', seite='10',
+                genre=[cls.genre1, cls.genre2]
+            ),
+            make(cls.model, schlagzeile='Object2', seite='20', genre=[cls.genre1]),
+            make(cls.model, schlagzeile='Object3', seite='30', ausgabe=cls.ausgabe),
+        ]
+        super().setUpTestData()
+
+    def test_changelist(self):
+        """Assert that the unfiltered changelist is available."""
+        response = self.client.get(self.changelist_path, data={ALL_VAR: ''})
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 3)
+
+    def test_filter_by_titel(self):
+        request_data = {'schlagzeile': 'Object1'}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 1)
+        self.assertIn(self.obj1, changelist.result_list)
+
+    def test_filter_by_seite_range(self):
+        request_data = {'seite_0': '10', 'seite_1': '20'}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 2)
+        self.assertIn(self.obj1, changelist.result_list)
+        self.assertIn(self.obj2, changelist.result_list)
+
+    def test_filter_by_seite_range_no_end(self):
+        request_data = {'seite_0': '10'}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 1)
+        self.assertIn(self.obj1, changelist.result_list)
+
+    def test_filter_by_datum_range_no_start(self):
+        request_data = {'seite_1': '20'}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 2)
+        self.assertIn(self.obj1, changelist.result_list)
+        self.assertIn(self.obj2, changelist.result_list)
+
+    def test_filter_by_genre(self):
+        request_data = {'genre': [self.genre1.pk, self.genre2.pk]}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 2)
+        self.assertIn(self.obj1, changelist.result_list)
+        self.assertIn(self.obj2, changelist.result_list)
+
+    def test_filter_by_ausgabe(self):
+        request_data = {'ausgabe': self.ausgabe.pk}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 1)
+        self.assertIn(self.obj3, changelist.result_list)
+
+    def test_filter_by_id(self):
+        request_data = {
+            'id': [",".join(str(pk) for pk in [self.obj1.pk, self.obj2.pk])]
+        }
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 2, msg=changelist.result_list)
+        self.assertIn(self.obj1, changelist.result_list)
+        self.assertIn(self.obj2, changelist.result_list)
+
+    def test_preserved_filters_result_list(self):
+        """
+        Assert that the links to the result items contain the encoded filters.
+        (for filter preservation)
+        """
+        preserved_filters_name = '_changelist_filters'
+        filters = [
+            ('single_page', {'seite_0': 10, 'seite_1': 20}),
+            ('page_range', {'seite_0': 10, 'seite_1': 20}),
+            ('fk', {'ausgabe': str(self.ausgabe.pk)}),
+            ('m2m', {'genre': [self.genre1.pk, self.genre2.pk]}),
+        ]
+        for filter_type, filter_kwargs in filters:
+            with self.subTest(filter_type=filter_type):
+                response = self.client.get(path=self.changelist_path, data=filter_kwargs)
+                expected = urlencode({preserved_filters_name: urlencode(filter_kwargs)})
+                for result in response.context['results']:
+                    if 'href=' not in result:
+                        continue
+                    with self.subTest():
+                        self.assertIn(expected, result)

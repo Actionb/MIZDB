@@ -7,6 +7,8 @@ from dbentry.base.models import ComputedNameModel
 class Musiker(models.Model):
     kuenstler_name = models.CharField(max_length=100)
 
+    genre = models.ManyToManyField('tests.Genre')
+
     def __str__(self):
         return self.kuenstler_name
 
@@ -51,8 +53,11 @@ class Ausgabe(models.Model):
 
 class Artikel(models.Model):
     schlagzeile = models.CharField(max_length=100)
+    seite = models.PositiveSmallIntegerField()
 
     ausgabe = models.ForeignKey('tests.Ausgabe', on_delete=models.PROTECT)
+
+    genre = models.ManyToManyField('tests.Genre')
 
 
 class VeranstaltungsReihe(models.Model):
@@ -177,4 +182,3 @@ class Base(models.Model):
 class Kalender(Base):
     class Meta:
         verbose_name = 'Programmheft'
-
