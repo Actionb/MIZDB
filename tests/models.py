@@ -46,6 +46,7 @@ class Magazin(models.Model):
 
 class Ausgabe(models.Model):
     name = models.CharField(max_length=100)
+    e_datum = models.DateField(blank=True, null=True)
     magazin = models.ForeignKey(
         'tests.Magazin', on_delete=models.PROTECT, related_name='ausgaben', null=True
     )
