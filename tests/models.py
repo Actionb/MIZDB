@@ -45,7 +45,14 @@ class Magazin(models.Model):
 
 
 class Ausgabe(models.Model):
+    class Status(models.TextChoices):
+        UNBEARBEITET = ('unb', 'unbearbeitet')
+        INBEARBEITUNG = ('iB', 'in Bearbeitung')
+        ABGESCHLOSSEN = ('abg', 'abgeschlossen')
+        KEINEBEARBEITUNG = ('kB', 'keine Bearbeitung vorgesehen')
+
     name = models.CharField(max_length=100)
+    status = models.CharField(max_length=40, choices=Status.choices, default=Status.UNBEARBEITET)
     e_datum = models.DateField(blank=True, null=True)
     magazin = models.ForeignKey(
         'tests.Magazin', on_delete=models.PROTECT, related_name='ausgaben', null=True
