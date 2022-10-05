@@ -179,8 +179,8 @@ class SearchForm(forms.Form):
                 continue
             elif ('in' in self.lookups.get(field_name, [])
                   and isinstance(value, QuerySet)):
-                # django admin prepare_lookup_value() expects an '__in'
-                # lookup to consist of comma separated values.
+                # django admin prepare_lookup_value expects a single string
+                # of comma separated values for this lookup.
                 param_value = ",".join(
                     str(pk) for pk in value.values_list('pk', flat=True).order_by('pk')
                 )
@@ -324,6 +324,7 @@ class SearchFormFactory:
                 includes_pk = True
 
             formfield_kwargs = {}
+            callback_kwargs = {}
             if widgets and path in widgets:
                 formfield_kwargs['widget'] = widgets[path]
             if (localized_fields == forms.models.ALL_FIELDS
@@ -336,17 +337,16 @@ class SearchFormFactory:
             if error_messages and path in error_messages:
                 formfield_kwargs['error_messages'] = error_messages[path]
             if field_classes and path in field_classes:
-                formfield_kwargs['form_class'] = field_classes[path]
+                callback_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
-                formfield_kwargs['forward'] = forwards[path]
+                callback_kwargs['forward'] = forwards[path]
             if tabular and path in tabular:
-                formfield_kwargs['tabular'] = True
+                callback_kwargs['tabular'] = True
             # Use the path stripped of all lookups as the formfield's name.
             formfield_name = search_utils.strip_lookups_from_path(path, lookups)
-            formfield = formfield_callback(db_field, **formfield_kwargs)
+            formfield = formfield_callback(db_field, **formfield_kwargs, **callback_kwargs)
             if range_lookup.lookup_name in lookups:
-                # A range lookup is used;
-                # wrap the formfield in a RangeFormField.
+                # Wrap the formfield in a RangeFormField for this range lookup:
                 attrs[formfield_name] = RangeFormField(
                     formfield, required=False, **formfield_kwargs
                 )
