@@ -28,9 +28,7 @@ class RangeWidget(forms.MultiWidget):
     template_name = 'rangewidget.html'
 
     def __init__(self, widget: forms.Widget, attrs: Optional[dict] = None) -> None:
-        # Duplicate the widget for the MultiWidget constructor:
-        widgets = [widget] * 2
-        super().__init__(widgets=widgets, attrs=attrs)
+        super().__init__(widgets=[widget] * 2, attrs=attrs)
 
     def decompress(self, value: Optional[str]) -> Union[List[str], List[None]]:
         # Split value into two values (start, end).
@@ -39,7 +37,12 @@ class RangeWidget(forms.MultiWidget):
         # its 'subfields', and not the clean method of MultiValueField,
         # compress() is only called by widget.get_context (widget rendering)
         # when value isn't a list already.
-        # In short: RangeWidget.decompress is never really used?
+        # TODO: method is not used:
+        #  decompress is only used to prepare single values fetched from the
+        #  database, either for use as initial values or as data if the field
+        #  is disabled (see MultiValueField methods has_changed and clean).
+        #  But RangeWidget is only used in search forms and only interacts with
+        #  data put in by the user, not database data.
         if value and isinstance(value, str) and value.count(',') == 1:
             return value.split(',')
         return [None, None]
@@ -60,8 +63,7 @@ class RangeFormField(forms.MultiValueField):
             **kwargs: Any
     ) -> None:
         if not kwargs.get('widget'):
-            # Assume that the formfield's widget is a basic widget; wrap it
-            # with a RangeWidget widget, duplicating it for range lookups.
+            # Create a RangeWidget from the formfield's default widget.
             kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
         super().__init__(
@@ -71,12 +73,11 @@ class RangeFormField(forms.MultiValueField):
         )
 
     def get_initial(self, initial: dict, name: Any) -> list:
-        # pycharm cannot know that self.widget is a widget *instance* (not a class) at this point.
         # noinspection PyArgumentList
         widget_data = self.widget.value_from_datadict(data=initial, files=None, name=name)
         if isinstance(self.fields[0], forms.MultiValueField):
-            # The subfields are MultiValueFields themselves,
-            # let them figure out the correct values for the given data.
+            # The subfields are also MultiValueFields; let them figure out the
+            # correct values for the given data.
             return [
                 self.fields[0].compress(widget_data[0]),
                 self.fields[1].compress(widget_data[1])
@@ -85,11 +86,10 @@ class RangeFormField(forms.MultiValueField):
             return widget_data
 
     def compress(self, data_list: list) -> list:
-        if data_list:
-            return data_list
-        else:
-            # Two values are expected, even for no data.
+        if not data_list:
+            # Return two empty values, one for each field.
             return [None, None]
+        return data_list
 
 
 class SearchForm(forms.Form):
@@ -179,8 +179,8 @@ class SearchForm(forms.Form):
                 continue
             elif ('in' in self.lookups.get(field_name, [])
                   and isinstance(value, QuerySet)):
-                # django admin prepare_lookup_value() expects an '__in'
-                # lookup to consist of comma separated values.
+                # django admin prepare_lookup_value expects a single string
+                # of comma separated values for this lookup.
                 param_value = ",".join(
                     str(pk) for pk in value.values_list('pk', flat=True).order_by('pk')
                 )
@@ -324,6 +324,7 @@ class SearchFormFactory:
                 includes_pk = True
 
             formfield_kwargs = {}
+            callback_kwargs = {}
             if widgets and path in widgets:
                 formfield_kwargs['widget'] = widgets[path]
             if (localized_fields == forms.models.ALL_FIELDS
@@ -336,17 +337,16 @@ class SearchFormFactory:
             if error_messages and path in error_messages:
                 formfield_kwargs['error_messages'] = error_messages[path]
             if field_classes and path in field_classes:
-                formfield_kwargs['form_class'] = field_classes[path]
+                callback_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
-                formfield_kwargs['forward'] = forwards[path]
+                callback_kwargs['forward'] = forwards[path]
             if tabular and path in tabular:
-                formfield_kwargs['tabular'] = True
+                callback_kwargs['tabular'] = True
             # Use the path stripped of all lookups as the formfield's name.
             formfield_name = search_utils.strip_lookups_from_path(path, lookups)
-            formfield = formfield_callback(db_field, **formfield_kwargs)
+            formfield = formfield_callback(db_field, **formfield_kwargs, **callback_kwargs)
             if range_lookup.lookup_name in lookups:
-                # A range lookup is used;
-                # wrap the formfield in a RangeFormField.
+                # Wrap the formfield in a RangeFormField for this range lookup:
                 attrs[formfield_name] = RangeFormField(
                     formfield, required=False, **formfield_kwargs
                 )
@@ -364,8 +364,10 @@ class SearchFormFactory:
             # with the query string created by utils.get_changelist_url
             # (which uses 'id__in').
             db_field = opts.pk
-            if db_field.is_relation:
-                # Assuming OneToOneRelation:
+            if db_field.is_relation and db_field.remote_field.parent_link:
+                # Create a search field for the parent's primary key field
+                # instead of the relation (that would produce some kind of
+                # select field).
                 db_field = db_field.target_field
             attrs['id__in'] = formfield_callback(db_field, label='ID')
 
