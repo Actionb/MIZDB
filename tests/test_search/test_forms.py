@@ -5,7 +5,6 @@ from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
 
 from dbentry import models as _models
-from dbentry.ac import widgets as autocomplete_widgets
 from dbentry.factory import make
 from dbentry.fields import PartialDate, PartialDateFormField
 from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory
@@ -56,7 +55,7 @@ class TestRangeFormField(MIZTestCase):
                     self.assertIn('widget', kwargs)
                     self.assertIsInstance(kwargs['widget'], RangeWidget)
                     if widget_kwarg:
-                        self.assertEqual(kwargs['widget'].widgets, [widget]*2)
+                        self.assertEqual(kwargs['widget'].widgets, [widget] * 2)
 
     def test_get_initial(self):
         """Assert that get_initial returns the correct data."""
@@ -69,9 +68,10 @@ class TestRangeFormField(MIZTestCase):
         Assert that get_initial returns the compressed values if its subfields
         are MultiValueFields.
         """
+
         class W(forms.MultiWidget):
             def __init__(self):
-                super().__init__(widgets=[forms.NumberInput()]*3)
+                super().__init__(widgets=[forms.NumberInput()] * 3)
 
         class F(forms.MultiValueField):
 
@@ -83,7 +83,7 @@ class TestRangeFormField(MIZTestCase):
 
             def compress(self, data_list):
                 if not data_list:
-                    return [None]*3
+                    return [None] * 3
                 return "-".join(str(v).zfill(2) for v in data_list)
 
         initial = {
@@ -214,6 +214,7 @@ class TestSearchFormFactory(MIZTestCase):
         Assert that custom formfield_callback can be passed to the factory
         and that it uses that callback to create formfields for dbfields.
         """
+
         def callback(_dbfield, **kwargs):
             return forms.DateField(**kwargs)
 
@@ -302,7 +303,6 @@ class TestSearchFormFactory(MIZTestCase):
 
 
 class TestSearchForm(MIZTestCase):
-
     model = Artikel
 
     def setUp(self):
@@ -369,8 +369,7 @@ class TestSearchForm(MIZTestCase):
     def test_get_filters_params_range(self):
         """Assert that get_filters_params handles range lookups correctly."""
         form_class = self.factory(self.model, fields=['seite__range'])
-        data = {'seite_0': '1', 'seite_1': '2'}
-        form = form_class(data=data)
+        form = form_class(data={'seite_0': '1', 'seite_1': '2'})
         self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertIn('seite__range', filter_params)
@@ -379,28 +378,27 @@ class TestSearchForm(MIZTestCase):
     def test_get_filters_params_range_skipped_when_empty(self):
         """Assert that empty values for range lookups are ignored."""
         form_class = self.factory(self.model, fields=['seite__range'])
-        data = {'seite__range_0': None, 'seite__range_1': None}
-        form = form_class(data=data)
+        form = form_class(data={'seite__range_0': None, 'seite__range_1': None})
         self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertFalse(filter_params)
 
     def test_get_filters_params_range_no_end(self):
         """
-        Assert that get_filters_params replaces a range lookup with an exact
+        Assert that get_filters_params replaces a range lookup with an 'exact'
         lookup when the range's end value is empty.
         """
         form_class = self.factory(self.model, fields=['seite__range'])
-        data = {'seite_0': '1', 'seite_1': None}
-        form = form_class(data=data)
+        form = form_class(data={'seite_0': '1', 'seite_1': None})
         self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertNotIn('seite__range', filter_params)
         self.assertIn('seite', filter_params)
+        self.assertEqual(filter_params['seite'], 1)
 
     def test_get_filters_params_range_no_start(self):
         """
-        Assert that get_filters_params replaces a range lookup with a lte
+        Assert that get_filters_params replaces a range lookup with a 'lte'
         lookup when the range's start value is empty.
         """
         form_class = self.factory(self.model, fields=['seite__range'])
@@ -410,135 +408,69 @@ class TestSearchForm(MIZTestCase):
         filter_params = form.get_filters_params()
         self.assertNotIn('seite__range', filter_params)
         self.assertIn('seite__lte', filter_params)
+        self.assertEqual(filter_params['seite__lte'], 1)
 
-    def test_get_filters_params(self):
-        # TODO: @home: start here
-        form_class = self.factory(_models.Plakat, fields=['datum'])
-        form = form_class(data={'datum_0': 2020, 'datum_1': 5, 'datum_2': 20})
-        self.assertTrue(form.is_valid())
-        self.assertIn('datum', form.cleaned_data)
-        expected = PartialDate(2020, 5, 20)
-        self.assertEqual(form.cleaned_data['datum'], expected)
-        self.assertEqual(form.get_filters_params(), {'datum': expected})
-
-    def test_get_filters_params_in_lookup_with_qs(self):
-        # Assert that get_filters_params creates a comma separated string of
-        # values for the 'in' lookup with querysets.
-        genre1 = make(_models.Genre, genre="genre1", pk=1)
-        genre2 = make(_models.Genre, genre="genre2", pk=2)
-        form_class = self.factory(_models.Plakat, fields=['genre'])
-        form = form_class(data={'genre': [genre1.pk, genre2.pk]})
+    def test_get_filters_params_range_partial_date(self):
+        """
+        Assert that get_filters_params returns the correct parameters for a
+        range lookup with PartialDate objects.
+        """
+        form_class = self.factory(
+            Ausgabe, fields=['e_datum__range'],
+            field_classes={'e_datum__range': PartialDateFormField},
+        )
+        form = form_class(
+            data={
+                'e_datum_0_0': 2020, 'e_datum_0_1': 5, 'e_datum_0_2': 20,
+                'e_datum_1_0': 2020, 'e_datum_1_1': 5, 'e_datum_1_2': 21,
+            }
+        )
         self.assertTrue(form.is_valid(), msg=form.errors)
-        self.assertIn('genre', form.cleaned_data)
-        self.assertEqual(list(form.cleaned_data['genre']), [genre1, genre2])
-        self.assertEqual(form.get_filters_params(), {'genre__in': "1,2"})
+        filter_params = form.get_filters_params()
+        self.assertIn('e_datum__range', filter_params)
+        self.assertEqual(
+            filter_params['e_datum__range'],
+            [PartialDate(2020, 5, 20), PartialDate(2020, 5, 21)]
+        )
+
+    def test_get_filters_params_range_no_end_partial_date(self):
+        """
+        Assert that get_filters_params replaces a range lookup on PartialDate
+        objects with a 'contains' lookup the range's end value is empty.
+        """
+        form_class = self.factory(
+            Ausgabe, fields=['e_datum__range'],
+            field_classes={'e_datum__range': PartialDateFormField},
+        )
+        form = form_class(data={'e_datum_0_0': 2020, 'e_datum_0_1': 5, 'e_datum_0_2': 20})
+        self.assertTrue(form.is_valid(), msg=form.errors)
+        filter_params = form.get_filters_params()
+        self.assertNotIn('e_datum__range', filter_params)
+        self.assertIn('e_datum__contains', filter_params)
+
+    def test_get_filters_params_comma_separated_values_for_relations(self):
+        """
+        Assert that get_filters_params creates a string of comma separated
+        values for the 'in' lookup on a relation, as expected by django admin.
+        """
+        genres = [make(Genre, genre="genre1"), make(Genre, genre="genre2")]
+        pks = [o.pk for o in genres]
+        form_class = self.factory(Artikel, fields=['genre'])
+        form = form_class(data={'genre': pks})
+        self.assertTrue(form.is_valid(), msg=form.errors)
+        filter_params = form.get_filters_params()
+        self.assertEqual(filter_params['genre__in'], f"{pks[0]},{pks[1]}")
 
     def test_clean_id__in(self):
-        # Assert that clean_id__in filters out alphabetic characters.
+        """Assert that clean_id__in filters out alphabetic characters."""
         form_class = self.factory(self.model, fields=['id__in'])
         form = form_class()
         form.cleaned_data = {'id__in': 'A20'}
         self.assertEqual(form.clean_id__in(), '20')
 
     def test_clean_id__in_keeps_sep(self):
-        # Assert that clean_id__in keeps the separator character.
+        """Assert that clean_id__in doesn't remove the value separator (i.e. comma)."""
         form_class = self.factory(self.model, fields=['id__in'])
         form = form_class()
         form.cleaned_data = {'id__in': '1,2'}
         self.assertEqual(form.clean_id__in(), '1,2')
-# TODO: incorporate these tests for get_filters_params:
-
-# def test_get_filters_params_multiple_choice_lookup(self):
-#     """
-#     Assert that the params returned contain the expected lookup and value
-#     for multiple choice fields.
-#     """
-#     form_data = {'genre': [self.genre1.pk, self.genre2.pk]}
-#     request = self.get_request(path=self.changelist_path, data=form_data)
-#     changelist = self.get_changelist(request)
-#     params = changelist.get_filters_params()
-#     self.assertIn('genre__in', params)
-#     self.assertEqual(
-#         params['genre__in'],
-#         '%s,%s' % (self.genre1.pk, self.genre2.pk)
-#     )
-#
-#
-# def test_get_filters_params_range_lookup(self):
-#     """
-#     Assert that the params returned contain the expected lookup and value
-#     for RangeFormFields.
-#     """
-#     form_data = {'seite_0': '10', 'seite_1': '20', }
-#     request = self.get_request(path=self.changelist_path, data=form_data)
-#     changelist = self.get_changelist(request)
-#     params = changelist.get_filters_params(form_data)
-#     self.assertIn('seite__range', params)
-#     self.assertEqual(len(params['seite__range']), 2)
-#     start, end = params['seite__range']
-#     self.assertEqual(start, 10)
-#     self.assertEqual(end, 20)
-#
-#
-# def test_get_filters_params_range_lookup_no_start(self):
-#     """
-#     Assert that the params returned contain the expected lookup and value
-#     for RangeFormFields when no start value was specified.
-#     """
-#     form_data = {'seite_1': '20'}
-#     request = self.get_request(path=self.changelist_path, data=form_data)
-#     changelist = self.get_changelist(request)
-#     params = changelist.get_filters_params(form_data)
-#     self.assertNotIn('seite__range', params)
-#     self.assertIn('seite__lte', params)
-#     self.assertEqual(params['seite__lte'], 20)
-#
-#
-# def test_get_filters_params_range_lookup_no_end(self):
-#     """
-#     Assert that the params returned contain the expected lookup and value
-#     for RangeFormFields when no end value was specified.
-#     """
-#     form_data = {'seite_0': '10'}
-#     request = self.get_request(path=self.changelist_path, data=form_data)
-#     changelist = self.get_changelist(request)
-#     params = changelist.get_filters_params(form_data)
-#     self.assertNotIn('seite__range', params)
-#     self.assertIn('seite', params)
-#     self.assertEqual(params['seite'], 10)
-#
-#
-# def test_get_filters_params_partial_date_no_end(self):
-#     # Assert that the params returned contain a valid lookup:
-#     # i.e. '__range' for RangeFormField.
-#     # __range without end specified => exact lookup
-#     form_data = {
-#         'datum_0_0': 2020, 'datum_0_1': 5, 'datum_0_2': 20,
-#     }
-#     request = self.get_request(path=self.changelist_path, data=form_data)
-#     changelist = self.get_changelist(request)
-#     params = changelist.get_filters_params(form_data)
-#     self.assertNotIn('datum__range', params)
-#     self.assertIn('datum__contains', params)
-#     self.assertEqual(params['datum__contains'], PartialDate(2020, 5, 20))
-#
-#
-# def test_get_filters_params_multifield(self):
-#     # Check how changelist copes with MultiValueFields such as PartialDateFormField:
-#     # the changelist must query with the cleaned data only and not the individual fields.
-#     form_data = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 20}
-#     patcher = mock.patch.object(
-#         _admin.PlakatAdmin, 'search_form_kwargs', {'fields': ['datum']}
-#     )
-#     patcher.start()
-#     request = self.get_request(path=self.changelist_path, data=form_data)
-#     changelist = self.get_changelist(request)
-#
-#     expected = PartialDate(2020, 5, 20)
-#     params = changelist.get_filters_params(form_data)
-#     self.assertIn('datum', params)
-#     self.assertEqual(params['datum'], expected)
-#     for key in form_data:
-#         with self.subTest():
-#             self.assertNotIn(key, params)
-#     patcher.stop()

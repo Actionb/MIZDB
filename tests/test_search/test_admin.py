@@ -580,7 +580,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertEqual(len(changelist.result_list), 1)
         self.assertIn(self.obj1, changelist.result_list)
 
-    def test_filter_by_datum_range_no_start(self):
+    def test_filter_by_seite_range_no_start(self):
         request_data = {'seite_1': '20'}
         response = self.client.get(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
