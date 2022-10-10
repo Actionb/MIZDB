@@ -23,16 +23,17 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
             **expressions: Any
     ) -> OrderedDictType[int, dict]:
         """
-        An extension of QuerySet.values() that merges results of the same record.
+        An extension of QuerySet.values() that merges results for the same
+        record.
 
         For example for  a pizza with two toppings and two sizes;
 
         values('pk', 'pizza__topping', 'pizza__size') will return:
                 [
-                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},\n
-                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},\n
-                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},\n
-                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'}\n
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'}
                 ]
 
 
@@ -46,12 +47,12 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
 
         Args:
             *fields (str): list of field names/paths that should be included
-            include_empty (bool): if True, include empty values
-              (here: as defined in django.core.validators.EMPTY_VALUES)
-            flatten (bool): if True, any values list that has a length of 1
-              will be replaced by just that one item. This does not apply to
-              values from reverse related fields, as an iterable always
-              expected here.
+            include_empty (bool): if True, include empty values as defined in
+              django.core.validators.EMPTY_VALUES
+            flatten (bool): if True, any values list that only contains one
+              item will be replaced by just that item, removing the list. This
+              does not apply to values from reverse related fields, as an
+              iterable is expected here.
             **expressions: additional expressions for values()
 
         Returns:
@@ -65,14 +66,13 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         # Make sure the query includes the model's primary key values as we
         # require it to build the result out of.
         # If fields is empty, the query targets all the model's fields.
-        if fields:
-            if pk_name not in fields:
-                if 'pk' in fields:
-                    pk_name = 'pk'
-                else:
-                    # The query does not query for the primary key at all;
-                    # it must be added to fields.
-                    fields += (pk_name,)
+        if fields and pk_name not in fields:
+            if 'pk' in fields:
+                pk_name = 'pk'
+            else:
+                # The query does not query for the primary key at all;
+                # it must be added to fields.
+                fields += (pk_name,)
 
         # Do not flatten reverse relation values.
         # An iterable object is expected.
@@ -97,8 +97,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         for val_dict in self.values(*fields, **expressions):
             pk = val_dict.pop(pk_name)
             # For easier lookups of field_names, use dictionaries for the
-            # item's values mapping. If tuplfy == True, we turn the values
-            # mapping back into a tuple before adding it to the result.
+            # item's values mapping.
             item_dict: Union[dict, tuple]  # for mypy
             if pk in result:
                 # Multiple rows returned due to joins over relations for this
@@ -112,7 +111,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
                 values: tuple  # for mypy
                 if field_path not in item_dict:
                     values = ()
-                elif flatten and not isinstance(item_dict.get(field_path), tuple):
+                elif flatten and not isinstance(item_dict[field_path], tuple):
                     # This value has previously been flattened!
                     values = (item_dict[field_path],)
                 else:
