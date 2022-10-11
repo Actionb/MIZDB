@@ -456,7 +456,19 @@ class TestWizardConfirmationView(ActionViewTestCase):
         with patch.object(SessionWizardView, 'post', return_value='WizardForm!'):
             self.assertEqual(view.post(request), 'WizardForm!')
 
-    # TODO: add test for done() - for coverage
+    def test_done_returns_none(self):
+        """
+        Assert that done() returns None even if perform_action returns a value
+        or if an exception occurred.
+        """
+        view = self.get_view()
+        # 'implement' perform_action:
+        with patch.object(view, 'perform_action') as perform_action_mock:
+            perform_action_mock.return_value = 'Not None'
+            self.assertIsNone(view.done())
+            perform_action_mock.side_effect = TypeError
+            with self.assertNotRaises(NotImplementedError):
+                self.assertIsNone(view.done())
 
 
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
