@@ -6,6 +6,7 @@ class Musiker(models.Model):
     beschreibung = models.TextField('Beschreibung', blank=True)
 
     person = models.ForeignKey('test_maint.Person', on_delete=models.CASCADE, null=True)
+    andere = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
     genres = models.ManyToManyField('test_maint.Genre')
 
@@ -16,6 +17,17 @@ class Musiker(models.Model):
 
     class Meta:
         verbose_name = 'Musiker'
+
+
+class MusikerAlias(models.Model):
+    alias = models.CharField(max_length=100)
+    musiker = models.ForeignKey('test_maint.Musiker', on_delete=models.CASCADE)
+
+
+class Band(models.Model):
+    name = models.CharField(max_length=100)
+
+    mitglieder = models.ManyToManyField('test_maint.Musiker')
 
 
 class Genre(models.Model):

@@ -31,8 +31,8 @@ class GenreAdmin(admin.ModelAdmin):
 class URLConf:
     urlpatterns = [
         path('test_maint/', admin_site.urls),
-        path('dupes/<str:model_name>/', DuplicateObjectsView.as_view(admin_site=admin_site), name='dupes'),
-        path('dupes/', DuplicateModelSelectView.as_view(admin_site=admin_site), name='dupes_select'),
+        path('dupes/<str:model_name>/', DuplicateObjectsView.as_view(admin_site=admin_site), name='dupes'),  # noqa
+        path('dupes/', DuplicateModelSelectView.as_view(admin_site=admin_site), name='dupes_select'),  # noqa
         path('unused/', UnusedObjectsView.as_view(admin_site=admin_site), name='find_unused'),
     ]
 
@@ -313,15 +313,31 @@ class TestUnusedObjectsView(ViewTestCase):
 
     def test_get_queryset(self):
         """
-        Assert that the returned queryset return the correct amount of 'unused'
-        records.
+        Assert that the returned queryset return the expected amount of records
+        that are 'unused'.
         """
-        # TODO: turn this into a general 'test' method?
+        # Testing with Musiker model here, instead of Genre, due to the variety
+        # of relations that model has.
+        _unused = make(Musiker)
         view = self.get_view(request=self.get_request())
         for limit in [0, 1, 2]:
-            relations, queryset = view.get_queryset(Genre, limit)
+            relations, queryset = view.get_queryset(Musiker, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
+
+    def test_get_queryset_ignores_self_relations(self):
+        """
+        Assert that get_queryset does not include self relations in its query
+        for related objects.
+        """
+        obj = make(Musiker)
+        _other = make(Musiker, andere=obj)
+        view = self.get_view(request=self.get_request())
+        _rels, unused_qs = view.get_queryset(Musiker, 0)
+        # 'obj' has no other relations other than to 'other', which is a self
+        # relation and should be ignored. That means 'obj' should appear in a
+        # queryset of unused objects.
+        self.assertIn(obj, unused_qs)
 
     def test_build_items(self):
         """Check the contents of the list that build_items returns."""
