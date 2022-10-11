@@ -1,8 +1,9 @@
 from unittest.mock import patch
 
 from django.core.exceptions import FieldDoesNotExist, FieldError
+from django.db import models
 
-from dbentry.query import MIZQuerySet
+from dbentry.query import CNQuerySet, MIZQuerySet
 from tests.case import DataTestCase
 from tests.factory import make
 from tests.models import Band
@@ -132,3 +133,174 @@ class TestMIZQuerySet(DataTestCase):
         with self.assertRaises(FieldError) as cm:
             self.queryset.values_dict('thisaintnofield', flatten=True)
             self.assertIn('Choices are', cm.exception.args[0])
+
+
+class CNQuerySetModel(models.Model):
+    _name = models.CharField(max_length=10, editable=False, default='YYYY-MM')
+    _changed_flag = models.BooleanField(editable=False, default=False)
+
+    month = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField()
+
+    name_composing_fields = ['month', 'year']
+    objects = CNQuerySet.as_manager()
+
+    @classmethod
+    def _get_name(cls, **name_data):
+        return f"{name_data['year'][0]}-{name_data['month'][0]:02}"
+
+
+class TestCNQuerySet(DataTestCase):
+    model = CNQuerySetModel
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(CNQuerySetModel, month=10, year=2022)
+        cls.obj2 = make(CNQuerySetModel, month=9, year=2021)
+        super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        self.queryset = CNQuerySet(self.model)
+        self.obj1_qs = self.queryset.filter(pk=self.obj1.pk)
+        self.obj2_qs = self.queryset.filter(pk=self.obj2.pk)
+        # Do pending updates (_changed_flag set by signals, etc.)
+        self.queryset._update_names()
+
+    def test_bulk_create_sets_changed_flag(self):
+        """Assert that bulk_create sets the changed_flag."""
+        # In order to update the created instances' names on their next
+        # query/instantiation, bulk_create must include _changed_flag == True
+        self.queryset.bulk_create([self.model(month=11, year=2023)])
+        self.assertTrue(self.queryset.filter(month=11, year=2023, _changed_flag=True).exists())
+
+    def test_defer_updates_name(self):
+        """Assert that _update_names is called when using defer() without a '_name' argument."""
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.defer('id'))
+            update_mock.assert_called()
+
+    def test_defer_not_updates_name(self):
+        """Assert that _update_names is not called when using defer() with a '_name' argument."""
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.defer('_name'))
+            update_mock.assert_not_called()
+
+    def test_filter_updates_names(self):
+        """
+        Assert that _update_names is called when using filter() with an
+        argument that starts with '_name'.
+        """
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            for arg in ('_name', '_name__icontains'):
+                with self.subTest(arg=arg):
+                    list(self.queryset.filter(**{arg: 'Test'}))
+                    update_mock.assert_called()
+
+    def test_filter_not_updates_names(self):
+        """
+        Assert that _update_names is not called when using filter() without a
+        '_name' argument.
+        """
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.obj1_qs.filter(year=2023))
+            update_mock.assert_not_called()
+
+    def test_only_updates_name(self):
+        """Assert that _update_names is called when using only() with a '_name' argument."""
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.only('_name'))
+            update_mock.assert_called()
+
+    def test_only_not_updates_name(self):
+        """Assert that _update_names is not called when using only() without a '_name' argument."""
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.only('id'))
+            update_mock.assert_not_called()
+
+    def test_update_sets_changed_flag(self):
+        """
+        Assert that update sets _changed_flag to True for updates without
+        changed_flag arguments.
+        """
+        self.obj1_qs.update(year=1921)
+        values = self.queryset.values('_changed_flag').get(pk=self.obj1.pk)
+        self.assertTrue(values['_changed_flag'])
+
+    def test_update_explicit_changed_flag_argument(self):
+        """Assert that update doesn't override an explicit _changed_flag argument."""
+        self.obj1_qs.update(year=1921, _changed_flag=False)
+        values = self.queryset.values('_changed_flag').get(pk=self.obj1.pk)
+        self.assertFalse(values['_changed_flag'])
+
+    def test_values_updates_name(self):
+        """Assert that _update_names is called when using values() with a '_name' argument."""
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.values('_name'))
+            update_mock.assert_called()
+
+    def test_values_not_updates_name(self):
+        """
+        Assert that _update_names is not called when using values() without a
+        '_name' argument.
+        """
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.values('id'))
+            update_mock.assert_not_called()
+
+    def test_values_list_updates_name(self):
+        """Assert that _update_names is called when using values_list() with a '_name' argument."""
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.values_list('_name'))
+            update_mock.assert_called()
+
+    def test_values_list_not_updates_name(self):
+        """
+        Assert that _update_names is not called when using values_list()
+        without a '_name' argument.
+        """
+        with patch.object(CNQuerySet, '_update_names') as update_mock:
+            list(self.queryset.values_list('id'))
+            update_mock.assert_not_called()
+
+    def test_update_names(self):
+        """Assert that the values for the name field are updated as expected."""
+        # Disable the 'automatic' updating of names:
+        with patch.object(CNQuerySet, '_update_names'):
+            self.obj1_qs.update(_changed_flag=True, month=1, year=1922)
+            self.obj2_qs.update(_changed_flag=True, month=2, year=1921)
+        # Now do the name updates:
+        self.queryset._update_names()
+        self.assertEqual(self.queryset.values('_name').get(pk=self.obj1.pk)['_name'], '1922-01')
+        self.assertEqual(self.queryset.values('_name').get(pk=self.obj2.pk)['_name'], '1921-02')
+
+    def test_update_names_num_queries(self):
+        """Asser that a name update performs the expected number of queries."""
+        # Should be six queries:
+        # - one from querying the existence of _changed_flag records,
+        # - one from calling values_dict,
+        # - one each for every object to be updated,
+        # - two for the transaction.atomic block
+        self.queryset.update(_changed_flag=True)
+        with self.assertNumQueries(6):
+            self.queryset._update_names()
+
+    def test_update_names_num_queries_empty(self):
+        """
+        Assert that no updating queries are done if the queryset does not
+        contain any rows with the changed flag set.
+        """
+        self.queryset.update(_changed_flag=False)
+        # One query that checks if there are any rows with the changed flag set:
+        with self.assertNumQueries(1):
+            self.queryset._update_names()
+
+    def test_num_queries(self):
+        """
+        Assert that a query including the _name field includes the expected
+        number of queries.
+        """
+        # 3 queries for each call of _update_names from only, filter and
+        # values_list, plus one query for the actual result list.
+        with self.assertNumQueries(4):
+            list(self.queryset.only('_name').filter(_name='2022-01').values_list('_name'))
