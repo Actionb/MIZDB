@@ -456,6 +456,8 @@ class TestWizardConfirmationView(ActionViewTestCase):
         with patch.object(SessionWizardView, 'post', return_value='WizardForm!'):
             self.assertEqual(view.post(request), 'WizardForm!')
 
+    # TODO: add test for done() - for coverage
+
 
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     admin_site = miz_site
