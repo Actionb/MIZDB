@@ -19,6 +19,14 @@ class TestMIZAdminMixin(ViewTestCase):
         template_name = 'test_template.html'
         admin_site = AdminSite()
 
+    def test_init_sets_admin_site(self):
+        """
+        Assert that init sets the admin_site attribute when provided with an
+        admin_site argument.
+        """
+        self.assertEqual(self.view_class(admin_site=1).admin_site, 1)
+        self.assertEqual(self.view_class().admin_site, self.view_class.admin_site)
+
     def test_get_context_data_calls_each_context(self):
         """get_context_data should call the each_context method of the admin site."""
         view = self.get_view(self.get_request())
