@@ -228,7 +228,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         Crosslinks are links on an instance's change form that send the user
         to the changelist containing the instance's related objects.
         """
-        if not object_id:  # pragma: no cover
+        if not object_id:
             return {}
 
         new_extra: dict = {'crosslinks': []}

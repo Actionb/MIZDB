@@ -329,7 +329,7 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
         self.assertFalse(next_data.get('jahr'))
 
     def test_javascript(self):
-        """Check that jquery and select2 are included and in the right order."""
+        """Check that jquery and select2 are included and loaded in the right order."""
         with self.settings(DEBUG=True):
             response = self.get_response(self.path)
             self.assertSelect2JS(response.context['form'].media._js)

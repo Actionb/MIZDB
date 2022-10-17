@@ -72,8 +72,8 @@ class TestAutocompleteMixin(TestCase):
 
     def test_formfield_for_foreignkey(self):
         """
-        formfield_for_foreignkey should call make_widget with tabular=True, if
-        the field's name is in the inline's 'tabular_autocomplete' list.
+        Assert that formfield_for_foreignkey calls make_widget with tabular=True
+        if the field's name is in the inline's 'tabular_autocomplete' list.
         """
         with patch('dbentry.base.admin.super'):
             with patch('dbentry.base.admin.make_widget') as make_mock:
@@ -89,8 +89,8 @@ class TestAutocompleteMixin(TestCase):
 
     def test_formfield_for_foreignkey_no_tabular(self):
         """
-        formfield_for_foreignkey should call make_widget with tabular=False, if
-        the field's name isn't present in the 'tabular_autocomplete' list.
+        Assert that formfield_for_foreignkey calls make_widget with tabular=False
+        if the field's name isn't present in the 'tabular_autocomplete' list.
         """
         with patch('dbentry.base.admin.super'):
             with patch('dbentry.base.admin.make_widget') as make_mock:
@@ -106,8 +106,8 @@ class TestAutocompleteMixin(TestCase):
 
     def test_formfield_for_foreignkey_no_override(self):
         """
-        formfield_for_foreignkey should not call make_widget, if a widget was
-        passed in.
+        Assert that formfield_for_foreignkey does not call make_widget if a
+        widget was passed in.
         """
         with patch('dbentry.base.admin.super'):
             with patch('dbentry.base.admin.make_widget') as make_mock:
@@ -271,6 +271,15 @@ class MIZModelAdminTest(AdminTestCase):
         request = self.get_request(user=self.super_user)
         self.assertEqual(len(self.model_admin.get_fieldsets(request, self.obj)), 2)
 
+    def test_get_fieldsets_adds_bb_fieldset(self):
+        """
+        Assert that get_fieldsets calls the _add_bb_fieldset method to include
+        an extra fieldset.
+        """
+        with patch.object(self.model_admin, '_add_bb_fieldset') as add_bb_mock:
+            self.model_admin.get_fieldsets(request=self.get_request())
+            add_bb_mock.assert_called()
+
     def test_add_bb_fieldset(self):
         """
         The fields 'beschreibung' and 'bemerkungen' should be moved from the
@@ -310,6 +319,13 @@ class MIZModelAdminTest(AdminTestCase):
             },
             crosslinks
         )
+
+    def test_add_crosslinks_no_object_id(self):
+        """
+        Assert that add_crosslinks returns an empty dictionary when no
+        object_id was provided.
+        """
+        self.assertEqual(self.model_admin.add_crosslinks(object_id=None), {})
 
     def test_add_crosslinks_ignores_relations_with_inlines(self):
         """No crosslinks should be created for relations handled by inlines."""
