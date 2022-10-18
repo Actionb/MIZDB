@@ -1,36 +1,30 @@
-import re
-from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib import admin, contenttypes
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.admin.models import LogEntry
-from django.contrib.admin.views.main import ALL_VAR
+from django.contrib.admin.views.main import ALL_VAR, ORDER_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.core import checks, exceptions
+from django.core import exceptions
 from django.db import connections, transaction
 from django.db.models import Count, Exists, Func, Min, Subquery
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.test.utils import CaptureQueriesContext  # noqa
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
 import dbentry.admin as _admin
 import dbentry.models as _models
-from dbentry.base.admin import AutocompleteMixin
-from dbentry.changelist import AusgabeChangeList, BestandChangeList, MIZChangeList
-from tests.factory import make, modelfactory_factory
+from dbentry.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.sites import miz_site
 from tests.case import AdminTestCase
-from dbentry.utils import get_model_fields
-from tests.case import MIZTestCase
+from tests.factory import make
 
 
 class AdminTestMethodsMixin(object):
-
     admin_site = miz_site
 
     # Fields to be excluded from the changeview form:
@@ -46,9 +40,9 @@ class AdminTestMethodsMixin(object):
         """Apply the model_admin's changelist annotations to the given object."""
         return (
             self.queryset
-            .filter(pk=obj.pk)
-            .annotate(**self.model_admin.get_changelist_annotations())
-            .get()
+                .filter(pk=obj.pk)
+                .annotate(**self.model_admin.get_changelist_annotations())
+                .get()
         )
 
     def test_get_exclude(self):
@@ -163,7 +157,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'plattennummer', 'release_id', 'discogs_url', 'beschreibung',
         'bemerkungen', 'medium', 'medium_qty'
     ]
-    
+
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(
@@ -337,14 +331,14 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                     self.get_request(), self.queryset, status=_models.Ausgabe.Status.INBEARBEITUNG
                 )
                 log_change_mock.assert_called()
-                
+
         # An exception should not stop the updates to model instances:
         self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'iB'})
         # The user should have been messaged about the exception:
         _request, message, level = message_user_mock.call_args[0]
         self.assertEqual(level, 'ERROR')
         self.assertEqual(
-            message, 
+            message,
             "Fehler beim Erstellen der LogEntry Objekte: \nValueError: This is a test exception."
         )
 
@@ -514,11 +508,11 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
-    
+
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(
-            cls.model, bandalias__alias=['Alias1', 'Alias2'], 
+            cls.model, bandalias__alias=['Alias1', 'Alias2'],
             genre__genre=['Testgenre1', 'Testgenre2'],
             musiker__kuenstler_name=['Testkuenstler1', 'Testkuenstler2']
         )
@@ -696,7 +690,12 @@ class TestBaseBrochureAdmin(AdminTestCase):
         self.assertIsInstance(annotations['jahr_string'], Func)
 
     def test_jahr_string(self):
-        obj = self.queryset.filter(pk=self.obj1.pk).annotate(**self.model_admin.get_changelist_annotations()).get()  # noqa
+        obj = (
+            self.queryset
+                .filter(pk=self.obj1.pk)
+                .annotate(**self.model_admin.get_changelist_annotations())
+                .get()
+        )
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
 
@@ -1513,7 +1512,8 @@ class TestAuthAdminMixin(TestCase):
         perm_queryset = Permission.objects.filter(content_type=ct)
         mocked_formfield = Mock(queryset=perm_queryset)
         mocked_super.return_value = Mock(
-            formfield_for_manytomany=Mock(return_value=mocked_formfield))
+            formfield_for_manytomany=Mock(return_value=mocked_formfield)
+        )
         formfield = _admin.AuthAdminMixin().formfield_for_manytomany(None)
         for choice in formfield.choices:
             with self.subTest(choice=choice):
@@ -1575,7 +1575,6 @@ class TestMIZLogEntryAdmin(AdminTestCase):
 
     def test_object(self):
         """Assert that the object method returns a link to the given object."""
-        # noinspection PyUnresolvedReferences
         opts = User._meta
         url = reverse(
             f"{self.admin_site.name}:{opts.app_label}_{opts.model_name}_change",
