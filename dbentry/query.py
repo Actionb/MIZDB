@@ -264,6 +264,7 @@ class AusgabeQuerySet(CNQuerySet):
             a dictionary that was used to update the jahrgang values;
               it maps jahrgang to list of ids.
         """
+        # TODO: the return value isn't use anywhere
         start = start_obj or self.chronological_order().first()
         start_date = start.e_datum
         years = start.ausgabejahr_set.values_list('jahr', flat=True)
