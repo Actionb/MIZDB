@@ -82,9 +82,6 @@ class AdminTestMethodsMixin(object):
         """
         # Request with 'all=1' to set changelist.show_all to True which should
         # stop hiding/filtering results - which might affect the # of queries.
-        # FIXME: this test fails for AusgabenAdmin, unless another instance
-        #  is created:
-        # make(self.model)
         with CaptureQueriesContext(connections['default']) as queries:
             self.client.get(self.changelist_path, data={ALL_VAR: '1'})
         n = len(queries.captured_queries)
@@ -199,8 +196,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
     ]
-    # one more query for the chronologically_ordered() query for magazin count:
-    num_queries_changelist = 6
 
     @classmethod
     def setUpTestData(cls):
@@ -215,6 +210,33 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             bestand__lagerort__ort=['Zeitschriftenraum', 'Dublettenlager'],
         )
         super().setUpTestData()
+
+    def test_changelist_queries(self):
+        """
+        Assert that the number of queries needed for the changelist remains
+        constant and doesn't depend on the number of records fetched.
+        """
+        # Request with 'all=1' to set changelist.show_all to True which should
+        # stop hiding/filtering results - which might affect the # of queries.
+        # Add ORDER_VAR parameter to suppress chronological ordering.
+        with CaptureQueriesContext(connections['default']) as queries:
+            self.client.get(self.changelist_path, data={ALL_VAR: '1', ORDER_VAR: '1'})
+        n = len(queries.captured_queries)
+        make(self.model)
+        with CaptureQueriesContext(connections['default']) as queries:
+            self.client.get(self.changelist_path, data={ALL_VAR: '1', ORDER_VAR: '1'})
+        self.assertEqual(
+            n, len(queries.captured_queries),
+            msg="Number of queries for changelist depends on number of records! "
+                f"Unoptimized query / no prefetching?"
+        )
+        if self.num_queries_changelist:
+            self.assertEqual(
+                n, self.num_queries_changelist,
+                msg="Number of queries required for a changelist request differs "
+                    f"from the expected value: got '{n}' expected '{self.num_queries_changelist}'. "
+                    "Check 'list_select_related'."
+            )
 
     def test_get_changelist(self):
         """Assert that AusgabenAdmin uses the AusgabeChangeList changelist class."""
