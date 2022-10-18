@@ -74,51 +74,6 @@ class AdminTestMethodsMixin(object):
         response = self.client.get(path=self.add_path)
         self.assertEqual(response.status_code, 200)
 
-    def test_changeform_media_context_collapse_after_jquery(self):
-        """Assert that a ModelAdmin's add/changeform loads jquery before collapse."""
-        # TODO: if this only occurs for ModelAdmins that do not have any inlines
-        #  why not test only those ModelAdmins directly?
-        # If the ModelAdmin does not contain any inlines the resulting media is
-        # media + AdminForm.media, where AdminForm.media has collapse in between
-        # jquery_base and jquery_init, ruining the load order.
-        # InlineFormsets usually do not contain collapse (or at least there's
-        # always one without it) so after media + InlineFormset.media,
-        # jquery.init would follow directly after jquery_base.
-        # follows directly after jquery_base.
-        request = self.get_request(path=self.add_path)
-        # Patch render_change_form to get access to the context:
-        with patch.object(self.model_admin, 'render_change_form') as mock:
-            self.model_admin._changeform_view(
-                request=self.get_request(path=self.add_path),
-                object_id=None,
-                form_url='',
-                extra_context={}
-            )
-            self.assertTrue(mock.called)
-            # context is the second positional argument of render_change_form:
-            context = mock.call_args[0][1]
-            self.assertIn('media', context)
-            media = context['media']
-
-            from django.conf import settings
-            jquery_base = f'admin/js/vendor/jquery/jquery{"" if settings.DEBUG else ".min"}.js'
-            jquery_init = 'admin/js/jquery.init.js'
-            collapse = 'admin/js/collapse.js'
-
-            if collapse in media._js:
-                self.assertIn(jquery_base, media._js)
-                self.assertIn(jquery_init, media._js)
-                self.assertGreater(
-                    media._js.index(collapse),
-                    media._js.index(jquery_init),
-                    msg="jquery.init must be loaded before collapse.js"
-                )
-                self.assertGreater(
-                    media._js.index(jquery_init),
-                    media._js.index(jquery_base),
-                    msg="jquery base must be loaded before jquery.init"
-                )
-
     def test_changelist_queries(self):
         """
         Assert that the number of queries needed for the changelist remains
@@ -1464,8 +1419,8 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTemplateUsed(response, 'admin/change_bestand.html')
 
 
-# TODO: @work: check this
 class TestChangelistAnnotations(AdminTestCase):
+    admin_site = miz_site
     model = _models.Ausgabe
     model_admin_class = _admin.AusgabenAdmin
 
@@ -1479,13 +1434,14 @@ class TestChangelistAnnotations(AdminTestCase):
 
     def test_action_update(self):
         """
-        Assert that actions that do an update on a queryset ordered against an
-        annotation go through without error.
+        Assert that actions can perform an update on a queryset sorted by an
+        annotated field.
         """
         # queryset.update removes all annotations - which will cause a
         # FieldError when it's time to apply ordering that depends on an
         # annotated field.
         # See: https://code.djangoproject.com/ticket/28897
+        # Fixed in django 4.1.
         request_data = {
             # 'index' specifies which action form (form to select an action from)
             # was used in case there are multiple such action forms
@@ -1498,7 +1454,6 @@ class TestChangelistAnnotations(AdminTestCase):
         query_string = f"?o={self.model_admin.list_display.index('num_string') + 1}"
         self.client.post(self.changelist_path + query_string, data=request_data)
         self.obj.refresh_from_db()
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.obj.status, _models.Ausgabe.Status.INBEARBEITUNG)
 
     def test_can_order_result_list(self):
