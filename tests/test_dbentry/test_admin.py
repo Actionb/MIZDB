@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 from django.contrib import admin, contenttypes
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.contrib.admin.models import LogEntry
 from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission, User
@@ -1259,6 +1260,14 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         request = self.get_request(user=self.noperms_user)
         self.assertNotIn('copy_related', self.model_admin.get_fields(request))
 
+    def test_save_related_calls_copy_related(self):
+        """Assert that save_related calls _copy_related."""
+        form_mock = Mock(instance=1)
+        with patch('dbentry.admin.super'):
+            with patch.object(self.model_admin, '_copy_related') as copy_related_mock:
+                self.model_admin.save_related(request=None, form=form_mock, formsets=None, change=True)  # noqa
+                copy_related_mock.assert_called()
+
     def test_action_change_bestand(self):
         """Assert that the 'change_bestand' page can be navigated to from the changelist."""
         request_data = {
@@ -1487,3 +1496,88 @@ class TestAuthAdminMixin(TestCase):
         for choice in formfield.choices:
             with self.subTest(choice=choice):
                 self.assertIn(_models.AusgabeLnum.__name__, choice[1])
+
+
+class TestMIZUserAdmin(AdminTestCase):
+    admin_site = miz_site
+    model = User
+    model_admin_class = _admin.MIZUserAdmin
+
+    def test_get_queryset_adds_activity_annotation(self):
+        """
+        Assert that get_queryset adds an annotation that shows the activity of
+        users.
+        """
+        queryset = self.model_admin.get_queryset(self.get_request())
+        self.assertIn('activity', queryset.query.annotations)
+        self.assertEqual(queryset.get(pk=self.super_user.pk).activity, 0)
+        LogEntry.objects.log_action(
+            user_id=self.super_user.pk,
+            content_type_id=ContentType.objects.get_for_model(User).pk,
+            object_id=self.super_user.pk,
+            object_repr=repr(self.super_user),
+            action_flag=admin.models.CHANGE,
+            change_message=[],
+        )
+        queryset = self.model_admin.get_queryset(self.get_request())
+        self.assertEqual(queryset.get(pk=self.super_user.pk).activity, 1)
+
+    def test_activity(self):
+        """
+        Assert that activity returns the value of the 'activity' attribute
+        of the given user.
+        """
+        self.super_user.activity = 'Foo'
+        self.assertEqual(self.model_admin.activity(self.super_user), 'Foo')
+
+
+class TestMIZLogEntryAdmin(AdminTestCase):
+    admin_site = miz_site
+    model = LogEntry
+    model_admin_class = _admin.MIZLogEntryAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.obj = LogEntry.objects.log_action(
+            user_id=cls.super_user.pk,
+            content_type_id=ContentType.objects.get_for_model(User).pk,
+            object_id=cls.super_user.pk,
+            object_repr="Superuser",
+            action_flag=admin.models.CHANGE,
+            change_message=[{
+                'changed':
+                    {'fields': ['username'], 'name': 'User', 'object': 'Superuser'}
+            }],
+        )
+
+    def test_object(self):
+        """Assert that the object method returns a link to the given object."""
+        # noinspection PyUnresolvedReferences
+        opts = User._meta
+        url = reverse(
+            f"{self.admin_site.name}:{opts.app_label}_{opts.model_name}_change",
+            args=[self.super_user.pk]
+        )
+        self.assertEqual(self.model_admin.object(self.obj), f'<a href="{url}">Superuser</a>')
+
+    def test_change_message_verbose(self):
+        """
+        Assert change_message_verbose returns the full change message of the
+        given object.
+        """
+        with translation_override(language=None):
+            self.assertEqual(
+                self.model_admin.change_message_verbose(self.obj),
+                "Changed username for User “Superuser”."
+            )
+
+    def test_change_message_raw(self):
+        """
+        Assert that change_message_raw returns the raw change message of the
+        given object.
+        """
+        self.assertEqual(
+            self.model_admin.change_message_raw(self.obj),
+            '[{"changed": {"fields": ["username"], "name": "User", "object": "Superuser"}}]'
+        )

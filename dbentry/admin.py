@@ -1684,7 +1684,6 @@ class MIZUserAdmin(AuthAdminMixin, UserAdmin):
         return user.activity or 0
     activity.short_description = 'Aktivität letzte 30 Tage'  # type: ignore[attr-defined]
     activity.admin_order_field = 'activity'  # type: ignore[attr-defined]
-    pass
 
 
 @admin.register(LogEntry, site=miz_site)
