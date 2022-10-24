@@ -1,31 +1,19 @@
 from django import forms
-from django.contrib import admin
 from django.contrib.admin.helpers import AdminField
 from django.contrib.admin.views.main import ORDER_VAR
 from django.test import override_settings
-from django.urls import path
 
 from dbentry.templatetags.miz_tags import checkbox_label, reset_ordering
 from tests.case import AdminTestCase
-from tests.models import Artikel
-
-admin_site = admin.AdminSite(name='test')
-
-
-@admin.register(Artikel, site=admin_site)
-class ArtikelAdmin(admin.ModelAdmin):
-    list_display = ['schlagzeile', 'seite', 'ausgabe']
+from .admin import FooAdmin, admin_site
+from .models import Foo
 
 
-class URLConf:
-    urlpatterns = [path('test_templatetags/', admin_site.urls)]
-
-
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_templatetags.urls')
 class TestTags(AdminTestCase):
     admin_site = admin_site
-    model = Artikel
-    model_admin_class = ArtikelAdmin
+    model = Foo
+    model_admin_class = FooAdmin
 
     def test_reset_ordering(self):
         """
