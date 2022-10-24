@@ -3,15 +3,16 @@ from django.urls import reverse, reverse_lazy
 
 import dbentry.models as _models
 from dbentry.bulk.views import BulkAusgabe
-from dbentry.tests.mixins import CreateFormViewMixin, LoggingTestMixin, TestDataMixin
 from tests.case import ViewTestCase
 from tests.factory import batch, make
+from tests.mixins import LoggingTestMixin
 
 
-class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
+class TestBulkAusgabe(ViewTestCase, LoggingTestMixin):
     model = _models.Ausgabe
     view_class = BulkAusgabe
     path = reverse_lazy('bulk_ausgabe')
+    fixtures = ['monat.json']
 
     @classmethod
     def setUpTestData(cls):
@@ -40,6 +41,7 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
 
     def setUp(self):
         super().setUp()
+        self.queryset = self.model.objects.all()
         self.session = self.client.session
         self.session['old_form_data'] = {}
         self.session.save()
@@ -135,7 +137,8 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
 
     def test_save_data(self):
         """Check the number of objects saved to the database."""
-        form = self.get_valid_form()
+        form = self.view_class.form_class(data=self.valid_data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         request = self.post_request()
         view = self.get_view(request)
 
@@ -172,7 +175,8 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
         """Check the updates made to already existing instances."""
         # The test's model instance 'updated' should have had an audio record
         # added to it. An update to the 'jahrgang' value is also expected.
-        form = self.get_valid_form()
+        form = self.view_class.form_class(data=self.valid_data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         request = self.post_request()
         # The related audio instance should not exist yet.
         self.assertFalse(self.updated.audio.exists())
@@ -220,7 +224,8 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
             sorted([self.updated.pk, self.multi1.pk, self.multi2.pk])
         )
 
-        form = self.get_valid_form()
+        form = self.view_class.form_class(data=self.valid_data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         request = self.post_request()
         ids, created, updated = self.get_view(request).save_data(form)
         preexisting = [self.updated, self.multi1, self.multi2]
@@ -322,7 +327,7 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
         """Assert that next_initial_data increments the values for 'jahrgang'."""
         data = self.valid_data.copy()
         data['jahr'] = ''
-        form = self.get_form(data=data)
+        form = self.view_class.form_class(data=data)
         form.is_valid()
         next_data = self.get_view().next_initial_data(form)
         self.assertEqual(next_data.get('jahrgang', 0), 12)
@@ -342,6 +347,8 @@ class TestBulkAusgabe(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingT
         first_visit_request = first_visit_response.wsgi_request
         self.assertEqual(first_visit_response.status_code, 200)
         # No preview should be displayed yet:
+        # NOTE: use assertIn instead of assertFalse/True;
+        #  assertIn would print out the many, many keys of context on failure
         self.assertFalse('preview_headers' in first_visit_response.context)
         self.assertFalse('preview' in first_visit_response.context)
         # The session storage for 'old_form_data' should be empty:
