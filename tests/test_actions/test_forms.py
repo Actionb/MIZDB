@@ -1,9 +1,9 @@
+from django.test import TestCase
+
 from dbentry.actions.forms import BrochureActionFormOptions
-from dbentry.tests.base import FormTestCase
 
 
-class TestBrochureActionFormOptions(FormTestCase):
-
+class TestBrochureActionFormOptions(TestCase):
     form_class = BrochureActionFormOptions
 
     def test_init_disables_delete_magazin_field(self):

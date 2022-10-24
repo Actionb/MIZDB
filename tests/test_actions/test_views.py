@@ -11,7 +11,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.forms.formsets import ManagementForm
 from django.test import override_settings
-from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import override as translation_override
 from django.views.generic.base import ContextMixin, View
@@ -30,13 +29,13 @@ from dbentry.actions.views import (
 )
 from dbentry.base.forms import MIZAdminForm
 from dbentry.sites import miz_site
-from dbentry.tests.mixins import LoggingTestMixin
 from dbentry.utils import get_obj_link
 from tests.case import AdminTestCase, ViewTestCase
 from tests.factory import make
-from tests.test_actions.models import Band, Genre
+from tests.mixins import LoggingTestMixin
+from .models import Band, Genre
 
-admin_site = admin.AdminSite(name='test')
+admin_site = admin.AdminSite(name='test_actions')
 
 
 class RenameConfirmationForm(MIZAdminForm):
@@ -87,11 +86,7 @@ class GenreAdmin(admin.ModelAdmin):
     pass
 
 
-class URLConf:
-    urlpatterns = [path('test_actions/', admin_site.urls)]
-
-
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestConfirmations(AdminTestCase):
     """Integration test for ActionConfirmationView (and ConfirmationViewMixin)."""
 
@@ -153,7 +148,7 @@ def outside_check(view):
     return True
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestConfirmationViewMixin(ActionViewTestCase):
     class DummyView(ConfirmationViewMixin, ContextMixin, View):
         admin_site = admin_site
@@ -294,7 +289,7 @@ def get_obj_link_mock(obj, user, site_name, blank):
     return format_html('<a href="URL"{target}>{obj}</a>', target=target, obj=obj)
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestActionConfirmationView(ActionViewTestCase):
     class DummyView(ActionConfirmationView):
         admin_site = admin_site
@@ -421,7 +416,7 @@ class TestActionConfirmationView(ActionViewTestCase):
             self.assertIn('object_list', view.get_context_data())
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestWizardConfirmationView(ActionViewTestCase):
     admin_site = admin_site
     view_class = WizardConfirmationView
