@@ -81,7 +81,7 @@ DATABASES = {
 
 DEBUG = True
 
-ROOT_URLCONF = 'tests.urls'  # TODO: or test urls?
+ROOT_URLCONF = 'tests.urls'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
