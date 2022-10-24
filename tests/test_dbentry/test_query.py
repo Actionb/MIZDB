@@ -681,13 +681,23 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
         self.assertJahrgangIncremented(self.queryset)
 
-    def test_increment_no_start_year(self):
-        # TODO: @home: check this out - what happens if no start date and no
-        #  start year is available?
+    def test_increment_no_start_values(self):
+        """
+        Assert that increment_jahrgang only increments the jahrgang value of
+        the start object if no temporal order can be established due to missing
+        values (no start date/start year).
+        """
         _models.AusgabeJahr.objects.all().delete()
         self.obj1.e_datum = None
+
         self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
-        self.assertFalse(self.queryset.values_list('jahrgang', flat=True))
+        self.assertFalse(
+            self.queryset.exclude(pk=self.obj1.pk).filter(jahrgang__isnull=False).exists()
+        )
+        self.assertSequenceEqual(
+            self.queryset.filter(pk=self.obj1.pk).values_list('jahrgang', flat=True),
+            [10]
+        )
 
 
 class TestBuildDate(MIZTestCase):
