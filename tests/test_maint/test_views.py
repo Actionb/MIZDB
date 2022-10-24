@@ -1,43 +1,21 @@
 from collections import OrderedDict
 from unittest.mock import DEFAULT, Mock, patch
 
-from django.contrib import admin
-from django.urls import path, reverse
-from django.utils.http import unquote
 from django.test import override_settings
+from django.urls import reverse
+from django.utils.http import unquote
 
 from dbentry.factory import make
 from dbentry.maint.views import (
     DuplicateModelSelectView, DuplicateObjectsView, ModelSelectView, UnusedObjectsView,
     find_duplicates
 )
-from tests.case import DataTestCase, ViewTestCase
 from dbentry.tests.mixins import TestDataMixin
-from tests.test_maint.models import Musiker, Genre, Person
-
-admin_site = admin.AdminSite(name='test_maint')
-
-
-@admin.register(Musiker, site=admin_site)
-class MusikerAdmin(admin.ModelAdmin):
-    pass
+from tests.case import DataTestCase, ViewTestCase
+from tests.test_maint.models import Genre, Musiker, Person
 
 
-@admin.register(Genre, site=admin_site)
-class GenreAdmin(admin.ModelAdmin):
-    pass
-
-
-class URLConf:
-    urlpatterns = [
-        path('test_maint/', admin_site.urls),
-        path('dupes/<str:model_name>/', DuplicateObjectsView.as_view(admin_site=admin_site), name='dupes'),  # noqa
-        path('dupes/', DuplicateModelSelectView.as_view(admin_site=admin_site), name='dupes_select'),  # noqa
-        path('unused/', UnusedObjectsView.as_view(admin_site=admin_site), name='find_unused'),
-    ]
-
-
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_maint.urls')
 class TestModelSelectView(ViewTestCase):
     view_class = ModelSelectView
 
@@ -75,7 +53,7 @@ class TestModelSelectView(ViewTestCase):
         self.assertEqual(view.get_next_view_kwargs(), {'model_name': 'some_model'})
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_maint.urls')
 class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
     model = Musiker
     view_class = DuplicateObjectsView
@@ -267,7 +245,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         self.assertEqual(context['breadcrumbs_title'], 'Musiker')
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_maint.urls')
 class TestUnusedObjectsView(ViewTestCase):
     view_class = UnusedObjectsView
 
@@ -303,7 +281,8 @@ class TestUnusedObjectsView(ViewTestCase):
         self.assertTrue(view.get_form().is_valid())
         with patch.multiple(
                 view, build_items=DEFAULT, render_to_response=DEFAULT,
-                get_context_data=Mock(return_value={})) as mocks:
+                get_context_data=Mock(return_value={})
+        ) as mocks:
             view.get(request=request)
         self.assertTrue(mocks['render_to_response'].called)
         context = mocks['render_to_response'].call_args[0][0]

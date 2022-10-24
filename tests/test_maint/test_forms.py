@@ -1,7 +1,5 @@
 from unittest.mock import Mock, patch
 
-from django.contrib import admin
-from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -11,7 +9,8 @@ from dbentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm,
     get_dupe_field_choices
 )
-from tests.test_maint.models import Kalender, Musiker, Person, Unregistered
+from .admin import admin_site
+from .models import Kalender, Musiker, Person, Unregistered
 
 
 class ForeignKeyA(models.Model):
@@ -28,7 +27,7 @@ class ForwardM2M(models.Model):
     name_field = 'title'
 
 
-class Model(models.Model):
+class DupeModel(models.Model):
     name = models.CharField('The Name', max_length=100)
     blank_field = models.CharField('Blank Field', max_length=100, blank=True)
     non_nullable_fk = models.ForeignKey(
@@ -42,7 +41,7 @@ class Model(models.Model):
 
 class ReverseM2M(models.Model):
     title = models.CharField(max_length=100)
-    related = models.ManyToManyField(Model, related_name='reverse_m2m')
+    related = models.ManyToManyField(DupeModel, related_name='reverse_m2m')
 
     name_field = 'title'
 
@@ -52,14 +51,14 @@ class ReverseM2M(models.Model):
 
 class ReverseFK(models.Model):
     title = models.CharField(max_length=100)
-    related = models.ForeignKey(Model, on_delete=models.CASCADE, related_name='reverse_fk')
+    related = models.ForeignKey(DupeModel, on_delete=models.CASCADE, related_name='reverse_fk')
 
     class Meta:
         verbose_name = 'Reverse FK'
 
 
 class TestGetDupeFieldChoices(TestCase):
-    model = Model
+    model = DupeModel
 
     def test_select_choices(self):
         select, _display = get_dupe_field_choices(self.model)
@@ -107,29 +106,11 @@ class TestGetDupeFieldChoices(TestCase):
 
     def test_display_choices_include_reverse_o2m(self):
         """
-        Assert that the choices for the 'display' field include reverse one to
-        many relations.
+        Assert that the choices for the 'display' field include reverse
+        one-to-many relations.
         """
         _select, display = get_dupe_field_choices(self.model)
         self.assertIn(('reverse_fk__pk', 'Reverse FK'), display)
-
-
-site = AdminSite(name='admin')
-
-
-@admin.register(Musiker, site=site)
-class MusikerAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(Person, site=site)
-class PersonAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(Kalender, site=site)
-class KalenderAdmin(admin.ModelAdmin):
-    pass
 
 
 class TestModelSelectForm(TestCase):
@@ -146,7 +127,7 @@ class TestModelSelectForm(TestCase):
 
     def test_get_model_list_filters_out_non_app_models(self):
         """Assert that models not belonging to the given app are filtered out."""
-        form = self.form_class(app_label="test_maint", admin_site=site)
+        form = self.form_class(app_label="test_maint", admin_site=admin_site)
         with patch('dbentry.maint.forms.apps.get_models') as get_models_mock:
             get_models_mock.return_value = [
                 Musiker,  # should be included
@@ -157,7 +138,7 @@ class TestModelSelectForm(TestCase):
 
     def test_get_model_list_filters_out_non_registered_models(self):
         """Assert that models not registered with the given admin site are filtered out."""
-        form = self.form_class(app_label="test_maint", admin_site=site)
+        form = self.form_class(app_label="test_maint", admin_site=admin_site)
         with patch('dbentry.maint.forms.apps.get_models') as get_models_mock:
             get_models_mock.return_value = [
                 Musiker,  # should be included
