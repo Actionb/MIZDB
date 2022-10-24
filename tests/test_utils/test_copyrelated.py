@@ -5,7 +5,7 @@ from django.db.utils import IntegrityError
 from dbentry.utils import copyrelated as utils
 from tests.case import DataTestCase, RequestTestCase
 from tests.factory import make
-from tests.models import Audio, Band, Veranstaltung
+from .models import Audio, Band, Veranstaltung
 
 
 class TestCopyRelated(DataTestCase, RequestTestCase):

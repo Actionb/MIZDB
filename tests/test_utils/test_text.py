@@ -1,8 +1,9 @@
+from django.test import TestCase
+
 from dbentry import utils
-from tests.case import MIZTestCase
 
 
-class TestTextUtils(MIZTestCase):
+class TestTextUtils(TestCase):
 
     def test_concat_limit(self):
         t = ['2020', '2021', '2024']

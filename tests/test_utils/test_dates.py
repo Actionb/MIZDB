@@ -1,10 +1,11 @@
 import datetime
 
+from django.test import TestCase
+
 from dbentry import utils
-from tests.case import MIZTestCase
 
 
-class TestDateUtils(MIZTestCase):
+class TestDateUtils(TestCase):
 
     def test_leapdays(self):
         test_data = [
@@ -30,7 +31,7 @@ class TestDateUtils(MIZTestCase):
             # start > end, leapdays() should swap them
             ((2000, 12, 31), (2000, 1, 1), 1),  # purely for coverage
         ]
-        for start, end,  expected in test_data:
+        for start, end, expected in test_data:
             start = datetime.date(*start)
             end = datetime.date(*end)
             with self.subTest(start=str(start), end=str(end)):
