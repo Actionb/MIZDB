@@ -4,13 +4,12 @@ from unittest.mock import patch
 from django.contrib.auth.models import Permission, User
 from django.core import checks
 from django.test import override_settings
-from django.urls import include, path, reverse
+from django.urls import reverse
 
 from dbentry import models as _models
 from dbentry.base.admin import MIZModelAdmin
 from dbentry.sites import MIZAdminSite, miz_site, register_tool
-from dbentry.tests.base import RequestTestCase
-from tests.case import MIZTestCase
+from tests.case import MIZTestCase, RequestTestCase
 
 
 class TestMIZAdminSite(RequestTestCase):
@@ -157,20 +156,12 @@ class TestRegisterToolDecorator(MIZTestCase):
         self.assertIn((DummyView, 'url_name', 'index_label', True), site.tools)
 
 
-class URLConf:
-    urlpatterns = [
-        path('admin/', include('dbentry.urls')),
-        path('admin/', miz_site.urls),
-    ]
-
-
-@override_settings(ROOT_URLCONF=URLConf)
 class TestMIZSite(RequestTestCase):
     """Test the admin site 'miz_site'."""
 
     def test_index_tools_superuser(self):
         """Check the admintools registered and available to a superuser."""
-        response = self.client.get(reverse('admin:index'))
+        response = self.client.get(reverse(f'{miz_site.name}:index'))
         tools = response.context_data.get('admintools')
         self.assertIn('bulk_ausgabe', tools)
         self.assertEqual(tools['bulk_ausgabe'], 'Ausgaben Erstellung')
@@ -188,7 +179,7 @@ class TestMIZSite(RequestTestCase):
         perms = Permission.objects.filter(codename='add_ausgabe')
         self.staff_user.user_permissions.set(perms)
         self.client.force_login(self.staff_user)
-        response = self.client.get(reverse('admin:index'))
+        response = self.client.get(reverse(f'{miz_site.name}:index'))
         tools = response.context_data.get('admintools').copy()
 
         self.assertIn('bulk_ausgabe', tools)
@@ -212,7 +203,7 @@ class TestMIZSite(RequestTestCase):
             ]
         )
         self.client.force_login(visitor_user)
-        response = self.client.get(reverse('admin:index'))
+        response = self.client.get(reverse(f'{miz_site.name}:index'))
         tools = response.context_data.get('admintools').copy()
         self.assertIn('site_search', tools)
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
@@ -228,9 +219,7 @@ class TestMIZSite(RequestTestCase):
             opts = model._meta
             with self.subTest(model_name=opts.model_name):
                 # noinspection PyShadowingNames
-                path = reverse(
-                    "%s:%s_%s_changelist" % (miz_site.name, opts.app_label, opts.model_name)
-                )
+                path = reverse(f"{miz_site.name}:{opts.app_label}_{opts.model_name}_changelist")
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path=path)
                 self.assertEqual(response.status_code, 200, msg=path)

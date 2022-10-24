@@ -10,7 +10,7 @@ from dbentry import models as _models
 from dbentry.query import CNQuerySet, MIZQuerySet, build_date
 from tests.case import DataTestCase, MIZTestCase
 from tests.factory import make
-from tests.models import Band
+from .models import Band
 
 
 class TestMIZQuerySet(DataTestCase):
@@ -309,7 +309,6 @@ class TestCNQuerySet(DataTestCase):
 
 
 class TestAusgabeChronologicalOrder(DataTestCase):
-
     model = _models.Ausgabe
 
     @classmethod
@@ -482,10 +481,10 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         )
         ordering = (
             self.model.objects
-                .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
-                .chronological_order()
-                .query
-                .order_by
+            .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
+            .chronological_order()
+            .query
+            .order_by
         )
         self.assertLess(ordering.index('lnum'), ordering.index('monat'))
         self.assertLess(ordering.index('lnum'), ordering.index('num'))
@@ -547,7 +546,6 @@ class TestAusgabeChronologicalOrder(DataTestCase):
 
 
 class TestAusgabeIncrementJahrgang(DataTestCase):
-
     model = _models.Ausgabe
 
     @classmethod
@@ -675,8 +673,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         _models.AusgabeMonat.objects.filter(ausgabe_id__in=ids).delete()
         _models.Ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
         # Also remove num values from obj6 and obj7.
-        _models.AusgabeNum.objects.filter(
-            ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
+        _models.AusgabeNum.objects.filter(ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
 
         self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
         self.assertJahrgangIncremented(self.queryset)

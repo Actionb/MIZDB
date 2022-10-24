@@ -11,7 +11,18 @@ from dbentry import models as _models
 from dbentry.views import MIZSiteSearch, MIZ_permission_denied_view, SiteSearchView
 from tests.case import ViewTestCase
 from tests.factory import make
-from tests.models import Artikel, Band, Musiker, Veranstaltung
+from .models import Artikel, Band, Genre, Musiker
+
+admin_site = AdminSite(name='admin')
+
+
+@admin.register(Band, Musiker, Genre, site=admin_site)
+class Admin(admin.ModelAdmin):
+    pass
+
+
+class URLConf:
+    urlpatterns = [path('test_views/', admin_site.urls)]
 
 
 class TestPermissionDeniedView(ViewTestCase):
@@ -40,21 +51,11 @@ class TestPermissionDeniedView(ViewTestCase):
         self.assertTrue('is_popup' in context)
 
 
-class URLConf:
-    test_site = AdminSite(name='admin')
-
-    @admin.register(Band, Musiker, Veranstaltung, site=test_site)
-    class Admin(admin.ModelAdmin):
-        pass
-
-    urlpatterns = [path('admin/', test_site.urls)]
-
-
 @override_settings(ROOT_URLCONF=URLConf)
 class TestSiteSearchView(ViewTestCase):
     # noinspection PyPep8Naming
     class view_class(SiteSearchView):
-        app_label = 'tests'  # use test models
+        app_label = 'test_dbentry'  # use test models
 
         def _search(self, model, q):
             # noinspection PyUnresolvedReferences
@@ -64,8 +65,8 @@ class TestSiteSearchView(ViewTestCase):
                 field = 'band_name'
             elif opts.model_name == 'musiker':
                 field = 'kuenstler_name'
-            elif opts.model_name == 'veranstaltung':
-                field = 'name'
+            elif opts.model_name == 'genre':
+                field = 'genre'
             if not field:
                 return []
             # noinspection PyUnresolvedReferences
@@ -82,7 +83,7 @@ class TestSiteSearchView(ViewTestCase):
         self.assertEqual(len(results), 1)
         self.assertIn('Musiker (1)', results[0])
 
-    def test_get_result_list_noperms(self):
+    def test_get_result_list_no_perms(self):
         """
         Assert that get_result_list doesn't return changelist links for users
         who have no permission to view those changelists.
@@ -108,14 +109,14 @@ class TestSiteSearchView(ViewTestCase):
         object names.
         """
         make(Band, band_name='Silva')
-        make(Veranstaltung, name='Silva Konzert')
+        make(Genre, genre='Silva Music')
         view = self.get_view(request=self.get_request())
         results = view.get_result_list('Silva')
         self.assertTrue(results)
         self.assertEqual(len(results), 3)
         self.assertIn('Bands (1)', results[0])
-        self.assertIn('Musiker (1)', results[1])
-        self.assertIn('Veranstaltungen (1)', results[2])
+        self.assertIn('Genres (1)', results[1])
+        self.assertIn('Musiker (1)', results[2])
 
     @mock.patch.object(SiteSearchView, 'render_to_response')
     def test_get(self, render_mock):

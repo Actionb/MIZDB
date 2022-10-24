@@ -12,7 +12,7 @@ from django.core import exceptions
 from django.db import connections, transaction
 from django.db.models import Count, Exists, Func, Min, Subquery
 from django.test import TestCase
-from django.test.utils import CaptureQueriesContext  # noqa
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
@@ -40,9 +40,9 @@ class AdminTestMethodsMixin(object):
         """Apply the model_admin's changelist annotations to the given object."""
         return (
             self.queryset
-                .filter(pk=obj.pk)
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .get()
+            .filter(pk=obj.pk)
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .get()
         )
 
     def test_get_exclude(self):
@@ -692,9 +692,9 @@ class TestBaseBrochureAdmin(AdminTestCase):
     def test_jahr_string(self):
         obj = (
             self.queryset
-                .filter(pk=self.obj1.pk)
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .get()
+            .filter(pk=self.obj1.pk)
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .get()
         )
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
@@ -1199,9 +1199,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_musiker(self):
         obj1, obj2 = (
             self.queryset
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .filter(id__in=[self.obj1.pk, self.obj2.pk])
-                .order_by('id')
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
         )
         self.assertTrue(self.model_admin.is_musiker(obj1))
         self.assertFalse(self.model_admin.is_musiker(obj2))
@@ -1209,9 +1209,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_autor(self):
         obj1, obj2 = (
             self.queryset
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .filter(id__in=[self.obj1.pk, self.obj2.pk])
-                .order_by('id')
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
         )
         self.assertTrue(self.model_admin.is_autor(obj1))
         self.assertFalse(self.model_admin.is_autor(obj2))
@@ -1286,7 +1286,12 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         form_mock = Mock(instance=1)
         with patch('dbentry.admin.super'):
             with patch.object(self.model_admin, '_copy_related') as copy_related_mock:
-                self.model_admin.save_related(request=None, form=form_mock, formsets=None, change=True)  # noqa
+                self.model_admin.save_related(
+                    request=None,
+                    form=form_mock,
+                    formsets=None,
+                    change=True
+                )
                 copy_related_mock.assert_called()
 
     def test_action_change_bestand(self):
