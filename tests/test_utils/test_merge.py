@@ -1,13 +1,55 @@
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 
 from dbentry import utils
 from tests.case import DataTestCase, RequestTestCase
 from tests.factory import make
 from tests.mixins import LoggingTestMixin
-from tests.models import Audio, Ausgabe, Band, Bestand, Magazin, Musiker
 
 
-class MergingTestCase(LoggingTestMixin, DataTestCase, RequestTestCase):
+class Foo(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = 'Foo'
+
+
+class Bar(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = 'Bar'
+
+
+class UnusedRelation(models.Model):
+    base = models.ForeignKey('MergeBase', on_delete=models.CASCADE)
+
+
+class BarM2M(models.Model):
+    base = models.ForeignKey('MergeBase', on_delete=models.PROTECT)
+    bar = models.ForeignKey('Bar', on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = (('base', 'bar'),)
+        verbose_name = 'MergeBase-Bar'
+
+    def __str__(self):
+        return str(self.bar)
+
+
+class MergeBase(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+
+    foo = models.ManyToManyField('Foo')
+    bar = models.ManyToManyField('Bar', through=BarM2M)
+
+    def __str__(self):
+        return self.name
+
+
+class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
+    model = MergeBase
 
     def setUp(self):
         super().setUp()
@@ -15,38 +57,43 @@ class MergingTestCase(LoggingTestMixin, DataTestCase, RequestTestCase):
         # will be made with wrong ContentType ids.
         ContentType.objects.clear_cache()
 
-
-class TestMerging(MergingTestCase):
-    model = Audio
-
     @classmethod
     def setUpTestData(cls):
-        cls.band_original = Band.objects.create(band_name='Originalband')
-        cls.musiker_original = Musiker.objects.create(kuenstler_name='Originalkünstler')
-        cls.obj1 = cls.original = Audio.objects.create(titel='Original')
-        cls.bestand_original = make(Bestand, audio=cls.original)
-        cls.original.band.add(cls.band_original)
-        cls.original.musiker.add(cls.musiker_original)
+        cls.foo_original = make(Foo, name='Original foo')
+        cls.bar_original = make(Bar, name='Original bar')
+        cls.obj1 = make(MergeBase, name='Original')
+        cls.obj1.foo.add(cls.foo_original)
+        cls.obj1.bar.add(cls.bar_original)
 
-        cls.band_merger1 = Band.objects.create(band_name='Mergerband One')
-        cls.musiker_merger1 = Musiker.objects.create(kuenstler_name='Musikermerger One')
-        cls.obj2 = Audio.objects.create(titel='Merger1')
-        cls.bestand_merger1 = make(Bestand, audio=cls.obj2)
-        cls.obj2.band.add(cls.band_merger1)
-        cls.obj2.musiker.add(cls.musiker_merger1)
+        cls.foo_merger1 = make(Foo, name='Foo merger One')
+        cls.bar_merger1 = make(Bar, name='Bar merger One')
+        cls.obj2 = make(MergeBase, name='Merger1')
+        cls.obj2.foo.add(cls.foo_merger1)
+        cls.obj2.bar.add(cls.bar_merger1)
 
-        cls.band_merger2 = Band.objects.create(band_name='Mergerband Two')
-        cls.musiker_merger2 = Musiker.objects.create(kuenstler_name='Musikermerger Two')
-        cls.obj3 = Audio.objects.create(titel='Merger2', beschreibung="Hello!")
-        cls.bestand_merger2 = make(Bestand, audio=cls.obj3)
-        cls.obj3.band.add(cls.band_merger2)
-        cls.obj3.musiker.add(cls.musiker_merger2)
+        cls.foo_merger2 = make(Foo, name='Foo merger Two')
+        cls.bar_merger2 = make(Bar, name='Bar merger Two')
+        cls.obj3 = make(MergeBase, name='Merger2', description="Hello!")
+        cls.obj3.foo.add(cls.foo_merger2)
+        cls.obj3.bar.add(cls.bar_merger2)
         # Add a 'duplicate' related object to test handling of UNIQUE CONSTRAINTS
         # violations.
-        cls.obj3.musiker.add(cls.musiker_merger1)
+        cls.obj3.foo.add(cls.foo_merger1)
 
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         super().setUpTestData()
+
+    def test_merge(self):
+        utils.merge_records(original=self.obj1, queryset=self.model.objects.all())
+        self.assertSequenceEqual(self.model.objects.all(), [self.obj1])
+        self.assertSequenceEqual(
+            self.obj1.foo.all(),
+            [self.foo_original, self.foo_merger1, self.foo_merger2]
+        )
+        self.assertSequenceEqual(
+            self.obj1.bar.all(),
+            [self.bar_original, self.bar_merger1, self.bar_merger2]
+        )
 
     def test_merge_records_expand(self):
         """
@@ -54,17 +101,17 @@ class TestMerging(MergingTestCase):
         True.
         """
         new_original, update_data = utils.merge_records(
-            original=self.original,
+            original=self.obj1,
             queryset=self.queryset,
             expand_original=True,
             user_id=self.super_user.pk
         )
         self.assertEqual(new_original, self.obj1)
-        self.assertEqual(new_original.titel, 'Original')
-        self.assertEqual(new_original.beschreibung, 'Hello!')
+        self.assertEqual(new_original.name, 'Original')
+        self.assertEqual(new_original.description, 'Hello!')
         self.assertLoggedChange(
             new_original,
-            change_message=[{'changed': {'fields': ['Beschreibung']}}]
+            change_message=[{'changed': {'fields': ['Description']}}]
         )
 
     def test_merge_records_no_expand(self):
@@ -73,14 +120,14 @@ class TestMerging(MergingTestCase):
         expand_original is False.
         """
         new_original, update_data = utils.merge_records(
-            self.original,
+            self.obj1,
             self.queryset,
             expand_original=False,
             user_id=self.super_user.pk
         )
         self.assertEqual(new_original, self.obj1)
-        self.assertEqual(new_original.titel, 'Original')
-        self.assertNotEqual(new_original.beschreibung, 'Hello!')
+        self.assertEqual(new_original.name, 'Original')
+        self.assertNotEqual(new_original.description, 'Hello!')
 
     def test_related_changes(self):
         """
@@ -88,7 +135,7 @@ class TestMerging(MergingTestCase):
         the 'original'.
         """
         _new_original, _update_data = utils.merge_records(
-            self.original,
+            self.obj1,
             self.queryset,
             expand_original=False,
             user_id=self.super_user.pk
@@ -96,40 +143,30 @@ class TestMerging(MergingTestCase):
         change_message = {"name": "", "object": ""}
         added = [{"added": change_message}]
 
-        change_message["name"] = "Bestand"
-        self.assertIn(self.bestand_original, self.obj1.bestand_set.all())
-        self.assertIn(self.bestand_merger1, self.obj1.bestand_set.all())
-        change_message["object"] = str(self.bestand_merger1)
-        self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertIn(self.bestand_merger2, self.obj1.bestand_set.all())
-        change_message["object"] = str(self.bestand_merger2)
-        self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertEqual(self.obj1.bestand_set.all().count(), 3)
+        change_message['name'] = 'MergeBase-Bar'
+        self.assertIn(self.bar_original, self.obj1.bar.all())
+        self.assertIn(self.bar_merger1, self.obj1.bar.all())
+        change_message["object"] = str(self.bar_merger1)
+        self.assertLoggedAddition(self.obj1, change_message=str(added).replace("'", '"'))
+        self.assertIn(self.bar_merger2, self.obj1.bar.all())
+        change_message["object"] = str(self.bar_merger2)
+        self.assertLoggedAddition(self.obj1, change_message=str(added).replace("'", '"'))
+        self.assertEqual(self.obj1.bar.all().count(), 3)
 
-        change_message['name'] = 'Audio-Musiker'
-        self.assertIn(self.musiker_original, self.obj1.musiker.all())
-        self.assertIn(self.musiker_merger1, self.obj1.musiker.all())
-        change_message["object"] = str(self.musiker_merger1)
-        self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertIn(self.musiker_merger2, self.obj1.musiker.all())
-        change_message["object"] = str(self.musiker_merger2)
-        self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertEqual(self.obj1.musiker.all().count(), 3)
-
-        change_message['name'] = 'Band'
-        self.assertIn(self.band_original, self.obj1.band.all())
-        self.assertIn(self.band_merger1, self.obj1.band.all())
-        change_message["object"] = str(self.band_merger1)
-        self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertIn(self.band_merger2, self.obj1.band.all())
-        change_message["object"] = str(self.band_merger2)
-        self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertEqual(self.obj1.band.all().count(), 3)
+        change_message['name'] = 'Foo'
+        self.assertIn(self.foo_original, self.obj1.foo.all())
+        self.assertIn(self.foo_merger1, self.obj1.foo.all())
+        change_message["object"] = str(self.foo_merger1)
+        self.assertLoggedAddition(self.obj1, change_message=str(added).replace("'", '"'))
+        self.assertIn(self.foo_merger2, self.obj1.foo.all())
+        change_message["object"] = str(self.foo_merger2)
+        self.assertLoggedAddition(self.obj1, change_message=str(added).replace("'", '"'))
+        self.assertEqual(self.obj1.foo.all().count(), 3)
 
     def test_rest_deleted(self):
         """Assert that merge deletes the other objects."""
         utils.merge_records(
-            self.original,
+            self.obj1,
             self.queryset,
             expand_original=True,
             user_id=self.super_user.pk
@@ -137,28 +174,17 @@ class TestMerging(MergingTestCase):
         self.assertNotIn(self.obj2, self.model.objects.all())
         self.assertNotIn(self.obj3, self.model.objects.all())
 
-
-class TestMergingProtected(MergingTestCase):
-    model = Ausgabe
-
-    def test_merge(self):
+    def test_duplicate_protected_related_object(self):
         """
-        Assert that merge handles protected relations (here: artikel) properly.
+        Assert that a ProtectedError is raised if any of the related objects
+        are protected and could not be deleted or could not be moved.
         """
-        mag = make(Magazin)
-        obj1 = make(self.model, magazin=mag, artikel__extra=1)
-        obj2 = make(self.model, magazin=mag, artikel__extra=1)
-        merged, update_data = utils.merge_records(
-            obj1,
-            self.model.objects.all(),
-            expand_original=False,
-            user_id=self.super_user.pk
-        )
-        self.assertEqual(merged, obj1)
-        self.assertEqual(merged.artikel_set.count(), 2)
-        self.assertNotIn(obj2, self.model.objects.all())
-
-    def test_raises_protected_error(self):
-        # TODO: test that merge raises a protected error and rolls back the transaction when some
-        #  objects are still protected
-        ...
+        # Add an object to obj3 that would violate unique constraints of obj2:
+        self.obj3.bar.add(self.bar_merger1)
+        queryset = self.queryset.filter(pk__in=[self.obj2.pk, self.obj3.pk])
+        with self.assertRaises(models.deletion.ProtectedError):
+            utils.merge_records(
+                self.obj2, queryset, expand_original=True, user_id=self.super_user.pk
+            )
+            # Check that the merge was aborted and obj3 was not deleted:
+            self.assertTrue(self.model.objects.filter(pk=self.obj3.pk).exists())
