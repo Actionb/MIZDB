@@ -31,6 +31,7 @@ TEST_APPS = [
     "tests.test_autocomplete",
     "tests.test_base",
     "tests.test_maint",
+    "tests.test_search",
     "tests.test_utils",
 ]
 

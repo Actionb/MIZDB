@@ -9,7 +9,7 @@ from dbentry.factory import make
 from dbentry.fields import PartialDate, PartialDateFormField
 from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory
 from dbentry.tests.base import MIZTestCase
-from tests.models import Artikel, Ausgabe, Genre, Kalender, Magazin
+from .models import Artikel, Ausgabe, Genre, InheritedPKModel, Magazin
 
 
 class TestRangeWidget(MIZTestCase):
@@ -290,7 +290,7 @@ class TestSearchFormFactory(MIZTestCase):
         (i.e. from multi-table inheritance) and creates a search field based on
         the parent's primary key field.
         """
-        form_class = self.factory(model=Kalender, fields=[])
+        form_class = self.factory(model=InheritedPKModel, fields=[])
         self.assertIn('id__in', form_class.base_fields)
         field = form_class.base_fields['id__in']
         # Should be the fallback CharField, since the db field is a parent_link

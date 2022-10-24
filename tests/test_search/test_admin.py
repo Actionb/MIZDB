@@ -2,9 +2,7 @@ from unittest import mock
 from unittest.mock import patch
 from urllib.parse import urlparse
 
-from django import forms
-from django.contrib import admin
-from django.contrib.admin.views.main import ALL_VAR, ChangeList
+from django.contrib.admin.views.main import ALL_VAR
 from django.core import checks
 from django.http.request import QueryDict
 from django.test import TestCase, override_settings
@@ -18,65 +16,15 @@ from dbentry.search.admin import (
 )
 from dbentry.search.forms import MIZAdminSearchForm
 from tests.case import AdminTestCase, RequestTestCase
-from tests.models import Artikel, Ausgabe, Band, Genre, Musiker
-
-admin_site = admin.AdminSite(name='test')
-
-
-class SearchChangelist(ChangelistSearchFormMixin, ChangeList):
-    pass
-
-
-@admin.register(Band, site=admin_site)
-class BandAdmin(AdminSearchFormMixin, admin.ModelAdmin):
-    search_form_kwargs = {
-        'fields': ['genre', 'musiker'],
-        # Specify widget class so that the searchform factory doesn't attempt
-        # to create dal autocomplete widgets for these fields:
-        'widgets': {
-            'genre': forms.widgets.SelectMultiple,
-            'musiker': forms.widgets.SelectMultiple
-        },
-        # The changelist template expects a MIZAdminFormMixin form:
-        'form': MIZAdminSearchForm
-    }
-    fields = ['band_name']
-
-
-@admin.register(Musiker, site=admin_site)
-class MusikerAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
-    search_form_kwargs = {'fields': ['kuenstler_name', 'genre']}
-
-
-@admin.register(Artikel, site=admin_site)
-class ArtikelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
-    search_form_kwargs = {
-        'fields': [
-            'schlagzeile',
-            'seite__range',
-            'genre',  # m2m
-            'ausgabe',  # FK
-            'id__in',  # primary key
-        ],
-        # Specify widget class so that the searchform factory doesn't attempt
-        # to create dal autocomplete widgets for these fields:
-        'widgets': {
-            'genre': forms.widgets.SelectMultiple,
-            'ausgabe': forms.widgets.Select
-        },
-        # The changelist template expects a MIZAdminFormMixin form:
-        'form': MIZAdminSearchForm
-    }
-
-    def get_changelist(self, request, **kwargs):
-        return SearchChangelist
+from .admin import ArtikelAdmin, BandAdmin, admin_site
+from .models import Artikel, Ausgabe, Band, Genre
 
 
 class URLConf:
     urlpatterns = [path('test_search/', admin_site.urls)]
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_search.urls')
 class TestAdminMixin(AdminTestCase):
     admin_site = admin_site
     model = Band
@@ -145,7 +93,7 @@ class TestAdminMixin(AdminTestCase):
 
     def test_lookup_allowed(self):
         """Assert that lookups defined on the search form are generally allowed."""
-        field_path = 'bandalias__alias'
+        field_path = 'genre__genre'
         with mock.patch.object(self.model_admin, 'search_form_kwargs', {'fields': [field_path]}):
             form = self.model_admin.get_search_form()  # set the search_form attribute
             self.assertTrue(self.model_admin.lookup_allowed(field_path, None))
@@ -159,12 +107,12 @@ class TestAdminMixin(AdminTestCase):
     def test_lookup_not_allowed(self):
         """
         Assert that a lookup that isn't already a valid relational lookup is
-        not allowed unless it is registered with the given formfield.
+        not allowed if it is not registered with the given formfield.
         """
-        field_path = 'bandalias__alias'
+        field_path = 'genre__genre'
         with mock.patch.object(self.model_admin, 'search_form_kwargs', {'fields': [field_path]}):
             form = self.model_admin.get_search_form()  # set the search_form attribute
-            form.lookups = {}
+            form.lookups = {}  # reset lookup registry
             self.assertFalse(
                 self.model_admin.lookup_allowed(f'{field_path}__icontains', None),
                 msg=f"Lookup 'icontains' for {field_path} is not registered on the "
@@ -176,7 +124,7 @@ class TestAdminMixin(AdminTestCase):
         Assert that invalid lookups for a given field are not allowed even if
         they are registered.
         """
-        field_path = 'bandalias__alias'
+        field_path = 'genre__genre'
         with mock.patch.object(self.model_admin, 'search_form_kwargs', {'fields': [field_path]}):
             form = self.model_admin.get_search_form()  # set the search_form attribute
             form.lookups = {field_path: ['year']}
@@ -190,8 +138,8 @@ class TestAdminMixin(AdminTestCase):
         Assert that for any search field declared with a range lookup, the 'lte'
         lookup is also regarded as valid.
         """
-        model_admin = MusikerAdmin(Musiker, admin_site)
-        field_path = 'musikeraudiom2m__audio__tracks'
+        model_admin = self.model_admin
+        field_path = 'years_active'
         with patch.object(model_admin, 'search_form_kwargs', {'fields': [f"{field_path}__range"]}):
             model_admin.get_search_form()
             self.assertTrue(model_admin.lookup_allowed(f'{field_path}__lte', None))
@@ -228,7 +176,7 @@ class TestAdminMixin(AdminTestCase):
             sorted(QueryDict('genre=1&genre=2').lists())
         )
 
-    def test_response_post_save_returns_index_on_noperms(self):
+    def test_response_post_save_returns_index_on_no_perms(self):
         """
         Assert that _response_post_save redirects to the index (like with
         django's implementation of response_post_save), if the user does not
@@ -365,10 +313,10 @@ class TestAdminMixin(AdminTestCase):
         fields.
         """
         with mock.patch.object(self.model_admin, 'search_form_kwargs'):
-            self.model_admin.search_form_kwargs = {'fields': ['musiker']}
+            self.model_admin.search_form_kwargs = {'fields': ['years_active']}
             errors = self.model_admin._check_search_form_fields()
             self.assertTrue(errors)
-            self.assertEqual(len(errors), 1)
+            self.assertEqual(len(errors), 1, msg=errors)
             self.assertIsInstance(errors[0], checks.Info)
             self.assertEqual(
                 errors[0].msg,
@@ -526,7 +474,7 @@ class TestChangelistSearchFormMixin(RequestTestCase):
             self.assertEqual(changelist.get_filters_params({}), 'default')
 
 
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_search.urls')
 class TestSearchFormChangelist(AdminTestCase):
     """Assert that the changelist's search form filters out results as expected."""
 
