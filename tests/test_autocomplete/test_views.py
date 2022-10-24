@@ -1220,8 +1220,11 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
     view_class = views.ContentTypeAutocompleteView
 
     def test_get_queryset(self):
-        # Test that the queryset only returns models that have in the admin
-        # site register.
+        """
+        Assert that the queryset only returns ContentTypes for models that have
+        been registered with the given admin site.
+        """
+
         class DummySite:
             _registry = {Band: 'ModelAdmin_would_go_here'}
 
@@ -1242,7 +1245,10 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
 class TestACGenre(RequestTestCase):
     model = _models.Genre
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre'})
-    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={'model_name': 'genre', 'create_field': 'genre'})  # noqa
+    create_path = reverse_lazy(
+        GENERIC_URL_NAME,
+        kwargs={'model_name': 'genre', 'create_field': 'genre'}
+    )
 
     @classmethod
     def setUpTestData(cls):

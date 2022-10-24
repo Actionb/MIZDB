@@ -1,14 +1,10 @@
 from unittest.mock import patch
 
-# noinspection PyPackageRequirements
 from dal import forward
 from django import forms
-from django.contrib import admin
-from django.contrib.admin import AdminSite
 from django.core.exceptions import ImproperlyConfigured
 from django.forms import Media, widgets
 from django.test import override_settings
-from django.urls import path
 from django.utils.translation import override as translation_override
 
 from dbentry.ac.widgets import (
@@ -26,19 +22,7 @@ class ArtikelForm(forms.ModelForm):
         fields = '__all__'
 
 
-site = AdminSite(name='admin')
-
-
-@admin.register(Ausgabe, site=site)
-class AusgabeAdmin(admin.ModelAdmin):
-    pass
-
-
-class URLConf:
-    urlpatterns = [path('admin/', site.urls)]
-
-
-@override_settings(ROOT_URLCONF=URLConf)
+@override_settings(ROOT_URLCONF='tests.test_autocomplete.urls')
 class TestRemoteModelWidgetWrapper(MIZTestCase):
 
     def setUp(self):
