@@ -56,7 +56,7 @@ class BandAlias(models.Model):
     band = models.ForeignKey('test_base.Band', on_delete=models.CASCADE)
 
 
-# Some tests require an M2M table that isn't auto created. # TODO: which ones?
+# Model for BaseM2MModel tests:
 class MusikerAudioM2M(BaseM2MModel):
     audio = models.ForeignKey('test_base.Audio', on_delete=models.CASCADE)
     musiker = models.ForeignKey('test_base.Musiker', on_delete=models.CASCADE)

@@ -317,8 +317,7 @@ def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> L
     Log that values for the ``fields`` of ``object`` have changed.
 
     If ``related_obj`` is given, log that a related object's field values have
-    been changed. (This is, basically, like logging changes on admin inline
-    formsets)
+    been changed. (useful for logging changes made with admin inlines)
     """
     if isinstance(fields, str):  # pragma: no cover
         fields = [fields]

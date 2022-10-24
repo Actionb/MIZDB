@@ -376,8 +376,6 @@ class TestAdminUtils(RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_change_related_obj(self):
-        # Note: to understand the purpose of logging changes of related objects,
-        # imagine logging changes to admin inlines.
         # noinspection PyUnresolvedReferences
         m2m_band = self.obj1.band.through.objects.create(
             band=self.band, audio=self.obj1
