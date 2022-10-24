@@ -11,7 +11,7 @@ from tests.factory import (
     M2MFactory, MIZDjangoOptions, RelatedFactory, RuntimeFactoryMixin, SelfFactory, UniqueFaker,
     factory, modelfactory_factory
 )
-from tests.models import Ancestor, Audio, Ausgabe, Band, Bestand, Magazin
+from .models import Ancestor, Audio, Ausgabe, Band, Bestand, Magazin
 
 
 class AncestorFactory(factory.django.DjangoModelFactory):
@@ -19,7 +19,7 @@ class AncestorFactory(factory.django.DjangoModelFactory):
         model = Ancestor
 
     name = factory.Faker('word')
-    ancestor = SelfFactory('tests.test_factory.AncestorFactory', required=False)
+    ancestor = SelfFactory('tests.test_factory.test.AncestorFactory', required=False)
 
     @classmethod
     def set_memo(cls, *args, **kwargs):
@@ -33,7 +33,7 @@ class MagazinFactory(factory.django.DjangoModelFactory):
 
     magazin_name = factory.Faker('word')
     ausgaben = RelatedFactory(
-        'tests.test_factory.AusgabeFactory',
+        'tests.test_factory.test.AusgabeFactory',
         factory_related_name='magazin',
         accessor_name='ausgaben',
         related_model=Ausgabe,
@@ -45,7 +45,7 @@ class AusgabeFactory(factory.django.DjangoModelFactory):
         model = Ausgabe
 
     name = factory.Faker('word')
-    magazin = factory.SubFactory('tests.test_factory.MagazinFactory')
+    magazin = factory.SubFactory('tests.test_factory.test.MagazinFactory')
 
 
 class BandFactory(factory.django.DjangoModelFactory):
@@ -60,7 +60,7 @@ class AudioFactory(factory.django.DjangoModelFactory):
         model = Audio
 
     titel = factory.Faker('word')
-    band = M2MFactory('tests.test_factory.BandFactory', descriptor_name='band')
+    band = M2MFactory('tests.test_factory.test.BandFactory', descriptor_name='band')
 
 
 class TestRuntimeFactoryMixin(MIZTestCase):
@@ -443,7 +443,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts = MIZDjangoOptions()
         opts.model = Band
         # noinspection PyUnresolvedReferences
-        rel = Audio._meta.get_field('musiker').remote_field
+        rel = Audio._meta.get_field('genre').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             with self.assertRaises(TypeError):
                 opts.add_m2m_factories()
