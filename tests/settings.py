@@ -80,8 +80,6 @@ DATABASES = {
     }
 }
 
-# DATABASE_ROUTERS = ['tests.dbrouter.SQLiteRouter']
-
 DEBUG = True
 
 ROOT_URLCONF = 'tests.urls'
