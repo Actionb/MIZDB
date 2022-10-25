@@ -518,8 +518,6 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             factory.builder.parse_declarations(self.declarations))
 
 
-# TODO: might be okay to cut MIZModelFactory; factory boy handles get_or_create
-#  queries better now. (also: full_relations isn't used)
 class MIZModelFactory(factory.django.DjangoModelFactory):
     """
     Factory for the models of the dbentry app.
@@ -556,37 +554,6 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             # are used in the query.
             return
         cls.__memo = fields
-
-    @classmethod
-    def full_relations(cls, **kwargs: Any) -> Model:
-        """
-        Create a model instance with a related object for each possible relation.
-        """
-        set_to_required = []
-        for name, decl in cls._meta.pre_declarations.as_dict().items():
-            if (hasattr(decl, 'required') and not decl.required
-                    and name not in kwargs):
-                # This declaration is not required by default and no value for
-                # it was passed in as kwarg.
-                # Set it to be required so the factory will create data for it.
-                set_to_required.append(name)
-                decl.required = True
-
-        for name in cls._meta.post_declarations:
-            # Add an extra item to every post_declaration unless one was
-            # already passed in as kwarg.
-            if (name not in kwargs
-                    and not any(s.startswith(name + '__') for s in kwargs)):
-                kwargs[name + '__extra'] = 1
-
-        step = factory.builder.StepBuilder(
-            cls._meta, kwargs, factory.enums.CREATE_STRATEGY
-        )
-        cls._meta._initialize_counter()
-        created = step.build()
-        for name in set_to_required:
-            cls._meta.pre_declarations[name].declaration.required = False
-        return created
 
     @classmethod
     def _generate(cls, strategy: str, params: dict) -> Model:
