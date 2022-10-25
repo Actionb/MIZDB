@@ -6,7 +6,7 @@ from django.contrib.admin.views.main import ALL_VAR
 from django.core import checks
 from django.http.request import QueryDict
 from django.test import TestCase, override_settings
-from django.urls import path, reverse
+from django.urls import reverse
 from django.utils.http import urlencode
 
 from dbentry.factory import batch, make
@@ -18,10 +18,6 @@ from dbentry.search.forms import MIZAdminSearchForm
 from tests.case import AdminTestCase, RequestTestCase
 from .admin import ArtikelAdmin, BandAdmin, admin_site
 from .models import Artikel, Ausgabe, Band, Genre
-
-
-class URLConf:
-    urlpatterns = [path('test_search/', admin_site.urls)]
 
 
 @override_settings(ROOT_URLCONF='tests.test_search.urls')
