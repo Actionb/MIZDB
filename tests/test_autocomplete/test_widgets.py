@@ -129,12 +129,13 @@ class TestGenericURLWidgetMixin(MIZTestCase):
         Assert that url argument defaults to class attribute 'generic_url_name'
         and is passed on to the super class constructor.
         """
-        self.Widget.generic_url_name = ''
-        self.assertEqual(self.Widget(model_name='genre')._url, '')
-        self.Widget.generic_url_name = 'this-is-the-default'
-        self.assertEqual(self.Widget(model_name='genre')._url, 'this-is-the-default')
-        # noinspection SpellCheckingInspection
-        self.assertEqual(self.Widget(model_name='genre', url='nocapture')._url, 'nocapture')
+        with patch.object(self.Widget, 'generic_url_name'):
+            self.Widget.generic_url_name = ''
+            self.assertEqual(self.Widget(model_name='genre')._url, '')
+            self.Widget.generic_url_name = 'this-is-the-default'
+            self.assertEqual(self.Widget(model_name='genre')._url, 'this-is-the-default')
+            # noinspection SpellCheckingInspection
+            self.assertEqual(self.Widget(model_name='genre', url='nocapture')._url, 'nocapture')
 
     @patch('dbentry.ac.widgets.reverse')
     def test_get_url_none(self, reverse_mock):
