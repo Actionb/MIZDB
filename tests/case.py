@@ -1,17 +1,15 @@
 import contextlib
 import sys
 import warnings
-from importlib import import_module
 
 from django import forms
-from django.conf import settings
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages import get_messages
-from django.test import RequestFactory, TestCase, override_settings
-from django.urls import path, reverse
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils.http import unquote
 
 # Display all warnings:
@@ -20,33 +18,6 @@ if not sys.warnoptions:
 
     warnings.simplefilter("default")  # Change the filter in this process
     os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
-
-
-@contextlib.contextmanager
-def override_urls(url_patterns):
-    """
-    Replace the url patterns of the root URLconf with the given list of URL
-    patterns.
-    """
-
-    class Dummy:
-        urlpatterns = url_patterns
-
-    with override_settings(ROOT_URLCONF=Dummy):
-        yield
-
-
-@contextlib.contextmanager
-def add_urls(url_patterns, route=''):
-    """Inject the given URL patterns into the root URLconf."""
-    try:
-        # noinspection PyUnresolvedReferences
-        urls = import_module(settings.ROOT_URLCONF).urlpatterns[:]
-    except AttributeError as e:
-        raise AttributeError(e.args[0], "No 'urlpatterns' in ROOT_URLCONF.")
-    urls.insert(0, path(route, url_patterns))
-    with override_urls(urls):
-        yield
 
 
 class MIZTestCase(TestCase):

@@ -1,21 +1,23 @@
 import re
 from unittest.mock import Mock, patch
 
-from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.forms import modelform_factory
+from django.test import override_settings
 from django.urls import NoReverseMatch
 
 from dbentry.utils import admin as admin_utils
-from tests.case import RequestTestCase, add_urls, override_urls
+from tests.case import RequestTestCase
 from tests.factory import make
+from .admin import AudioAdmin, admin_site
 from .models import Audio, Band, Bestand, Genre, Kalender, Lagerort, Musiker
 
 
+@override_settings(ROOT_URLCONF='tests.test_utils.urls')
 class TestAdminUtils(RequestTestCase):
     model = Audio
 
@@ -40,48 +42,43 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_obj_link(self):
         """Assert that the expected link is returned by get_obj_link."""
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            self.assertEqual(
-                admin_utils.get_obj_link(self.obj1, self.super_user),
-                f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/">{self.obj1}</a>'
-            )
+        self.assertEqual(
+            admin_utils.get_obj_link(self.obj1, self.super_user),
+            f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/">{self.obj1}</a>'
+        )
 
     def test_get_obj_link_blank(self):
         """
         Assert that the expected link, with target="_blank", is returned by
         get_obj_link.
         """
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            self.assertEqual(
-                admin_utils.get_obj_link(self.obj1, self.super_user, blank=True),
-                f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/" '
-                f'target="_blank">{self.obj1}</a>'
-            )
+        self.assertEqual(
+            admin_utils.get_obj_link(self.obj1, self.super_user, blank=True),
+            f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/" '
+            f'target="_blank">{self.obj1}</a>'
+        )
 
     def test_get_obj_link_no_change_permission(self):
         """
         No link should be displayed, if the user does not have change
         permissions.
         """
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            # noinspection PyUnresolvedReferences
-            self.assertEqual(
-                admin_utils.get_obj_link(self.obj1, self.noperms_user),
-                f"{self.model._meta.verbose_name}: {self.obj1}"
-            )
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(
+            admin_utils.get_obj_link(self.obj1, self.noperms_user),
+            f"{self.model._meta.verbose_name}: {self.obj1}"
+        )
 
     def test_get_obj_link_no_reverse_match(self):
         """
         No link should be displayed, if there is no reverse match for the given
         admin site name and model instance/model options.
         """
-        with override_urls(url_patterns=[]):  # remove all URL confs
+
+        class URLConf:
+            urlpatterns = []
+
+        with override_settings(ROOT_URLCONF=URLConf):
             with self.assertNotRaises(NoReverseMatch):
                 link = admin_utils.get_obj_link(self.obj1, self.super_user)
         # noinspection PyUnresolvedReferences
@@ -93,11 +90,9 @@ class TestAdminUtils(RequestTestCase):
 
     def test_link_list(self):
         """Assert that the expected links are returned by link_list."""
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        request = self.get_request(user=self.super_user)
-        with add_urls(site.urls, 'admin/'):
-            links = admin_utils.link_list(request, obj_list=[self.obj1, self.obj2])
+        links = admin_utils.link_list(
+            self.get_request(user=self.super_user), obj_list=[self.obj1, self.obj2]
+        )
         for i, (url, label) in enumerate(re.findall(r'<a href="(.*?)">(.*?)</a>', links)):
             with self.subTest(url=url, label=label):
                 self.assertEqual(
@@ -110,14 +105,11 @@ class TestAdminUtils(RequestTestCase):
         Assert that all links returned by link_list have the target attribute
         set to "_blank".
         """
-        sep = "§"  # use an unusual separator so the links can be split easily
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        request = self.get_request(user=self.super_user)
-        with add_urls(site.urls, 'admin/'):
-            links = admin_utils.link_list(
-                request, obj_list=[self.obj1, self.obj2], sep=sep, blank=True
-            )
+        sep = "$"  # use an unusual separator so the links can be split easily
+        links = admin_utils.link_list(
+            self.get_request(user=self.super_user), obj_list=[self.obj1, self.obj2],
+            sep=sep, blank=True
+        )
         for link in links.split(sep):
             with self.subTest(link=link):
                 self.assertIn('target="_blank"', link)
@@ -128,26 +120,20 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_changelist_link(self):
         """Assert that the expected link is returned by get_changelist_link."""
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            self.assertEqual(
-                admin_utils.get_changelist_link(self.model, self.super_user),
-                '<a href="/admin/test_utils/audio/">Liste</a>'
-            )
+        self.assertEqual(
+            admin_utils.get_changelist_link(self.model, self.super_user),
+            '<a href="/admin/test_utils/audio/">Liste</a>'
+        )
 
     def test_get_changelist_link_blank(self):
         """
         Assert that the expected link, with target="_blank", is returned by
         get_changelist_link.
         """
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            self.assertEqual(
-                admin_utils.get_changelist_link(self.model, self.super_user, blank=True),
-                '<a href="/admin/test_utils/audio/" target="_blank">Liste</a>'
-            )
+        self.assertEqual(
+            admin_utils.get_changelist_link(self.model, self.super_user, blank=True),
+            '<a href="/admin/test_utils/audio/" target="_blank">Liste</a>'
+        )
 
     ################################################################################################
     # test get_changelist_url
@@ -159,32 +145,26 @@ class TestAdminUtils(RequestTestCase):
         """
         # noinspection PyUnresolvedReferences
         obj2 = Audio.objects.create(titel='Any')
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            for obj_list in (None, [self.obj1], [self.obj1, obj2]):
-                expected = '/admin/test_utils/audio/'
-                if obj_list:
-                    expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
-                with self.subTest(obj_list=obj_list):
-                    self.assertEqual(
-                        admin_utils.get_changelist_url(
-                            self.model,
-                            self.super_user,
-                            obj_list=obj_list
-                        ),
-                        expected
-                    )
+        for obj_list in (None, [self.obj1], [self.obj1, obj2]):
+            expected = '/admin/test_utils/audio/'
+            if obj_list:
+                expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
+            with self.subTest(obj_list=obj_list):
+                self.assertEqual(
+                    admin_utils.get_changelist_url(
+                        self.model,
+                        self.super_user,
+                        obj_list=obj_list
+                    ),
+                    expected
+                )
 
     def test_get_changelist_url_no_perms(self):
         """
         Assert that get_changelist_url returns an empty string, if the user has
         no permission to access the requested changelist.
         """
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            self.assertEqual(admin_utils.get_changelist_url(self.model, self.noperms_user), "")
+        self.assertEqual(admin_utils.get_changelist_url(self.model, self.noperms_user), "")
 
     def test_get_changelist_url_no_reverse(self):
         """
@@ -207,20 +187,17 @@ class TestAdminUtils(RequestTestCase):
         view = Permission.objects.get(codename='view_audio', content_type=ct)
         perms = [[], [change], [view], [change, view]]
 
-        site = AdminSite()
-        site.register(self.model, ModelAdmin)
-        with add_urls(site.urls, 'admin/'):
-            for permissions in perms:
-                with self.subTest(permissions=permissions):
-                    self.staff_user.user_permissions.set(permissions)
-                    # Re-fetch the user from the database to reset the permission cache:
-                    # https://docs.djangoproject.com/en/3.2/topics/auth/default/#permission-caching
-                    user = get_user_model().objects.get(pk=self.staff_user.pk)
-                    url = admin_utils.get_changelist_url(model=self.model, user=user)
-                    if not permissions:
-                        self.assertFalse(url)
-                    else:
-                        self.assertEqual(url, '/admin/test_utils/audio/')
+        for permissions in perms:
+            with self.subTest(permissions=permissions):
+                self.staff_user.user_permissions.set(permissions)
+                # Re-fetch the user from the database to reset the permission cache:
+                # https://docs.djangoproject.com/en/3.2/topics/auth/default/#permission-caching
+                user = get_user_model().objects.get(pk=self.staff_user.pk)
+                url = admin_utils.get_changelist_url(model=self.model, user=user)
+                if not permissions:
+                    self.assertFalse(url)
+                else:
+                    self.assertEqual(url, '/admin/test_utils/audio/')
 
     ################################################################################################
     # test construct_change_message and _get_relation_change_message
@@ -417,15 +394,16 @@ class TestAdminUtils(RequestTestCase):
         Assert that get_model_admin_for_model returns the expected ModelAdmin
         class.
         """
-        site = AdminSite()
-        model_admin_class = type('Dummy', (ModelAdmin,), {})
-        # model_admin = ModelAdmin(self.model, site)
-        site.register(self.model, model_admin_class)
+        # site = AdminSite()
+        # model_admin_class = type('Dummy', (ModelAdmin,), {})
+        # # model_admin = ModelAdmin(self.model, site)
+        # site.register(self.model, model_admin_class)
         for arg in ('test_utils.Audio', self.model):
             with self.subTest(argument=arg):
                 self.assertIsInstance(
-                    admin_utils.get_model_admin_for_model(arg, site),
-                    model_admin_class
+                    admin_utils.get_model_admin_for_model(arg, admin_site),
+                    AudioAdmin
+                    # model_admin_class
                 )
 
     def test_get_model_admin_for_model_not_registered(self):
@@ -433,7 +411,7 @@ class TestAdminUtils(RequestTestCase):
         get_model_admin_for_model should return None, if no ModelAdmin class
         is registered with the given model.
         """
-        self.assertIsNone(admin_utils.get_model_admin_for_model('test_utils.Audio'), AdminSite())
+        self.assertIsNone(admin_utils.get_model_admin_for_model('test_utils.Band'), admin_site)
 
     def test_get_model_admin_for_model_raises_lookup_error(self):
         """
