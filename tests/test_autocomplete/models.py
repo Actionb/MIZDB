@@ -29,7 +29,7 @@ class Band(models.Model):
 
     class Meta:
         verbose_name = 'Band'
-        ordering = ('band_name', )
+        ordering = ('band_name',)
 
     def __str__(self):
         return self.band_name

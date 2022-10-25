@@ -95,7 +95,7 @@ class TestAusgabeChangeList(AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        make(cls.model)  # need at least one object for chronological_order to get going
+        make(cls.model)  # need at least one object for chronological_order
         super().setUpTestData()
 
     def test_get_queryset_ordering(self):
@@ -127,9 +127,11 @@ class TestBestandChangelist(AdminTestCase):
         changelist = self.model_admin.get_changelist_instance(request)
         changelist.get_results(request)
         select_related = list(changelist.result_list.query.select_related)
-        for field_path in ('audio', 'ausgabe', 'brochure', 'buch', 'dokument', 'foto',
-                           'memorabilien', 'plakat', 'technik', 'video',
-                           'lagerort', 'provenienz__geber'):
+        for field_path in (
+                'audio', 'ausgabe', 'brochure', 'buch', 'dokument', 'foto',
+                'memorabilien', 'plakat', 'technik', 'video',
+                'lagerort', 'provenienz__geber'
+        ):
             # Note that a path like provenienz__geber will be represented by a
             # nested dict in query.select_related: {'provenienz': {'geber': {}}}
             related = field_path.split('__', 1)[0]

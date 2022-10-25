@@ -22,8 +22,10 @@ def get_result_ids(response):
 class ACViewTestCase(ViewTestCase):
     model = None
 
-    def get_view(self, request=None, args=None, kwargs=None, model=None,
-                 create_field=None, forwarded=None, q='', **initkwargs):
+    def get_view(
+            self, request=None, args=None, kwargs=None, model=None,
+            create_field=None, forwarded=None, q='', **initkwargs
+    ):
         initkwargs = {
             'model': model or getattr(self.view_class, 'model', None) or self.model,
             'create_field': create_field or getattr(model, 'create_field', None),

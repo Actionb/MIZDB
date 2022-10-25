@@ -328,26 +328,36 @@ class TestAusgabeChronologicalOrder(DataTestCase):
 
         for jg, year in enumerate(range(1999, 2002), start=1):
             for i in range(1, 4):
-                cls.e_datum.append(make(
-                    cls.model, magazin=cls.mag,
-                    e_datum=get_date(i, year), ausgabejahr__jahr=year
-                ))
-                cls.num.append(make(
-                    cls.model, magazin=cls.mag,
-                    ausgabenum__num=i, ausgabejahr__jahr=year
-                ))
-                cls.lnum.append(make(
-                    cls.model, magazin=cls.mag,
-                    ausgabelnum__lnum=i, ausgabejahr__jahr=year
-                ))
-                cls.monat.append(make(
-                    cls.model, magazin=cls.mag,
-                    ausgabemonat__monat__ordinal=i, ausgabejahr__jahr=year
-                ))
-                cls.jg.append(make(
-                    cls.model, magazin=cls.mag,
-                    ausgabenum__num=i, jahrgang=jg
-                ))
+                cls.e_datum.append(
+                    make(
+                        cls.model, magazin=cls.mag,
+                        e_datum=get_date(i, year), ausgabejahr__jahr=year
+                    )
+                )
+                cls.num.append(
+                    make(
+                        cls.model, magazin=cls.mag,
+                        ausgabenum__num=i, ausgabejahr__jahr=year
+                    )
+                )
+                cls.lnum.append(
+                    make(
+                        cls.model, magazin=cls.mag,
+                        ausgabelnum__lnum=i, ausgabejahr__jahr=year
+                    )
+                )
+                cls.monat.append(
+                    make(
+                        cls.model, magazin=cls.mag,
+                        ausgabemonat__monat__ordinal=i, ausgabejahr__jahr=year
+                    )
+                )
+                cls.jg.append(
+                    make(
+                        cls.model, magazin=cls.mag,
+                        ausgabenum__num=i, jahrgang=jg
+                    )
+                )
         cls.all = cls.e_datum + cls.num + cls.lnum + cls.monat + cls.jg
         super().setUpTestData()
 
@@ -481,10 +491,10 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         )
         ordering = (
             self.model.objects
-            .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
-            .chronological_order()
-            .query
-            .order_by
+                .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
+                .chronological_order()
+                .query
+                .order_by
         )
         self.assertLess(ordering.index('lnum'), ordering.index('monat'))
         self.assertLess(ordering.index('lnum'), ordering.index('num'))
@@ -504,10 +514,10 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         self.model.objects.update(_changed_flag=True)
         queryset = self.model.objects.chronological_order()
         queryset._update_names()
+        # Since jahrgang objects have 'num' values the 'num' criterion should
+        # come before 'e_datum', 'lnum', etc.:
         expected = (
             'magazin__magazin_name', 'jahr', 'jahrgang', 'sonderausgabe',
-            # Note that jahrgang objects have 'num' values, this means that
-            # the 'num' criterion coming first.
             'num', 'e_datum', 'lnum', 'monat', '-id'
         )
         self.assertEqual(queryset.query.order_by, expected)

@@ -1,4 +1,5 @@
 from django.urls import include, path
+
 from dbentry.sites import miz_site
 
 urlpatterns = [

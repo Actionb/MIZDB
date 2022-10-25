@@ -1,11 +1,10 @@
 from django.core.exceptions import ValidationError
 
-from tests.case import MIZTestCase
 from dbentry.validators import (
-    DiscogsMasterReleaseValidator, ISSNValidator, ISBNValidator, EANValidator,
-    InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength,
-    DiscogsURLValidator, DNBURLValidator
+    DNBURLValidator, DiscogsMasterReleaseValidator, DiscogsURLValidator, EANValidator,
+    ISBNValidator, ISSNValidator, InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength
 )
+from tests.case import MIZTestCase
 
 
 class TestISBNValidator(MIZTestCase):
@@ -123,7 +122,10 @@ class TestDiscogsURLValidator(MIZTestCase):
             with self.subTest(url=url):
                 with self.assertRaises(ValidationError) as cm:
                     self.validator(url)
-                self.assertEqual(cm.exception.message, "Bitte nur Adressen von discogs.com eingeben.")  # noqa
+                self.assertEqual(
+                    cm.exception.message,
+                    "Bitte nur Adressen von discogs.com eingeben."
+                )
                 self.assertEqual(cm.exception.code, 'discogs')
 
 
@@ -166,7 +168,10 @@ class TestDiscogsMasterReleaseValidator(MIZTestCase):
             with self.subTest(url=url):
                 with self.assertRaises(ValidationError) as cm:
                     self.validator(url)
-                self.assertEqual(cm.exception.message, "Bitte keine Adressen von Master-Releases eingeben.")  # noqa
+                self.assertEqual(
+                    cm.exception.message,
+                    "Bitte keine Adressen von Master-Releases eingeben."
+                )
                 self.assertEqual(cm.exception.code, 'master_release')
 
 

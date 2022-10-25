@@ -15,7 +15,6 @@ from dbentry import models as _models
 from dbentry.fields import PartialDateField
 from dbentry.utils import get_model_fields, get_model_relations, is_iterable
 
-
 Model = TypeVar('Model')
 
 

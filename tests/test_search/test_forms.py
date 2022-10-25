@@ -63,7 +63,7 @@ class TestRangeFormField(MIZTestCase):
         formfield = RangeFormField(formfield=forms.IntegerField())
         self.assertEqual(formfield.get_initial(initial, 'seite'), [10, 20])
 
-    def test_get_initial_multivaluefields(self):
+    def test_get_initial_multi_value_fields(self):
         """
         Assert that get_initial returns the compressed values if its subfields
         are MultiValueFields.
@@ -194,11 +194,13 @@ class TestSearchFormFactory(MIZTestCase):
 
     def test_get_search_form_ignores_invalid_fields(self):
         """Assert that get_search_form ignores invalid fields/lookups."""
+        # noinspection SpellCheckingInspection
         fields = [
             'seite__gt', 'schlagzeile', 'genre__genre', 'notafield',
             'ausgabe__notalookup'
         ]
         valid = ['seite', 'schlagzeile', 'genre__genre']
+        # noinspection SpellCheckingInspection
         invalid = ['notafield', 'ausgabe', 'ausgabe__notalookup']
         form_fields = self.factory.get_search_form(Artikel, fields).base_fields
         for field_name in chain(valid, invalid):
@@ -212,7 +214,7 @@ class TestSearchFormFactory(MIZTestCase):
     def test_get_search_form_takes_formfield_callback(self):
         """
         Assert that custom formfield_callback can be passed to the factory
-        and that it uses that callback to create formfields for dbfields.
+        and that it uses that callback to create formfields for db fields.
         """
 
         def callback(_dbfield, **kwargs):

@@ -40,9 +40,9 @@ class AdminTestMethodsMixin(object):
         """Apply the model_admin's changelist annotations to the given object."""
         return (
             self.queryset
-            .filter(pk=obj.pk)
-            .annotate(**self.model_admin.get_changelist_annotations())
-            .get()
+                .filter(pk=obj.pk)
+                .annotate(**self.model_admin.get_changelist_annotations())
+                .get()
         )
 
     def test_get_exclude(self):
@@ -359,7 +359,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             content_type=ContentType.objects.get_for_model(_models.BaseBrochure)
         )
 
-        user = User.objects.create(username='Alice', password='bobsucks', is_staff=True)
+        user = User.objects.create(username='Alice', password='bob_sucks', is_staff=True)
         # Note that each request will need a *new* user instance, since the
         # auth backend does some permission caching on the passed in instances.
 
@@ -514,7 +514,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1 = make(
             cls.model, bandalias__alias=['Alias1', 'Alias2'],
             genre__genre=['Testgenre1', 'Testgenre2'],
-            musiker__kuenstler_name=['Testkuenstler1', 'Testkuenstler2']
+            musiker__kuenstler_name=['Kuenstler 1', 'Kuenstler 2']
         )
         super().setUpTestData()
 
@@ -535,7 +535,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_musiker_string(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.musiker_string(obj), 'Testkuenstler1, Testkuenstler2')
+        self.assertEqual(self.model_admin.musiker_string(obj), 'Kuenstler 1, Kuenstler 2')
 
     def test_alias_string(self):
         obj = self.get_annotated_model_obj(self.obj1)
@@ -692,9 +692,9 @@ class TestBaseBrochureAdmin(AdminTestCase):
     def test_jahr_string(self):
         obj = (
             self.queryset
-            .filter(pk=self.obj1.pk)
-            .annotate(**self.model_admin.get_changelist_annotations())
-            .get()
+                .filter(pk=self.obj1.pk)
+                .annotate(**self.model_admin.get_changelist_annotations())
+                .get()
         )
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
@@ -887,7 +887,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = make(cls.model, genre='Subgenre', genrealias__alias=['Alias1', 'Alias2'])
+        cls.obj1 = make(cls.model, genre='Sub Genre', genrealias__alias=['Alias1', 'Alias2'])
         super().setUpTestData()
 
     def test_get_changelist_annotations(self):
@@ -1032,6 +1032,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         ort1 = make(_models.Ort, stadt='Dortmund', land__code='DE')
         ort2 = make(_models.Ort, stadt='Buxtehude', land__code='DE')
+        # noinspection SpellCheckingInspection
         cls.beschreibung = (
             "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"
             " invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et"
@@ -1199,9 +1200,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_musiker(self):
         obj1, obj2 = (
             self.queryset
-            .annotate(**self.model_admin.get_changelist_annotations())
-            .filter(id__in=[self.obj1.pk, self.obj2.pk])
-            .order_by('id')
+                .annotate(**self.model_admin.get_changelist_annotations())
+                .filter(id__in=[self.obj1.pk, self.obj2.pk])
+                .order_by('id')
         )
         self.assertTrue(self.model_admin.is_musiker(obj1))
         self.assertFalse(self.model_admin.is_musiker(obj2))
@@ -1209,9 +1210,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_autor(self):
         obj1, obj2 = (
             self.queryset
-            .annotate(**self.model_admin.get_changelist_annotations())
-            .filter(id__in=[self.obj1.pk, self.obj2.pk])
-            .order_by('id')
+                .annotate(**self.model_admin.get_changelist_annotations())
+                .filter(id__in=[self.obj1.pk, self.obj2.pk])
+                .order_by('id')
         )
         self.assertTrue(self.model_admin.is_autor(obj1))
         self.assertFalse(self.model_admin.is_autor(obj2))
@@ -1242,10 +1243,9 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1 = make(cls.model, datum='2022-10-17')
         cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
-        cls.obj1.veranstaltung.set([
-            make(_models.Veranstaltung, name='Woodstock 1969', band=cls.band, musiker=cls.musiker),
-            make(_models.Veranstaltung, name='Glastonbury 2004')
-        ])
+        v1 = make(_models.Veranstaltung, name='Woodstock 1969', band=cls.band, musiker=cls.musiker)
+        v2 = make(_models.Veranstaltung, name='Glastonbury 2004')
+        cls.obj1.veranstaltung.set([v1, v2])
         super().setUpTestData()
 
     def test_get_changelist_annotations(self):
@@ -1319,7 +1319,7 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(
-            cls.model, schlagwort='Subobject', schlagwortalias__alias=['Alias1', 'Alias2']
+            cls.model, schlagwort='Sub Schlagwort', schlagwortalias__alias=['Alias1', 'Alias2']
         )
         super().setUpTestData()
 

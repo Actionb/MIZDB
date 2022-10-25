@@ -80,4 +80,3 @@ class Bestand(models.Model):
 
     class Meta:
         verbose_name = 'Bestand'
-

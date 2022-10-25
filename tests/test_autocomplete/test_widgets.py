@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+# noinspection PyPackageRequirements
 from dal import forward
 from django import forms
 from django.core.exceptions import ImproperlyConfigured

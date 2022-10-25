@@ -399,6 +399,7 @@ class TestDiscogsFormMixin(MIZTestCase):
 
     def test_clean_strips_slug(self):
         """Assert any slugs are stripped from the URL."""
+        # noinspection SpellCheckingInspection
         urls = [
             'https://www.discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',
             'www.discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',

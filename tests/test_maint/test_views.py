@@ -34,7 +34,7 @@ class TestModelSelectView(ViewTestCase):
 
     def test_get(self):
         # Assert that get() redirects to the success url if
-        # the view's submit_name is in the GET querydict.
+        # the view's submit_name is in the GET query dict.
         request = self.get_request(data={'testing': 'yes'})
         view = self.get_view(request, submit_name='testing')
         with patch.object(view, 'get_success_url', return_value='test_maint:index'):

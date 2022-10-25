@@ -242,6 +242,7 @@ class LoggingTestMixin(object):
 
             for _obj, filter_params in unlogged:
                 msg += "\nFilter parameters used: "
+                # noinspection PyUnresolvedReferences
                 msg += "\n{}; {}".format(
                     sorted(filter_params.items()),
                     ContentType.objects.get_for_id(filter_params['content_type__pk']).model
@@ -254,6 +255,7 @@ class LoggingTestMixin(object):
                 msg += "\nchange_messages: "
                 for log_entry in LogEntry.objects.order_by('pk'):
                     msg += "\n{}: {}".format(str(log_entry.pk), log_entry.get_change_message())
+            # noinspection PyUnresolvedReferences
             self.fail(msg)
 
     def assertLoggedAddition(self, obj, **kwargs):

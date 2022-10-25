@@ -135,7 +135,9 @@ class AllRelations(models.Model):
     one_to_one = models.OneToOneField('test_utils.OneToOneModel', on_delete=models.CASCADE)
     forward_related = models.ForeignKey('test_utils.ForwardRelatedModel', on_delete=models.CASCADE)
     many_auto = models.ManyToManyField('test_utils.M2MTargetOne')
-    many_intermediary = models.ManyToManyField('test_utils.M2MTargetTwo', through='test_utils.M2MTable')  # noqa
+    many_intermediary = models.ManyToManyField(
+        'test_utils.M2MTargetTwo', through='test_utils.M2MTable'
+    )
 
 
 class TestGetModelRelations(MIZTestCase):

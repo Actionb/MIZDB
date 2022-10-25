@@ -1,5 +1,5 @@
-from django.utils.translation import override as translation_override
 from django.core.exceptions import ValidationError
+from django.utils.translation import override as translation_override
 
 from dbentry.bulk.fields import BulkField, BulkJahrField
 from tests.case import MIZTestCase

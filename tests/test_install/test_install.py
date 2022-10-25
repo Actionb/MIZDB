@@ -127,7 +127,7 @@ class TestFuncs(unittest.TestCase):
     def test_create_database(self, run, version_check):
         run.return_value = mock.Mock(returncode=0)
         version_check.return_value = True
-        db_password = "'test_password'"   # a quoted string is expected
+        db_password = "'test_password'"  # a quoted string is expected
         port = 1
         db_name = "test_db"
         db_user = "test_user"

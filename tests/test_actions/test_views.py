@@ -1858,14 +1858,14 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
 
     def test_get_bestand_formset_no_inline(self):
         """
-        get_bestand_formset should throw an error when attempting to get the
-        Bestand inline for a model_admin_class that doesn't have such an inline.
+        Assert that get_bestand_formset raises an error when no inline class
+        was declared for the Bestand model.
         """
         mocked_inlines = Mock(return_value=[])
         with patch.object(self.model_admin, 'get_formsets_with_inlines', new=mocked_inlines):
+            request = self.get_request()
+            view = self.get_view(self.get_request())
             with self.assertRaises(ValueError):
-                request = self.get_request()
-                view = self.get_view(self.get_request())
                 view.get_bestand_formset(request, None)
 
     def test_create_log_entries(self):
