@@ -2,9 +2,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from dbentry import utils
-from tests.case import DataTestCase, RequestTestCase
+from tests.case import DataTestCase, LoggingTestMixin, RequestTestCase
 from tests.factory import make
-from tests.mixins import LoggingTestMixin
 
 
 class Foo(models.Model):

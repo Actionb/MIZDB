@@ -30,9 +30,8 @@ from dbentry.actions.views import (
 from dbentry.base.forms import MIZAdminForm
 from dbentry.sites import miz_site
 from dbentry.utils import get_obj_link
-from tests.case import AdminTestCase, ViewTestCase
+from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
 from tests.factory import make
-from tests.mixins import LoggingTestMixin
 from .models import Band, Genre
 
 admin_site = admin.AdminSite(name='test_actions')
