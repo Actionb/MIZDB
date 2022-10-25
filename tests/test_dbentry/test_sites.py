@@ -1,6 +1,7 @@
 from unittest import skip
 from unittest.mock import patch
 
+from django.contrib import admin
 from django.contrib.auth.models import Permission, User
 from django.core import checks
 from django.test import override_settings
@@ -11,10 +12,17 @@ from dbentry.base.admin import MIZModelAdmin
 from dbentry.sites import MIZAdminSite, miz_site, register_tool
 from tests.case import MIZTestCase, RequestTestCase
 
+miz_admin_site = MIZAdminSite()
+
+
+@admin.register(_models.Artikel, site=miz_admin_site)
+class ArtikelAdmin(MIZModelAdmin):
+    index_category = 'Archivgut'
+
 
 class TestMIZAdminSite(RequestTestCase):
     """Test the base admin site class MIZAdminSite."""
-    site = MIZAdminSite()
+    site = miz_admin_site
 
     def test_each_context(self):
         """Assert that the Wiki URL is added to the context."""
@@ -71,21 +79,6 @@ class TestMIZAdminSite(RequestTestCase):
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
 
-    def test_app_index(self):
-        """
-        Check that /admin/dbentry/ and /admin/ resolve to the expected index
-        views.
-        """
-        response = self.client.get('/admin/dbentry/')
-        self.assertEqual(
-            response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__
-        )
-
-        response = self.client.get('/admin/')
-        self.assertEqual(
-            response.resolver_match.func.__name__, MIZAdminSite.index.__name__
-        )
-
     def test_build_admintools_context_superuser_only(self):
         """
         Assert that build_admintools_context only includes tools that are
@@ -105,11 +98,6 @@ class TestMIZAdminSite(RequestTestCase):
         one of the three default ones (Archivgut, Stammdaten, Sonstige) into
         the 'Sonstige' category.
         """
-
-        class ArtikelAdmin(MIZModelAdmin):
-            index_category = ''
-
-        self.site.register(_models.Artikel, ArtikelAdmin)
         for index_category in ('Sonstige', 'Beep', None):
             app_list = [{'app_label': 'dbentry', 'models': [{'object_name': 'Artikel'}]}]
             with self.subTest(index_category=str(index_category)):
@@ -223,3 +211,18 @@ class TestMIZSite(RequestTestCase):
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path=path)
                 self.assertEqual(response.status_code, 200, msg=path)
+
+    def test_app_index(self):
+        """
+        Assert that the paths '/admin/dbentry/' and '/admin/' resolve to the
+        expected index view functions.
+        """
+        response = self.client.get('/admin/dbentry/')
+        self.assertEqual(
+            response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__
+        )
+
+        response = self.client.get('/admin/')
+        self.assertEqual(
+            response.resolver_match.func.__name__, MIZAdminSite.index.__name__
+        )
