@@ -336,7 +336,22 @@ class TestBulkAusgabe(ViewTestCase, LoggingTestMixin):
         """Check that jquery and select2 are included and loaded in the right order."""
         with self.settings(DEBUG=True):
             response = self.get_response(self.path)
-            self.assertSelect2JS(response.context['form'].media._js)
+            js = response.context['form'].media._js
+            jquery = 'admin/js/vendor/jquery/jquery.js'
+            select2 = 'admin/js/vendor/select2/select2.full.js'
+            jquery_init = 'admin/js/jquery.init.js'
+
+            self.assertIn(jquery, js, msg="select2 requires jQuery.")
+            self.assertIn(select2, js, msg="select2 js file not found.")
+            self.assertGreater(
+                js.index(select2), js.index(jquery),
+                msg="select2 must be loaded after jQuery."
+            )
+            self.assertIn(jquery_init, js)
+            self.assertGreater(
+                js.index(jquery_init), js.index(select2),
+                msg="select2 must be loaded before django's jquery_init."
+            )
 
     def test_story(self):
         preview_msg = 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.'

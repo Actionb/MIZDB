@@ -1144,8 +1144,14 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertTrue(_models.Katalog.objects.filter(titel='Bar Katalog').exists())
         katalog2 = _models.Katalog.objects.get(titel='Bar Katalog')
         # ...along with the year values...
-        self.assertQuerysetEqual(katalog1.jahre.values_list('jahr', flat=True), ['2000', '2001'])
-        self.assertQuerysetEqual(katalog2.jahre.values_list('jahr', flat=True), ['2000', '2001'])
+        self.assertQuerysetEqual(
+            katalog1.jahre.values_list('jahr', flat=True),
+            ['2000', '2001'], transform=str
+        )
+        self.assertQuerysetEqual(
+            katalog2.jahre.values_list('jahr', flat=True),
+            ['2000', '2001'], transform=str
+        )
         # ...and the bestand objects...
         bestand1.refresh_from_db()
         bestand2.refresh_from_db()
@@ -1378,7 +1384,7 @@ class TestMoveToBrochure(ActionViewTestCase):
         new_brochure = target_model.objects.get()
         self.assertQuerysetEqual(
             new_brochure.jahre.values_list('jahr', flat=True),
-            ['2000', '2001']
+            ['2000', '2001'], transform=str
         )
 
     @patch('dbentry.actions.views.log_change')
