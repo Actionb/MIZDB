@@ -433,7 +433,7 @@ class TestAdminUtils(RequestTestCase):
         get_model_admin_for_model should return None, if no ModelAdmin class
         is registered with the given model.
         """
-        self.assertIsNone(admin_utils.get_model_admin_for_model('tests.Audio'), AdminSite())
+        self.assertIsNone(admin_utils.get_model_admin_for_model('test_utils.Audio'), AdminSite())
 
     def test_get_model_admin_for_model_raises_lookup_error(self):
         """
