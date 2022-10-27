@@ -227,7 +227,6 @@ class TestConfirmationViewMixin(ActionViewTestCase):
         self.assertEqual(context['breadcrumbs_title'], 'Merging')
         self.assertEqual(context['non_reversible_warning'], 'This action cannot be reversed.')
 
-    @expectedFailure
     def test_get_context_data_adds_media(self):
         """Assert that the media of the model admin and the form are added."""
         # No form:

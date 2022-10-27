@@ -112,8 +112,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
 
     def get_context_data(self, **kwargs: Any) -> dict:
-        context = super().get_context_data(**kwargs)
-
         defaults = {
             'queryset': self.queryset,
             'opts': self.opts,
@@ -130,15 +128,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
         else:
             defaults['objects_name'] = force_str(self.opts.verbose_name_plural)
 
-        # Add model_admin and form media.
-        if 'media' in context:
-            media = context['media'] + self.model_admin.media
-        else:
-            media = self.model_admin.media
-        if hasattr(self, 'get_form') and self.get_form():  # type: ignore[attr-defined]
-            media += self.get_form().media  # type: ignore[attr-defined]
-        defaults['media'] = media
-
         # Add view specific variables.
         title = self.title or getattr(self, 'short_description', '')
         title = title % {'verbose_name_plural': self.opts.verbose_name_plural}
@@ -152,7 +141,18 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if not self.action_reversible:
             defaults['non_reversible_warning'] = self.non_reversible_warning
 
-        context.update({**defaults, **kwargs})
+        kwargs = {**defaults, **kwargs}
+        context = super().get_context_data(**kwargs)
+
+        # Add model_admin and form media.
+        if 'media' in context:
+            media = context['media'] + self.model_admin.media
+        else:
+            media = self.model_admin.media
+        if hasattr(self, 'get_form') and self.get_form():  # type: ignore[attr-defined]
+            media += self.get_form().media  # type: ignore[attr-defined]
+        context['media'] = media
+
         return context
 
 
