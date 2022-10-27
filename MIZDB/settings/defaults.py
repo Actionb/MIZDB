@@ -138,12 +138,3 @@ SESSION_COOKIE_AGE = (14 * 24 + 12) * 60 * 60
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context
 WIKI_URL = config.get('WIKI_URL', '')
-
-# TODO: move this to tests.test_settings - or remove once tests rework is done
-if 'test' in sys.argv:
-    # Add a NullHandler to the root logger for test runs.
-    # This stops log messages to be printed to sys.stderr during tests
-    # if no other handlers are assigned.
-    # Note that django debug toolbar adds a handler to the root logger that
-    # handles all log records. The toolbar need not be enabled for this.
-    logging.getLogger().addHandler(logging.NullHandler())
