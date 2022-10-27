@@ -104,6 +104,7 @@ class MIZAdminSite(admin.AdminSite):
             # noinspection PyUnresolvedReferences
             if superuser_only and not request.user.is_superuser:
                 continue
+            # TODO: check permissions (do not use resolve(), see commit 0190e654)
             result[url_name] = index_label
         return result
 

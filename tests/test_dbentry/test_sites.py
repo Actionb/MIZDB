@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib import admin
 from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
 from django.core import checks
 from django.test import override_settings
 from django.urls import reverse
@@ -164,7 +165,8 @@ class TestMIZSite(RequestTestCase):
         Check that staff users only have access to a selected number of index
         tools.
         """
-        perms = Permission.objects.filter(codename='add_ausgabe')
+        ct = ContentType.objects.get_for_model(_models.Ausgabe)
+        perms = Permission.objects.filter(codename='add_ausgabe', content_type=ct)
         self.staff_user.user_permissions.set(perms)
         self.client.force_login(self.staff_user)
         response = self.client.get(reverse(f'{miz_site.name}:index'))
@@ -182,13 +184,15 @@ class TestMIZSite(RequestTestCase):
         Assert that view-only users (i.e. visitors) only see the site_search
         tool.
         """
+        # TODO: enable this test once the tool view rework has added a way of
+        #  checking permissions for tool views that do not require the use of
+        #  resolve (f.ex. with a has_perms class method on the tool view).
         visitor_user = User.objects.create_user(
             username='visitor', password='besucher', is_staff=True
         )
+        ct = ContentType.objects.get_for_model(_models.Ausgabe)
         visitor_user.user_permissions.set(
-            [
-                Permission.objects.get(codename='view_ausgabe'),
-            ]
+            [Permission.objects.get(codename='view_ausgabe', content_type=ct)]
         )
         self.client.force_login(visitor_user)
         response = self.client.get(reverse(f'{miz_site.name}:index'))
