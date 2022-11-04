@@ -30,6 +30,7 @@ TEST_APPS = [
     "tests.test_actions",
     "tests.test_autocomplete",
     "tests.test_base",
+    "tests.test_commands",
     "tests.test_dbentry",
     "tests.test_factory",
     "tests.test_maint",
