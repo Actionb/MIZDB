@@ -10,7 +10,6 @@ from dbentry.maint.views import (
     DuplicateModelSelectView, DuplicateObjectsView, ModelSelectView, UnusedObjectsView,
     find_duplicates
 )
-from dbentry.tests.mixins import TestDataMixin
 from tests.case import DataTestCase, ViewTestCase
 from tests.test_maint.models import Genre, Musiker, Person
 
@@ -54,7 +53,7 @@ class TestModelSelectView(ViewTestCase):
 
 
 @override_settings(ROOT_URLCONF='tests.test_maint.urls')
-class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
+class TestDuplicateObjectsView(ViewTestCase):
     model = Musiker
     view_class = DuplicateObjectsView
 

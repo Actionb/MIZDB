@@ -3,16 +3,16 @@ from unittest.mock import Mock, patch
 
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.test import TestCase
 
 from dbentry import models as _models
 from dbentry.factory import make
 from dbentry.fields import PartialDate, PartialDateFormField
 from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory
-from dbentry.tests.base import MIZTestCase
 from .models import Artikel, Ausgabe, Genre, InheritedPKModel, Magazin
 
 
-class TestRangeWidget(MIZTestCase):
+class TestRangeWidget(TestCase):
 
     def test_init_duplicates_widget(self):
         """
@@ -28,7 +28,7 @@ class TestRangeWidget(MIZTestCase):
         self.assertEqual(kwargs['widgets'], [widget] * 2)
 
 
-class TestRangeFormField(MIZTestCase):
+class TestRangeFormField(TestCase):
 
     def test_init_duplicates_formfield(self):
         """
@@ -106,7 +106,7 @@ class TestRangeFormField(MIZTestCase):
                 self.assertEqual(formfield.compress(test_data), expected)
 
 
-class TestSearchFormFactory(MIZTestCase):
+class TestSearchFormFactory(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -304,7 +304,7 @@ class TestSearchFormFactory(MIZTestCase):
         self.assertIsInstance(form_class.base_fields['id__in'].widget, forms.TextInput)
 
 
-class TestSearchForm(MIZTestCase):
+class TestSearchForm(TestCase):
     model = Artikel
 
     def setUp(self):
