@@ -1,4 +1,4 @@
-from unittest import skip
+from unittest import expectedFailure
 from unittest.mock import patch
 
 from django.contrib import admin
@@ -178,7 +178,7 @@ class TestMIZSite(RequestTestCase):
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
-    @skip("Permission checks disabled again: commit 0190e654")
+    @expectedFailure  # Permission checks disabled again: commit 0190e654
     def test_index_tools_view_only(self):
         """
         Assert that view-only users (i.e. visitors) only see the site_search

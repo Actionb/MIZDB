@@ -360,9 +360,9 @@ class TestBulkAusgabe(ViewTestCase, LoggingTestMixin):
         first_visit_response = self.client.post(self.path)
         first_visit_request = first_visit_response.wsgi_request
         self.assertEqual(first_visit_response.status_code, 200)
-        # No preview should be displayed yet:
-        # NOTE: use assertIn instead of assertFalse/True;
-        #  assertIn would print out the many, many keys of context on failure
+        # For checking context contents, use assertIn instead of assertFalse/True;
+        # assertIn would clutter the screen on failure, as it would print the
+        # many keys in context.
         self.assertFalse('preview_headers' in first_visit_response.context)
         self.assertFalse('preview' in first_visit_response.context)
         # The session storage for 'old_form_data' should be empty:
