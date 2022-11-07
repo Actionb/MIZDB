@@ -1,4 +1,5 @@
 # WARNING: unique together options are not really supported. Use with caution.
+# TODO: move factory to tests module?
 import itertools
 import sys
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, Union
@@ -650,23 +651,30 @@ _cache: Dict[str, Type[MIZModelFactory]] = {}
 def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFactory]:
     """Create a factory class for the given model."""
     # noinspection PyUnresolvedReferences
-    model_name = model._meta.model_name
-    # Check the cache for a factory for that model_name.
-    if model_name in _cache:
-        return _cache[model_name]
+    model_name, label = model._meta.model_name, model._meta.label
+    # Check the cache for a factory with that label.
+    if label in _cache:
+        return _cache[label]
     # Check this module and the factory's base module for a factory
-    # matching the name.
+    # matching the default factory name.
+    # Note that a factory's name may not be unique across multiple apps; need
+    # to verify that any factory matching the name is a factory for the
+    # requested model.
     factory_name = model_name.capitalize() + 'Factory'
     if hasattr(sys.modules[__name__], factory_name):
-        return getattr(sys.modules[__name__], factory_name)
+        modelfac = getattr(sys.modules[__name__], factory_name)
+        if modelfac._meta.model == model:
+            return modelfac
     if hasattr(sys.modules['factory.base'], factory_name):
-        return getattr(sys.modules['factory.base'], factory_name)
+        modelfac = getattr(sys.modules['factory.base'], factory_name)
+        if modelfac._meta.model == model:
+            return modelfac
     # Create a new factory class:
     if 'Meta' not in kwargs:
         kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model': model})
     modelfac = type(factory_name, (MIZModelFactory,), kwargs)
     # noinspection PyTypeChecker
-    _cache[model_name] = modelfac
+    _cache[label] = modelfac
     # noinspection PyTypeChecker
     return modelfac
 

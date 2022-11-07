@@ -291,7 +291,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 context.update(**context_kwargs)
         return self.render_to_response(context)
 
-    # noinspection PyMethodMayBeStatic,PyUnresolvedReferences
+    # noinspection PyMethodMayBeStatic
     def get_queryset(
             self, model: Type[Model], limit: int
     ) -> Tuple[OrderedDictType[Relations, dict], QuerySet]:
@@ -300,14 +300,16 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         less than ``limit`` reverse related objects.
 
         Returns a 2-tuple:
-            - a OrderedDict containing information to each reverse relation
+            - a OrderedDict containing information for each reverse relation
             - queryset of the 'unused' objects
         """
+        # noinspection PyUnresolvedReferences
+        queryset = model.objects
         relations = OrderedDict()
         # all_ids is a 'screenshot' of all IDs of the model's objects.
         # Starting out, unused will also contain all IDs, but any ID that is
         # from an object that exceeds the limit will be removed.
-        all_ids = unused = set(model.objects.values_list('pk', flat=True))
+        all_ids = unused = set(queryset.values_list('pk', flat=True))
 
         # For each reverse relation, query for the 'unused' objects, and remove
         # all OTHER IDs (i.e. those of objects that exceed the limit) from the
@@ -331,9 +333,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 related_model = rel.related_model
 
             # For this relation, get objects that do not exceed the limit.
-            qs = model.objects.order_by().annotate(
-                c=Count(query_name)
-            ).filter(Q(c__lte=limit))
+            qs = queryset.order_by().annotate(c=Count(query_name)).filter(Q(c__lte=limit))
             counts = {pk: c for pk, c in qs.values_list('pk', 'c')}
             # Remove the ids of the objects that exceed the limit for this relation.
             unused.difference_update(all_ids.difference(counts))
@@ -341,7 +341,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 'related_model': related_model,
                 'counts': counts
             }
-        return relations, model.objects.filter(pk__in=unused)
+        return relations, queryset.filter(pk__in=unused)
 
     def build_items(
             self,

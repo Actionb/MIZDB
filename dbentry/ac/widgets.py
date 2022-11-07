@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Type
 
 # noinspection PyPackageRequirements
 from dal import autocomplete, forward
@@ -182,7 +182,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
     def __init__(
             self,
             widget: Widget,
-            remote_model: Model,
+            remote_model: Type[Model],
             remote_field_name: str = '',
             can_add_related: bool = True,
             can_change_related: bool = True,

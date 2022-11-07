@@ -192,6 +192,7 @@ def get_model_admin_for_model(
 
 def has_admin_permission(request: HttpRequest, model_admin: ModelAdmin) -> bool:
     """Return True if the request user has any module or model permissions."""
+    # TODO: remove: this isn't used anymore
     # (used by help views)
     # Check if the user has any permissions to the module/app.
     if not model_admin.has_module_permission(request):
@@ -285,7 +286,7 @@ def create_logentry(
         action_flag (int): the integer flag/representation of the action
         message (str or list): the change message to add to the LogEntry
     """
-    return LogEntry.objects.log_action(
+    return LogEntry.objects.log_action(  # pragma: no cover
         user_id=user_id,
         content_type_id=get_content_type_for_model(obj).pk,
         object_id=obj.pk,
@@ -316,10 +317,9 @@ def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> L
     Log that values for the ``fields`` of ``object`` have changed.
 
     If ``related_obj`` is given, log that a related object's field values have
-    been changed. (This is, basically, like logging changes on admin inline
-    formsets)
+    been changed. (useful for logging changes made with admin inlines)
     """
-    if isinstance(fields, str):
+    if isinstance(fields, str):  # pragma: no cover
         fields = [fields]
     message: Dict[str, dict] = {'changed': {}}
     # noinspection PyUnresolvedReferences

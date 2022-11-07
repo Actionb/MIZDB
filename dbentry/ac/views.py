@@ -213,11 +213,11 @@ class ACAusgabe(ACTabular):
         return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
 
     def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']  # pragma: no cover
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
 
     def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]  # pragma: no cover
+        return [result.num_string, result.lnum_string, result.jahr_string]
 
 
 class ACAutor(ACBase):
@@ -262,7 +262,7 @@ class ACBand(ACTabular):
     model = _models.Band
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
@@ -307,7 +307,7 @@ class ACMusiker(ACTabular):
     model = _models.Musiker
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
@@ -352,7 +352,7 @@ class ACSpielort(ACTabular):
     model = _models.Spielort
 
     def get_group_headers(self) -> list:
-        return ['Ort']  # pragma: no cover
+        return ['Ort']
 
     def get_extra_data(self, result: _models.Spielort) -> list:
         return [str(result.ort)]
@@ -362,7 +362,7 @@ class ACVeranstaltung(ACTabular):
     model = _models.Veranstaltung
 
     def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']  # pragma: no cover
+        return ['Datum', 'Spielort']
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]

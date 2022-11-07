@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from dal import autocomplete
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -148,9 +149,7 @@ class AudioAdmin(MIZModelAdmin):
         }
 
     def kuenstler_string(self, obj: _models.Audio) -> str:
-        # band_list and musiker_list added by annotations
-        # noinspection PyUnresolvedReferences
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -341,7 +340,8 @@ class AusgabenAdmin(MIZModelAdmin):
         Check that the request's user has permission to add Brochure objects
         and permission to delete Ausgabe objects.
         """
-        from django.contrib.auth import get_permission_codename  # TODO: move import to the top
+        # This method is called by admin.checks._check_action_permission_methods
+        # TODO: just declare perms list - without the loop
         perms = []
         # noinspection PyUnresolvedReferences
         for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
@@ -486,9 +486,7 @@ class ArtikelAdmin(MIZModelAdmin):
     schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
     def kuenstler_string(self, obj: _models.Artikel) -> str:
-        # band_list and musiker_list added by annotations
-        # noinspection PyUnresolvedReferences
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display() # added by annotations  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -809,6 +807,7 @@ class GenreAdmin(MIZModelAdmin):
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
     def _get_crosslink_relations(self):
+        # TODO: why set the label to None? What would the label be if not None?
         return [
             (_models.Musiker, 'genre', None), (_models.Band, 'genre', None),
             (_models.Magazin, 'genre', None), (_models.Artikel, 'genre', None),
@@ -1224,7 +1223,7 @@ class OrtAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
-    search_form_kwargs = {'fields': ['land', 'bland']}
+    search_form_kwargs = {'fields': ['land', 'bland']}  # FIXME: forward land to bland
     ordering = ['land', 'bland', 'stadt']
     list_select_related = ['land', 'bland']
 
@@ -1394,6 +1393,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
 
     def get_fieldsets(self, request: HttpRequest, obj: _models.BaseBrochure = None) -> list:
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
+        # TODO: why do this in get_fieldsets instead of declaring the fieldsets
+        #  via fields attribute? fields = [(None, ...), ..., ('Beilage von Ausgabe', {...})]
         fieldsets = super().get_fieldsets(request, obj)
         # django default implementation adds at minimum:
         # [(None, {'fields': self.get_fields()})]
@@ -1401,7 +1402,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
         # 'ausgabe__magazin' is returned by get_fields() due to being a base
         # field of this ModelAdmin's form class.
         default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:
+        if not default_fieldset:  # pragma: no cover
             return fieldsets
         fields = default_fieldset['fields'].copy()
         ausgabe_fields = ('ausgabe__magazin', 'ausgabe')
@@ -1474,9 +1475,10 @@ class KatalogAdmin(BaseBrochureAdmin):
         Swap fieldset fields 'art' and 'zusammenfassung' without having to
         redeclare the entire fieldsets attribute.
         """
+        # TODO: just declare the fieldsets attribute
         fieldsets = super().get_fieldsets(*args, **kwargs)
         default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:
+        if not default_fieldset:  # pragma: no cover
             return fieldsets
         fields = default_fieldset['fields'].copy()
         if all(f in fields for f in ('art', 'zusammenfassung')):
@@ -1630,7 +1632,7 @@ class AuthAdminMixin(object):
             self, db_field: ManyToManyField, request: Optional[HttpRequest] = None, **kwargs: Any
     ) -> FormField:
         """
-        Get a form field for a ManyToManyField. If it's the formfield for
+        Get a form field for a ManyToManyField. If it is the formfield for
         Permissions, adjust the choices to include the models' class names.
         """
         formfield = super().formfield_for_manytomany(  # type: ignore[misc]
@@ -1682,7 +1684,6 @@ class MIZUserAdmin(AuthAdminMixin, UserAdmin):
         return user.activity or 0
     activity.short_description = 'Aktivität letzte 30 Tage'  # type: ignore[attr-defined]
     activity.admin_order_field = 'activity'  # type: ignore[attr-defined]
-    pass
 
 
 @admin.register(LogEntry, site=miz_site)

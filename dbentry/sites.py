@@ -104,6 +104,7 @@ class MIZAdminSite(admin.AdminSite):
             # noinspection PyUnresolvedReferences
             if superuser_only and not request.user.is_superuser:
                 continue
+            # TODO: check permissions (do not use resolve(), see commit 0190e654)
             result[url_name] = index_label
         return result
 
@@ -132,6 +133,8 @@ class MIZAdminSite(admin.AdminSite):
             model_admin = utils.get_model_admin_for_model(m['object_name'], self)
             if model_admin is None:  # pragma: no cover
                 continue
+            # FIXME: Add a issubclass check: only MIZModelAdmins have the
+            #  get_index_category method
             # noinspection PyUnresolvedReferences
             model_category = model_admin.get_index_category()
             if model_category not in categories:

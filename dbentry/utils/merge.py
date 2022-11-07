@@ -96,7 +96,7 @@ def merge_records(
                     # parameters passed to values().
                     unique_together = list(unique_together)
                     unique_together.remove(related_field.name)
-                    if not unique_together:
+                    if not unique_together:  # pragma: no cover
                         continue
                 # noinspection PyUnresolvedReferences
                 for values in (
@@ -148,9 +148,11 @@ def merge_records(
             if rel.on_delete == models.PROTECT:
                 not_updated = merger_related.exclude(pk__in=updated_ids)
                 if not_updated.exists() and not is_protected(not_updated):
-                    # Some related objects could not be updated (probably
-                    # because the original already has identical related objects).
-                    # Delete the troublemakers?
+                    # FIXME: unreachable code: if the relation is protected,
+                    #  then how could is_protected(not_updated) be False?
+                    # A protected related object was not updated (maybe a
+                    # UNIQUE CONSTRAINT violation) to reference the 'original'.
+                    # Delete the related object now, or the merge will fail.
                     if user_id:
                         for obj in not_updated:
                             log_deletion(user_id, obj)

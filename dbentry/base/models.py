@@ -52,6 +52,12 @@ class BaseModel(models.Model):
                 m2m=False,
                 exclude=self.exclude_from_str
             )
+            # TODO: replace the above with the below to remove the get_model_fields call:
+            # model_fields = [
+            #     f for f in opts.get_fields()
+            #     if f.concrete
+            #     and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
+            # ]
             result = " ".join(
                 [
                     str(fld.value_from_object(self))
@@ -69,19 +75,12 @@ class BaseModel(models.Model):
             TypeError: when qs() was called from class level. The method
                 requires a model instance.
         """
-        try:
-            # Use 'model.objects' instead of 'self.objects' as managers
-            # are not accessible via instances.
-            # noinspection PyUnresolvedReferences
-            return self._meta.model.objects.filter(pk=self.pk)
-        except TypeError:
-            # qs() was called from class level; i.e. 'self' is a model class.
-            # 'self.pk' thus refers to the property of that class which is not
-            # the right type.
+        if isinstance(self, type):
             raise TypeError(
-                "Calling qs() from class level is prohibited. "
-                "Use {}.objects instead.".format(self.__name__)
+                f"Calling qs() from class level is prohibited. Use {self.__name__}.objects instead."
             )
+        # noinspection PyUnresolvedReferences
+        return self._meta.model.objects.filter(pk=self.pk)
 
     class Meta:
         abstract = True
@@ -112,7 +111,7 @@ class BaseM2MModel(BaseModel):
             if not fk_field.null
         ]
         if len(data) < 2:
-            # Cannot build a meaningful representation.
+            # Cannot build a more meaningful representation than the default.
             return super().__str__()
         else:
             template = "{}" + " ({})" * (len(data) - 1)
@@ -215,9 +214,12 @@ class ComputedNameModel(BaseModel):
         return errors
 
     def save(self, update: bool = True, *args: Any, **kwargs: Any) -> None:
+        """
+        Save the current instance.
+
+        If 'update' is true, force an update of the name field.
+        """
         super().save(*args, **kwargs)
-        # Parameters that make up the name may have changed;
-        # update the name if necessary.
         if update:
             self.update_name(force_update=True)
 
@@ -280,7 +282,7 @@ class ComputedNameModel(BaseModel):
         The keyword arguments are the fields of ``name_composing_fields``
         and their respective values.
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError('Subclasses must implement this method.')  # pragma: no cover
 
     def __str__(self) -> str:
         # noinspection PyUnresolvedReferences

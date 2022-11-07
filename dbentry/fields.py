@@ -3,10 +3,10 @@ import re
 from functools import total_ordering
 from typing import Any, Callable, List, Optional, Union
 
+from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.forms import fields, widgets
 from django.utils import formats
 from stdnum import ean, isbn, issn
 
@@ -21,7 +21,7 @@ class YearField(models.IntegerField):
     MAX_YEAR = 3000
     MIN_YEAR = 1800
 
-    def formfield(self, **kwargs: Any) -> fields.Field:
+    def formfield(self, **kwargs: Any) -> forms.Field:
         kwargs['validators'] = [
             MaxValueValidator(self.MAX_YEAR),
             MinValueValidator(self.MIN_YEAR)
@@ -29,7 +29,7 @@ class YearField(models.IntegerField):
         return super().formfield(**kwargs)
 
 
-class StdNumWidget(widgets.TextInput):
+class StdNumWidget(forms.TextInput):
     """A TextInput widget that formats its value according to a format_callback."""
 
     def __init__(
@@ -45,7 +45,7 @@ class StdNumWidget(widgets.TextInput):
         return self.format_callback(value)
 
 
-class StdNumFormField(fields.CharField):
+class StdNumFormField(forms.CharField):
 
     def __init__(self, stdnum, *args, **kwargs):
         """
@@ -107,7 +107,7 @@ class StdNumField(models.CharField):
             kwargs['max_length'] = self.max_length
         super().__init__(*args, **kwargs)
 
-    def formfield(self, widget: Optional[fields.TextInput] = None, **kwargs: Any) -> fields.Field:
+    def formfield(self, widget: Optional[forms.TextInput] = None, **kwargs: Any) -> forms.Field:
         defaults = {
             'min_length': self.min_length,
             'stdnum': self.stdnum,
@@ -182,7 +182,7 @@ class ISBNField(StdNumField):
 
         return _format
 
-    def formfield(self, **kwargs: Any) -> fields.Field:  # type: ignore[override]
+    def formfield(self, **kwargs: Any) -> forms.Field:  # type: ignore[override]
         defaults = {'form_class': ISBNFormField}
         return super().formfield(**{**defaults, **kwargs})
 
@@ -194,7 +194,7 @@ class ISSNField(StdNumField):
     default_validators = [ISSNValidator]
     description = 'Cleaned and validated ISSN string of length 8.'
 
-    def formfield(self, **kwargs: Any) -> fields.Field:  # type: ignore[override]
+    def formfield(self, **kwargs: Any) -> forms.Field:  # type: ignore[override]
         defaults = {
             # Allow for EAN-13 with dashes/spaces as form data
             'max_length': 17,
@@ -362,23 +362,21 @@ class PartialDate(datetime.date):
         return super().__gt__(other)
 
 
-class PartialDateWidget(widgets.MultiWidget):
+class PartialDateWidget(forms.MultiWidget):
     """Default widget for the PartialDateFormField."""
 
-    def __init__(self, **kwargs: Any) -> None:
-        if 'widgets' in kwargs:
-            _widgets = kwargs.pop('widgets')
-        else:
-            _widgets = []
+    def __init__(self, widgets=None, **kwargs: Any) -> None:
+        if not widgets:
+            widgets = []
             for placeholder in ('Jahr', 'Monat', 'Tag'):
-                attrs = {'placeholder': placeholder}
                 if placeholder != 'Tag':
-                    style = {'style': 'width:70px; margin-right:10px;'}
+                    style = 'width:70px; margin-right:10px;'
                 else:
-                    style = {'style': 'width:70px;'}
-                attrs.update(style)
-                _widgets.append(widgets.NumberInput(attrs=attrs))
-        super().__init__(_widgets, **kwargs)
+                    style = 'width:70px;'
+                widgets.append(
+                    forms.NumberInput(attrs={'placeholder': placeholder, 'style': style})
+                )
+        super().__init__(widgets=widgets, **kwargs)
 
     def decompress(self, value: Optional[PartialDate]) -> Union[List[int], List[None]]:
         if isinstance(value, PartialDate):
@@ -386,37 +384,35 @@ class PartialDateWidget(widgets.MultiWidget):
         return [None, None, None]
 
 
-class PartialDateFormField(fields.MultiValueField):
+class PartialDateFormField(forms.MultiValueField):
     """Default form field for PartialDateField model field."""
 
-    default_error_messages = fields.DateField.default_error_messages
+    default_error_messages = forms.DateField.default_error_messages
 
-    def __init__(self, **kwargs: Any) -> None:
-        if 'fields' in kwargs:
-            _fields = kwargs.pop('fields')
-        else:
-            _fields = [fields.IntegerField(required=False)] * 3
+    def __init__(self, fields=None, widget=None, **kwargs: Any) -> None:
+        if not fields:
+            fields = [forms.IntegerField(required=False)] * 3
+        if not widget:
+            widget = PartialDateWidget
+        elif not ((isinstance(widget, type) and issubclass(widget, PartialDateWidget))
+                  or isinstance(widget, PartialDateWidget)):
+            # Replace the given widget if it is not a subclass or instance of
+            # PartialDateWidget.
+            # (django admin will try to instantiate this formfield with an
+            # AdminTextInputWidget)
+            # TODO: this should be done via an assertion, raising an error if
+            #  the passed in widget is not a PartialDateWidget
+            widget = PartialDateWidget
+
         if 'max_length' in kwargs:
-            # super(PartialDateField).formfield (i.e. CharField.formfield)
-            # adds a max_length kwarg that MultiValueField does not handle
+            # Remove the max_length kwarg added by CharField.formfield, since
+            # that kwarg doesn't apply to MultiValueField.
             del kwargs['max_length']
-        widget = PartialDateWidget
-        if 'widget' in kwargs:
-            # django admin will try to instantiate this formfield with an
-            # AdminTextInputWidget.
-            # Accept widget from the kwargs as a replacement if it's either
-            # a subclass or an instance of PartialDateWidget.
-            kwarg_widget = kwargs.pop('widget')
-            is_pd_widget = (
-                    isinstance(kwarg_widget, type)
-                    and issubclass(kwarg_widget, PartialDateWidget)
-            )
-            if (isinstance(kwarg_widget, PartialDateWidget)
-                    or is_pd_widget):
-                widget = kwarg_widget
-        super().__init__(
-            _fields, widget=widget, require_all_fields=False, **kwargs
-        )
+
+        # The point of a PartialDate is that not all attributes of a date need
+        # to be set, so require_all_fields should never be True.
+        kwargs['require_all_fields'] = False
+        super().__init__(fields=fields, widget=widget, **kwargs)
 
     def compress(self, data_list: List[Union[int, str, None]]) -> PartialDate:
         try:
@@ -440,15 +436,11 @@ class PartialDateField(models.CharField):
     default_error_messages = models.DateField.default_error_messages
     help_text = "Teilweise Angaben sind erlaubt (z.B. Jahr & Monat aber ohne Tag)."
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, null=False, blank=True, help_text='', **kwargs: Any) -> None:
         kwargs['max_length'] = 10  # digits: 4 year, 2 month, 2 day, 2 dashes
-        if 'null' not in kwargs:
-            kwargs['null'] = False
-        if 'blank' not in kwargs:
-            kwargs['blank'] = True
-        if 'help_text' not in kwargs:
-            kwargs['help_text'] = self.help_text
-        super().__init__(*args, **kwargs)
+        if not help_text:
+            help_text = self.help_text
+        super().__init__(*args, null=null, blank=blank, help_text=help_text, **kwargs)
 
     def to_python(self, value: Union[str, PartialDate, datetime.date, None]) -> PartialDate:
         if not value:
@@ -482,5 +474,5 @@ class PartialDateField(models.CharField):
             return value
         return PartialDate.from_string(value)
 
-    def formfield(self, **kwargs: Any) -> fields.Field:
+    def formfield(self, form_class=None, **kwargs: Any) -> forms.Field:
         return super().formfield(form_class=PartialDateFormField, **kwargs)

@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from django import forms
+from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.views.main import ORDER_VAR
 from django.contrib.auth import get_permission_codename
@@ -12,7 +13,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
 
-from dbentry import models as _models
+from dbentry import models as _models  # TODO: move concrete dbentry classes out of 'base'?
 from dbentry.ac.widgets import make_widget
 from dbentry.actions.actions import merge_records
 from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
@@ -23,7 +24,9 @@ from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
 
+# TODO: rename 'crosslinks' to 'changelist_links'
 FieldsetList = List[Tuple[Optional[str], dict]]
+BESTAND_MODEL_NAME = 'dbentry.Bestand'
 
 
 class AutocompleteMixin(object):
@@ -110,6 +113,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                         get_fields_and_lookups(self.model, field)
                 except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                     errors.append(
+                        # TODO: use f-strings
                         checks.Error(
                             "fieldset '%s' contains invalid item: '%s'. %s" % (
                                 fieldset_name, field, e.args[0]),
@@ -118,7 +122,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     )
         return errors
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         annotations = self.get_changelist_annotations()
         if annotations:
@@ -138,6 +142,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
     def has_merge_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to merge records."""
+        # This method is called by ModelAdmin._filter_actions_by_permissions.
         codename = get_permission_codename('merge', self.opts)
         # noinspection PyUnresolvedReferences
         return request.user.has_perm(
@@ -147,8 +152,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     # noinspection PyMethodMayBeStatic
     def has_alter_bestand_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to change inventory quantities."""
-        # noinspection PyUnresolvedReferences
-        opts = _models.Bestand._meta
+        # This method is called by ModelAdmin._filter_actions_by_permissions.
+        opts = apps.get_model(BESTAND_MODEL_NAME)._meta
         perms = [
             "%s.%s" % (opts.app_label, get_permission_codename(action, opts))
             for action in ('add', 'change', 'delete')
@@ -255,9 +260,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     query_field = rel.name
                 # Use a 'prettier' related_name as the default for the label.
                 if rel.related_name:
-                    label = " ".join(
-                        capfirst(s) for s in rel.related_name.replace('_', ' ').split()
-                    )
+                    label = " ".join(capfirst(s) for s in rel.related_name.split('_'))
                 else:
                     label = None
                 relations.append((query_model, query_field, label))
@@ -266,15 +269,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         for query_model, query_field, label in relations:
             opts = query_model._meta
             try:
-                url = reverse(
-                    "admin:{}_{}_changelist".format(opts.app_label, opts.model_name)
-                )
+                url = reverse("admin:{}_{}_changelist".format(opts.app_label, opts.model_name))
             except NoReverseMatch:
                 # NoReverseMatch, no link that leads anywhere!
                 continue
 
             count = query_model.objects.filter(**{query_field: object_id}).count()
-            if not count:
+            if not count:  # pragma: no cover
                 # No point showing an empty changelist.
                 continue
             # Add the query string to the url:
@@ -291,10 +292,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
     def add_extra_context(self, object_id: Optional[str] = None, **extra_context) -> dict:
         """Add extra context specific to this ModelAdmin."""
-        extra_context.update({
-            'collapse_all': self.collapse_all,
-            **self.add_crosslinks(object_id, self.crosslink_labels),
-        })
+        extra_context.update(
+            {
+                'collapse_all': self.collapse_all,
+                **self.add_crosslinks(object_id, self.crosslink_labels),
+            }
+        )
         return extra_context
 
     def add_view(
@@ -343,7 +346,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             # has saved the related objects via save_related. This is to avoid
             # update_name building a name with outdated related objects.
             obj.save(update=False)
-        else:
+        else:  # pragma: no cover
             super().save_model(request, obj, form, change)
 
     def save_related(
