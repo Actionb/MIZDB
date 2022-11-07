@@ -10,8 +10,8 @@ from django.urls import reverse
 
 from dbentry import models as _models
 from dbentry.base.admin import MIZModelAdmin
-from dbentry.sites import MIZAdminSite, miz_site, register_tool
-from tests.case import MIZTestCase, RequestTestCase
+from dbentry.sites import MIZAdminSite, miz_site
+from tests.case import RequestTestCase
 
 miz_admin_site = MIZAdminSite()
 
@@ -121,28 +121,6 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertFalse(self.site.add_categories(app_list))
         app_list.append({'app_label': 'dbentry', 'models': []})
         self.assertTrue(self.site.add_categories(app_list))
-
-
-class TestRegisterToolDecorator(MIZTestCase):
-
-    def test(self):
-        """
-        Assert that the register_tool decorator calls a site's register_tool
-        method with the right arguments and adds the view to the list of tool
-        views.
-        """
-        site = MIZAdminSite()
-
-        @register_tool(
-            url_name='url_name',
-            index_label='index_label',
-            superuser_only=True,
-            site=site
-        )
-        class DummyView:
-            pass
-
-        self.assertIn((DummyView, 'url_name', 'index_label', True), site.tools)
 
 
 class TestMIZSite(RequestTestCase):
