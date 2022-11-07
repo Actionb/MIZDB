@@ -17,6 +17,7 @@ class Musiker(models.Model):
 
     class Meta:
         verbose_name = 'Musiker'
+        verbose_name_plural = 'Musiker'
 
 
 class MusikerAlias(models.Model):
@@ -29,6 +30,10 @@ class Band(models.Model):
 
     mitglieder = models.ManyToManyField('test_tools.Musiker')
 
+    class Meta:
+        verbose_name = 'Band'
+        verbose_name_plural = 'Bands'
+
 
 class Genre(models.Model):
     genre = models.CharField('Genre', max_length=100)
@@ -40,6 +45,7 @@ class Genre(models.Model):
 
     class Meta:
         verbose_name = 'Genre'
+        verbose_name_plural = 'Genres'
 
 
 class Person(models.Model):

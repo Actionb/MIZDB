@@ -5,13 +5,15 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils.http import unquote
 
+from dbentry import models as _models
 from dbentry.factory import make
 from dbentry.tools.views import (
-    DuplicateModelSelectView, DuplicateObjectsView, ModelSelectView, UnusedObjectsView,
+    DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, ModelSelectView, SiteSearchView,
+    UnusedObjectsView,
     find_duplicates
 )
 from tests.case import DataTestCase, ViewTestCase
-from tests.test_tools.models import Genre, Musiker, Person
+from tests.test_tools.models import Band, Genre, Musiker, Person
 
 
 @override_settings(ROOT_URLCONF='tests.test_tools.urls')
@@ -32,8 +34,10 @@ class TestModelSelectView(ViewTestCase):
                 self.assertEqual(context[context_variable], expected)
 
     def test_get(self):
-        # Assert that get() redirects to the success url if
-        # the view's submit_name is in the GET query dict.
+        """
+        Assert that get() redirects to the success url if the view's
+        submit_name is in the GET query dict.
+        """
         request = self.get_request(data={'testing': 'yes'})
         view = self.get_view(request, submit_name='testing')
         with patch.object(view, 'get_success_url', return_value='test_tools:index'):
@@ -42,7 +46,7 @@ class TestModelSelectView(ViewTestCase):
         self.assertEqual(response.url, '/test_tools/')
 
     def test_get_success_url(self):
-        # Assert that get_success_url returns a resolvable url.
+        """Assert that get_success_url returns a resolvable url."""
         view = self.get_view(self.get_request(), next_view='test_tools:index')
         with patch.object(view, 'get_next_view_kwargs', return_value={}):
             self.assertEqual(view.get_success_url(), '/test_tools/')
@@ -386,3 +390,126 @@ class TestFindDuplicates(DataTestCase):
             self.model.objects.all(), fields=['kuenstler_name', 'genres__genre']
         )
         self.assertEqual(len(duplicates), 0)
+
+
+@override_settings(ROOT_URLCONF='tests.test_tools.urls')
+class TestSiteSearchView(ViewTestCase):
+    # noinspection PyPep8Naming
+    class view_class(SiteSearchView):
+        app_label = 'test_tools'  # use test models
+
+        def _search(self, model, q):
+            # noinspection PyUnresolvedReferences
+            opts = model._meta
+            field = ''
+            if opts.model_name == 'band':
+                field = 'name'
+            elif opts.model_name == 'musiker':
+                field = 'kuenstler_name'
+            elif opts.model_name == 'genre':
+                field = 'genre'
+            if not field:
+                return []
+            # noinspection PyUnresolvedReferences
+            qs = model.objects.filter(**{field + '__icontains': q})
+            return qs
+
+    @classmethod
+    def setUpTestData(cls):
+        make(Musiker, kuenstler_name='Sharon Silva')
+        super().setUpTestData()
+
+    def test_get_result_list(self):
+        view = self.get_view(request=self.get_request())
+        results = view.get_result_list('Silva')
+        self.assertEqual(len(results), 1)
+        self.assertIn('Musiker (1)', results[0])
+
+    def test_get_result_list_no_perms(self):
+        """
+        Assert that get_result_list doesn't return changelist links for users
+        who have no permission to view those changelists.
+        """
+        view = self.get_view(request=self.get_request(user=self.noperms_user))
+        results = view.get_result_list('Silva')
+        self.assertFalse(results)
+
+    def test_get_result_list_no_changelist(self):
+        """
+        Assert that get_result_list doesn't return changelist links for models
+        that do not have a registered ModelAdmin.
+        """
+        make(Person, name='Sharon Silva')  # no ModelAdmin for this model
+        view = self.get_view(request=self.get_request())
+        results = view.get_result_list('Silva')
+        self.assertEqual(len(results), 1)
+        self.assertIn('Musiker (1)', results[0])
+
+    def test_get_result_list_sorted(self):
+        """
+        Assert that the result list is sorted alphabetically by the models'
+        object names.
+        """
+        make(Band, name='Silva')
+        make(Genre, genre='Silva Music')
+        view = self.get_view(request=self.get_request())
+        results = view.get_result_list('Silva')
+        self.assertTrue(results)
+        self.assertEqual(len(results), 3)
+        self.assertIn('Bands (1)', results[0])
+        self.assertIn('Genres (1)', results[1])
+        self.assertIn('Musiker (1)', results[2])
+
+    @patch.object(SiteSearchView, 'render_to_response')
+    def test_get(self, render_mock):
+        """Assert that render_to_response is called with the expected context."""
+        request = self.get_request(data={'q': 'Silva'})
+        self.get_view(request).get(request)
+        self.assertTrue(render_mock.called)
+        context = render_mock.call_args[0][0]
+        self.assertIn('q', context.keys())
+        self.assertEqual(context['q'], 'Silva')
+        self.assertIn('results', context.keys())
+        results = context['results']
+        self.assertTrue(results)
+        self.assertEqual(len(results), 1)
+        self.assertIn('?q=Silva', results[0])
+        self.assertIn('Musiker (1)', results[0])
+
+    @patch.object(SiteSearchView, 'get_result_list')
+    @patch.object(SiteSearchView, 'render_to_response')
+    def test_get_no_q(self, _render_mock, get_result_list_mock):
+        """get_result_list should not be called when no search term was provided."""
+        for data in ({}, {'q': ''}):
+            with self.subTest(request_data=data):
+                request = self.get_request(data=data)
+                self.get_view(request).get(request)
+                self.assertFalse(get_result_list_mock.called)
+
+
+class TestMIZSiteSearch(ViewTestCase):
+    view_class = MIZSiteSearch
+
+    @classmethod
+    def setUpTestData(cls):
+        make(_models.Musiker, kuenstler_name='Sharon Silva')
+        make(_models.Band, band_name='Silvas')
+        make(_models.Veranstaltung, name='Silva Konzert')
+        super().setUpTestData()
+
+    def test_get_models_no_m2m_models(self):
+        """Assert that _get_models filters out models subclassing BaseM2MModel."""
+        view = self.get_view(self.get_request())
+        models = view._get_models('dbentry')
+        from dbentry.base.models import BaseModel, BaseM2MModel
+        self.assertFalse(any(issubclass(m, BaseM2MModel) for m in models))
+        self.assertTrue(all(issubclass(m, BaseModel) for m in models))
+
+    def test_get_result_list(self):
+        view = self.get_view(request=self.get_request())
+        results = view.get_result_list('Silva')
+        self.assertTrue(results)
+        self.assertEqual(len(results), 3)
+        self.assertIn('Bands (1)', results[0])
+        self.assertIn('Musiker (1)', results[1])
+        self.assertIn('Veranstaltungen (1)', results[2])

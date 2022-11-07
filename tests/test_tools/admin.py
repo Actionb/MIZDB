@@ -1,8 +1,13 @@
 from django.contrib import admin
 
-from tests.test_tools.models import Genre, Kalender, Musiker
+from .models import Band, Genre, Kalender, Musiker
 
 admin_site = admin.AdminSite(name='test_tools')
+
+
+@admin.register(Band, site=admin_site)
+class BandAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Musiker, site=admin_site)
