@@ -16,10 +16,14 @@ class TestRegisterToolDecorator(MIZTestCase):
         @register_tool(
             url_name='url_name',
             index_label='index_label',
+            permission_required=('dbentry.ausgabe_add',),
             superuser_only=True,
             site=site
         )
         class DummyView:
             pass
 
-        self.assertIn((DummyView, 'url_name', 'index_label', True), site.tools)
+        self.assertIn(
+            (DummyView, 'url_name', 'index_label', ('dbentry.ausgabe_add',), True),
+            site.tools
+        )

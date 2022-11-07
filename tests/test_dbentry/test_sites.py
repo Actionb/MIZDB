@@ -4,7 +4,6 @@ from unittest.mock import patch
 from django.contrib import admin
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.core import checks
 from django.test import override_settings
 from django.urls import reverse
 
@@ -67,32 +66,6 @@ class TestMIZAdminSite(RequestTestCase):
             with self.subTest():
                 self.assertIn(category, app_names)
 
-    @patch("dbentry.sites.admin.AdminSite.check")
-    def test_check(self, super_mock):
-        """Assert that the check finds tools with invalid url names."""
-        super_mock.return_value = []
-        with patch.object(self.site, 'tools', new=[]):
-            # noinspection PyTypeChecker
-            self.assertFalse(self.site.check(None))
-            self.site.tools.append((None, '404_url', '', False))
-            # noinspection PyTypeChecker
-            errors = self.site.check(None)
-            self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Error)
-
-    def test_build_admintools_context_superuser_only(self):
-        """
-        Assert that build_admintools_context only includes tools that are
-        flagged with superuser_only=True for superusers.
-        """
-        # Items in the tools list are a 4-tuple:
-        #   (tool, url_name, index_label, superuser_only)
-        self.site.tools = [(None, '', '', True)]
-        request = self.get_request(user=self.super_user)
-        self.assertTrue(self.site.build_admintools_context(request))
-        request = self.get_request(user=self.noperms_user)
-        self.assertFalse(self.site.build_admintools_context(request))
-
     def test_add_categories_no_category(self):
         """
         Assert that add_categories puts ModelAdmins with a category that isn't
@@ -128,7 +101,8 @@ class TestMIZSite(RequestTestCase):
 
     def test_index_tools_superuser(self):
         """Check the admintools registered and available to a superuser."""
-        response = self.client.get(reverse(f'{miz_site.name}:index'))
+        response = self.get_response(reverse(f'{miz_site.name}:index'))
+        self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools')
         self.assertIn('bulk_ausgabe', tools)
         self.assertEqual(tools['bulk_ausgabe'], 'Ausgaben Erstellung')
@@ -147,7 +121,8 @@ class TestMIZSite(RequestTestCase):
         perms = Permission.objects.filter(codename='add_ausgabe', content_type=ct)
         self.staff_user.user_permissions.set(perms)
         self.client.force_login(self.staff_user)
-        response = self.client.get(reverse(f'{miz_site.name}:index'))
+        response = self.get_response(reverse(f'{miz_site.name}:index'))
+        self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools').copy()
 
         self.assertIn('bulk_ausgabe', tools)
@@ -173,7 +148,8 @@ class TestMIZSite(RequestTestCase):
             [Permission.objects.get(codename='view_ausgabe', content_type=ct)]
         )
         self.client.force_login(visitor_user)
-        response = self.client.get(reverse(f'{miz_site.name}:index'))
+        response = self.get_response(reverse(f'{miz_site.name}:index'))
+        self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools').copy()
         self.assertIn('site_search', tools)
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')

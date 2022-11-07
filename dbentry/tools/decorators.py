@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Sequence
 
 from django.views import View
 
@@ -8,6 +8,7 @@ from dbentry.sites import MIZAdminSite, miz_site
 def register_tool(
         url_name: str,
         index_label: str,
+        permission_required: Sequence = (),
         superuser_only: bool = False,
         site: MIZAdminSite = miz_site
 ) -> Callable:
@@ -20,13 +21,16 @@ def register_tool(
     Args:
         url_name (str): name of the URL pattern to the view
         index_label (str): the label for the link on the index page to the view
+        permission_required (Sequence): a sequence of perrmission codenames
+          required to access the view. Used to decide whether to display a link
+          to decorated view on the index page for the current user.
         superuser_only (bool): If True, only superusers will see a link on the
           index page. This does not restrict access to the view in any way.
         site (MIZAdminSite instance): the site to register the view with
     """
 
     def decorator(tool_view: View) -> View:
-        site.register_tool(tool_view, url_name, index_label, superuser_only)
+        site.register_tool(tool_view, url_name, index_label, permission_required, superuser_only)
         return tool_view
 
     return decorator
