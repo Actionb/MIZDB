@@ -16,7 +16,7 @@ from django.utils.translation import gettext
 
 from dbentry import models as _models
 from dbentry.base.views import MIZAdminMixin
-from dbentry.bulk.forms import BulkFormAusgabe
+from dbentry.tools.bulk.forms import BulkFormAusgabe
 from dbentry.sites import register_tool
 from dbentry.utils.admin import (
     get_changelist_link, get_changelist_url, link_list, log_addition, log_change

@@ -5,10 +5,10 @@ class Musiker(models.Model):
     kuenstler_name = models.CharField('Künstlername', max_length=100)
     beschreibung = models.TextField('Beschreibung', blank=True)
 
-    person = models.ForeignKey('test_maint.Person', on_delete=models.CASCADE, null=True)
+    person = models.ForeignKey('test_tools.Person', on_delete=models.CASCADE, null=True)
     andere = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
-    genres = models.ManyToManyField('test_maint.Genre')
+    genres = models.ManyToManyField('test_tools.Genre')
 
     name_field = 'kuenstler_name'
 
@@ -21,13 +21,13 @@ class Musiker(models.Model):
 
 class MusikerAlias(models.Model):
     alias = models.CharField(max_length=100)
-    musiker = models.ForeignKey('test_maint.Musiker', on_delete=models.CASCADE)
+    musiker = models.ForeignKey('test_tools.Musiker', on_delete=models.CASCADE)
 
 
 class Band(models.Model):
     name = models.CharField(max_length=100)
 
-    mitglieder = models.ManyToManyField('test_maint.Musiker')
+    mitglieder = models.ManyToManyField('test_tools.Musiker')
 
 
 class Genre(models.Model):

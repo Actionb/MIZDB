@@ -6,15 +6,15 @@ from django.urls import reverse
 from django.utils.http import unquote
 
 from dbentry.factory import make
-from dbentry.maint.views import (
+from dbentry.tools.views import (
     DuplicateModelSelectView, DuplicateObjectsView, ModelSelectView, UnusedObjectsView,
     find_duplicates
 )
 from tests.case import DataTestCase, ViewTestCase
-from tests.test_maint.models import Genre, Musiker, Person
+from tests.test_tools.models import Genre, Musiker, Person
 
 
-@override_settings(ROOT_URLCONF='tests.test_maint.urls')
+@override_settings(ROOT_URLCONF='tests.test_tools.urls')
 class TestModelSelectView(ViewTestCase):
     view_class = ModelSelectView
 
@@ -36,23 +36,23 @@ class TestModelSelectView(ViewTestCase):
         # the view's submit_name is in the GET query dict.
         request = self.get_request(data={'testing': 'yes'})
         view = self.get_view(request, submit_name='testing')
-        with patch.object(view, 'get_success_url', return_value='test_maint:index'):
+        with patch.object(view, 'get_success_url', return_value='test_tools:index'):
             response = view.get(request)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/test_maint/')
+        self.assertEqual(response.url, '/test_tools/')
 
     def test_get_success_url(self):
         # Assert that get_success_url returns a resolvable url.
-        view = self.get_view(self.get_request(), next_view='test_maint:index')
+        view = self.get_view(self.get_request(), next_view='test_tools:index')
         with patch.object(view, 'get_next_view_kwargs', return_value={}):
-            self.assertEqual(view.get_success_url(), '/test_maint/')
+            self.assertEqual(view.get_success_url(), '/test_tools/')
 
     def test_get_next_view_kwargs(self):
         view = self.get_view(self.get_request(data={'model_select': 'some_model'}))
         self.assertEqual(view.get_next_view_kwargs(), {'model_name': 'some_model'})
 
 
-@override_settings(ROOT_URLCONF='tests.test_maint.urls')
+@override_settings(ROOT_URLCONF='tests.test_tools.urls')
 class TestDuplicateObjectsView(ViewTestCase):
     model = Musiker
     view_class = DuplicateObjectsView
@@ -101,7 +101,7 @@ class TestDuplicateObjectsView(ViewTestCase):
         # for that model to select the fields for the search and the overview.
         response = self.client.get(
             reverse('dupes_select'),
-            data={'submit': '1', 'model_select': 'test_maint.musiker'},
+            data={'submit': '1', 'model_select': 'test_tools.musiker'},
             follow=True
         )
         self.assertEqual(response.status_code, 200)
@@ -115,7 +115,7 @@ class TestDuplicateObjectsView(ViewTestCase):
 
         # Select the fields. The duplicates should then be displayed.
         response = self.client.get(
-            reverse('dupes', kwargs={'model_name': 'test_maint.musiker'}),
+            reverse('dupes', kwargs={'model_name': 'test_tools.musiker'}),
             data={
                 'get_duplicates': '1',
                 'select': ['kuenstler_name'],
@@ -131,9 +131,9 @@ class TestDuplicateObjectsView(ViewTestCase):
         self.assertTrue(context['items'])
 
     def test_build_duplicates_items(self):
-        changelist_url = reverse('test_maint:test_maint_musiker_changelist')
+        changelist_url = reverse('test_tools:test_tools_musiker_changelist')
         changeform_url = unquote(
-            reverse('test_maint:test_maint_musiker_change', args=['{pk}'])
+            reverse('test_tools:test_tools_musiker_change', args=['{pk}'])
         )
         link_template = '<a href="{url}" target="_blank">{name}</a>'
 
@@ -145,7 +145,7 @@ class TestDuplicateObjectsView(ViewTestCase):
             'display': ['kuenstler_name', 'beschreibung', 'person', 'genres__genre']
         }
         request = self.get_request(data=request_data)
-        view = self.get_view(request, kwargs={'model_name': 'test_maint.musiker'})
+        view = self.get_view(request, kwargs={'model_name': 'test_tools.musiker'})
         form = view.get_form()
         # A validated and cleaned form is required.
         self.assertTrue(form.is_valid(), msg=form.errors)
@@ -228,7 +228,7 @@ class TestDuplicateObjectsView(ViewTestCase):
             'display': ['kuenstler_name', 'genres__genre']
         }
         request = self.get_request(data=request_data)
-        view = self.get_view(request, kwargs={'model_name': 'test_maint.musiker'})
+        view = self.get_view(request, kwargs={'model_name': 'test_tools.musiker'})
         with patch.object(view, 'build_duplicates_items'):
             with patch.object(view, 'render_to_response') as render_mock:
                 view.get(request)
@@ -238,13 +238,13 @@ class TestDuplicateObjectsView(ViewTestCase):
 
     @patch('dbentry.base.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
     def test_get_context_data(self):
-        view = self.get_view(self.get_request(), kwargs={'model_name': 'test_maint.musiker'})
+        view = self.get_view(self.get_request(), kwargs={'model_name': 'test_tools.musiker'})
         context = view.get_context_data()
         self.assertEqual(context['title'], 'Duplikate: Musiker')
         self.assertEqual(context['breadcrumbs_title'], 'Musiker')
 
 
-@override_settings(ROOT_URLCONF='tests.test_maint.urls')
+@override_settings(ROOT_URLCONF='tests.test_tools.urls')
 class TestUnusedObjectsView(ViewTestCase):
     view_class = UnusedObjectsView
 
@@ -331,10 +331,10 @@ class TestUnusedObjectsView(ViewTestCase):
         # Sorting by "model_name (count)" since we know count is either 0 or 1:
         # (sorting by url will sort an url with pk="10" before one with pk="9")
         unused, used_once = sorted(items, key=lambda tpl: tpl[1])
-        url = reverse("test_maint:test_maint_genre_change", args=[self.unused.pk])
+        url = reverse("test_tools:test_tools_genre_change", args=[self.unused.pk])
         self.assertIn(url, unused[0])
         self.assertIn("Musiker (0)", unused[1])
-        url = reverse("test_maint:test_maint_genre_change", args=[self.used_once.pk])
+        url = reverse("test_tools:test_tools_genre_change", args=[self.used_once.pk])
         self.assertIn(url, used_once[0])
         self.assertIn("Musiker (1)", used_once[1])
 

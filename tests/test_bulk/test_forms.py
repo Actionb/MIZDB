@@ -6,8 +6,8 @@ from django.test import tag
 from django.utils.translation import override as translation_override
 
 from dbentry import models as _models
-from dbentry.bulk.fields import BulkField, BulkJahrField
-from dbentry.bulk.forms import BulkForm, BulkFormAusgabe
+from dbentry.tools.bulk.fields import BulkField, BulkJahrField
+from dbentry.tools.bulk.forms import BulkForm, BulkFormAusgabe
 from tests.case import DataTestCase, MIZTestCase
 from tests.factory import batch, make
 

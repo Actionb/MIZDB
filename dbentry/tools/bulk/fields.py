@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import Widget
 
-from dbentry.bulk.handlers import (
+from dbentry.tools.bulk.handlers import (
     GroupingHandler, NumericHandler, RangeGroupingHandler, RangeHandler
 )
 

@@ -17,7 +17,7 @@ from django.utils.safestring import SafeText
 
 from dbentry import utils
 from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
-from dbentry.maint.forms import (
+from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
 from dbentry.sites import register_tool

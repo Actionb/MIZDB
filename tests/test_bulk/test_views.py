@@ -2,7 +2,7 @@ from django.test import tag
 from django.urls import reverse, reverse_lazy
 
 import dbentry.models as _models
-from dbentry.bulk.views import BulkAusgabe
+from dbentry.tools.bulk.views import BulkAusgabe
 from tests.case import LoggingTestMixin, ViewTestCase
 from tests.factory import batch, make
 

@@ -1,10 +1,10 @@
 from django.urls import path
 
-from dbentry.maint.views import DuplicateModelSelectView, DuplicateObjectsView, UnusedObjectsView
+from dbentry.tools.views import DuplicateModelSelectView, DuplicateObjectsView, UnusedObjectsView
 from .admin import admin_site
 
 urlpatterns = [
-    path('test_maint/', admin_site.urls),
+    path('test_tools/', admin_site.urls),
     path(
         'dupes/<str:model_name>/',
         DuplicateObjectsView.as_view(admin_site=admin_site),

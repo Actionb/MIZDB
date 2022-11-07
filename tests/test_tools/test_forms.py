@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.test import TestCase
 
-from dbentry.maint.forms import (
+from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm,
     get_dupe_field_choices
 )
@@ -127,8 +127,8 @@ class TestModelSelectForm(TestCase):
 
     def test_get_model_list_filters_out_non_app_models(self):
         """Assert that models not belonging to the given app are filtered out."""
-        form = self.form_class(app_label="test_maint", admin_site=admin_site)
-        with patch('dbentry.maint.forms.apps.get_models') as get_models_mock:
+        form = self.form_class(app_label="test_tools", admin_site=admin_site)
+        with patch('dbentry.tools.forms.apps.get_models') as get_models_mock:
             get_models_mock.return_value = [
                 Musiker,  # should be included
                 User,  # should be filtered out
@@ -138,8 +138,8 @@ class TestModelSelectForm(TestCase):
 
     def test_get_model_list_filters_out_non_registered_models(self):
         """Assert that models not registered with the given admin site are filtered out."""
-        form = self.form_class(app_label="test_maint", admin_site=admin_site)
-        with patch('dbentry.maint.forms.apps.get_models') as get_models_mock:
+        form = self.form_class(app_label="test_tools", admin_site=admin_site)
+        with patch('dbentry.tools.forms.apps.get_models') as get_models_mock:
             get_models_mock.return_value = [
                 Musiker,  # should be included
                 Unregistered,  # not registered with 'site'
@@ -149,7 +149,7 @@ class TestModelSelectForm(TestCase):
     def test_get_model_list_sorted_by_verbose_name(self):
         """Assert that the model list is sorted by model verbose_name."""
         form = self.form_class()
-        with patch('dbentry.maint.forms.apps.get_models') as get_models_mock:
+        with patch('dbentry.tools.forms.apps.get_models') as get_models_mock:
             with patch.object(form, 'get_model_filters', new=Mock(return_value=[])):
                 get_models_mock.return_value = [Person, Musiker, Kalender]
                 self.assertEqual(
@@ -167,7 +167,7 @@ class TestDuplicateFieldsSelectForm(TestCase):
         form['select'].choices = []
         form['display'].choices = []
 
-        with patch('dbentry.maint.forms.get_dupe_field_choices') as m:
+        with patch('dbentry.tools.forms.get_dupe_field_choices') as m:
             m.return_value = [
                 [('kuenstler_name', 'Künstlername')],
                 [('kuenstler_name', 'Künstlername'), ('musikeralias__alias', 'Alias')]

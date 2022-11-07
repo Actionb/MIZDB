@@ -7,7 +7,7 @@ from django.db.models import Model, QuerySet
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminForm, MinMaxRequiredFormMixin
-from dbentry.bulk.fields import BaseSplitField, BulkField, BulkJahrField
+from dbentry.tools.bulk.fields import BaseSplitField, BulkField, BulkJahrField
 
 
 class BulkForm(MIZAdminForm):

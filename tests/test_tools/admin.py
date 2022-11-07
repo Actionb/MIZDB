@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from tests.test_maint.models import Genre, Kalender, Musiker
+from tests.test_tools.models import Genre, Kalender, Musiker
 
-admin_site = admin.AdminSite(name='test_maint')
+admin_site = admin.AdminSite(name='test_tools')
 
 
 @admin.register(Musiker, site=admin_site)

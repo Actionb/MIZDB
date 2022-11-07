@@ -2,7 +2,7 @@ import re
 
 from django.test import TestCase
 
-from dbentry.bulk.handlers import (
+from dbentry.tools.bulk.handlers import (
     GroupingHandler, ItemHandler, NumericHandler, RangeGroupingHandler, RangeHandler
 )
 
