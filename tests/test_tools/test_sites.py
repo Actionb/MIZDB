@@ -43,17 +43,22 @@ class TestSiteToolMixin(RequestTestCase):
 
     @patch("dbentry.sites.admin.AdminSite.check")
     def test_check(self, super_mock):
-        """Assert that the check finds tools with invalid url names."""
+        """Assert that check() adds errors if an url name cannot be reversed."""
         super_mock.return_value = []
         with patch.object(self.site, 'tools', new=[]):
+            # No tools, no errors:
             self.assertFalse(self.site.check(None))
+            # The site's index is a reversible url name:
+            self.site.tools = [(None, f"{self.site.name}:index", '', (), False)]
+            self.assertFalse(self.site.check(None))
+            # Add a tool with a bogus url name:
             self.site.tools.append((None, '404_url', '', (), False))
             errors = self.site.check(None)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
 
     def test_register_tool(self):
-        """Assert that register_tool appends tools to the tools list."""
+        """Assert that register_tool() appends tools to the tools list."""
         self.assertFalse(self.site.tools)
         tool = ('view class', 'url name', 'label', ('test_tools.add_band',), False)
         with patch.object(self.site, 'tools', new=[]):
@@ -63,7 +68,7 @@ class TestSiteToolMixin(RequestTestCase):
     @expectedFailure
     def test_build_admintools_context_permission_required(self):
         """
-        Assert that build_admintools_context excludes tools if the user does
+        Assert that build_admintools_context() excludes tools if the user does
         not have all the required permissions.
         """
         band_codename = get_permission_codename('add', Band._meta)
@@ -91,7 +96,7 @@ class TestSiteToolMixin(RequestTestCase):
 
     def test_build_admintools_context_superuser_only(self):
         """
-        Assert that build_admintools_context excludes tools flagged with
+        Assert that build_admintools_context() excludes tools flagged with
         superuser_only=True if the user is not a superuser.
         """
         tool = (None, '', '', (), True)

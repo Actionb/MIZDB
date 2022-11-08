@@ -9,9 +9,11 @@ from django.views.decorators.cache import never_cache
 
 
 class SiteToolMixin(object):
-    """A mixin for a django admin site that lists registered tool views in the sidebar."""
-
-    # TODO: create a separate index.html that includes the admin tools stuff
+    """
+    A mixin for a django admin site that lists registered tool views on the
+    index page.
+    """
+    index_template = 'tools/index.html'
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
