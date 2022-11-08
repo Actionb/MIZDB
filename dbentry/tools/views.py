@@ -152,15 +152,19 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         kwargs['data'] = self.request.GET
         return kwargs
 
-    def build_duplicates_items(
-            self, form: Form
-    ) -> List[Tuple[List[Tuple[Any, SafeText, List[str]]], SafeText]]:
+    def build_duplicates_items(self, form: Form) -> list:
         """
         Prepare the content of the table that lists the duplicates.
 
-        Returns a list of 2-tuples, where the first item is a list of
-        (model instance, change page URL, display values) tuples, and the last
-        item is the link to the changelist of the duplicate instances.
+        Returns a list of 2-tuples. The first item of that 2-tuple contains
+        table date for the duplicate instances. The second item is a link to the
+        changelist of those instances. Example:
+        [
+            (
+                [(model instance, change page URL, display values), ...],
+                <link to the changelist of the duplicate instances>
+            ), ...
+        ]
         """
         # Optimize the query by using StringAgg on values for many_to_many and
         # many_to_one relations. Use select_related for many_to_one relations.
@@ -223,12 +227,12 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
                 **{'target': '_blank', 'class': 'button', 'style': 'padding: 10px 15px;'}
             )
 
-        groups = []
+        groups: list = []
         # A group of duplicates and the data that makes them duplicates of each
         # other.
         dupe_group = dupe_data = None
         for i, obj in enumerate(duplicates):
-            if {f: getattr(obj, f) for f in search_fields} == dupe_data:
+            if {f: getattr(obj, f) for f in search_fields} == dupe_data and dupe_group is not None:
                 dupe_group.append(make_dupe_item(obj))
                 if i == duplicates.count() - 1:
                     # This is the last item in the queryset: append the group.
@@ -398,7 +402,7 @@ class SiteSearchView(views.generic.TemplateView):
         app = apps.get_app_config(app_label or self.app_label)
         return app.get_models()
 
-    def _search(self, model: Model, q: str) -> []:
+    def _search(self, model: Model, q: str) -> Any:
         """Search the given model for the search term ``q``."""
         raise NotImplementedError("The view class must implement the search.")  # pragma: no cover
 
@@ -447,6 +451,6 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
             if issubclass(m, BaseModel) and not issubclass(m, BaseM2MModel)
         ]
 
-    def _search(self, model: Model, q: str) -> []:
+    def _search(self, model: Model, q: str) -> Any:
         # noinspection PyUnresolvedReferences
         return model.objects.search(q, ranked=False)  # pragma: no cover

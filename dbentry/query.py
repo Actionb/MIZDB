@@ -429,7 +429,7 @@ class AusgabeQuerySet(CNQuerySet):
         # Determine if jahr should come before jahrgang in ordering.
         jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
-        jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))
+        jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))  # type: ignore[var-annotated]  # noqa
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
             jahr_index = ordering.index('jahr')

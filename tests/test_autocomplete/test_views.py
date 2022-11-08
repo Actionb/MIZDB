@@ -589,7 +589,7 @@ class TestACAusgabe(ACViewTestCase):
             def get_changelist_annotations(self):
                 return {'foo': Count('*')}
 
-        with patch('dbentry.admin.AusgabenAdmin', new=DummyAdmin):
+        with patch('dbentry.ac.views.AusgabenAdmin', new=DummyAdmin):
             view = self.get_view(self.get_request())
             queryset = view.get_queryset()
             self.assertIn('foo', queryset.query.annotations)

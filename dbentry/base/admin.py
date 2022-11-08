@@ -20,6 +20,7 @@ from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
 from dbentry.base.models import ComputedNameModel
 from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
+from dbentry.query import MIZQuerySet
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
@@ -221,7 +222,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         """
         return None
 
-    def add_crosslinks(self, object_id: str, labels: Optional[dict] = None) -> Dict[str, list]:
+    def add_crosslinks(self, object_id: str = '', labels: Optional[dict] = None) -> Dict[str, list]:
         """
         Provide the template with data to create links to related objects.
 
@@ -290,12 +291,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
-    def add_extra_context(self, object_id: Optional[str] = None, **extra_context) -> dict:
+    def add_extra_context(self, object_id: str = '', **extra_context: Any) -> dict:
         """Add extra context specific to this ModelAdmin."""
         extra_context.update(
             {
                 'collapse_all': self.collapse_all,
-                **self.add_crosslinks(object_id, self.crosslink_labels),
+                **self.add_crosslinks(object_id, self.crosslink_labels),  # type: ignore[arg-type]
             }
         )
         return extra_context
@@ -312,9 +313,9 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     def change_view(
             self,
             request: HttpRequest,
-            object_id: Optional[str],
+            object_id: str = '',
             form_url: str = '',
-            extra_context: dict = None
+            extra_context: Optional[dict] = None
     ) -> HttpResponse:
         """View for changing an object."""
         new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
@@ -365,7 +366,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         """Return annotations necessary for the changelist queryset."""
         return {}
 
-    def get_search_results(self, request, queryset, search_term):
+    def get_search_results(
+            self,
+            request: HttpRequest,
+            queryset: MIZQuerySet,
+            search_term: str
+    ) -> tuple[MIZQuerySet, bool]:
         if not search_term:
             return queryset, False
         # Do a full text search. Respect ordering specified on the changelist.
@@ -394,7 +400,7 @@ class BaseInlineMixin(AutocompleteMixin):
     description: str = ''
     form: ModelForm = MIZAdminInlineFormBase
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if self.verbose_model:
             # noinspection PyUnresolvedReferences
