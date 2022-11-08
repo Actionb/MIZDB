@@ -112,7 +112,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
     and the possibility for merging each group is provided.
     """
 
-    template_name = 'admin/dupes.html'
+    template_name = 'tools/dupes.html'
     form_class = DuplicateFieldsSelectForm
 
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
@@ -254,7 +254,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
 
     form_class = UnusedObjectsForm
-    template_name = 'admin/find_unused.html'
+    template_name = 'tools/find_unused.html'
 
     form_method = 'get'
     submit_name = 'get_unused'
@@ -378,7 +378,7 @@ class SiteSearchView(views.generic.TemplateView):
     """
 
     app_label = ''
-    template_name = 'admin/site_search.html'
+    template_name = 'tools/site_search.html'
 
     def get(self, request: HttpRequest, **kwargs: Any) -> HttpResponse:
         context = self.get_context_data(**kwargs)
@@ -427,7 +427,8 @@ class SiteSearchView(views.generic.TemplateView):
 @register_tool(
     url_name='site_search',
     index_label='Datenbank durchsuchen',
-    # TODO: create a 'search' permission that allows app-wide searching?
+    # TODO: add required permissions
+    #  (create a 'search' permission that allows app-wide searching?)
     # permission_required=['dbentry.view_artikel'],
     superuser_only=False
 )
