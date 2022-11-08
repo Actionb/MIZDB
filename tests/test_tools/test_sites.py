@@ -1,4 +1,3 @@
-from unittest import expectedFailure
 from unittest.mock import patch
 
 from django.contrib import admin
@@ -65,7 +64,6 @@ class TestSiteToolMixin(RequestTestCase):
             self.site.register_tool(*tool)
             self.assertIn(tool, self.site.tools)
 
-    @expectedFailure
     def test_build_admintools_context_permission_required(self):
         """
         Assert that build_admintools_context() excludes tools if the user does
@@ -73,7 +71,10 @@ class TestSiteToolMixin(RequestTestCase):
         """
         band_codename = get_permission_codename('add', Band._meta)
         musiker_codename = get_permission_codename('add', Musiker._meta)
-        perms_required = (f"test_tools.{band_codename}", f"test_tools.{musiker_codename}")
+        perms_required = (
+            f"{Band._meta.app_label}.{band_codename}",
+            f"{Musiker._meta.app_label}.{musiker_codename}"
+        )
         request = self.get_request(user=self.staff_user)
 
         tool = (None, '', '', perms_required, False)
@@ -85,6 +86,7 @@ class TestSiteToolMixin(RequestTestCase):
             self.staff_user.user_permissions.add(
                 Permission.objects.get(codename=band_codename, content_type=ct)
             )
+            request.user = self.reload_user(self.staff_user)
             self.assertFalse(self.site.build_admintools_context(request))
 
             # Add musiker permission:
@@ -92,6 +94,7 @@ class TestSiteToolMixin(RequestTestCase):
             self.staff_user.user_permissions.add(
                 Permission.objects.get(codename=musiker_codename, content_type=ct)
             )
+            request.user = self.reload_user(self.staff_user)
             self.assertTrue(self.site.build_admintools_context(request))
 
     def test_build_admintools_context_superuser_only(self):

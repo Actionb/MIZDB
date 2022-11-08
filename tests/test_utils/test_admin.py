@@ -2,7 +2,6 @@ import re
 from unittest.mock import Mock, patch
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -190,10 +189,8 @@ class TestAdminUtils(RequestTestCase):
         for permissions in perms:
             with self.subTest(permissions=permissions):
                 self.staff_user.user_permissions.set(permissions)
-                # Re-fetch the user from the database to reset the permission cache:
-                # https://docs.djangoproject.com/en/3.2/topics/auth/default/#permission-caching
-                user = get_user_model().objects.get(pk=self.staff_user.pk)
-                url = admin_utils.get_changelist_url(model=self.model, user=user)
+                self.staff_user = self.reload_user(self.staff_user)
+                url = admin_utils.get_changelist_url(model=self.model, user=self.staff_user)
                 if not permissions:
                     self.assertFalse(url)
                 else:

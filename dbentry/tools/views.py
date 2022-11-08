@@ -427,6 +427,8 @@ class SiteSearchView(views.generic.TemplateView):
 @register_tool(
     url_name='site_search',
     index_label='Datenbank durchsuchen',
+    # TODO: create a 'search' permission that allows app-wide searching?
+    # permission_required=['dbentry.view_artikel'],
     superuser_only=False
 )
 class MIZSiteSearch(MIZAdminMixin, SiteSearchView):

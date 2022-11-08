@@ -1,4 +1,3 @@
-from unittest import expectedFailure
 from unittest.mock import patch
 
 from django.contrib import admin
@@ -101,9 +100,10 @@ class TestMIZSite(RequestTestCase):
 
     def test_index_tools_superuser(self):
         """Check the admintools registered and available to a superuser."""
-        response = self.get_response(reverse(f'{miz_site.name}:index'))
+        response = self.get_response(reverse(f'{miz_site.name}:index'), user=self.super_user)
         self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools')
+
         self.assertIn('bulk_ausgabe', tools)
         self.assertEqual(tools['bulk_ausgabe'], 'Ausgaben Erstellung')
         self.assertIn('site_search', tools)
@@ -120,8 +120,8 @@ class TestMIZSite(RequestTestCase):
         ct = ContentType.objects.get_for_model(_models.Ausgabe)
         perms = Permission.objects.filter(codename='add_ausgabe', content_type=ct)
         self.staff_user.user_permissions.set(perms)
-        self.client.force_login(self.staff_user)
-        response = self.get_response(reverse(f'{miz_site.name}:index'))
+
+        response = self.get_response(reverse(f'{miz_site.name}:index'), user=self.staff_user)
         self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools').copy()
 
@@ -131,15 +131,11 @@ class TestMIZSite(RequestTestCase):
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
-    @expectedFailure  # Permission checks disabled again: commit 0190e654
     def test_index_tools_view_only(self):
         """
         Assert that view-only users (i.e. visitors) only see the site_search
         tool.
         """
-        # TODO: enable this test once the tool view rework has added a way of
-        #  checking permissions for tool views that do not require the use of
-        #  resolve (f.ex. with a has_perms class method on the tool view).
         visitor_user = User.objects.create_user(
             username='visitor', password='besucher', is_staff=True
         )
@@ -147,10 +143,11 @@ class TestMIZSite(RequestTestCase):
         visitor_user.user_permissions.set(
             [Permission.objects.get(codename='view_ausgabe', content_type=ct)]
         )
-        self.client.force_login(visitor_user)
-        response = self.get_response(reverse(f'{miz_site.name}:index'))
+
+        response = self.get_response(reverse(f'{miz_site.name}:index'), user=visitor_user)
         self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools').copy()
+
         self.assertIn('site_search', tools)
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)

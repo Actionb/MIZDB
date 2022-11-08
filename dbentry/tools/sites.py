@@ -21,6 +21,7 @@ class SiteToolMixin(object):
 
     def check(self, app_configs: Optional[ValuesView]) -> List[checks.CheckMessage]:
         errors = super().check(app_configs)
+        # Check that the registered urls are reversible.
         for tool, url_name, *_ in self.tools:
             try:
                 reverse(url_name)
@@ -43,31 +44,35 @@ class SiteToolMixin(object):
             superuser_only: bool = False
     ) -> None:
         """
-        Add the given view to the sites' registered tools.
+        Add the given view to the sites' registered tools. A link to the
+        registered view will be displayed in the sidebar of the index page.
 
-        A registered tool view will have a link to it from the index page.
-        The link will be labelled with ``index_label``. The view must be
-        reversible using ``url_name``. ``permission_required`` dictates what
-        permissions the user will need for the link to be included in the index.
-        If ``superuser_only`` is True, the link will only be added for
-        superusers.
+        Args:
+            view: the tool view
+            url_name: the reversible url name of the view
+            index_label: the label for the link
+            permission_required: permissions required for the link to be
+              displayed on the index page
+            superuser_only: if True, a link will only be displayed to superusers
         """
         self.tools.append((view, url_name, index_label, permission_required, superuser_only))
 
     def build_admintools_context(self, request: HttpRequest) -> OrderedDictType[str, str]:
         """
-        Return a mapping of url_name: index_label of registered tools
-        (ordered by index_label) to be added to the index' context.
+        Return a mapping of url_name: index_label of registered tools, ordered
+        by index_label, to be added to the index' context.
+        Exclude tool views the user does not have permission for.
         """
         result = OrderedDict()
-        # Walk through the tools by index_label:
-        tools = sorted(self.tools, key=lambda t: t[2])
-        for _tool, url_name, index_label, permission_required, superuser_only in tools:
-            # noinspection PyUnresolvedReferences
-            if superuser_only and not request.user.is_superuser:
+        # noinspection PyUnresolvedReferences
+        user = request.user
+        # Walk through the tools sorted by index_label:
+        for _tool, url, label, perms, su_only in sorted(self.tools, key=lambda tpl: tpl[2]):
+            if su_only and not user.is_superuser:
                 continue
-            # TODO: check permissions (do not use resolve(), see commit 0190e654)
-            result[url_name] = index_label
+            if not user.has_perms(perms):
+                continue
+            result[url] = label
         return result
 
     @never_cache

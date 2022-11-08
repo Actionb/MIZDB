@@ -21,9 +21,9 @@ def register_tool(
     Args:
         url_name (str): name of the URL pattern to the view
         index_label (str): the label for the link on the index page to the view
-        permission_required (Sequence): a sequence of perrmission codenames
+        permission_required (Sequence): a sequence of permission codenames
           required to access the view. Used to decide whether to display a link
-          to decorated view on the index page for the current user.
+          to the decorated view on the index page for the current user.
         superuser_only (bool): If True, only superusers will see a link on the
           index page. This does not restrict access to the view in any way.
         site (MIZAdminSite instance): the site to register the view with

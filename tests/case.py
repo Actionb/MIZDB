@@ -5,7 +5,7 @@ import warnings
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages import get_messages
 from django.test import RequestFactory, TestCase
@@ -48,17 +48,25 @@ class UserTestCase(MIZTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.super_user = User.objects.create_superuser(
+        cls.super_user = get_user_model().objects.create_superuser(
             username='superuser', password='foobar', email='testtest@test.test'
         )
-        cls.staff_user = User.objects.create_user(username='staff', password='foo', is_staff=True)
-        cls.noperms_user = User.objects.create_user(username='noperms', password='bar')
-        cls.users = [cls.super_user, cls.staff_user, cls.noperms_user]
+        cls.staff_user = get_user_model().objects.create_user(
+            username='staff', password='foo', is_staff=True
+        )
+        cls.noperms_user = get_user_model().objects.create_user(
+            username='noperms', password='bar'
+        )
 
     def setUp(self):
         super().setUp()
         # Have the super_user be logged in by default:
         self.client.force_login(self.super_user)
+
+    # noinspection PyMethodMayBeStatic
+    def reload_user(self, user):
+        """Reload user from database and return it. This resets the permission cache."""
+        return get_user_model().objects.get(pk=user.pk)
 
 
 class RequestTestCase(UserTestCase):

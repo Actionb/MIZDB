@@ -23,7 +23,11 @@ from dbentry.utils.admin import (
 )
 
 
-@register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
+@register_tool(
+    url_name='bulk_ausgabe',
+    index_label='Ausgaben Erstellung',
+    permission_required=['dbentry.add_ausgabe']
+)
 class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView):
     """A FormView that creates multiple Ausgabe instances from a single form."""
 
