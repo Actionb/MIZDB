@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from typing import Any, List, Optional, OrderedDict as OrderedDictType, Sequence, ValuesView
 
+from django.contrib import admin
 from django.core import checks
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
@@ -8,9 +9,9 @@ from django.views import View
 from django.views.decorators.cache import never_cache
 
 
-class SiteToolMixin(object):
+class IndexToolsSite(admin.AdminSite):
     """
-    A mixin for a django admin site that lists registered tool views on the
+    A django admin site that lists registered tool views in the sidebar of the
     index page.
     """
     index_template = 'tools/index.html'

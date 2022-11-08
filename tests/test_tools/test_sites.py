@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -9,20 +8,16 @@ from django.test import override_settings
 from django.urls import path, reverse
 from django.views import View
 
-from dbentry.tools.sites import SiteToolMixin
+from dbentry.tools.sites import IndexToolsSite
 from tests.case import RequestTestCase
 from .models import Band, Musiker
-
-
-class DummySite(SiteToolMixin, admin.AdminSite):
-    pass
 
 
 class DummyTool(View):
     pass
 
 
-admin_site = DummySite()
+admin_site = IndexToolsSite()
 
 
 class URLConf:
@@ -33,8 +28,8 @@ class URLConf:
 
 
 @override_settings(ROOT_URLCONF=URLConf)
-class TestSiteToolMixin(RequestTestCase):
-    """Test the tools site mixin."""
+class TestIndexToolsSite(RequestTestCase):
+    """Test the IndexToolsSite admin site."""
     # Items in the tools list are a 5-tuple:
     #   (tool, url_name, index_label, permission_required, superuser_only)
 

@@ -7,10 +7,10 @@ from django.http import HttpRequest, HttpResponse
 from django.views.decorators.cache import never_cache
 
 from dbentry import utils
-from dbentry.tools.sites import SiteToolMixin
+from dbentry.tools.sites import IndexToolsSite
 
 
-class MIZAdminSite(SiteToolMixin, admin.AdminSite):
+class MIZAdminSite(IndexToolsSite):
     """
     AdminSite for the dbentry app.
 
