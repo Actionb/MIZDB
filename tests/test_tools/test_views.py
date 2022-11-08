@@ -6,14 +6,14 @@ from django.urls import reverse
 from django.utils.http import unquote
 
 from dbentry import models as _models
-from dbentry.factory import make
 from dbentry.tools.views import (
     DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, ModelSelectView, SiteSearchView,
     UnusedObjectsView,
     find_duplicates
 )
 from tests.case import DataTestCase, ViewTestCase
-from tests.test_tools.models import Band, Genre, Musiker, Person
+from tests.factory import make
+from .models import Band, Genre, Musiker, Person
 
 
 @override_settings(ROOT_URLCONF='tests.test_tools.urls')

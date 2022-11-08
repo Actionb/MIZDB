@@ -677,7 +677,7 @@ class AutorFactory(MIZModelFactory):
     class Meta:
         model = _models.Autor
 
-    person = SubFactory('dbentry.factory.PersonFactory', required=True)
+    person = SubFactory('tests.factory.PersonFactory', required=True)
 
     # noinspection PyMethodParameters
     @factory.lazy_attribute

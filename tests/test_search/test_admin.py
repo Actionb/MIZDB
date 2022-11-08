@@ -9,13 +9,13 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from dbentry.factory import batch, make
 from dbentry.search.admin import (
     AdminSearchFormMixin, ChangelistSearchFormMixin,
     MIZAdminSearchFormMixin
 )
 from dbentry.search.forms import MIZAdminSearchForm
 from tests.case import AdminTestCase, RequestTestCase
+from tests.factory import batch, make
 from .admin import ArtikelAdmin, BandAdmin, admin_site
 from .models import Artikel, Ausgabe, Band, Genre
 
