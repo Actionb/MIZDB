@@ -1,6 +1,4 @@
 """Settings shared by both production and development environments."""
-import logging
-import sys
 from pathlib import Path
 
 import yaml
