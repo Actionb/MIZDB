@@ -35,7 +35,7 @@ class TestIndexToolsSite(RequestTestCase):
 
     site = admin_site
 
-    @patch("dbentry.sites.admin.AdminSite.check")
+    @patch("dbentry.tools.sites.admin.AdminSite.check")
     def test_check(self, super_mock):
         """Assert that check() adds errors if an url name cannot be reversed."""
         super_mock.return_value = []

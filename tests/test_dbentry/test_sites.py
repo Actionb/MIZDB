@@ -33,7 +33,7 @@ class TestMIZAdminSite(RequestTestCase):
             context = self.site.each_context(self.get_request())
             self.assertNotIn('wiki_url', context)
 
-    @patch('dbentry.sites.admin.AdminSite.app_index')
+    @patch('dbentry.tools.sites.IndexToolsSite.app_index')
     def test_app_index_returns_dbentry(self, super_mock):
         """
         Assert that a request for the app index of app 'dbentry' returns the
