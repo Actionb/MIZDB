@@ -53,10 +53,9 @@ def get_dupe_field_choices(model: Type[Model]) -> Tuple:
                 # Add a choice for the related model's name_field, but add them
                 # to display_choices after all non-m2m choices.
                 target = getattr(field.related_model, 'name_field', '') or 'pk'
-                m2m.append((
-                    field.name + LOOKUP_SEP + target,
-                    field.verbose_name.capitalize()
-                ))
+                m2m.append(
+                    (field.name + LOOKUP_SEP + target, field.verbose_name.capitalize())
+                )
             else:
                 choice = (field.name, field.verbose_name.capitalize())
                 display_choices.append(choice)
@@ -67,10 +66,12 @@ def get_dupe_field_choices(model: Type[Model]) -> Tuple:
             # Some kind of reverse relation. Add a choice for the related
             # model's name_field.
             target = getattr(field.related_model, 'name_field', '') or 'pk'
-            reverse.append((
-                utils.get_reverse_field_path(field, target),
-                field.related_model._meta.verbose_name
-            ))
+            reverse.append(
+                (
+                    utils.get_reverse_field_path(field, target),
+                    field.related_model._meta.verbose_name
+                )
+            )
     display_choices.extend([*sorted(m2m), *sorted(reverse)])
     return select_choices, display_choices
 
@@ -108,6 +109,8 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     def get_model_list(self) -> List[Tuple[str, str]]:
         """Return the choices for the ``model_select`` field."""
+        # TODO: ditch get_model_filters (and nfilters) and just filter the
+        #  model list in this method
         filters = self.get_model_filters()
         choices = [
             (model._meta.model_name, model._meta.verbose_name)

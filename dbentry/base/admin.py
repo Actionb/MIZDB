@@ -305,7 +305,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             self,
             request: HttpRequest,
             form_url: str = '',
-            extra_context: dict = None
+            extra_context: Optional[dict] = None
     ) -> HttpResponse:
         """View for adding a new object."""
         return super().add_view(request, form_url, self.add_extra_context(**(extra_context or {})))

@@ -112,7 +112,7 @@ class AdminSearchFormMixin(object):
         # Allow lookups defined in advanced_search_form.
         # Extract the lookups from the field_path 'lookup':
         try:
-            _, lookups = utils.get_fields_and_lookups(self.model, lookup)  # type: ignore[attr-defined]  # noqa
+            _, lookups = utils.get_fields_and_lookups(self.model, lookup)  # type: ignore
         except (exceptions.FieldDoesNotExist, exceptions.FieldError):
             return False
         # Remove all lookups from the field_path to end up with just a
@@ -151,7 +151,7 @@ class AdminSearchFormMixin(object):
         Figure out where to redirect after the 'Save' button has been pressed.
         If applicable, add preserved changelist filters to the query string.
         """
-        preserved_filters = dict(parse_qsl(self.get_preserved_filters(request)))  # type: ignore[attr-defined]  # noqa
+        preserved_filters = dict(parse_qsl(self.get_preserved_filters(request)))  # type: ignore
         response = super()._response_post_save(request, obj)  # type: ignore[misc]
         if (not isinstance(response, HttpResponseRedirect)
                 or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]

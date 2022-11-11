@@ -380,7 +380,7 @@ class DiscogsFormMixin(object):
     url_field_name: str = ''
     release_id_field_name: str = ''
 
-    def __init__(self: Form, *args, **kwargs):
+    def __init__(self: Form, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)  # type: ignore[call-arg]
         if self.url_field_name in self.fields:
             self.fields[self.url_field_name].validators.append(

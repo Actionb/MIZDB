@@ -1,5 +1,5 @@
 import sys
-from typing import Dict, Iterable, List, Optional, Set, TextIO, Tuple, Type, Union
+from typing import Iterable, List, Optional, TextIO, Tuple, Type, Union
 
 from django.apps import apps
 from django.contrib import auth

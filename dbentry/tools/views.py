@@ -14,7 +14,7 @@ from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.utils.safestring import SafeText
+from django.utils.safestring import SafeString, SafeText
 
 from dbentry import utils
 from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
@@ -197,7 +197,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         )
 
         # noinspection PyShadowingNames
-        def make_dupe_item(obj):
+        def make_dupe_item(obj: Model) -> Tuple[Model, SafeString, list[str]]:
             """
             Provide a tuple to add to a group of duplicates.
 
@@ -215,7 +215,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
             return obj, utils.get_obj_link(obj, self.request.user, blank=True), values
 
         # noinspection PyShadowingNames
-        def get_cl_link(dupe_group):
+        def get_cl_link(dupe_group: List[Tuple[Model, SafeString, list[str]]]) -> SafeString:
             """Provide a link to the changelist page for this group of duplicate items."""
             cl_url = utils.get_changelist_url(
                 self.model, self.request.user, obj_list=[item[0] for item in dupe_group]

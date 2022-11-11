@@ -627,7 +627,7 @@ class PlakatAdmin(MIZModelAdmin):
     veranstaltung_string.short_description = 'Veranstaltungen'  # type: ignore[attr-defined]  # noqa
     veranstaltung_string.admin_order_field = 'veranstaltung_list'  # type: ignore[attr-defined]  # noqa
 
-    def get_fields(self, request: HttpRequest, obj: _models.Plakat = None) -> List[str]:
+    def get_fields(self, request: HttpRequest, obj: Optional[_models.Plakat] = None) -> List[str]:
         """
         Remove the 'copy_related' formfield, if the user does not have change
         permissions on the object.

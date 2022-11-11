@@ -281,30 +281,36 @@ class SearchFormFactory:
         """
         Create and return a search form class for a given model.
 
-        Regarding the creation of the formfields, this method works quite the
-        same way as the method that creates the formfields for a ModelForm:
-            django.forms.models.fields_for_model.
-        Most arguments to get_search_form fulfill the same purposes as those
-        to fields_for_model.
-        One difference is that the collection 'fields' may contain field_paths
-        to other models ('foo__bar') and/or lookups ('foo__contains').
-
-        Any lookups that are valid lookups for the model field are stored in a
-        mapping, called 'lookups', of formfield_name: lookups which is attached
-        to resulting form class. This is done to allow lookups in admin that are
-        not whitelisted as a list_filter (see: ModelAdmin.lookup_allowed).
+        Any lookups specified in a field path in ``fields`` that are valid
+        lookups for the model field are stored on the resulting form class in a
+        dictionary called 'lookups'. This is done to allow lookups in admin that
+        are not whitelisted as a list_filter (see: ModelAdmin.lookup_allowed).
         If the lookup (or parts of it) is a range lookup, a RangeFormField is
         automatically created, wrapping the default formfield class for that
-        formfield. If no lookups are included in the field_path, a default
+        formfield. If no lookups are included in the field path, a default
         lookup will be retrieved from get_default_lookup().
 
-        Additional arguments.
-            - ``forwards``: a mapping of formfield_name: dal forwards
-            - ``tabular``: a list of formfield_names to be used with a tabular
-              widget
-            - ``range_lookup``: the lookup class whose lookup_name is used to
-              recognize range lookups.
+        Args:
+            model: the model to create the form for
+            fields: a list of field names or paths to use in the form. These
+              names/paths may include lookups.
+            form: the base form class for the search form
+            formfield_callback: a callable that takes a model field and returns
+              a form field
+            widgets: a dictionary of model field names mapped to a widget
+            localized_fields: list of names of fields which should be localized
+            labels: a dictionary of model field names mapped to a label
+            help_texts: a dictionary of model field names mapped to a help text
+            error_messages: a dictionary of model field names mapped to a
+              dictionary of error messages
+            field_classes: a dictionary of model field names mapped to a form
+              field class
+            forwards: a dictionary of formfield_name mapped to dal forwards
+            tabular: a list of formfield_names that should use a tabular widget
+            range_lookup: the lookup class whose lookup_name is used for range
+              lookups
         """
+        # FIXME: fields argument should not be optional
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback):

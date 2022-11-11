@@ -174,7 +174,7 @@ class ComputedNameModel(BaseModel):
 
     objects = CNQuerySet.as_manager()
 
-    def __init__(self, *args, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # An up-to-date name _may_ be expected upon initialization.
         self.update_name()

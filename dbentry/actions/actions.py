@@ -11,7 +11,8 @@ from dbentry.actions.views import (
 
 def add_cls_attrs(view_cls: Type[View]) -> Callable:
     """
-    A decorator for an action view function that adds view class attributes.
+    A decorator for an action view function that adds view class attributes to
+    the function.
 
     Adds the following attributes to the view function if it doesn't already
     have these set:
@@ -21,11 +22,10 @@ def add_cls_attrs(view_cls: Type[View]) -> Callable:
           access the action. See dbentry.admin.base.MIZModelAdmin.get_actions()
     """
 
-    def wrap(func):
-        if not hasattr(func, 'short_description') and hasattr(view_cls, 'short_description'):
-            func.short_description = view_cls.short_description
-        if not hasattr(func, 'allowed_permissions') and hasattr(view_cls, 'allowed_permissions'):
-            func.allowed_permissions = view_cls.allowed_permissions
+    def wrap(func: Callable) -> Callable:
+        for attr in ('short_description', 'allowed_permissions'):
+            if not hasattr(func, attr) and hasattr(view_cls, attr):
+                setattr(func, attr, getattr(view_cls, attr))
         return func
 
     return wrap

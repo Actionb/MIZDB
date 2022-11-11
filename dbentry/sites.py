@@ -2,7 +2,6 @@ from collections import OrderedDict
 from typing import Any, List, Optional, OrderedDict as OrderedDictType
 
 from django.conf import settings
-from django.contrib import admin
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.cache import never_cache
 

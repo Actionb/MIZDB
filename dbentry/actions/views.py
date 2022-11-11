@@ -30,7 +30,7 @@ from dbentry.utils.admin import (
 )
 
 
-def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
+def check_same_magazin(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check that all objects in the view's queryset are related to the same
     Magazin instance.
@@ -47,7 +47,7 @@ def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
     return True
 
 
-def check_at_least_two_objects(view, **_kwargs: Any) -> bool:
+def check_at_least_two_objects(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """Check whether an insufficient number of objects has been selected."""
     if view.queryset.count() == 1:
         view.model_admin.message_user(
@@ -62,7 +62,7 @@ def check_at_least_two_objects(view, **_kwargs: Any) -> bool:
     return True
 
 
-def check_different_magazines(view, **_kwargs: Any) -> bool:
+def check_different_magazines(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check whether the Ausgabe instances are from different Magazin instances.
     """
@@ -84,7 +84,7 @@ def check_different_magazines(view, **_kwargs: Any) -> bool:
     return True
 
 
-def check_different_ausgaben(view, **_kwargs: Any) -> bool:
+def check_different_ausgaben(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check whether the Artikel instances are from different Ausgabe instances.
     """
@@ -133,7 +133,7 @@ class BulkEditJahrgang(ActionConfirmationView):
         "\nAlle bereits vorhandenen Angaben für Jahrgänge werden überschrieben."
     )
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
         kwargs['choices'] = {ALL_FIELDS: self.queryset}
         return kwargs
@@ -360,7 +360,7 @@ class MergeView(WizardConfirmationView):
             # for its fields AND 'choices' for the DynamicChoiceFormMixin.
             data, choices, total_forms = {}, {}, 0
 
-            def add_prefix(key_name):
+            def add_prefix(key_name: str) -> str:
                 return prefix + '-' + str(total_forms) + '-' + key_name
 
             for fld_name, values in sorted(self.updates.items()):
@@ -445,16 +445,16 @@ class MergeView(WizardConfirmationView):
         return None
 
 
-def check_protected_artikel(view, **_kwargs: Any) -> bool:
+def check_protected_artikel(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check whether any of the Ausgabe are referenced through protected
     foreign keys on Artikel objects.
     """
     ausgaben_with_artikel = (
         view.queryset
-            .annotate(artikel_count=Count('artikel'))
-            .filter(artikel_count__gt=0)
-            .order_by('magazin')
+        .annotate(artikel_count=Count('artikel'))
+        .filter(artikel_count__gt=0)
+        .order_by('magazin')
     )
     if ausgaben_with_artikel.exists():
         msg_template = (
@@ -490,15 +490,14 @@ class MoveToBrochure(ActionConfirmationView):
 
     form_class = BrochureActionFormSet
 
-    def get_initial(self):
-        fields = (
-            'pk', '_name', 'beschreibung', 'bemerkungen', 'magazin_id',
-            'magazin__magazin_name', 'magazin_beschreibung'
-        )
+    def get_initial(self) -> List[dict]:
         values = (
             self.queryset
-                .annotate(magazin_beschreibung=F('magazin__beschreibung'))
-                .values_list(*fields)
+            .annotate(magazin_beschreibung=F('magazin__beschreibung'))
+            .values_list(
+                'pk', '_name', 'beschreibung', 'bemerkungen', 'magazin_id',
+                'magazin__magazin_name', 'magazin_beschreibung'
+            )
         )
         initial = []
         for (pk, _name, beschreibung, bemerkungen, magazin_id, magazin_name,
@@ -616,10 +615,10 @@ class MoveToBrochure(ActionConfirmationView):
                     message="Hinweis: "
                             "{verbose_name} wurde automatisch erstellt beim Verschieben"
                             " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
-                                verbose_name=brochure_class._meta.verbose_name,  # noqa
-                                str_ausgabe=str_ausgabe,
-                                str_magazin=str(magazin_instance)
-                            )
+                        verbose_name=brochure_class._meta.verbose_name,  # noqa
+                        str_ausgabe=str_ausgabe,
+                        str_magazin=str(magazin_instance)
+                    )
                 )
                 # Log the changes to the Bestand instances:
                 qs = _models.Bestand.objects.filter(brochure_id=new_brochure.pk)

@@ -146,7 +146,7 @@ class TextSearchQuerySetMixin(object):
         results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]
         if ranked or not self.query.order_by:  # type: ignore[attr-defined]
             # Apply ordering to the results.
-            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore[attr-defined]  # noqa
+            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore
             if ranked and getattr(model, 'name_field', None):
                 name_field = model.name_field
                 exact = ExpressionWrapper(

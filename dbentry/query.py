@@ -1,7 +1,10 @@
 import calendar
 import datetime
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Union
+from typing import (
+    Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Sequence,
+    Tuple, Union
+)
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
@@ -427,9 +430,11 @@ class AusgabeQuerySet(CNQuerySet):
             pk_order_item = '-%s' % pk_name
 
         # Determine if jahr should come before jahrgang in ordering.
-        jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
+        jj_values: List[Tuple[int, int]] = list(self.values_list('ausgabejahr__jahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
-        jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))  # type: ignore[var-annotated]  # noqa
+        jahr_values: Sequence[int]
+        jahrgang_values: Sequence[int]
+        jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
             jahr_index = ordering.index('jahr')

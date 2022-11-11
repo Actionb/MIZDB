@@ -220,7 +220,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
                 instance.qs().update(**updates)
                 instance.refresh_from_db()
-                log_change(user_id, instance, updates.keys())
+                log_change(user_id, instance, list(updates.keys()))
                 updated.append(instance)
 
             # Create and/or update related sets.

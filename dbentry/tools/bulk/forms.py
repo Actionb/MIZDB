@@ -242,9 +242,10 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         qs = self.cleaned_data.get('magazin').ausgabe_set.all()
 
         for fld_name, field_path in [
-                ('num', 'ausgabenum__num'),
-                ('lnum', 'ausgabelnum__lnum'),
-                ('monat', 'ausgabemonat__monat__ordinal')]:
+            ('num', 'ausgabenum__num'),
+            ('lnum', 'ausgabelnum__lnum'),
+            ('monat', 'ausgabemonat__monat__ordinal')
+        ]:
             row_data = row.get(fld_name, [])
             if isinstance(row_data, str):
                 row_data = [row_data]

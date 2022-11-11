@@ -35,7 +35,11 @@ def strip_lookups_from_path(path: str, lookups: List[str]) -> str:
 
     ('datum__jahr__in', ['in']) -> 'datum__jahr'
     """
-    return LOOKUP_SEP.join((
-        path.split(LOOKUP_SEP)[0],
-        *filter(lambda piece: piece not in lookups, path.split(LOOKUP_SEP)[1:])
-    ))
+
+    def filter_func(piece: str) -> bool:
+        """Filter out lookups."""
+        return piece not in lookups
+
+    return LOOKUP_SEP.join(
+        (path.split(LOOKUP_SEP)[0], *filter(filter_func, path.split(LOOKUP_SEP)[1:]))
+    )

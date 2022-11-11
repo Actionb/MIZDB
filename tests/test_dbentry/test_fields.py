@@ -736,7 +736,7 @@ class TestPartialDateFormField(MIZTestCase):
         """Assert that init sets the 'fields' argument if no fields were passed in."""
         formfield = PartialDateFormField()
         self.assertEqual(len(formfield.fields), 3)
-        for field in PartialDateFormField().fields:
+        for field in formfield.fields:
             self.assertIsInstance(field, forms.IntegerField)
             self.assertFalse(field.required)
 

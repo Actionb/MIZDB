@@ -18,6 +18,7 @@ from dbentry.utils import get_obj_link
 
 SafeTextOrStr = Union[str, SafeText]
 
+
 # TODO: remove MIZAdminMixin inheritance? If MIZAdminMixin is not required by
 #  ConfirmationViewMixin methods or processes, it should be removed.
 
@@ -203,7 +204,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         of the objects, present those values as a nested list.
         """
 
-        def linkify(model_instance):
+        def linkify(model_instance: Model) -> SafeText:
             object_link = get_obj_link(
                 model_instance, self.request.user,
                 self.model_admin.admin_site.name, blank=True
@@ -211,6 +212,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
             if "</a>" in object_link:
                 # get_obj_link returned a full link;
                 # add the model's verbose_name.
+                # noinspection PyUnresolvedReferences
                 return format_html(
                     '{model_name}: {object_link}',
                     model_name=capfirst(model_instance._meta.verbose_name),

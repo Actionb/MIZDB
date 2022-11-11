@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Type, Union
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import ModelAdmin, get_content_type_for_model
@@ -312,7 +312,12 @@ def log_addition(user_id: int, obj: Model, related_obj: Model = None) -> LogEntr
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
-def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> LogEntry:
+def log_change(
+        user_id: int,
+        obj: Model,
+        fields: Union[Sequence[str], str],
+        related_obj: Model = None
+) -> LogEntry:
     """
     Log that values for the ``fields`` of ``object`` have changed.
 

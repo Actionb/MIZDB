@@ -1,4 +1,5 @@
 from django.db import models
+
 from dbentry.base.models import BaseM2MModel
 from dbentry.utils.models import get_model_fields
 
@@ -81,7 +82,8 @@ class m2m_datei_quelle(BaseM2MModel):
     def get_quelle_art(self, as_field=True):
         return None
         foreignkey_fields = get_model_fields(
-            m2m_datei_quelle, base=False, foreign=True, m2m=False)
+            m2m_datei_quelle, base=False, foreign=True, m2m=False
+        )
         for fld in foreignkey_fields:
             if fld.name != 'datei' and fld.value_from_object(self):
                 if as_field:

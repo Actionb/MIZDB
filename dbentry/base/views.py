@@ -18,7 +18,7 @@ class MIZAdminMixin(object):
     breadcrumbs_title: str = ''
     admin_site: AdminSite = miz_site
 
-    def __init__(self, *args, admin_site=None, **kwargs):
+    def __init__(self, *args: Any, admin_site: Optional[AdminSite] = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if admin_site:
             self.admin_site = admin_site

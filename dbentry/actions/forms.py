@@ -2,12 +2,10 @@ from typing import Any
 
 from django import forms
 from django.contrib.admin.helpers import Fieldset
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 
 from dbentry import models as _models
 from dbentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm
-from dbentry.utils import get_model_from_string
 
 
 class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
@@ -65,9 +63,9 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
     required_css_class = 'required'
 
     class Media:
-        css = {'all': ('admin/css/changelists.css', )}
+        css = {'all': ('admin/css/changelists.css',)}
 
-    def expand_primary_fieldset(self):
+    def expand_primary_fieldset(self) -> Fieldset:
         """
         Provide a Fieldset object of the expand_primary field for the template.
         """

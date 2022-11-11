@@ -21,6 +21,12 @@ class BaseSplitField(forms.CharField):
     The field's ``to_list`` method will apply the handlers to each value again
     to produce the sequence of final results.
 
+    Example, with a simple NumericHandler for the individual values:
+        data: '1,2,3,4' -> result sequence: ['1', '2', '3', '4']
+
+    Example, with a RangeHandler:
+        data: '2-5' -> result sequence: ['2', '3', '4', '5']
+
     Attributes:
         - ``separator_pattern`` (str): pattern for a regular expression to
           split the field's data with.
@@ -82,11 +88,11 @@ class BaseSplitField(forms.CharField):
         attrs['style'] = 'width:350px;'
         return attrs
 
-    def to_list(self, value) -> Tuple[list, int]:
+    def to_list(self, value: str) -> Tuple[list, int]:
         """
         Run handlers on each item of value.
 
-        Returns a list of the results and the length of that list.
+        Return a list of the results and the length of that list.
         """
         if not value:
             return [], 0

@@ -62,7 +62,7 @@ def merge_records(
         if expand_original and update_data:
             original_qs.update(**update_data)
             if user_id:
-                log_change(user_id, original_qs.get(), update_data.keys())
+                log_change(user_id, original_qs.get(), list(update_data.keys()))
 
         for rel in get_model_relations(model, forward=False):
             related_model, related_field = get_relation_info_to(model, rel)
@@ -99,11 +99,8 @@ def merge_records(
                     if not unique_together:  # pragma: no cover
                         continue
                 # noinspection PyUnresolvedReferences
-                for values in (
-                        related_model.objects
-                        .filter(**{related_field.name: original})
-                        .values(*unique_together)
-                ):
+                already_related = related_model.objects.filter(**{related_field.name: original})
+                for values in already_related.values(*unique_together):
                     # Exclude all values that would violate the unique
                     # constraints (i.e. values that original has already):
                     qs_to_be_updated = qs_to_be_updated.exclude(**values)
