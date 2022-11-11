@@ -145,11 +145,26 @@ class TestAdminMixin(AdminTestCase):
         Assert that data from the search form is added to a changeform's initial
         data (via the '_changelist_filters' query arg).
         """
-        request_data = {'_changelist_filters': f'genre={self.genre1.pk}&genre={self.genre2.pk}'}
+        request_data = {
+            '_changelist_filters': f'genre={self.genre1.pk}&genre={self.genre2.pk}',
+            'band_name': 'The Foo Bars'
+        }
         response = self.client.get(path=self.add_path, data=request_data)
         initial = response.context['adminform'].form.initial
         self.assertIn('genre__in', initial)
         self.assertEqual(initial['genre__in'], f"{self.genre1.pk},{self.genre2.pk}")
+        self.assertIn('band_name', initial)
+        self.assertEqual(initial['band_name'], 'The Foo Bars')
+
+    def test_get_get_changeform_initial_data_no_changelist_filters(self):
+        """
+        Assert that no extra initial items are added when no changelist filters
+        are given.
+        """
+        response = self.client.get(path=self.add_path, data={})
+        self.assertFalse(response.context['adminform'].form.initial)
+        response = self.client.get(path=self.add_path, data={'band_name': 'The Foo Bars'})
+        self.assertEqual(response.context['adminform'].form.initial, {'band_name': 'The Foo Bars'})
 
     def test_response_post_save_preserves_multi_values(self):
         """

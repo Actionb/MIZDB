@@ -136,7 +136,7 @@ class AdminSearchFormMixin(object):
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Add data from the changelist filters to the add form's initial."""
         initial = super().get_changeform_initial_data(request)  # type: ignore[misc]
-        if '_changelist_filters' not in initial or not initial['_changelist_filters']:  # pragma: no cover  # noqa
+        if '_changelist_filters' not in initial or not initial['_changelist_filters']:
             return initial
         changelist_filters = QueryDict(initial['_changelist_filters'])
         if self.has_search_form():
