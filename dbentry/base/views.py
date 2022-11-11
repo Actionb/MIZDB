@@ -11,7 +11,7 @@ from dbentry.sites import miz_site
 
 
 class MIZAdminMixin(object):
-    """Add admin_site specific context (each_context) to the view."""
+    """A mixin that adds admin_site specific context (each_context) to the view."""
 
     title: str = ''
     site_title: str = 'MIZDB'

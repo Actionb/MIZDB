@@ -13,19 +13,15 @@ from django.utils.safestring import SafeText
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
 
-from dbentry.base.views import FixedSessionWizardView, MIZAdminMixin
+from dbentry.base.views import FixedSessionWizardView
 from dbentry.utils import get_obj_link
 
 SafeTextOrStr = Union[str, SafeText]
 
 
-# TODO: remove MIZAdminMixin inheritance? If MIZAdminMixin is not required by
-#  ConfirmationViewMixin methods or processes, it should be removed.
-
-
-class ConfirmationViewMixin(MIZAdminMixin):
+class ConfirmationViewMixin(object):
     """
-    A mixin that controls the confirmation stage of an admin action.
+    A view mixin that controls the confirmation stage of an admin action.
 
     Attributes:
         - ``title`` (str): the title that is shown both in the template and
@@ -143,7 +139,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
             defaults['non_reversible_warning'] = self.non_reversible_warning
 
         kwargs = {**defaults, **kwargs}
-        context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)  # type: ignore[misc]
 
         # Add model_admin and form media.
         if 'media' in context:

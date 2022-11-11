@@ -20,6 +20,7 @@ from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, BulkEditJahrgangForm, MergeConflictsFormSet,
     MergeFormSelectPrimary
 )
+from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
 from dbentry.utils import (
     get_changelist_link, get_model_from_string, get_obj_link, get_updatable_fields, is_protected,
@@ -105,7 +106,7 @@ def check_different_ausgaben(view: ActionConfirmationView, **_kwargs: Any) -> bo
     return True
 
 
-class BulkEditJahrgang(ActionConfirmationView):
+class BulkEditJahrgang(MIZAdminMixin, ActionConfirmationView):
     """
     View that bulk edits the jahrgang of a collection of Ausgabe instances.
     """
@@ -167,7 +168,7 @@ class BulkEditJahrgang(ActionConfirmationView):
             )
 
 
-class MergeView(WizardConfirmationView):
+class MergeView(MIZAdminMixin, WizardConfirmationView):
     """
     View that merges model instances.
 
@@ -479,7 +480,7 @@ def check_protected_artikel(view: ActionConfirmationView, **_kwargs: Any) -> boo
     return True
 
 
-class MoveToBrochure(ActionConfirmationView):
+class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
     """Moves a set of Ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
@@ -697,7 +698,7 @@ class MoveToBrochure(ActionConfirmationView):
         return context
 
 
-class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
+class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.TemplateView):
     """Edit the Bestand set of the parent model instance(s)."""
 
     template_name = 'admin/change_bestand.html'

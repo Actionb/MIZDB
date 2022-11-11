@@ -1,4 +1,3 @@
-from unittest import expectedFailure
 from unittest.mock import DEFAULT, Mock, PropertyMock, call, patch
 
 from django import forms
@@ -28,6 +27,7 @@ from dbentry.actions.views import (
     BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
 )
 from dbentry.base.forms import MIZAdminForm
+from dbentry.base.views import MIZAdminMixin
 from dbentry.sites import miz_site
 from dbentry.utils import get_obj_link
 from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
@@ -731,7 +731,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         self.assertEqual(view.storage.current_step, MergeView.CONFLICT_RESOLUTION_STEP)
 
     @translation_override(language=None)
-    @patch.object(WizardConfirmationView, 'get_context_data')
+    @patch.object(MIZAdminMixin, 'get_context_data')
     def test_get_context_data_select_primary_step(self, super_mock):
         """
         Assert that get_context_data adds various items for the select primary
@@ -753,7 +753,7 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             self.assertEqual(context['view_helptext'], view.view_helptext[step])
 
     @translation_override(language=None)
-    @patch.object(WizardConfirmationView, 'get_context_data')
+    @patch.object(MIZAdminMixin, 'get_context_data')
     def test_get_context_data_select_conflict_resolution_step(self, super_mock):
         view = self.get_view()
         step = view.CONFLICT_RESOLUTION_STEP
