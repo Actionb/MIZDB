@@ -30,7 +30,6 @@ class TestAutocompleteMixin(TestCase):
             with patch('dbentry.base.admin.make_widget') as make_mock:
                 inline = AutocompleteMixin()
                 inline.tabular_autocomplete = ['dummy']
-                # noinspection PyTypeChecker
                 inline.formfield_for_foreignkey(db_field=self.DummyModelField(), request=None)
 
                 make_mock.assert_called()
@@ -47,7 +46,6 @@ class TestAutocompleteMixin(TestCase):
             with patch('dbentry.base.admin.make_widget') as make_mock:
                 inline = AutocompleteMixin()
                 inline.tabular_autocomplete = []
-                # noinspection PyTypeChecker
                 inline.formfield_for_foreignkey(db_field=self.DummyModelField(), request=None)
 
                 make_mock.assert_called()
@@ -64,7 +62,6 @@ class TestAutocompleteMixin(TestCase):
             with patch('dbentry.base.admin.make_widget') as make_mock:
                 inline = AutocompleteMixin()
                 inline.tabular_autocomplete = []
-                # noinspection PyTypeChecker
                 inline.formfield_for_foreignkey(
                     db_field=self.DummyModelField(), request=None, widget=object
                 )
@@ -161,7 +158,6 @@ class MIZModelAdminTest(AdminTestCase):
 
     def test_has_merge_permission(self):
         ct = ContentType.objects.get_for_model(self.model)
-        # noinspection PyUnresolvedReferences
         codename = get_permission_codename('merge', self.model._meta)
         merge_perm = Permission.objects.get(content_type=ct, codename=codename)
         self.staff_user.user_permissions.add(merge_perm)
@@ -178,7 +174,6 @@ class MIZModelAdminTest(AdminTestCase):
         perms = []
         for action in ('add', 'change', 'delete'):
             ct = ContentType.objects.get_for_model(Bestand)
-            # noinspection PyUnresolvedReferences
             codename = get_permission_codename(action, Bestand._meta)
             perms.append(Permission.objects.get(codename=codename, content_type=ct))
 
@@ -311,7 +306,6 @@ class MIZModelAdminTest(AdminTestCase):
 
     def test_add_crosslinks_uses_related_name(self):
         """If the relation has a related_name, it should be used as the label."""
-        # noinspection PyUnresolvedReferences
         rel = Audio._meta.get_field('band').remote_field
         with mock.patch.object(rel, 'related_name', new='hovercrafts_full_of_eels'):
             crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
@@ -346,7 +340,6 @@ class MIZModelAdminTest(AdminTestCase):
         Only superusers should have module permission, if the superuser_only
         flag is set.
         """
-        # noinspection PyUnresolvedReferences
         perm = Permission.objects.get(
             codename=get_permission_codename('change', self.model._meta),
             content_type=ContentType.objects.get_for_model(self.model)
@@ -374,7 +367,6 @@ class MIZModelAdminTest(AdminTestCase):
         """
         obj = make(Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
-        # noinspection PyArgumentList
         obj.save(update=False)
         form = mock.Mock(instance=obj)
         with mock.patch('dbentry.base.admin.super'):
@@ -407,7 +399,6 @@ class MIZModelAdminTest(AdminTestCase):
         text search method of the queryset.
         """
         request = self.get_request()
-        # noinspection PyUnresolvedReferences
         qs = self.model.objects.all()
         with mock.patch.object(qs, 'search', create=True) as search_mock:
             self.model_admin.get_search_results(request, qs, search_term='')

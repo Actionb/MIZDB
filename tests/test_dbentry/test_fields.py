@@ -187,7 +187,6 @@ class StdNumModel(models.Model):
     ean = EANField()
 
 
-# noinspection PyUnresolvedReferences
 class StdNumFieldTestsMixin(object):
     """Test method mixin with tests on the standard number model fields."""
     # Reminder: the field's cleaning methods will re-raise any errors as new
@@ -346,7 +345,6 @@ class StdNumFieldTestsMixin(object):
 
 
 class TestISBNField(StdNumFieldTestsMixin, MIZTestCase):
-    # noinspection PyUnresolvedReferences
     model_field = StdNumModel._meta.get_field('isbn')
 
     valid = [
@@ -428,7 +426,6 @@ class TestISBNField(StdNumFieldTestsMixin, MIZTestCase):
                     isbn.compact(isbn.to_isbn13(valid_number))
                 )
 
-    # noinspection PyUnresolvedReferences
     def test_query_for_isbn10_finds_isbn13(self):
         """Assert that ISBN-10c can be used to query for objects with a ISBN-13."""
         isbn_10 = '123456789X'
@@ -437,7 +434,6 @@ class TestISBNField(StdNumFieldTestsMixin, MIZTestCase):
 
 
 class TestISSNField(StdNumFieldTestsMixin, MIZTestCase):
-    # noinspection PyUnresolvedReferences
     model_field = StdNumModel._meta.get_field('issn')
 
     valid = ["12345679", "1234-5679"]
@@ -459,7 +455,6 @@ class TestISSNField(StdNumFieldTestsMixin, MIZTestCase):
 
 
 class TestEANField(StdNumFieldTestsMixin, MIZTestCase):
-    # noinspection PyUnresolvedReferences
     model_field = StdNumModel._meta.get_field('ean')
 
     valid = ['73513537', "1234567890128"]
@@ -518,7 +513,6 @@ class TestPartialDate(MIZTestCase):
         self.assertAttrsSet(PartialDate(month=0, day=0), None, None, None, '')
         self.assertAttrsSet(PartialDate(year=0, month=0, day=0), None, None, None, '')
 
-    # noinspection PyTypeChecker
     def test_new_with_string_kwargs(self):
         # Full date
         self.assertAttrsSet(PartialDate(year='2019', month='5', day='20'), 2019, 5, 20, '%Y-%m-%d')
@@ -889,7 +883,6 @@ class TestPartialDateFieldQueries(DataTestCase):
 
     def setUp(self):
         super().setUp()
-        # noinspection PyUnresolvedReferences
         self.queryset = self.model.objects.all()
 
     def test_create_partial_date(self):

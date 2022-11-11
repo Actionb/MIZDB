@@ -118,7 +118,6 @@ class TestSearchFormFactory(TestCase):
         Assert that formfield_for_dbfield attempts to create a dal widget for
         many-to-one relations.
         """
-        # noinspection PyUnresolvedReferences
         dbfield = Ausgabe._meta.get_field('magazin')
         self.factory.formfield_for_dbfield(dbfield)
         make_widget_mock.assert_called()
@@ -135,7 +134,6 @@ class TestSearchFormFactory(TestCase):
         Assert that formfield_for_dbfield attempts to create a dal widget for
         many-to-many relations.
         """
-        # noinspection PyUnresolvedReferences
         dbfield = Artikel._meta.get_field('genre')
         self.factory.formfield_for_dbfield(dbfield)
         make_widget_mock.assert_called()
@@ -149,7 +147,6 @@ class TestSearchFormFactory(TestCase):
     @patch("dbentry.search.forms.make_widget")
     def test_formfield_for_dbfield_dal_with_forward(self, make_widget_mock):
         """Assert that forwarding declared for dal widgets is respected."""
-        # noinspection PyUnresolvedReferences
         dbfield = Ausgabe._meta.get_field('magazin')
         self.factory.formfield_for_dbfield(dbfield, forward=['ausgabe'])
         make_widget_mock.assert_called()
@@ -162,7 +159,6 @@ class TestSearchFormFactory(TestCase):
         Assert that test_formfield_for_dbfield respects the formfield class
         provided in the kwargs.
         """
-        # noinspection PyUnresolvedReferences
         db_field = Ausgabe._meta.get_field('e_datum')
         self.assertIsInstance(
             self.factory.formfield_for_dbfield(db_field, form_class=forms.CharField),
@@ -174,7 +170,6 @@ class TestSearchFormFactory(TestCase):
         Assert that formfield_for_dbfield creates a CharField formfield for
         fields that do not provide a formfield (such as AutoFields).
         """
-        # noinspection PyUnresolvedReferences
         db_field = Ausgabe._meta.get_field('id')
         self.assertIsInstance(
             self.factory.formfield_for_dbfield(db_field),
@@ -186,21 +181,17 @@ class TestSearchFormFactory(TestCase):
         Assert that formfield_for_dbfield adds an 'empty' choice for formfields
         with choices.
         """
-        # noinspection PyUnresolvedReferences
         db_field = Ausgabe._meta.get_field('status')
         formfield = self.factory.formfield_for_dbfield(db_field)
-        # noinspection PyUnresolvedReferences
         self.assertIn(BLANK_CHOICE_DASH[0], formfield.choices)
 
     def test_get_search_form_ignores_invalid_fields(self):
         """Assert that get_search_form ignores invalid fields/lookups."""
-        # noinspection SpellCheckingInspection
         fields = [
             'seite__gt', 'schlagzeile', 'genre__genre', 'notafield',
             'ausgabe__notalookup'
         ]
         valid = ['seite', 'schlagzeile', 'genre__genre']
-        # noinspection SpellCheckingInspection
         invalid = ['notafield', 'ausgabe', 'ausgabe__notalookup']
         form_fields = self.factory.get_search_form(Artikel, fields).base_fields
         for field_name in chain(valid, invalid):

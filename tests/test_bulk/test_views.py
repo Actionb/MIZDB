@@ -20,21 +20,18 @@ class TestBulkAusgabe(ViewTestCase, LoggingTestMixin):
         cls.dublette = make(_models.Lagerort, ort='Dubletten LO')
         cls.audio_lo = make(_models.Lagerort)
         cls.prov = make(_models.Provenienz)
-        # noinspection PyUnresolvedReferences
         cls.updated = make(
             cls.model,
             magazin=cls.mag,
             ausgabejahr__jahr=[2000, 2001],
             ausgabenum__num=1
         )
-        # noinspection PyUnresolvedReferences
         cls.multi1, cls.multi2 = batch(
             cls.model, 2,
             magazin=cls.mag,
             ausgabejahr__jahr=[2000, 2001],
             ausgabenum__num=5
         )
-        # noinspection PyUnresolvedReferences
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         super().setUpTestData()
 

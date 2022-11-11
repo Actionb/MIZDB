@@ -23,13 +23,11 @@ class TestCopyRelated(DataTestCase, RequestTestCase):
         v2 = make(Veranstaltung, band=[b2])
         v3 = make(Veranstaltung)
 
-        # noinspection PyUnresolvedReferences
         cls.obj1.veranstaltung.add(v1, v2, v3)
 
     def test_copies_related_bands(self):
         """copy_related_set should copy the related Band instances."""
         utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
-        # noinspection PyUnresolvedReferences
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 2)
         self.assertIn(self.band1, bands)
@@ -37,13 +35,11 @@ class TestCopyRelated(DataTestCase, RequestTestCase):
 
     def test_no_duplicates(self):
         """Assert that copy_related_set does not create duplicate related records."""
-        # noinspection PyUnresolvedReferences
         self.obj1.band.add(self.band1)
         # Attempting to create duplicates on the M2M would raise an
         # IntegrityError.
         with self.assertNotRaises(IntegrityError):
             utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
-        # noinspection PyUnresolvedReferences
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 2)
         self.assertIn(self.band1, bands)
@@ -52,11 +48,9 @@ class TestCopyRelated(DataTestCase, RequestTestCase):
     def test_preserves_own_bands(self):
         """Assert that related objects are not dropped by the copying process."""
         other_band = make(Band)
-        # noinspection PyUnresolvedReferences
         self.obj1.band.add(other_band)
 
         utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
-        # noinspection PyUnresolvedReferences
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 3)
         self.assertIn(other_band, bands)
@@ -101,7 +95,6 @@ class TestCopyRelated(DataTestCase, RequestTestCase):
         with self.assertNotRaises(ValueError):
             utils.copy_related_set(request, self.obj1, 'veranstaltung__band')
         # Check that copying went through:
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.obj1.band.count(), 2)
         # Check that the message was sent:
         message_text = (

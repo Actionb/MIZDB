@@ -1032,7 +1032,6 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         ort1 = make(_models.Ort, stadt='Dortmund', land__code='DE')
         ort2 = make(_models.Ort, stadt='Buxtehude', land__code='DE')
-        # noinspection SpellCheckingInspection
         cls.beschreibung = (
             "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"
             " invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et"

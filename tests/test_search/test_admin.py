@@ -437,7 +437,6 @@ class TestChangelistSearchFormMixin(RequestTestCase):
         def __init__(self, *args, **kwargs):
             pass
 
-        # noinspection PyMethodMayBeStatic
         def get_filters_params(self, *_args, **_kwargs):
             return 'default'
 

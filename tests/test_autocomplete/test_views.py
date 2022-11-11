@@ -62,7 +62,6 @@ class TestAutorNameParser(MIZTestCase):
         the model field max_length of 8.
         """
         *y, kuerzel = views.parse_autor_name('Alice (Supercalifragilisticexpialidocious) Tester')
-        # noinspection SpellCheckingInspection
         self.assertEqual(kuerzel, 'Supercal')
 
 
@@ -269,7 +268,6 @@ class TestACBase(ACViewTestCase):
         musiker = make(Musiker)
         view.forwarded['musiker'] = musiker.pk
         self.assertFalse(view.apply_forwarded(queryset).exists())
-        # noinspection PyUnresolvedReferences
         musiker.band_set.add(self.obj1)
         self.assertTrue(view.apply_forwarded(queryset).exists())
 
@@ -566,11 +564,9 @@ class TestACAusgabe(ACViewTestCase):
             cls.model, magazin=mag, sonderausgabe=True,
             beschreibung='Special Edition'
         )
-        # noinspection SpellCheckingInspection
         cls.obj_jahrg = make(cls.model, magazin=mag, jahrgang=12, ausgabenum__num=13)
         cls.obj_datum = make(cls.model, magazin=mag, e_datum='1986-08-18')
 
-        # noinspection PyUnresolvedReferences
         cls.test_data = [
             cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg
         ]
@@ -585,7 +581,6 @@ class TestACAusgabe(ACViewTestCase):
             def __init__(self, *args, **kwargs):
                 pass
 
-            # noinspection PyMethodMayBeStatic
             def get_changelist_annotations(self):
                 return {'foo': Count('*')}
 
@@ -600,7 +595,6 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(self.obj_num, view.get_queryset())
 
         # search for 10/11:
-        # noinspection PyUnresolvedReferences
         self.obj_num.ausgabenum_set.create(num=11)
         self.obj_num.refresh_from_db()
         view = self.get_view(q=self.obj_num.__str__())
@@ -612,7 +606,6 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(self.obj_lnum, view.get_queryset())
 
         # search for 11/12:
-        # noinspection PyUnresolvedReferences
         self.obj_lnum.ausgabelnum_set.create(lnum=12)
         self.obj_lnum.refresh_from_db()
         view = self.get_view(q=self.obj_lnum.__str__())
@@ -624,7 +617,6 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(self.obj_monat, view.get_queryset())
 
         # search for Jan/Feb:
-        # noinspection PyUnresolvedReferences
         self.obj_monat.ausgabemonat_set.create(monat=make(_models.Monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
@@ -759,11 +751,9 @@ class TestACBuchband(ACViewTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
-        # noinspection PyUnresolvedReferences
         cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
         cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
 
-        # noinspection PyUnresolvedReferences
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
 
         super().setUpTestData()
@@ -840,7 +830,6 @@ class TestACMusiker(RequestTestCase):
     model = _models.Musiker
     path = reverse_lazy('acmusiker')
     create_path = reverse_lazy('acmusiker', kwargs={'create_field': 'kuenstler_name'})
-    # noinspection SpellCheckingInspection
     test_data = {
         'kuenstler_name': 'Prince',
         'musikeralias__alias': 'TAFKAP',
@@ -879,7 +868,6 @@ class TestACMusiker(RequestTestCase):
         result = results['children'][0]
         self.assertEqual(result['id'], str(self.obj.pk))
         self.assertEqual(result['text'], str(self.obj))
-        # noinspection SpellCheckingInspection
         self.assertEqual(result[EXTRA_DATA_KEY], ['TAFKAP'])
         self.assertEqual(result['selected_text'], str(self.obj))
 
@@ -1082,7 +1070,6 @@ class TestGND(ViewTestCase):
         with the correct startRecord index.
         """
         mocked_query_func.return_value = ([('id', 'label')], 1)
-        # noinspection PyPep8Naming
         startRecord_msg = "Expected query func to be called with a 'startRecord' kwarg."
         view_initkwargs = {
             'q': 'Beep',
@@ -1232,7 +1219,6 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
 
         view = self.get_view()
         view.admin_site = DummySite
-        # noinspection PyUnresolvedReferences
         opts = Band._meta
         self.assertQuerysetEqual(
             view.get_queryset(),

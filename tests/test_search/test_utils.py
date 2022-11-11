@@ -9,7 +9,6 @@ from .models import Artikel, Ausgabe, Magazin
 class TestUtils(MIZTestCase):
 
     def test_get_dbfield_from_path(self):
-        # noinspection PyUnresolvedReferences
         test_data = [
             (
                 Artikel, 'seite__gt',

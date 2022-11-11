@@ -194,7 +194,6 @@ class TestDNBURLValidator(MIZTestCase):
 
     def test_invalid(self):
         """Assert that invalid or non-DNB URLs raise a ValidationError."""
-        # noinspection SpellCheckingInspection
         urls = ['notavalidurl', 'www.google.com']
         for url in urls:
             with self.subTest(url=url):

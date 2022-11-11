@@ -63,7 +63,6 @@ class UserTestCase(MIZTestCase):
         # Have the super_user be logged in by default:
         self.client.force_login(self.super_user)
 
-    # noinspection PyMethodMayBeStatic
     def reload_user(self, user):
         """Reload user from database and return it. This resets the permission cache."""
         return get_user_model().objects.get(pk=user.pk)
@@ -168,7 +167,6 @@ class ModelFormTestCase(DataTestCase):
         return self.get_form_class()(**kwargs)
 
 
-# noinspection PyPep8Naming
 class LoggingTestMixin(object):
     """
     Provide TestCases with assertions that verify that a change to a model
@@ -238,7 +236,6 @@ class LoggingTestMixin(object):
                 msg += "\nCheck your test method or state of LogEntry table."
                 raise AssertionError(msg)
         if unlogged:
-            # noinspection PyUnboundLocalVariable
             msg = (
                 "LogEntry for {op} missing on objects: {unlogged_objects}, "
                 "model: ({model_name})."
@@ -250,7 +247,6 @@ class LoggingTestMixin(object):
 
             for _obj, filter_params in unlogged:
                 msg += "\nFilter parameters used: "
-                # noinspection PyUnresolvedReferences
                 msg += "\n{}; {}".format(
                     sorted(filter_params.items()),
                     ContentType.objects.get_for_id(filter_params['content_type__pk']).model
@@ -263,7 +259,6 @@ class LoggingTestMixin(object):
                 msg += "\nchange_messages: "
                 for log_entry in LogEntry.objects.order_by('pk'):
                     msg += "\n{}: {}".format(str(log_entry.pk), log_entry.get_change_message())
-            # noinspection PyUnresolvedReferences
             self.fail(msg)
 
     def assertLoggedAddition(self, obj, **kwargs):

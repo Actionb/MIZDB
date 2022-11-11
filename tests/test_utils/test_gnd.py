@@ -8,7 +8,6 @@ from tests.case import MIZTestCase
 @requests_mock.Mocker()
 class TestGND(MIZTestCase):
     # Sample xml in RDFxml format:
-    # noinspection SpellCheckingInspection
     rdf_xml = """
         <?xml version="1.0" encoding="UTF-8"?>
         <searchRetrieveResponse xmlns="default" xmlns:rdf="rdf" xmlns:gndo="gndo">

@@ -31,7 +31,6 @@ class TestModelPerson(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
     def test_full_text_search(self):
@@ -41,7 +40,6 @@ class TestModelPerson(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -63,7 +61,6 @@ class TestModelMusiker(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
 
     def test_full_text_search(self):
@@ -73,7 +70,6 @@ class TestModelMusiker(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -89,12 +85,10 @@ class TestModelMusikerAlias(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('alias', columns)
         self.assertEqual(columns['alias']['name'], 'alias')
@@ -111,12 +105,10 @@ class TestModelGenre(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['genre'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('genre', columns)
         self.assertEqual(columns['genre']['name'], 'genre')
@@ -129,12 +121,10 @@ class TestModelGenreAlias(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('alias', columns)
         self.assertEqual(columns['alias']['name'], 'alias')
@@ -151,7 +141,6 @@ class TestModelBand(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['band_name'])
 
     def test_search_field_columns(self):
@@ -161,7 +150,6 @@ class TestModelBand(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -181,12 +169,10 @@ class TestModelBandAlias(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('alias', columns)
         self.assertEqual(columns['alias']['name'], 'alias')
@@ -224,7 +210,6 @@ class TestModelAutor(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
     def test_search_field_columns(self):
@@ -234,7 +219,6 @@ class TestModelAutor(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -446,7 +430,6 @@ class TestModelAusgabe(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['magazin'])
 
     def test_search_field_columns(self):
@@ -456,7 +439,6 @@ class TestModelAusgabe(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -476,7 +458,6 @@ class TestModelAusgabeJahr(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['jahr'])
 
 
@@ -489,7 +470,6 @@ class TestModelAusgabeLnum(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['lnum'])
 
 
@@ -502,7 +482,6 @@ class TestModelAusgabeMonat(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['monat'])
 
 
@@ -515,7 +494,6 @@ class TestModelAusgabeNum(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['num'])
 
 
@@ -528,7 +506,6 @@ class TestModelMonat(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['ordinal'])
 
     def test_full_text_search(self):
@@ -537,7 +514,6 @@ class TestModelMonat(MIZTestCase):
             ('monat', ('monat', 'A', SIMPLE)),
             ('abk', ('abk', 'A', SIMPLE)),
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -557,7 +533,6 @@ class TestModelMagazin(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['magazin_name'])
 
     def test_full_text_search(self):
@@ -568,7 +543,6 @@ class TestModelMagazin(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -588,12 +562,10 @@ class TestModelVerlag(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('verlag_name', columns)
         self.assertEqual(columns['verlag_name']['name'], 'verlag_name')
@@ -621,12 +593,10 @@ class TestModelOrt(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('_name', columns)
         self.assertEqual(columns['_name']['name'], '_name')
@@ -643,7 +613,6 @@ class TestModelBundesland(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['land', 'bland_name'])
 
     def test_full_text_search(self):
@@ -652,7 +621,6 @@ class TestModelBundesland(MIZTestCase):
             ('bland_name', ('bland_name', 'A', SIMPLE)),
             ('code', ('code', 'A', SIMPLE)),
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -672,7 +640,6 @@ class TestModelLand(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['land_name'])
 
     def test_full_text_search(self):
@@ -681,7 +648,6 @@ class TestModelLand(MIZTestCase):
             ('land_name', ('land_name', 'A', SIMPLE)),
             ('code', ('code', 'A', SIMPLE)),
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -701,12 +667,10 @@ class TestModelSchlagwort(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['schlagwort'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('schlagwort', columns)
         self.assertEqual(columns['schlagwort']['name'], 'schlagwort')
@@ -723,12 +687,10 @@ class TestModelSchlagwortAlias(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('alias', columns)
         self.assertEqual(columns['alias']['name'], 'alias')
@@ -753,7 +715,6 @@ class TestModelArtikel(MIZTestCase):
 
     def test_meta_ordering(self):
         """Assert that the ordering includes magazin_name and Ausgabe._name"""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(
             self.model._meta.ordering,
             ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
@@ -767,7 +728,6 @@ class TestModelArtikel(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -787,7 +747,6 @@ class TestModelBuch(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -796,7 +755,6 @@ class TestModelBuch(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -816,12 +774,10 @@ class TestModelHerausgeber(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['herausgeber'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('herausgeber', columns)
         self.assertEqual(columns['herausgeber']['name'], 'herausgeber')
@@ -841,7 +797,6 @@ class TestModelInstrument(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
 
     def test_full_text_search(self):
@@ -849,7 +804,6 @@ class TestModelInstrument(MIZTestCase):
             ('instrument', ('instrument', 'A', SIMPLE)),
             ('kuerzel', ('kuerzel', 'A', SIMPLE)),
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -869,7 +823,6 @@ class TestModelAudio(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_search_field_columns(self):
@@ -879,7 +832,6 @@ class TestModelAudio(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -899,7 +851,6 @@ class TestModelPlakat(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -909,7 +860,6 @@ class TestModelPlakat(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -925,12 +875,10 @@ class TestModelBildreihe(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('name', columns)
         self.assertEqual(columns['name']['name'], 'name')
@@ -943,12 +891,10 @@ class TestModelSchriftenreihe(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('name', columns)
         self.assertEqual(columns['name']['name'], 'name')
@@ -961,7 +907,6 @@ class TestModelDokument(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -970,7 +915,6 @@ class TestModelDokument(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -986,7 +930,6 @@ class TestModelMemorabilien(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -996,7 +939,6 @@ class TestModelMemorabilien(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1019,7 +961,6 @@ class TestModelSpielort(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name', 'ort'])
 
     def test_full_text_search(self):
@@ -1029,7 +970,6 @@ class TestModelSpielort(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1050,12 +990,10 @@ class TestModelSpielortAlias(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('alias', columns)
         self.assertEqual(columns['alias']['name'], 'alias')
@@ -1068,7 +1006,6 @@ class TestModelTechnik(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -1078,7 +1015,6 @@ class TestModelTechnik(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1094,7 +1030,6 @@ class TestModelVeranstaltung(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name', 'datum', 'spielort'])
 
     def test_full_text_search(self):
@@ -1105,7 +1040,6 @@ class TestModelVeranstaltung(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1127,12 +1061,10 @@ class TestModelVeranstaltungAlias(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('alias', columns)
         self.assertEqual(columns['alias']['name'], 'alias')
@@ -1145,12 +1077,10 @@ class TestModelVeranstaltungsreihe(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('name', columns)
         self.assertEqual(columns['name']['name'], 'name')
@@ -1163,7 +1093,6 @@ class TestModelVideo(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -1173,7 +1102,6 @@ class TestModelVideo(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1193,7 +1121,6 @@ class TestModelProvenienz(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
 
     def test_related_search_vectors(self):
@@ -1210,12 +1137,10 @@ class TestModelGeber(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('name', columns)
         self.assertEqual(columns['name']['name'], 'name')
@@ -1256,12 +1181,10 @@ class TestModelLagerort(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('_name', columns)
         self.assertEqual(columns['_name']['name'], '_name')
@@ -1274,7 +1197,6 @@ class TestModelBestand(MIZTestCase):
 
     def test_str(self):
         obj = make(self.model)
-        # noinspection PyUnresolvedReferences
         self.assertEqual(obj.__str__(), obj.lagerort.__str__())
 
     def test_bestand_object(self):
@@ -1300,7 +1222,6 @@ class TestModelBestand(MIZTestCase):
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('anmerkungen', columns)
         self.assertEqual(columns['anmerkungen']['name'], 'anmerkungen')
@@ -1317,7 +1238,6 @@ class TestModelDatei(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -1326,7 +1246,6 @@ class TestModelDatei(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1346,12 +1265,10 @@ class TestModelPlattenfirma(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['name'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('name', columns)
         self.assertEqual(columns['name']['name'], 'name')
@@ -1372,13 +1289,11 @@ class TestModelBaseBrochure(MIZTestCase):
     def test_resolve_child_no_children(self):
         """ resolve_child should return None, if the object has no children."""
         obj = make(self.model)
-        # noinspection PyUnresolvedReferences
         self.assertIsNone(obj.resolve_child())
 
     def test_resolve_child(self):
         child_models = (_models.Brochure, _models.Kalender, _models.Katalog)
         for child_model in child_models:
-            # noinspection PyUnresolvedReferences
             opts = child_model._meta
             with self.subTest(child_model=opts.object_name):
                 obj = make(child_model)
@@ -1393,7 +1308,6 @@ class TestModelBaseBrochure(MIZTestCase):
             ('zusammenfassung', ('zusammenfassung', 'B', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_base_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1409,12 +1323,10 @@ class TestModelBrochure(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('beschreibung', columns)
         self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
@@ -1432,12 +1344,10 @@ class TestModelKalender(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('beschreibung', columns)
         self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
@@ -1455,12 +1365,10 @@ class TestModelKatalog(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         self.assertIn('beschreibung', columns)
         self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
@@ -1482,7 +1390,6 @@ class TestModelFoto(MIZTestCase):
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
     def test_full_text_search(self):
@@ -1492,7 +1399,6 @@ class TestModelFoto(MIZTestCase):
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
-        # noinspection PyUnresolvedReferences
         columns = get_search_field_columns(self.model._meta.get_field('_fts'))
         for column_name, expected in test_data:
             with self.subTest(column=column_name):
@@ -1536,6 +1442,5 @@ class TestM2mDateiMusiker(MIZTestCase):
         self.assertEqual(obj.__str__(), 'Natalia Lafourcade')
         guitar = make(_models.Instrument, instrument="Guitar", kuerzel="g")
         tambourine = make(_models.Instrument, instrument="Tambourine", kuerzel="tb")
-        # noinspection PyUnresolvedReferences
         obj.instrument.add(guitar, tambourine)
         self.assertEqual(obj.__str__(), 'Natalia Lafourcade (g,tb)')

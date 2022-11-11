@@ -34,7 +34,6 @@ class TestSearchVectorField(TestCase):
             title = models.CharField(max_length=100)
             search_field = field
 
-        # noinspection PyUnresolvedReferences
         _name, path, args, kwargs = SearchVectorModel._meta.get_field('search_field').deconstruct()
         self.assertEqual(_name, 'search_field')
         self.assertEqual(path, 'dbentry.fts.fields.SearchVectorField')

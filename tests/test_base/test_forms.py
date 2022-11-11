@@ -22,7 +22,6 @@ class FieldGroupTest(MIZTestCase):
         is_musician = forms.BooleanField(required=False)
         is_scientist = forms.BooleanField(required=False)
 
-        # noinspection PyMethodMayBeStatic
         def get_group_error_messages(self, *_args, **_kwargs):
             # FieldGroup expects this method of 'MinMaxRequiredFormMixin'.
             return ''
@@ -216,7 +215,6 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
         cls.obj1 = make(Band, band_name='Tool')
         cls.obj2 = make(Band, band_name='Led Zeppelin')
         cls.obj3 = make(Band, band_name='BRMC')
-        # noinspection PyUnresolvedReferences
         cls.band_choices = [
             # Account for default ordering of the Band model:
             (str(o.pk), str(o)) for o in [cls.obj3, cls.obj2, cls.obj1]
@@ -232,14 +230,12 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
     def test_set_choices_manager(self):
         """set_choices should be able to set the choices from a manager object."""
         form = self.TestForm()
-        # noinspection PyUnresolvedReferences
         form.set_choices(choices={'good': Band.objects})
         self.assertEqual(form.fields['good'].choices, self.band_choices)
 
     def test_set_choices_queryset(self):
         """set_choices should be able to set the choices from a queryset object."""
         form = self.TestForm()
-        # noinspection PyUnresolvedReferences
         form.set_choices(choices={'good': Band.objects.all()})
         self.assertEqual(form.fields['good'].choices, self.band_choices)
 
@@ -250,7 +246,6 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
         """
         all_choices = [('1', 'Beatles'), ('2', 'Stones'), ('3', 'AC/DC')]
         form = self.TestForm()
-        # noinspection PyUnresolvedReferences
         form.set_choices(choices={'good': Band.objects.all(), forms.ALL_FIELDS: all_choices})
         self.assertEqual(form.fields['good'].choices, self.band_choices)
         self.assertEqual(form.fields['bad'].choices, all_choices)
@@ -259,7 +254,6 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
     def test_set_choices_preserved(self):
         """Assert that preset choices are preserved and not overwritten."""
         form = self.TestForm()
-        # noinspection PyUnresolvedReferences
         form.set_choices(choices={'ugly': Band.objects.all()})
         self.assertEqual(form.fields['ugly'].choices, [('-1', 'The Ugly Ones')])
 
@@ -270,7 +264,6 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
         """
         form = self.TestForm()
         with self.assertRaises(TypeError):
-            # noinspection PyTypeChecker
             form.set_choices(choices=[1, 2, 3])
 
 
@@ -280,12 +273,10 @@ class MIZAdminInlineFormBaseTest(MIZTestCase):
     def setUpTestData(cls):
         cls.audio = make(Audio)
         cls.musiker = make(Musiker)
-        # noinspection PyUnresolvedReferences
         cls.m2m = MusikerAudioM2M.objects.create(audio=cls.audio, musiker=cls.musiker)
 
     def test_validate_unique(self):
         """Assert that MIZAdminInlineFormBase flags duplicates for deletion."""
-        # noinspection SpellCheckingInspection
         data = {
             'musikeraudiom2m_set-INITIAL_FORMS': '1',
             'musikeraudiom2m_set-TOTAL_FORMS': '2',
@@ -399,7 +390,6 @@ class TestDiscogsFormMixin(MIZTestCase):
 
     def test_clean_strips_slug(self):
         """Assert any slugs are stripped from the URL."""
-        # noinspection SpellCheckingInspection
         urls = [
             'https://www.discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',
             'www.discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',

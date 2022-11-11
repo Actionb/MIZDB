@@ -53,10 +53,8 @@ class TestModelUtils(MIZTestCase):
     def test_get_reverse_field_path(self):
         # The relation has no 'related_query_name' or 'related_name';
         # get_reverse_field_path should use the model_name of the related model
-        # noinspection PyUnresolvedReferences
         rel = Protector._meta.get_field('protected')
         self.assertEqual(utils.get_reverse_field_path(rel, 'name'), 'protected__name')
-        # noinspection PyUnresolvedReferences
         rel = M2MTarget._meta.get_field('sources')
         self.assertEqual(utils.get_reverse_field_path(rel, 'name'), 'sources__name')
         rel.related_query_name = 'foobar'
@@ -64,7 +62,6 @@ class TestModelUtils(MIZTestCase):
 
     def test_get_fields_and_lookups(self):
         fields, lookups = utils.get_fields_and_lookups(Protected, 'protector__date__year__gte')
-        # noinspection PyUnresolvedReferences
         self.assertEqual(
             fields,
             [Protected._meta.get_field('protector'), Protector._meta.get_field('date')]
@@ -143,15 +140,10 @@ class AllRelations(models.Model):
 class TestGetModelRelations(MIZTestCase):
 
     def test_get_model_relations(self):
-        # noinspection PyUnresolvedReferences
         o2o = AllRelations._meta.get_field('one_to_one').remote_field
-        # noinspection PyUnresolvedReferences
         fk = AllRelations._meta.get_field('forward_related').remote_field
-        # noinspection PyUnresolvedReferences
         rev_fk = ReverseRelatedModel._meta.get_field('reverse').remote_field
-        # noinspection PyUnresolvedReferences
         m2m_inter = AllRelations._meta.get_field('many_intermediary').remote_field
-        # noinspection PyUnresolvedReferences
         m2m_auto = AllRelations._meta.get_field('many_auto').remote_field
 
         rels = utils.get_model_relations(AllRelations)

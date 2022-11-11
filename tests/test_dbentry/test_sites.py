@@ -42,7 +42,6 @@ class TestMIZAdminSite(RequestTestCase):
         for app_label, index_called in [('dbentry', True), ('Beep', False)]:
             with self.subTest(app_label=app_label):
                 with patch.object(self.site, 'index') as index_mock:
-                    # noinspection PyTypeChecker
                     self.site.app_index(request=None, app_label=app_label)
                     if index_called:
                         self.assertTrue(index_mock.called)
@@ -58,7 +57,6 @@ class TestMIZAdminSite(RequestTestCase):
         """
         request = self.get_request(path=reverse('admin:index'))
         response = self.site.app_index(request, app_label='dbentry')
-        # noinspection PyUnresolvedReferences
         app_list = response.context_data['app_list']
         app_names = [d.get('name') for d in app_list if d.get('name')]
         for category in ['Archivgut', 'Stammdaten', 'Sonstige']:
@@ -161,7 +159,6 @@ class TestMIZSite(RequestTestCase):
         for model in miz_site._registry:
             opts = model._meta
             with self.subTest(model_name=opts.model_name):
-                # noinspection PyShadowingNames
                 path = reverse(f"{miz_site.name}:{opts.app_label}_{opts.model_name}_changelist")
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path=path)

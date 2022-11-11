@@ -25,7 +25,6 @@ class TestBaseModel(MIZTestCase):
         super().setUpTestData()
 
     def test_qs(self):
-        # noinspection PyUnresolvedReferences
         queryset = self.obj.qs()
         self.assertIsInstance(queryset, django_models.QuerySet)
         self.assertEqual(queryset.count(), 1)
@@ -34,7 +33,6 @@ class TestBaseModel(MIZTestCase):
     def test_qs_exception(self):
         """qs should raise a TypeError, if called from class level."""
         with self.assertRaises(TypeError):
-            # noinspection PyTypeChecker
             self.model.qs(self.model)
 
     def test_str_name_field_set(self):
@@ -57,7 +55,6 @@ class TestBaseModel(MIZTestCase):
     def test_merge_permission(self):
         """Assert that the model has the new 'merge' permission."""
         ct = ContentType.objects.get_for_model(self.model)
-        # noinspection PyUnresolvedReferences
         self.assertIn(
             get_permission_codename('merge', self.model._meta),
             Permission.objects.filter(content_type=ct).values_list('codename', flat=True)
@@ -98,9 +95,7 @@ class TestComputedNameModel(MIZTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # noinspection PyTypeChecker
         cls.obj: Person = make(cls.model, vorname='Alice', nachname='Tester')
-        # noinspection PyUnresolvedReferences
         cls.qs = cls.model.objects.filter(pk=cls.obj.pk)
         super().setUpTestData()
 

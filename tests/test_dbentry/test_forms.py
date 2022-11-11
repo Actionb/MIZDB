@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-# noinspection PyPackageRequirements
 from dal import autocomplete
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS

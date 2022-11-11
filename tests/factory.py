@@ -624,7 +624,6 @@ _cache: Dict[str, Type[MIZModelFactory]] = {}
 
 def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFactory]:
     """Create a factory class for the given model."""
-    # noinspection PyUnresolvedReferences
     model_name, label = model._meta.model_name, model._meta.label
     # Check the cache for a factory with that label.
     if label in _cache:
@@ -650,9 +649,7 @@ def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFact
     if 'Meta' not in kwargs:
         kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model': model})
     modelfac = type(factory_name, (MIZModelFactory,), kwargs)
-    # noinspection PyTypeChecker
     _cache[label] = modelfac
-    # noinspection PyTypeChecker
     return modelfac
 
 
@@ -679,13 +676,11 @@ class AutorFactory(MIZModelFactory):
 
     person = SubFactory('tests.factory.PersonFactory', required=True)
 
-    # noinspection PyMethodParameters
     @factory.lazy_attribute
-    def kuerzel(obj):
+    def kuerzel(obj):  # noqa
         """Prepare a 2 character token based on the Person's name."""
         if obj.person is None:
             return 'XY'
-        # noinspection PyUnresolvedReferences
         vorname, nachname = obj.person.vorname, obj.person.nachname
         if vorname:
             return vorname[0] + nachname[0]

@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-# noinspection PyPackageRequirements
 from dal import forward
 from django import forms
 from django.core.exceptions import ImproperlyConfigured
@@ -134,13 +133,11 @@ class TestGenericURLWidgetMixin(MIZTestCase):
             self.assertEqual(self.Widget(model_name='genre')._url, '')
             self.Widget.generic_url_name = 'this-is-the-default'
             self.assertEqual(self.Widget(model_name='genre')._url, 'this-is-the-default')
-            # noinspection SpellCheckingInspection
             self.assertEqual(self.Widget(model_name='genre', url='nocapture')._url, 'nocapture')
 
     @patch('dbentry.ac.widgets.reverse')
     def test_get_url_none(self, reverse_mock):
         """_get_url should return None, if the url was set to None."""
-        # noinspection PyTypeChecker
         obj = self.Widget(model_name='genre', url=None)
         self.assertIsNone(obj._get_url())
         self.assertFalse(reverse_mock.called)
@@ -250,7 +247,6 @@ class TestMakeWidget(MIZTestCase):
 
     def test_assigns_create_field(self):
         widget = make_widget(model=Ausgabe)
-        # noinspection PyUnresolvedReferences
         self.assertEqual(widget.create_field, 'name')
 
     @translation_override(language=None)

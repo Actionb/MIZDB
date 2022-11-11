@@ -11,7 +11,6 @@ from tests.case import ViewTestCase
 
 
 class TestMIZAdminMixin(ViewTestCase):
-    # noinspection PyPep8Naming
     class view_class(MIZAdminMixin, views.generic.TemplateView):
         title = 'DummyView'
         site_title = 'Testing'
@@ -59,7 +58,6 @@ class TestOptionalFormView(ViewTestCase):
     class TestForm(forms.Form):
         spam = forms.CharField()
 
-    # noinspection PyPep8Naming
     class view_class(OptionalFormView):
         form_class = forms.Form
 
@@ -131,7 +129,6 @@ class TestFixedSessionWizardView(ViewTestCase):
 
 
 class SuperUserOnlyTest(ViewTestCase):
-    # noinspection PyPep8Naming
     class view_class(SuperUserOnlyMixin, views.View):
         pass
 

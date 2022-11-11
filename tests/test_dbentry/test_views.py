@@ -12,7 +12,6 @@ class TestPermissionDeniedView(ViewTestCase):
         Calling the view with an unknown template_name should return a
         'Forbidden' response.
         """
-        # noinspection PyTypeChecker
         response = MIZ_permission_denied_view(None, None, template_name='beepboop')
         self.assertEqual(response.status_code, 403)
         self.assertTrue(isinstance(response, http.HttpResponseForbidden))
@@ -24,7 +23,6 @@ class TestPermissionDeniedView(ViewTestCase):
         """
         exception = PermissionDenied('Exception Text')
         response = MIZ_permission_denied_view(self.get_request(), exception)
-        # noinspection PyUnresolvedReferences
         context = response.context_data
         self.assertTrue('exception' in context)
         self.assertEqual(context['exception'], 'Exception Text')

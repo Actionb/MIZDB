@@ -25,7 +25,6 @@ class TestGetSearchVectorField(TestCase):
         title = models.CharField(max_length=100)
 
     def test(self):
-        # noinspection PyUnresolvedReferences
         expected = self.ModelA._meta.get_field('search_field_1')
         self.assertEqual(_get_search_vector_field(self.ModelA), expected)
         self.assertIsNone(_get_search_vector_field(self.ModelB))
@@ -127,7 +126,6 @@ class TestFullTextSearch(DataTestCase):
         model's default ordering.
         """
         results = self.queryset.order_by().search('Die Ärzte', ranked=False)
-        # noinspection PyUnresolvedReferences
         model_ordering = self.model._meta.ordering
         for ordering in model_ordering:
             self.assertIn(
@@ -235,7 +233,6 @@ class TestTextSearchQuerySetMixin(TestCase):
             related_search_vectors = [('alias__fts', 'simple_unaccent')]
 
         cls.model = MixinTestModel
-        # noinspection PyUnresolvedReferences
         cls.opts, cls.alias_opts = MixinTestModel._meta, MixinTestAlias._meta
 
         super().setUpClass()

@@ -139,7 +139,6 @@ class TestUniqueFaker(MIZTestCase):
         faker = UniqueFaker('word')
         step = BuildStep()
         step.sequence = 42
-        # noinspection PyTypeChecker
         self.assertTrue(faker.evaluate(None, step, {}).endswith('42'))
 
 
@@ -356,7 +355,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts = MIZDjangoOptions()
         opts.factory = type('DummyFactory', (object,), {})
         opts.model = Audio
-        # noinspection PyUnresolvedReferences
         fields = [
             Audio._meta.get_field('titel'), Audio._meta.get_field('tracks'),
             Audio._meta.get_field('beschreibung')
@@ -376,7 +374,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         # 'forward': Audio has ManyToManyField to Band
         opts.model = Audio
         opts.factory = type('DummyFactory', (object,), {})
-        # noinspection PyUnresolvedReferences
         rel = Audio._meta.get_field('band').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
@@ -386,7 +383,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         # 'reverse': Band to Audio
         opts.model = Band
         opts.factory = type('DummyFactory', (object,), {})
-        # noinspection PyUnresolvedReferences
         rel = Band._meta.get_field('audio')
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
@@ -416,7 +412,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.factory = type('ClubFactory', (object,), {})
         # Relation from BaseClub to Players inherited by Club;
         # (rel.field.model is in Club._meta.parents)
-        # noinspection PyUnresolvedReferences
         rel = BaseClub._meta.get_field('players').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
@@ -427,7 +422,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.factory = type('ClubFactory', (object,), {})
         # Relation from Fans to BaseClub inherited by Club;
         # (rel.field.related_model is in Club._meta.parents)
-        # noinspection PyUnresolvedReferences
         rel = Fan._meta.get_field('clubs').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
@@ -442,7 +436,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         """
         opts = MIZDjangoOptions()
         opts.model = Band
-        # noinspection PyUnresolvedReferences
         rel = Audio._meta.get_field('genre').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             with self.assertRaises(TypeError):
@@ -456,9 +449,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts = MIZDjangoOptions()
         opts.factory = type('AudioFactory', (object,), {})
         opts.model = Audio
-        # noinspection PyUnresolvedReferences
         m2o_rel = Bestand._meta.get_field('audio').remote_field
-        # noinspection PyUnresolvedReferences
         m2m_rel = Audio._meta.get_field('band').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[m2o_rel, m2m_rel])):
             opts.add_related_factories()
@@ -485,7 +476,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts = MIZDjangoOptions()
         opts.factory = type('FirmFactory', (object,), {})
         opts.model = Earth
-        # noinspection PyUnresolvedReferences
         rel = Moon._meta.get_field('orbits').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_related_factories()
@@ -500,7 +490,6 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts = MIZDjangoOptions()
         opts.factory = type('AncestorFactory', (object,), {})
         opts.model = Ancestor
-        # noinspection PyUnresolvedReferences
         field = Ancestor._meta.get_field('ancestor')
         with mock.patch('tests.factory.get_model_fields', Mock(return_value=[field])):
             opts.add_sub_factories()
@@ -513,21 +502,17 @@ class TestMIZDjangoOptions(MIZTestCase):
         added to the 'declarations' dictionary.
         """
 
-        # noinspection PyUnusedLocal
         class ForwardRelated(models.Model):
             pass
 
-        # noinspection PyUnusedLocal
         class ReverseRelated(models.Model):
             x = models.ForeignKey(
                 'TestModel', related_name='reverse_related', on_delete=models.CASCADE
             )
 
-        # noinspection PyUnusedLocal
         class ForwardM2M(models.Model):
             pass
 
-        # noinspection PyUnusedLocal
         class ReverseM2M(models.Model):
             x = models.ManyToManyField('TestModel', related_name='reverse_m2m')
 

@@ -9,7 +9,6 @@ class Genre(models.Model):
 
 
 class Band(models.Model):
-    # noinspection SpellCheckingInspection
     class Status(models.TextChoices):
         ACTIVE = ('ACT', 'Aktiv')
         INACTIVE = ('IACT', 'Inaktiv')

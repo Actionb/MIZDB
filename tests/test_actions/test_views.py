@@ -141,7 +141,6 @@ class ActionViewTestCase(AdminTestCase, ViewTestCase):
         return super().get_view(request=request, args=args, kwargs=kwargs, **initkwargs)
 
 
-# noinspection PyUnusedLocal
 def outside_check(view):
     """A function for the action_allowed_checks of 'DummyView'."""
     return True
@@ -172,7 +171,6 @@ class TestConfirmationViewMixin(ActionViewTestCase):
         init should set the 'action_name' attribute to the view class name, if
         the class attribute is not set.
         """
-        # noinspection PyUnresolvedReferences
         queryset = self.model.objects.all()
         view = self.view_class(model_admin=self.model_admin, queryset=queryset)
         self.assertEqual(view.action_name, 'DummyView')
@@ -278,7 +276,6 @@ class TestConfirmationViewMixin(ActionViewTestCase):
                 self.assertEqual(context['objects_name'], 'Bands')
 
 
-# noinspection PyUnusedLocal
 def get_obj_link_mock(obj, user, site_name, blank):
     """Mock version of dbentry.admin.utils.get_obj_link"""
     target = ''
@@ -352,7 +349,6 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertEqual(display_field_values[0], 'Bandname: ' + self.obj.band_name)
 
         # The next two items should be links to the Genre objects:
-        # noinspection PyUnresolvedReferences
         genres = Genre.objects.all().order_by('genre')
         self.assertEqual(
             display_field_values[1], f'Genre: <a href="URL" target="_blank">{genres[0]}</a>'
@@ -579,7 +575,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # User needs view permission to have access to the change list. User
         # also needs access to at least one action for the action form to be
         # included (here: delete selected action).
-        # noinspection PyUnresolvedReferences
         opts = self.model._meta
         ct = ContentType.objects.get_for_model(self.model)
         view_perm = Permission.objects.get(
@@ -954,7 +949,6 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         # User needs view permission to have access to the change list. User
         # also needs access to at least one action for the action form to be
         # included (here: delete selected action).
-        # noinspection PyUnresolvedReferences
         opts = self.model._meta
         ct = ContentType.objects.get_for_model(self.model)
         view_perm = Permission.objects.get(
@@ -1069,9 +1063,7 @@ class TestMoveToBrochure(ActionViewTestCase):
             bestand__extra=1
         )
         obj3 = make(self.model, magazin=self.mag)
-        # noinspection PyUnresolvedReferences
         bestand1 = self.obj1.bestand_set.first()
-        # noinspection PyUnresolvedReferences
         bestand2 = obj2.bestand_set.first()
 
         # User selects two Ausgabe instances of different magazines and gets a
@@ -1266,7 +1258,6 @@ class TestMoveToBrochure(ActionViewTestCase):
                 'accept': False,
             }
         ]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name, 'delete_magazin': False}
         view = self.get_view(
             self.get_request(),
@@ -1274,7 +1265,6 @@ class TestMoveToBrochure(ActionViewTestCase):
         )
         view._magazin_instance = self.mag
 
-        # noinspection PyUnresolvedReferences
         changed_bestand = self.obj1.bestand_set.first()  # snapshot the bestand
         view.perform_action(form_data, options_form_data)
         self.assertTrue(target_model.objects.filter(titel='Foo Brochure').exists())
@@ -1307,10 +1297,8 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': '0',
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name}
         view = self.get_view(self.get_request(), queryset=self.queryset)
-        # noinspection PyUnresolvedReferences
         with self.assertNotRaises(_models.Ausgabe.DoesNotExist):
             view.perform_action(form_data, options_form_data)
 
@@ -1328,7 +1316,6 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': self.obj1.pk,
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name, 'delete_magazin': True}
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
@@ -1353,7 +1340,6 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': self.obj1.pk,
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name, 'delete_magazin': False}
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
@@ -1374,7 +1360,6 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': self.obj1.pk,
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name, 'delete_magazin': False}
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
@@ -1396,7 +1381,6 @@ class TestMoveToBrochure(ActionViewTestCase):
         new Brochure object was created.
         """
         target_model = _models.Brochure
-        # noinspection PyUnresolvedReferences
         target_opts = target_model._meta
         get_model_mock.return_value = target_model
         form_data = [{
@@ -1432,12 +1416,10 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': self.obj1.pk,
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name}
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
 
-        # noinspection PyUnresolvedReferences
         changed_bestand = self.obj1.bestand_set.first()
         view.perform_action(form_data, options_form_data)
         self.assertTrue(target_model.objects.filter(titel='Foo Katalog').exists())
@@ -1466,12 +1448,10 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': self.obj1.pk,
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name}
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
 
-        # noinspection PyUnresolvedReferences
         changed_bestand = self.obj1.bestand_set.first()
         view.perform_action(form_data, options_form_data)
         self.assertTrue(target_model.objects.filter(titel='Foo Kalender').exists())
@@ -1501,7 +1481,6 @@ class TestMoveToBrochure(ActionViewTestCase):
             'ausgabe_id': self.obj1.pk,
             'accept': True,
         }]
-        # noinspection PyUnresolvedReferences
         options_form_data = {'brochure_art': target_model._meta.model_name}
         # Get a request that went through the 'messages' middleware:
         request = self.get_response('/').wsgi_request
@@ -1639,7 +1618,6 @@ class TestMoveToBrochure(ActionViewTestCase):
         # User needs view permission to have access to the change list. User
         # also needs access to at least one action for the action form to be
         # included (here: delete selected action).
-        # noinspection PyUnresolvedReferences
         opts = self.model._meta
         ct = ContentType.objects.get_for_model(self.model)
         view_perm = Permission.objects.get(
@@ -1665,7 +1643,6 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertMessageSent(response.wsgi_request, 'No action selected.')
 
         # Give the user the permissions required for the action:
-        # noinspection PyUnresolvedReferences
         add_perm = Permission.objects.get(
             codename=get_permission_codename('add', _models.BaseBrochure._meta),
             content_type=ContentType.objects.get_for_model(_models.BaseBrochure)
@@ -1699,7 +1676,6 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
     @staticmethod
     def get_form_data(parent_obj: _models.Ausgabe, *bestand_objects):
         prefix = 'bestand_set-%s' % parent_obj.pk
-        # noinspection PyUnresolvedReferences
         management_form_data = {
             prefix + '-TOTAL_FORMS': len(bestand_objects),
             prefix + '-INITIAL_FORMS': parent_obj.bestand_set.count(),
@@ -1733,7 +1709,6 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # A successful action should send us back to the changelist:
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/change_list.html')
-        # noinspection PyUnresolvedReferences
         bestand_set = self.obj1.bestand_set
         self.assertEqual(bestand_set.count(), 1)
         self.assertEqual(bestand_set.get().lagerort, self.lagerort1)
@@ -1755,7 +1730,6 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # A successful action should send us back to the changelist:
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/change_list.html')
-        # noinspection PyUnresolvedReferences
         bestand_set = self.obj1.bestand_set
         self.assertEqual(bestand_set.count(), 1)
         self.assertEqual(bestand_set.get().lagerort, self.lagerort2)
@@ -1780,7 +1754,6 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             response.status_code, 302,
             msg="Expected a redirect back to the changelist."
         )
-        # noinspection PyUnresolvedReferences
         self.assertFalse(self.obj1.bestand_set.exists())
 
     def test_post_stops_on_invalid(self):
@@ -1813,7 +1786,6 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # Check some attributes of the formset/inline.
         self.assertEqual(inline.model, _models.Bestand)
         self.assertEqual(formset.instance, self.obj1)
-        # noinspection PyUnresolvedReferences
         self.assertQuerysetEqual(formset.queryset.all(), self.obj1.bestand_set.all())
 
     def test_get_bestand_formset_form_data(self):
@@ -1909,7 +1881,6 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         changed.refresh_from_db()
 
         # Check the log entry for the parent instance:
-        # noinspection PyUnresolvedReferences
         name = _models.Bestand._meta.verbose_name
         expected_change_message = [
             {'added': {'name': name, 'object': str(added)}},

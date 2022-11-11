@@ -27,10 +27,8 @@ class TestAdminUtils(RequestTestCase):
         cls.obj1 = make(cls.model, titel='Testaudio')
         cls.obj2 = make(cls.model, titel='Hovercrafts')
         lagerort = make(Lagerort, ort="Aufm Tisch!")
-        # noinspection PyUnresolvedReferences
         cls.bestand = make(Bestand, audio=cls.obj1, lagerort=lagerort)
 
-        # noinspection PyUnresolvedReferences
         cls.test_data = [cls.obj1, cls.obj2]
 
         super().setUpTestData()
@@ -62,7 +60,6 @@ class TestAdminUtils(RequestTestCase):
         No link should be displayed, if the user does not have change
         permissions.
         """
-        # noinspection PyUnresolvedReferences
         self.assertEqual(
             admin_utils.get_obj_link(self.obj1, self.noperms_user),
             f"{self.model._meta.verbose_name}: {self.obj1}"
@@ -80,7 +77,6 @@ class TestAdminUtils(RequestTestCase):
         with override_settings(ROOT_URLCONF=URLConf):
             with self.assertNotRaises(NoReverseMatch):
                 link = admin_utils.get_obj_link(self.obj1, self.super_user)
-        # noinspection PyUnresolvedReferences
         self.assertEqual(link, f"{self.model._meta.verbose_name}: {self.obj1}")
 
     ################################################################################################
@@ -142,7 +138,6 @@ class TestAdminUtils(RequestTestCase):
         """
         Check the output of get_changelist_url for various obj_list arguments.
         """
-        # noinspection PyUnresolvedReferences
         obj2 = Audio.objects.create(titel='Any')
         for obj_list in (None, [self.obj1], [self.obj1, obj2]):
             expected = '/admin/test_utils/audio/'
@@ -201,11 +196,9 @@ class TestAdminUtils(RequestTestCase):
     ################################################################################################
 
     def test_construct_change_message(self):
-        # noinspection PyUnresolvedReferences
         m2m_musiker = self.obj1.musiker.through.objects.create(
             musiker=self.musiker, audio=self.obj1
         )
-        # noinspection PyUnresolvedReferences
         m2m_band = self.obj1.band.through.objects.create(
             band=self.band, audio=self.obj1
         )
@@ -252,7 +245,6 @@ class TestAdminUtils(RequestTestCase):
         Assert that _get_relation_change_message uses the m2m through table
         for the change message if that table is not auto created.
         """
-        # noinspection PyUnresolvedReferences
         m2m = self.obj1.musiker.through.objects.create(musiker=self.musiker, audio=self.obj1)
         msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
         self.assertEqual(msg_dict['name'], 'Audio-Musiker')
@@ -269,7 +261,6 @@ class TestAdminUtils(RequestTestCase):
         _get_relation_change_message uses verbose name and object representation
         of the object at the other end of the m2m relation.
         """
-        # noinspection PyUnresolvedReferences
         m2m = self.obj1.band.through.objects.create(band=self.band, audio=self.obj1)
         msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
         self.assertEqual(msg_dict['name'], 'Band')
@@ -311,7 +302,6 @@ class TestAdminUtils(RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_addition_related_obj(self):
-        # noinspection PyUnresolvedReferences
         m2m_band = self.obj1.band.through.objects.create(
             band=self.band, audio=self.obj1
         )
@@ -350,7 +340,6 @@ class TestAdminUtils(RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_change_related_obj(self):
-        # noinspection PyUnresolvedReferences
         m2m_band = self.obj1.band.through.objects.create(
             band=self.band, audio=self.obj1
         )

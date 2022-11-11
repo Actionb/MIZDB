@@ -341,7 +341,6 @@ class TestInstall(unittest.TestCase):
         for patch in patches:
             patch.stop()
 
-    # noinspection PyMethodMayBeStatic
     def get_install_kwargs(self, **kwargs):
         return {
             'venv_directory': "~/.venv",

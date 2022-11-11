@@ -86,9 +86,7 @@ class TestDuplicateObjectsView(ViewTestCase):
         # And a control object that shouldn't show up as a duplicate:
         cls.other = cls.model.objects.create(kuenstler_name='Other')
 
-        # noinspection PyUnresolvedReferences
         cls.dupe_1.genres.set([cls.genre1, cls.genre2])
-        # noinspection PyUnresolvedReferences
         cls.dupe_2.genres.set([cls.genre1, cls.genre2])
         super().setUpTestData()
 
@@ -394,12 +392,10 @@ class TestFindDuplicates(DataTestCase):
 
 @override_settings(ROOT_URLCONF='tests.test_tools.urls')
 class TestSiteSearchView(ViewTestCase):
-    # noinspection PyPep8Naming
     class view_class(SiteSearchView):
         app_label = 'test_tools'  # use test models
 
         def _search(self, model, q):
-            # noinspection PyUnresolvedReferences
             opts = model._meta
             field = ''
             if opts.model_name == 'band':
@@ -410,7 +406,6 @@ class TestSiteSearchView(ViewTestCase):
                 field = 'genre'
             if not field:
                 return []
-            # noinspection PyUnresolvedReferences
             qs = model.objects.filter(**{field + '__icontains': q})
             return qs
 
