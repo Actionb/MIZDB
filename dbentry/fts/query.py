@@ -69,7 +69,6 @@ class TextSearchQuerySetMixin(object):
         be included in a query, and the config_name refers to the search config
         to use in the query on that related field.
         """
-        # TODO: remove this - use getattr() in search method directly
         return getattr(self.model, 'related_search_vectors', [])  # type: ignore[attr-defined]
 
     def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> Any:
@@ -85,12 +84,15 @@ class TextSearchQuerySetMixin(object):
         """
         if not q:
             return self.none()  # type: ignore[attr-defined]
+        model = self.model  # type: ignore[attr-defined]
+        model_search_rank = related_search_rank = None
+        pk_name = model._meta.pk.name
 
         filters = Q()
         if q.isnumeric():
-            filters |= Q(pk=q)  # TODO: use model._meta.pk_name in place of 'pk'
-        model_search_rank = related_search_rank = None
-        model = self.model  # type: ignore[attr-defined]
+            # q is a number: include a filter for the primary key.
+            filters |= Q(**{pk_name: q})
+
         search_field = _get_search_vector_field(model)
         if search_field:
             # Add a query and a rank for every text search config defined on
@@ -161,8 +163,7 @@ class TextSearchQuerySetMixin(object):
                 if q.isnumeric():
                     # Prepend an ordering for exact pk matches:
                     ordering.insert(
-                        # TODO: use model._meta.pk_name in place of 'pk'
-                        0, ExpressionWrapper(Q(pk=q), output_field=BooleanField()).desc()
+                        0, ExpressionWrapper(Q(**{pk_name: q}), output_field=BooleanField()).desc()
                     )
             results = results.order_by(*ordering)
         return results

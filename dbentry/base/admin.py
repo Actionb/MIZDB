@@ -13,7 +13,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
 
-from dbentry import models as _models  # TODO: move concrete dbentry classes out of 'base'?
+from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.actions.actions import merge_records
 from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
