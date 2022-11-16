@@ -491,10 +491,10 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         )
         ordering = (
             self.model.objects
-                .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
-                .chronological_order()
-                .query
-                .order_by
+            .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
+            .chronological_order()
+            .query
+            .order_by
         )
         self.assertLess(ordering.index('lnum'), ordering.index('monat'))
         self.assertLess(ordering.index('lnum'), ordering.index('num'))

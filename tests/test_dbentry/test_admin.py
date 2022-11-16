@@ -40,9 +40,9 @@ class AdminTestMethodsMixin(object):
         """Apply the model_admin's changelist annotations to the given object."""
         return (
             self.queryset
-                .filter(pk=obj.pk)
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .get()
+            .filter(pk=obj.pk)
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .get()
         )
 
     def test_get_exclude(self):
@@ -444,13 +444,13 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 
-    def test_brochure_crosslink(self):
+    def test_brochure_changelist_link(self):
         """Assert that the links to each of the BaseBrochure models are labelled correctly."""
         obj = make(self.model)
         make(_models.Brochure, ausgabe=obj)
         make(_models.Kalender, ausgabe=obj)
         make(_models.Katalog, ausgabe=obj)
-        crosslinks = self.model_admin.add_crosslinks(object_id=obj.pk, labels={})['crosslinks']
+        changelist_links = self.model_admin.add_changelist_links(object_id=obj.pk, labels={})
         labels = {
             'brochure': 'Broschüren (1)',
             'kalender': 'Programmhefte (1)',
@@ -464,7 +464,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                     'url': f"{reverse(url_name)}?{obj._meta.model_name}={obj.pk}",
                     'label': labels[opts.model_name]
                 }
-                self.assertIn(expected, crosslinks)
+                self.assertIn(expected, changelist_links)
 
     def test_action_change_bestand(self):
         """Assert that the 'change_bestand' page can be navigated to from the changelist."""
@@ -692,9 +692,9 @@ class TestBaseBrochureAdmin(AdminTestCase):
     def test_jahr_string(self):
         obj = (
             self.queryset
-                .filter(pk=self.obj1.pk)
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .get()
+            .filter(pk=self.obj1.pk)
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .get()
         )
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
@@ -899,13 +899,13 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj = self.get_annotated_model_obj(self.obj1)
         self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
-    def test_brochure_crosslink(self):
+    def test_brochure_changelist_link(self):
         """Assert that the links to each of the BaseBrochure models are labelled correctly."""
         obj = make(self.model)
         make(_models.Brochure, genre=obj)
         make(_models.Kalender, genre=obj)
         make(_models.Katalog, genre=obj)
-        crosslinks = self.model_admin.add_crosslinks(object_id=obj.pk, labels={})['crosslinks']
+        changelist_links = self.model_admin.add_changelist_links(object_id=obj.pk, labels={})
         labels = {
             'brochure': 'Broschüren (1)',
             'kalender': 'Programmhefte (1)',
@@ -919,7 +919,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
                     'url': f"{reverse(url_name)}?{obj._meta.model_name}={obj.pk}",
                     'label': labels[opts.model_name]
                 }
-                self.assertIn(expected, crosslinks)
+                self.assertIn(expected, changelist_links)
 
 
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1199,9 +1199,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_musiker(self):
         obj1, obj2 = (
             self.queryset
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .filter(id__in=[self.obj1.pk, self.obj2.pk])
-                .order_by('id')
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
         )
         self.assertTrue(self.model_admin.is_musiker(obj1))
         self.assertFalse(self.model_admin.is_musiker(obj2))
@@ -1209,9 +1209,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_autor(self):
         obj1, obj2 = (
             self.queryset
-                .annotate(**self.model_admin.get_changelist_annotations())
-                .filter(id__in=[self.obj1.pk, self.obj2.pk])
-                .order_by('id')
+            .annotate(**self.model_admin.get_changelist_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
         )
         self.assertTrue(self.model_admin.is_autor(obj1))
         self.assertFalse(self.model_admin.is_autor(obj2))

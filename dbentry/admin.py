@@ -348,7 +348,7 @@ class AusgabenAdmin(MIZModelAdmin):
         # noinspection PyUnresolvedReferences
         return request.user.has_perms(perms)
 
-    def _get_crosslink_relations(self) -> list:
+    def _get_changelist_link_relations(self) -> list:
         return [
             (_models.Artikel, 'ausgabe', 'Artikel'),
             (_models.Brochure, 'ausgabe', 'Broschüren'),
@@ -703,7 +703,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Verlag
 
     collapse_all = True
-    crosslink_labels = {'buch': 'Aufsätze'}
+    changelist_link_labels = {'buch': 'Aufsätze'}
     form = _forms.BuchForm
     index_category = 'Archivgut'
     save_on_top = True
@@ -814,8 +814,7 @@ class GenreAdmin(MIZModelAdmin):
         return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
-    def _get_crosslink_relations(self) -> list:
-        # TODO: why set the label to None? What would the label be if not None?
+    def _get_changelist_link_relations(self) -> list:
         return [
             (_models.Musiker, 'genre', None), (_models.Band, 'genre', None),
             (_models.Magazin, 'genre', None), (_models.Artikel, 'genre', None),

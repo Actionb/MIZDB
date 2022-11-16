@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 
 from django import forms
 from django.apps import apps
@@ -25,7 +25,6 @@ from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
 
-# TODO: rename 'crosslinks' to 'changelist_links'
 FieldsetList = List[Tuple[Optional[str], dict]]
 BESTAND_MODEL_NAME = 'dbentry.Bestand'
 
@@ -60,8 +59,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     Base ModelAdmin for this app.
 
     Attributes:
-        - ``crosslink_labels`` (dict): mapping of related_model_name: label
-          used to give crosslinks custom labels.
+        - ``changelist_link_labels`` (dict): mapping of related_model_name: label
+          to give changelist_links custom labels
         - ``collapse_all`` (bool): context variable used in the inline templates.
           If True, all inlines start out collapsed unless they contain data.
         - ``superuser_only`` (bool): if true, only a superuser can interact
@@ -71,7 +70,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
           group them on the index page.
     """
 
-    crosslink_labels: dict
+    changelist_link_labels: dict
     collapse_all: bool = False
     superuser_only: bool = False
     index_category: str = 'Sonstige'
@@ -88,8 +87,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if not hasattr(self, 'crosslink_labels') or self.crosslink_labels is None:
-            self.crosslink_labels = {}
+        if not hasattr(self, 'changelist_link_labels') or self.changelist_link_labels is None:
+            self.changelist_link_labels = {}
 
     def check(self, **kwargs: Any) -> list:
         errors = super().check(**kwargs)
@@ -210,33 +209,37 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         return self._add_bb_fieldset(fieldsets)
 
     # noinspection PyMethodMayBeStatic
-    def _get_crosslink_relations(self) -> Optional[List[Tuple[Type[Model], str, Optional[str]]]]:
+    def _get_changelist_link_relations(self) -> Optional[List[Tuple]]:
         """
-        Hook to specify relations to follow with the crosslinks.
-
-        A list of 3-tuples must be returned. The tuples must consist of:
+        Hook to specify relations to follow with the changelist_links.
+        
+        A list of 3-tuples should be returned. The tuples must consist of:
           - model class: the related model to query for the related objects
           - field name: the name of the field of the related model to query
             against
-          - label (str) or None: the label for the link
+          - label: the label for the link, optional
+            
+        If the return value is None, add_changelist_links will try to add links
+        for all reverse relations of this model.
         """
         return None
 
-    def add_crosslinks(self, object_id: str = '', labels: Optional[dict] = None) -> Dict[str, list]:
+    def add_changelist_links(self, object_id: str = '', labels: Optional[dict] = None) -> list:
         """
-        Provide the template with data to create links to related objects.
+        Provide context data for the given object's change form template that 
+        includes links to the changelists of related objects.
 
-        Crosslinks are links on an instance's change form that send the user
-        to the changelist containing the instance's related objects.
+        Returns a list of dictionaries:
+            [{'url': <changelist url>, 'label': <label for the link>}, ...]
         """
         if not object_id:
-            return {}
+            return []
 
-        new_extra: dict = {'crosslinks': []}
+        links = []
         if labels is None:  # pragma: no cover
             labels = {}
 
-        relations = self._get_crosslink_relations()
+        relations = self._get_changelist_link_relations()
         if relations is None:
             # Walk through all reverse relations and collect the model and
             # model field to query against as well as the assigned name for the
@@ -255,8 +258,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                 query_field = rel.remote_field.name
                 if rel.many_to_many and query_model == self.model:
                     # M2M relations are symmetric, but we wouldn't want to create
-                    # a crosslink that leads back to *this* model's changelist
-                    # (unless it's a self relation).
+                    # a changelist_link that leads back to *this* model's 
+                    # changelist (unless it's a self relation).
                     query_model = rel.model
                     query_field = rel.name
                 # Use a 'prettier' related_name as the default for the label.
@@ -266,7 +269,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     label = None
                 relations.append((query_model, query_field, label))
 
-        # Create the context data for the crosslinks.
+        # Create the context data for the changelist_links.
         for query_model, query_field, label in relations:
             opts = query_model._meta
             try:
@@ -288,15 +291,17 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             else:
                 label = label or opts.verbose_name_plural
 
-            new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
-        return new_extra
+            links.append({'url': url, 'label': f"{label} ({count!s})"})
+        return links
 
     def add_extra_context(self, object_id: str = '', **extra_context: Any) -> dict:
         """Add extra context specific to this ModelAdmin."""
         extra_context.update(
             {
                 'collapse_all': self.collapse_all,
-                **self.add_crosslinks(object_id, self.crosslink_labels),  # type: ignore[arg-type]
+                'changelist_links': self.add_changelist_links(
+                    object_id, self.changelist_link_labels
+                )
             }
         )
         return extra_context

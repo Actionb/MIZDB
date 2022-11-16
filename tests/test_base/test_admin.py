@@ -249,91 +249,83 @@ class MIZModelAdminTest(AdminTestCase):
         fieldsets = self.model_admin._add_bb_fieldset([(None, {'fields': ['titel']})])
         self.assertEqual(len(fieldsets), 1)
 
-    def test_add_crosslinks(self):
-        crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
+    def test_add_changelist_links(self):
+        links = self.model_admin.add_changelist_links(self.obj.pk)
         self.assertIn(
             {
                 'url': f'/admin/test_base/veranstaltung/?audio={self.obj.pk}',
                 'label': 'Veranstaltungen (1)'
             },
-            crosslinks
+            links
         )
         self.assertIn(
             {
                 'url': f'/admin/test_base/band/?audio={self.obj.pk}',
                 'label': 'Bands (1)'
             },
-            crosslinks
+            links
         )
 
-    def test_add_crosslinks_no_object_id(self):
+    def test_add_changelist_links_no_object_id(self):
         """
-        Assert that add_crosslinks returns an empty dictionary when no
+        Assert that add_changelist_links returns an empty list when no
         object_id was provided.
         """
-        self.assertEqual(self.model_admin.add_crosslinks(object_id=None), {})
+        self.assertEqual(self.model_admin.add_changelist_links(object_id=None), [])
 
-    def test_add_crosslinks_ignores_relations_with_inlines(self):
-        """No crosslinks should be created for relations handled by inlines."""
+    def test_add_changelist_links_ignores_relations_with_inlines(self):
+        """No changelist_links should be created for relations handled by inlines."""
         # AudioAdmin has an inline for the relation to Musiker.
-        crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
-        _urls, labels = zip(*(d.values() for d in crosslinks))
+        links = self.model_admin.add_changelist_links(self.obj.pk)
+        _urls, labels = zip(*(d.values() for d in links))
         self.assertNotIn('Musiker (1)', labels)
 
-    def test_add_crosslinks_m2m_relation_link(self):
+    def test_add_changelist_links_m2m_relation_link(self):
         """
         The links should follow M2M relations to the *other* model of the
         relation - not back to *this* model.
         """
         # The link for Veranstaltung should point to the Veranstaltung
         # changelist - not the Audio changelist.
-        crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
-        urls, _labels = zip(*(d.values() for d in crosslinks))
+        links = self.model_admin.add_changelist_links(self.obj.pk)
+        urls, _labels = zip(*(d.values() for d in links))
         self.assertIn(f'/admin/test_base/veranstaltung/?audio={self.obj.pk}', urls)
 
-    def test_add_crosslinks_prefer_labels_arg(self):
+    def test_add_changelist_links_prefer_labels_arg(self):
         """Passed in labels should be used over the model's verbose name."""
-        crosslinks = self.model_admin.add_crosslinks(
-            self.obj.pk, labels={'band': 'Hovercrafts'}
-        )['crosslinks']
+        links = self.model_admin.add_changelist_links(self.obj.pk, labels={'band': 'Hovercrafts'})
         self.assertIn(
             {
                 'url': f'/admin/test_base/band/?audio={self.obj.pk}',
                 'label': 'Hovercrafts (1)'
             },
-            crosslinks
+            links
         )
 
-    def test_add_crosslinks_uses_related_name(self):
+    def test_add_changelist_links_uses_related_name(self):
         """If the relation has a related_name, it should be used as the label."""
         rel = Audio._meta.get_field('band').remote_field
         with mock.patch.object(rel, 'related_name', new='hovercrafts_full_of_eels'):
-            crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
-            _urls, labels = zip(*(d.values() for d in crosslinks))
+            links = self.model_admin.add_changelist_links(self.obj.pk)
+            _urls, labels = zip(*(d.values() for d in links))
             self.assertIn('Hovercrafts Full Of Eels (1)', labels)
 
     def test_add_extra_context(self):
         """Assert that add_extra_context adds additional items for the context."""
-        for object_id in ('', self.obj.pk):
-            with self.subTest(object_id=object_id):
-                extra = self.model_admin.add_extra_context(object_id=object_id)
-                self.assertIn('collapse_all', extra)
-                if object_id:
-                    self.assertIn('crosslinks', extra)
-                else:
-                    self.assertNotIn('crosslinks', extra)
+        extra = self.model_admin.add_extra_context(object_id=self.obj.pk)
+        self.assertIn('collapse_all', extra)
+        self.assertIn('changelist_links', extra)
 
-    def test_add_view(self):
-        """add_view context should include 'collapse_all' but not 'crosslinks'."""
-        response = self.client.get(self.add_path)
-        self.assertIn('collapse_all', response.context)
-        self.assertNotIn('crosslinks', response.context, msg='no crosslinks allowed in add views')
-
-    def test_change_view(self):
-        """add_view context should include 'collapse_all' and 'crosslinks'."""
-        response = self.client.get(self.change_path.format(pk=self.obj.pk))
-        self.assertIn('collapse_all', response.context)
-        self.assertIn('crosslinks', response.context)
+    def test_view_context(self):
+        """
+        Assert that the context for both add and change views include
+        'collapse_all`and 'changelist_links' items.
+        """
+        for url in (self.add_path, self.change_path.format(pk=self.obj.pk)):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertTrue('collapse_all' in response.context)
+                self.assertTrue('changelist_links' in response.context)
 
     def test_has_module_permission_superuser_only(self):
         """

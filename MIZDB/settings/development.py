@@ -1,6 +1,6 @@
-from .defaults import *
-
 import sys  # noqa
+
+from .defaults import *
 
 DEBUG = True
 
