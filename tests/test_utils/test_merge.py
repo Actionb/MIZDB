@@ -61,25 +61,25 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         cls.foo_original = make(Foo, name='Original foo')
         cls.bar_original = make(Bar, name='Original bar')
         cls.obj1 = make(MergeBase, name='Original')
-        cls.obj1.foo.add(cls.foo_original)
-        cls.obj1.bar.add(cls.bar_original)
+        cls.obj1.foo.add(cls.foo_original)  # noqa
+        cls.obj1.bar.add(cls.bar_original)  # noqa
 
         cls.foo_merger1 = make(Foo, name='Foo merger One')
         cls.bar_merger1 = make(Bar, name='Bar merger One')
         cls.obj2 = make(MergeBase, name='Merger1')
-        cls.obj2.foo.add(cls.foo_merger1)
-        cls.obj2.bar.add(cls.bar_merger1)
+        cls.obj2.foo.add(cls.foo_merger1)  # noqa
+        cls.obj2.bar.add(cls.bar_merger1)  # noqa
 
         cls.foo_merger2 = make(Foo, name='Foo merger Two')
         cls.bar_merger2 = make(Bar, name='Bar merger Two')
         cls.obj3 = make(MergeBase, name='Merger2', description="Hello!")
-        cls.obj3.foo.add(cls.foo_merger2)
-        cls.obj3.bar.add(cls.bar_merger2)
+        cls.obj3.foo.add(cls.foo_merger2)  # noqa
+        cls.obj3.bar.add(cls.bar_merger2)  # noqa
         # Add a 'duplicate' related object to test handling of UNIQUE CONSTRAINTS
         # violations.
-        cls.obj3.foo.add(cls.foo_merger1)
+        cls.obj3.foo.add(cls.foo_merger1)  # noqa
 
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]  # noqa
         super().setUpTestData()
 
     def test_merge(self):
@@ -99,6 +99,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         Assert that merge expands the original's values when expand_original is
         True.
         """
+        new_original: MergeBase
         new_original, update_data = utils.merge_records(
             original=self.obj1,
             queryset=self.queryset,
@@ -118,6 +119,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         Assert that merge does not expand the original's values when
         expand_original is False.
         """
+        new_original: MergeBase
         new_original, update_data = utils.merge_records(
             self.obj1,
             self.queryset,
@@ -179,7 +181,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         are protected and could not be deleted or could not be moved.
         """
         # Add an object to obj3 that would violate unique constraints of obj2:
-        self.obj3.bar.add(self.bar_merger1)
+        self.obj3.bar.add(self.bar_merger1)  # noqa
         queryset = self.queryset.filter(pk__in=[self.obj2.pk, self.obj3.pk])
         with self.assertRaises(models.deletion.ProtectedError):
             utils.merge_records(

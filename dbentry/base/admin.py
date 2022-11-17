@@ -8,7 +8,7 @@ from django.contrib.auth import get_permission_codename
 from django.core import checks, exceptions
 from django.db import models
 from django.db.models import Model, QuerySet
-from django.forms import BaseInlineFormSet, ModelForm
+from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
@@ -45,7 +45,7 @@ class AutocompleteMixin(object):
             db_field: models.Field,
             request: HttpRequest,
             **kwargs: Any
-    ) -> forms.Field:
+    ) -> ChoiceField:
         if 'widget' not in kwargs:
             kwargs['widget'] = make_widget(
                 model=db_field.related_model,

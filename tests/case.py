@@ -173,7 +173,7 @@ class LoggingTestMixin(object):
     object has been logged.
     """
 
-    def assertLogged(self, objects, action_flag, change_message=None, **kwargs):
+    def assertLogged(self: TestCase, objects, action_flag, change_message=None, **kwargs):
         if not objects:
             return
         if not LogEntry.objects.exists():
@@ -249,7 +249,7 @@ class LoggingTestMixin(object):
                 msg += "\nFilter parameters used: "
                 msg += "\n{}; {}".format(
                     sorted(filter_params.items()),
-                    ContentType.objects.get_for_id(filter_params['content_type__pk']).model
+                    ContentType.objects.get_for_id(filter_params['content_type__pk']).model  # noqa
                 )
                 msg += "\nLogEntry values: "
                 for log_entry in LogEntry.objects.order_by('pk').values('pk', *list(filter_params)):

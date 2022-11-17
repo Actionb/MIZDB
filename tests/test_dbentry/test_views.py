@@ -23,7 +23,7 @@ class TestPermissionDeniedView(ViewTestCase):
         """
         exception = PermissionDenied('Exception Text')
         response = MIZ_permission_denied_view(self.get_request(), exception)
-        context = response.context_data
+        context = response.context_data  # noqa
         self.assertTrue('exception' in context)
         self.assertEqual(context['exception'], 'Exception Text')
         self.assertTrue('is_popup' in context)

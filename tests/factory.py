@@ -681,7 +681,7 @@ class AutorFactory(MIZModelFactory):
         """Prepare a 2 character token based on the Person's name."""
         if obj.person is None:
             return 'XY'
-        vorname, nachname = obj.person.vorname, obj.person.nachname
+        vorname, nachname = obj.person.vorname, obj.person.nachname  # noqa
         if vorname:
             return vorname[0] + nachname[0]
         return nachname[:2].upper()

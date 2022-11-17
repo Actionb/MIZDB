@@ -568,7 +568,7 @@ class TestACAusgabe(ACViewTestCase):
         cls.obj_datum = make(cls.model, magazin=mag, e_datum='1986-08-18')
 
         cls.test_data = [
-            cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg
+            cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg  # noqa
         ]
 
         super().setUpTestData()
@@ -751,10 +751,10 @@ class TestACBuchband(ACViewTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
-        cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
+        cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)  # noqa
         cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
 
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]  # noqa
 
         super().setUpTestData()
 

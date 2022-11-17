@@ -309,12 +309,18 @@ class TestCNQuerySet(DataTestCase):
 
 
 class TestAusgabeChronologicalOrder(DataTestCase):
+    jg = None
+    monat = None
+    lnum = None
+    num = None
+    mag = None
+    e_datum = None
     model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):
 
-        def get_date(month, year):
+        def get_date(month, year):  # noqa
             return "{year}-{month}-{day}".format(
                 year=str(year),
                 month=str(month),
@@ -566,7 +572,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             e_datum='2000-06-01', ausgabemonat__monat__ordinal=[6],
             ausgabenum__num=[6]
         )
-        cls.obj1.refresh_from_db()
+        cls.obj1.refresh_from_db()  # noqa
         # obj2: start_jg - 1
         # Should belong to the previous jahrgang.
         cls.obj2 = make(

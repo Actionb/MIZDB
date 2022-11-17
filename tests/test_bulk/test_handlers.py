@@ -1,4 +1,5 @@
 import re
+from typing import Union
 
 from django.test import TestCase
 
@@ -28,18 +29,20 @@ class TestItemHandler(TestCase):
 
 
 class TestMethodsMixin:
+    valid_data = ()
+    invalid_data = ()
 
-    def test_is_valid_valid_input(self):
+    def test_is_valid_valid_input(self: Union['TestMethodsMixin', 'HandlerTestCase']):
         for valid_input, _expected in self.valid_data:
             with self.subTest(input=valid_input):
                 self.assertTrue(self.handler.is_valid(valid_input))
 
-    def test_is_valid_invalid_input(self):
+    def test_is_valid_invalid_input(self: Union['TestMethodsMixin', 'HandlerTestCase']):
         for invalid_input in self.invalid_data:
             with self.subTest(input=invalid_input):
                 self.assertFalse(self.handler.is_valid(invalid_input))
 
-    def test_handle(self):
+    def test_handle(self: Union['TestMethodsMixin', 'HandlerTestCase']):
         for valid_input, expected in self.valid_data:
             with self.subTest(input=valid_input):
                 self.assertEqual(list(self.handler.handle(valid_input)), expected)

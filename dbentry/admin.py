@@ -15,7 +15,7 @@ from django.db.models import (
     Model, Min, OuterRef, QuerySet, Subquery, Value
 )
 from django.db.models.functions import Coalesce
-from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
+from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
 from django_admin_logs.admin import LogEntryAdmin
@@ -1244,7 +1244,7 @@ class OrtAdmin(MIZModelAdmin):
 
     def formfield_for_foreignkey(
             self, db_field: ModelField, request: HttpRequest, **kwargs: Any
-    ) -> FormField:
+    ) -> ChoiceField:
         if db_field == self.opts.get_field('bland'):
             # Limit the choices to the Land instance selected in 'land':
             kwargs['widget'] = make_widget(model=db_field.related_model, forward=['land'])
@@ -1651,7 +1651,7 @@ class AuthAdminMixin(object):
             self, db_field: ManyToManyField,
             request: Optional[HttpRequest] = None,
             **kwargs: Any
-    ) -> FormField:
+    ) -> ChoiceField:
         """
         Get a form field for a ManyToManyField. If it is the formfield for
         Permissions, adjust the choices to include the models' class names.

@@ -1,3 +1,4 @@
+from typing import Union
 from unittest.mock import Mock, patch
 
 from django.contrib import admin, contenttypes
@@ -36,7 +37,7 @@ class AdminTestMethodsMixin(object):
     # 4. full count, 5. result list
     num_queries_changelist = 5
 
-    def get_annotated_model_obj(self, obj):
+    def get_annotated_model_obj(self: Union['AdminTestMethodsMixin', 'AdminTestCase'], obj):
         """Apply the model_admin's changelist annotations to the given object."""
         return (
             self.queryset
@@ -45,31 +46,31 @@ class AdminTestMethodsMixin(object):
             .get()
         )
 
-    def test_get_exclude(self):
+    def test_get_exclude(self: Union['AdminTestMethodsMixin', 'AdminTestCase']):
         """Assert that the expected fields are excluded from change form."""
         self.assertCountEqual(
             self.model_admin.get_exclude(self.get_request()),
             self.exclude_expected
         )
 
-    def test_get_fields(self):
+    def test_get_fields(self: Union['AdminTestMethodsMixin', 'AdminTestCase']):
         """Assert that the expected fields are used for the change form."""
         self.assertSequenceEqual(
             self.model_admin.get_fields(self.get_request()),
             self.fields_expected
         )
 
-    def test_changelist_can_be_reached(self):
+    def test_changelist_can_be_reached(self: Union['AdminTestMethodsMixin', 'AdminTestCase']):
         """Assert that the changelist can be reached."""
         response = self.client.get(path=self.changelist_path)
         self.assertEqual(response.status_code, 200)
 
-    def test_add_page_can_be_reached(self):
+    def test_add_page_can_be_reached(self: Union['AdminTestMethodsMixin', 'AdminTestCase']):
         """Assert that the add page can be reached."""
         response = self.client.get(path=self.add_path)
         self.assertEqual(response.status_code, 200)
 
-    def test_changelist_queries(self):
+    def test_changelist_queries(self: Union['AdminTestMethodsMixin', 'AdminTestCase']):
         """
         Assert that the number of queries needed for the changelist remains
         constant and doesn't depend on the number of records fetched.
@@ -112,7 +113,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj1 = make(
-            _models.Artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',
+            _models.Artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',  # noqa
             schlagwort__schlagwort=['Schlagwort1', 'Schlagwort2'],
             musiker__kuenstler_name='Alice Tester', band__band_name='Testband'
         )
@@ -562,7 +563,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.audio_object = make(_models.Audio, titel="Hovercrafts Full of Eels")
-        cls.bestand_object = make(_models.Bestand, audio=cls.audio_object)
+        cls.bestand_object = make(_models.Bestand, audio=cls.audio_object)  # noqa
         super().setUpTestData()
 
     def test_get_changelist(self):
@@ -750,10 +751,10 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
             autor__person=[p1, p2],
             schlagwort__schlagwort=['Schlagwort1', 'Schlagwort2'],
             genre__genre=['Testgenre1', 'Testgenre2'],
-            musiker=[cls.musiker],
-            band=[cls.band]
+            musiker=[cls.musiker],  # noqa
+            band=[cls.band]  # noqa
         )
-        cls.test_data = [cls.obj1]
+        cls.test_data = [cls.obj1]  # noqa
         super().setUpTestData()
 
     def test_get_changelist_annotations(self):
@@ -1039,7 +1040,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
             "sanctus est Lorem ipsum dolor sit amet."
         )
         cls.obj1 = make(
-            cls.model, ausgabe__extra=1, orte=[ort1, ort2], beschreibung=cls.beschreibung
+            cls.model, ausgabe__extra=1, orte=[ort1, ort2], beschreibung=cls.beschreibung  # noqa
         )
         super().setUpTestData()
 
@@ -1242,9 +1243,9 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1 = make(cls.model, datum='2022-10-17')
         cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
-        v1 = make(_models.Veranstaltung, name='Woodstock 1969', band=cls.band, musiker=cls.musiker)
+        v1 = make(_models.Veranstaltung, name='Woodstock 1969', band=cls.band, musiker=cls.musiker)  # noqa
         v2 = make(_models.Veranstaltung, name='Glastonbury 2004')
-        cls.obj1.veranstaltung.set([v1, v2])
+        cls.obj1.veranstaltung.set([v1, v2])  # noqa
         super().setUpTestData()
 
     def test_get_changelist_annotations(self):
