@@ -6,7 +6,12 @@ from django.db.models import Model, QuerySet
 from dbentry.utils import get_model_relations
 
 
-def _replace(obj: Model, attr_name: str, replacements: List[Model], related_objects: QuerySet) -> None:
+def _replace(
+        obj: Model,
+        attr_name: str,
+        replacements: List[Model],
+        related_objects: QuerySet
+) -> None:
     """
     For every model instance in 'related_objects', replace the object 'obj' in
     the related set accessed via 'attr_name' with the objects given in
@@ -38,3 +43,5 @@ def replace(obj, replacements):
             attr = accessor.target_field_name
 
         _replace(obj, attr, replacements, accessor.all())
+
+    obj.delete()
