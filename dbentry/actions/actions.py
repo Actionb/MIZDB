@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from django.views import View
 
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
 
 
@@ -49,3 +49,8 @@ def moveto_brochure(model_admin: Model, request: HttpRequest, queryset: QuerySet
 @add_cls_attrs(ChangeBestand)
 def change_bestand(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
     return ChangeBestand.as_view(model_admin=model_admin, queryset=queryset)(request)
+
+
+@add_cls_attrs(Replace)
+def replace(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return Replace.as_view(model_admin=model_admin, queryset=queryset)(request)

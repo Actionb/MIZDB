@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from django import views
 from django.contrib import messages
-from django.contrib.admin.models import ADDITION
+from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.admin.options import InlineModelAdmin
 from django.db import transaction
 from django.db.models import Count, F, Model, ProtectedError
@@ -18,7 +18,7 @@ from dbentry.actions.base import (
 )
 from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, BulkEditJahrgangForm, MergeConflictsFormSet,
-    MergeFormSelectPrimary
+    MergeFormSelectPrimary, ReplaceForm
 )
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
@@ -29,6 +29,7 @@ from dbentry.utils import (
 from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )
+from dbentry.utils.replace import replace
 
 
 def check_same_magazin(view: ActionConfirmationView, **_kwargs: Any) -> bool:
@@ -801,3 +802,47 @@ class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.Template
                 )
             )
         return context
+
+
+# TODO: superuser only?
+class Replace(MIZAdminMixin, ActionConfirmationView):
+    # template_name = 'admin/replace.html'
+    form_class = ReplaceForm
+    title = 'Ersetzen'
+    action_name = 'replace'
+    short_description = '%(verbose_name)s ersetzen'
+    action_allowed_checks = ['_check_one_object_only']
+
+    def _check_one_object_only(self) -> bool:
+        """Check that the view is called with just one object."""
+        if self.queryset.count() > 1:
+            self.model_admin.message_user(
+                request=self.request,
+                message=(
+                    'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+                    'bitte wählen Sie nur einen Datensatz aus.'
+                ),
+                level=messages.ERROR
+            )
+            return False
+        return True
+
+    def get_form_kwargs(self) -> dict:
+        kwargs = super().get_form_kwargs()
+        kwargs['choices'] = {'replacements': self.model.objects.all()}
+        return kwargs
+
+    def perform_action(self, cleaned_data) -> None:
+        obj = self.queryset.get()
+        replacements = self.model.objects.filter(pk__in=cleaned_data['replacements'])
+        changes = replace(obj, replacements)
+
+        change_message = [{'deleted': {'object': str(obj), 'name': obj._meta.verbose_name}}]
+        for replacement in replacements:
+            change_message.append(
+                {'added': {'object': str(replacement), 'name': replacement._meta.verbose_name}}
+            )
+        for changed_obj, field in changes:
+            create_logentry(self.request.user.pk, changed_obj, CHANGE, change_message)
+        # TODO: add log entry for the deletion of `obj`?
+        return None

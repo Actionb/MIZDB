@@ -7,6 +7,10 @@ class Genre(models.Model):
     def __str__(self):
         return self.genre
 
+    class Meta:
+        verbose_name = 'Genre'
+        verbose_name_plural = 'Genres'
+
 
 class Band(models.Model):
     class Status(models.TextChoices):

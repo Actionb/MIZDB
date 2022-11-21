@@ -17,6 +17,7 @@ from formtools.wizard.views import SessionWizardView, WizardView
 
 import dbentry.admin as _admin
 import dbentry.models as _models
+from dbentry.actions import actions as _actions
 from dbentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 )
@@ -82,7 +83,7 @@ class BandAdmin(admin.ModelAdmin):
 
 @admin.register(Genre, site=admin_site)
 class GenreAdmin(admin.ModelAdmin):
-    pass
+    actions = [_actions.replace]
 
 
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
@@ -1899,3 +1900,71 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # them has been deleted.
         args, kwargs = mocks['log_deletion'].call_args
         self.assertEqual((args[0], str(args[1])), (self.super_user.pk, str(deleted)))
+
+
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
+class TestReplace(ActionViewTestCase, LoggingTestMixin):
+    action_name = 'replace'
+    admin_site = admin_site
+    model = Genre
+    model_admin_class = GenreAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(Genre)
+        cls.obj2 = make(Genre)
+        cls.band = make(Band, genres=[cls.obj1])
+        super().setUpTestData()
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test(self):
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/action_confirmation.html')
+
+        # Fill out the form. We should be redirected back to the changelist,
+        # and obj1 should have been replaced and deleted.
+        request_data['action_confirmed'] = '1'
+        request_data['replacements'] = [str(self.obj2.pk)]
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateNotUsed(response, 'admin/action_confirmation.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
+        self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
+        self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test_can_only_select_one(self):
+        """Assert that the action can only be called with one selected object."""
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateNotUsed(response, 'admin/action_confirmation.html')
+        self.assertMessageSent(
+            response.wsgi_request,
+            'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+            'bitte wählen Sie nur einen Datensatz aus.'
+        )
+
+    def test_adds_log_entries(self):
+        """Assert that LogEntry change messages are added to the related objects."""
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+            'action_confirmed': '1',
+            'replacements': [str(self.obj2.pk)],
+        }
+        self.post_response(self.changelist_path, data=request_data, follow=True)
+        change_message = [
+            {'deleted': {'object': str(self.obj1), 'name': 'Genre'}},
+            {'added': {'object': str(self.obj2), 'name': 'Genre'}},
+        ]
+        self.assertLoggedChange(self.band, change_message=change_message)
+        # self.assertLoggedDeletion(self.obj1)
