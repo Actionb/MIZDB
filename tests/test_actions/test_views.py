@@ -1,4 +1,4 @@
-from unittest.mock import DEFAULT, Mock, PropertyMock, call, patch
+from unittest.mock import DEFAULT, Mock, PropertyMock, patch
 
 from django import forms
 from django.contrib import admin
@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.forms.formsets import ManagementForm
 from django.test import override_settings
-from django.utils.html import format_html
+from django.urls import reverse
 from django.utils.translation import override as translation_override
 from django.views.generic.base import ContextMixin, View
 from formtools.wizard.views import SessionWizardView, WizardView
@@ -19,7 +19,7 @@ import dbentry.admin as _admin
 import dbentry.models as _models
 from dbentry.actions import actions as _actions
 from dbentry.actions.base import (
-    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView, get_object_link
 )
 from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, MergeConflictsFormSet, MergeFormSelectPrimary
@@ -84,6 +84,9 @@ class BandAdmin(admin.ModelAdmin):
 @admin.register(Genre, site=admin_site)
 class GenreAdmin(admin.ModelAdmin):
     actions = [_actions.replace]
+
+    def has_superuser_permission(self, request):
+        return request.user.is_superuser
 
 
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
@@ -277,14 +280,6 @@ class TestConfirmationViewMixin(ActionViewTestCase):
                 self.assertEqual(context['objects_name'], 'Bands')
 
 
-def get_obj_link_mock(obj, user, site_name, blank):
-    """Mock version of dbentry.admin.utils.get_obj_link"""
-    target = ''
-    if blank:
-        target = format_html(' target="_blank"')
-    return format_html('<a href="URL"{target}>{obj}</a>', target=target, obj=obj)
-
-
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestActionConfirmationView(ActionViewTestCase):
     class DummyView(ActionConfirmationView):
@@ -315,13 +310,34 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertIn('data', view.get_form_kwargs())
         self.assertIn('files', view.get_form_kwargs())
 
-    @patch('dbentry.actions.base.get_obj_link')
-    def test_get_objects_list(self, get_link_mock):
-        get_link_mock.side_effect = get_obj_link_mock
+    def test_get_object_link(self):
+        """
+        Assert that get_object_link returns the expected string:
+        '<model.verbose_name>: <url>'.
+        """
+        # TODO: move this test into its own TestCase for get_object_link
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(
+            get_object_link(self.obj, self.super_user, self.admin_site.name),
+            f'Band: <a href="{url}" target="_blank">Khruangbin</a>'
+        )
+
+    def test_get_object_link_no_change_page_URL(self):
+        """
+        Assert that get_object_link returns '<model.verbose_name>: <str(obj)>'
+        if no URL to the change page could be found.
+        """
+        # TODO: move this test into its own TestCase for get_object_link
+        self.assertEqual(
+            get_object_link(self.obj, self.noperms_user, self.admin_site.name),
+            'Band: Khruangbin'
+        )
+
+    def test_get_objects_list(self):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),  # noqa
+            queryset=self.model.objects.all(),
             display_fields=['band_name', 'genres', 'status']
         )
         user = view.request.user
@@ -334,61 +350,51 @@ class TestActionConfirmationView(ActionViewTestCase):
         #       ...
         # ]
 
-        self.assertEqual(
-            len(get_link_mock.call_args_list), 3,
-            msg="Expected get_obj_link to be called three times, as three links are expected."
-        )
-        self.assertEqual(link_list[0][0], f'Band: <a href="URL" target="_blank">{self.obj}</a>')
-        # Note that the link for the object is created after the links of its 
-        # related objects. That means it is the last mock call.
-        self.assertEqual(
-            get_link_mock.call_args_list[-1], call(self.obj, user, self.admin_site.name, blank=True)
-        )
+        self.assertEqual(len(link_list), 1)
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(link_list[0][0], f'Band: <a href="{url}" target="_blank">{self.obj}</a>')
 
         # link_list[0][1] is the list of values for the display fields:
         display_field_values = link_list[0][1]
+        # 4 items: one for the band name, two for the genres, and one for the
+        # status:
+        self.assertEqual(len(display_field_values), 4)
+        # 'band_name' value:
         self.assertEqual(display_field_values[0], 'Bandname: ' + self.obj.band_name)
-
-        # The next two items should be links to the Genre objects:
+        # links to the genres:
         genres = Genre.objects.all().order_by('genre')
+        url_name = f"{self.admin_site.name}:{Genre._meta.app_label}_{Genre._meta.model_name}_change"
+        url = reverse(url_name, args=[genres[0].pk])
         self.assertEqual(
-            display_field_values[1], f'Genre: <a href="URL" target="_blank">{genres[0]}</a>'
+            display_field_values[1], f'Genre: <a href="{url}" target="_blank">{genres[0]}</a>'
         )
+        url = reverse(url_name, args=[genres[1].pk])
         self.assertEqual(
-            get_link_mock.call_args_list[0],
-            call(genres[0], user, self.admin_site.name, blank=True)
+            display_field_values[2], f'Genre: <a href="{url}" target="_blank">{genres[1]}</a>'
         )
-        self.assertEqual(
-            display_field_values[2], f'Genre: <a href="URL" target="_blank">{genres[1]}</a>'
-        )
-        self.assertEqual(
-            get_link_mock.call_args_list[1],
-            call(genres[1], user, self.admin_site.name, blank=True)
-        )
-
-        # And the last item should be the status:
+        # 'status' value:
         self.assertEqual(link_list[0][1][3], 'Status: Aktiv')
 
-    @patch('dbentry.actions.base.get_obj_link')
-    def test_get_objects_list_no_display_fields(self, get_link_mock):
-        get_link_mock.return_value = format_html('<a href="URL">a link</a>')
+    def test_get_objects_list_no_display_fields(self):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),  # noqa
+            queryset=self.model.objects.all(),
             display_fields=[]
         )
-        self.assertEqual(view.get_objects_list(), [('Band: <a href="URL">a link</a>',)])
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(
+            view.get_objects_list(),
+            [(f'Band: <a href="{url}" target="_blank">{self.obj}</a>',)]
+        )
 
-    @patch('dbentry.actions.base.get_obj_link')
-    def test_get_objects_list_no_link(self, get_link_mock):
+    def test_get_objects_list_no_link(self):
         """
         Assert that a string representation of the object is presented, if
         no link could be created for it.
         """
-        get_link_mock.return_value = f'Band: {self.obj}'
         view = self.get_view(
-            self.get_request(),
+            self.get_request(user=self.noperms_user),
             model_admin=self.model_admin,
             queryset=self.model.objects.all(),  # noqa
             display_fields=[]
@@ -1971,6 +1977,23 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             {'added': {'object': str(self.obj2), 'name': 'Genre'}},
         ]
         self.assertLoggedChange(self.band, change_message=change_message)
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test_requires_superuser_permission(self):
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]
+        }
+
+        response = self.post_response(
+            self.changelist_path, user=self.staff_user, data=request_data, follow=True
+        )
+        self.assertEqual(response.status_code, 403)
+        # As superuser:
+        response = self.post_response(
+            self.changelist_path, user=self.super_user, data=request_data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
 
     def test_check_one_object_only(self):
         for qs in (self.model.objects.all(), (self.model.objects.filter(pk=self.obj1.pk))):
