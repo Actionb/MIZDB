@@ -122,6 +122,9 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     )
         return errors
 
+    def has_superuser_permission(self, request):
+        return request.user.is_superuser
+
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         annotations = self.get_changelist_annotations()

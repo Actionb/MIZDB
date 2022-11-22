@@ -811,6 +811,8 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
     action_name = 'replace'
     short_description = '%(verbose_name)s ersetzen'
     action_allowed_checks = ['_check_one_object_only']
+    allowed_permissions = ['superuser']
+    action_reversible = True
 
     def _check_one_object_only(self) -> bool:
         """Check that the view is called with just one object."""
@@ -831,7 +833,7 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
         kwargs['choices'] = {'replacements': self.model.objects.all()}
         return kwargs
 
-    def perform_action(self, cleaned_data) -> None:
+    def perform_action(self, cleaned_data) -> None:  # type: ignore[override]
         obj = self.queryset.get()
         replacements = self.model.objects.filter(pk__in=cleaned_data['replacements'])
         changes = replace(obj, replacements)
