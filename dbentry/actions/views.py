@@ -9,6 +9,7 @@ from django.db.models import Count, F, Model, ProtectedError
 from django.forms import ALL_FIELDS, BaseInlineFormSet, Form
 from django.http import HttpRequest, HttpResponse
 from django.utils.html import format_html
+from django.utils.text import capfirst
 from django.utils.translation import gettext, gettext_lazy
 from django.views.generic import FormView
 
@@ -23,7 +24,8 @@ from dbentry.actions.forms import (
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
 from dbentry.utils import (
-    get_changelist_link, get_model_from_string, get_obj_link, get_updatable_fields, is_protected,
+    get_changelist_link, get_model_from_string, get_model_relations, get_obj_link,
+    get_updatable_fields, is_protected,
     link_list, merge_records
 )
 from dbentry.utils.admin import (
@@ -847,3 +849,36 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
             create_logentry(self.request.user.pk, changed_obj, CHANGE, change_message)
         # TODO: add log entry for the deletion of `obj`?
         return None
+
+    def get_objects_list(self):
+        to_replace = self.queryset.get()
+        objects_list = []
+
+        for rel in get_model_relations(self.model, forward=False):
+            if rel.related_model == self.model:
+                related_set = getattr(to_replace, rel.remote_field.name)
+                # other_model = rel.model
+                model_name = rel.model._meta.verbose_name
+            else:
+                related_set = getattr(to_replace, rel.get_accessor_name())
+                # other_model = rel.related_model
+                model_name = rel.related_model._meta.verbose_name
+
+            for obj in related_set.all():
+                # TODO: add the a link
+                link = get_obj_link(
+                    obj=obj,
+                    user=self.request.user,
+                    site_name=self.model_admin.admin_site.name,
+                    blank=True
+                )
+                objects_list.append((f"{capfirst(model_name)}: {link}",))
+                # objects_list.append((
+                #     format_html(
+                #         '{model_name}: {link}',
+                #         model_name=capfirst(model_name),
+                #         link=link
+                #     ),
+                #     # (f"{capfirst(model_name)}: {link}",)
+                # ))
+        return objects_list
