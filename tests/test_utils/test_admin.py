@@ -34,6 +34,38 @@ class TestAdminUtils(RequestTestCase):
         super().setUpTestData()
 
     ################################################################################################
+    # test get_change_page_url
+    ################################################################################################
+
+    def test_get_change_page_url(self):
+        """Assert that the expected URL is returned by get_change_page_url."""
+        self.assertEqual(
+            admin_utils.get_change_page_url(self.obj1, self.super_user),
+            f'/admin/test_utils/audio/{self.obj1.pk}/change/'
+        )
+
+    def test_get_change_page_url_no_change_permission(self):
+        """
+        Assert that get_change_page_url returns an empty string if the user
+        lacks change permission.
+        """
+        self.assertFalse(admin_utils.get_change_page_url(self.obj1, self.noperms_user))
+
+    def test_get_change_page_url_no_reverse_match(self):
+        """
+        Assert that get_change_page_url returns an empty string if there is no
+        reverse match for the object.
+        """
+
+        class URLConf:
+            urlpatterns = []
+
+        with override_settings(ROOT_URLCONF=URLConf):
+            with self.assertNotRaises(NoReverseMatch):
+                link = admin_utils.get_change_page_url(self.obj1, self.super_user)
+        self.assertFalse(link)
+
+    ################################################################################################
     # test get_obj_link
     ################################################################################################
 
@@ -57,7 +89,7 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_obj_link_no_change_permission(self):
         """
-        No link should be displayed, if the user does not have change
+        No link should be displayed if the user does not have change
         permissions.
         """
         self.assertEqual(
@@ -67,7 +99,7 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_obj_link_no_reverse_match(self):
         """
-        No link should be displayed, if there is no reverse match for the given
+        No link should be displayed if there is no reverse match for the given
         admin site name and model instance/model options.
         """
 
@@ -155,14 +187,14 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_changelist_url_no_perms(self):
         """
-        Assert that get_changelist_url returns an empty string, if the user has
+        Assert that get_changelist_url returns an empty string if the user has
         no permission to access the requested changelist.
         """
         self.assertEqual(admin_utils.get_changelist_url(self.model, self.noperms_user), "")
 
     def test_get_changelist_url_no_reverse(self):
         """
-        Assert that get_changelist_url returns an empty string, if no reverse
+        Assert that get_changelist_url returns an empty string if no reverse
         match could be found for the requested changelist.
         """
 
@@ -394,7 +426,7 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_model_admin_for_model_not_registered(self):
         """
-        get_model_admin_for_model should return None, if no ModelAdmin class
+        get_model_admin_for_model should return None if no ModelAdmin class
         is registered with the given model.
         """
         self.assertIsNone(admin_utils.get_model_admin_for_model('test_utils.Band'), admin_site)
