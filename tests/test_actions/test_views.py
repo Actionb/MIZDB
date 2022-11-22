@@ -25,7 +25,7 @@ from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, MergeConflictsFormSet, MergeFormSelectPrimary
 )
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
 from dbentry.base.forms import MIZAdminForm
 from dbentry.base.views import MIZAdminMixin
@@ -1908,6 +1908,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
     admin_site = admin_site
     model = Genre
     model_admin_class = GenreAdmin
+    view_class = Replace
 
     @classmethod
     def setUpTestData(cls):
@@ -1954,7 +1955,10 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         )
 
     def test_adds_log_entries(self):
-        """Assert that LogEntry change messages are added to the related objects."""
+        """
+        Assert that LogEntry change messages are added to the related objects
+        that were changed.
+        """
         request_data = {
             'action': self.action_name,
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
@@ -1967,4 +1971,45 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             {'added': {'object': str(self.obj2), 'name': 'Genre'}},
         ]
         self.assertLoggedChange(self.band, change_message=change_message)
-        # self.assertLoggedDeletion(self.obj1)
+
+    def test_check_one_object_only(self):
+        for qs in (self.model.objects.all(), (self.model.objects.filter(pk=self.obj1.pk))):
+            with self.subTest(count=qs.count()):
+                # Get a request that went through the 'messages' middleware:
+                request = self.get_response('/').wsgi_request
+                view = self.get_view(queryset=qs, request=request)
+                if qs.count() == 1:
+                    self.assertTrue(view._check_one_object_only())
+                else:
+                    self.assertFalse(view._check_one_object_only())
+                    self.assertMessageSent(
+                        request,
+                        'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+                        'bitte wählen Sie nur einen Datensatz aus.'
+                    )
+
+    def test_get_form_kwargs_sets_choices(self):
+        """Assert that get_form_kwargs adds the choices for the replacements choice field."""
+        view = self.get_view(request=self.get_request())
+        form_kwargs = view.get_form_kwargs()
+        self.assertIn('choices', form_kwargs)
+        self.assertIn('replacements', form_kwargs['choices'])
+        self.assertQuerysetEqual(
+            form_kwargs['choices']['replacements'],
+            self.model.objects.all(),
+            ordered=False
+        )
+
+    def test_get_perform_action(self):
+        view = self.get_view(
+            request=self.get_request(),
+            queryset=self.model.objects.filter(pk=self.obj1.pk)
+        )
+        view.perform_action(cleaned_data={'replacements': [str(self.obj2.pk)]})
+        self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
+        self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
+        change_message = [
+            {'deleted': {'object': str(self.obj1), 'name': 'Genre'}},
+            {'added': {'object': str(self.obj2), 'name': 'Genre'}},
+        ]
+        self.assertLoggedChange(self.band, change_message=change_message)

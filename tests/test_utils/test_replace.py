@@ -1,6 +1,6 @@
 from dbentry.utils.replace import _replace, replace
 from tests.factory import make
-from .models import Band, Genre, Musiker
+from .models import Audio, Band, Genre, Musiker
 from ..case import DataTestCase
 
 
@@ -17,11 +17,16 @@ class TestReplace(DataTestCase):
         cls.band2 = make(Band, band_name='band2', genre=[cls.initial, cls.extra])  # noqa
         cls.band3 = make(Band, band_name='band3', genre=[cls.extra])  # noqa
         cls.musiker = make(Musiker, kuenstler_name='musiker', genre=[cls.initial])  # noqa
+
+        cls.audio = make(Audio, titel='audio', band=[cls.band1])  # noqa
         super().setUpTestData()
 
     def test__replace(self):
         changes = _replace(
-            self.initial, 'genre', [self.replacement1, self.replacement2], self.queryset
+            obj=self.initial,
+            related_objects=self.queryset,
+            attr_name='genre',
+            replacements=[self.replacement1, self.replacement2]
         )
 
         self.assertQuerysetEqual(
@@ -34,13 +39,10 @@ class TestReplace(DataTestCase):
         )
         self.assertQuerysetEqual(self.band3.genre.order_by('genre'), [self.extra])
 
-        self.assertCountEqual(
-            changes,
-            [(self.band1, 'genre'), (self.band2, 'genre')]
-        )
+        self.assertCountEqual(changes, [self.band1, self.band2])
 
     def test_replace(self):
-        changes = replace(self.initial, [self.replacement1, self.replacement2])
+        changes = replace(obj=self.initial, replacements=[self.replacement1, self.replacement2])
 
         self.assertQuerysetEqual(
             self.band1.genre.order_by('genre'),
@@ -59,19 +61,35 @@ class TestReplace(DataTestCase):
 
         self.assertFalse(Genre.objects.filter(pk=self.initial.pk).exists())
 
-        self.assertCountEqual(
-            changes,
-            [(self.band1, 'genre'), (self.band2, 'genre'), (self.musiker, 'genre')]
+        self.assertCountEqual(changes, [self.band1, self.band2, self.musiker])
+
+    def test_replace_reverse_relation_declared_on_obj(self):
+        """
+        Assert that replace can handle if obj has a relation that classifies as
+        'reverse' but is declared on the model of obj itself.
+        (i.e. a 'forward' ManyToMany)
+        """
+        changes = replace(self.band1, [self.band2, self.band3])
+        self.assertQuerysetEqual(
+            self.audio.band.order_by('band_name'),
+            [self.band2, self.band3]
         )
+        self.assertFalse(Band.objects.filter(pk=self.band1.pk).exists())
+        self.assertCountEqual(changes, [self.audio, self.initial])
 
     def test_replace_rollback(self):
         """Assert that any error during the replacement results in a full rollback."""
-        self.fail("Write me!")
-        # TODO: fail here
-        replace(self.initial, [self.replacement1, self.replacement2])
-        self.assertTrue(self.model.objects.filter(pk=self.initial.pk).exists())
-        self.assertTrue(self.model.objects.filter(pk=self.replacement1.pk).exists())
-        self.assertTrue(self.model.objects.filter(pk=self.replacement2.pk).exists())
+        # Calling related_set.add with an unsaved instance raises a ValueError:
+        unsaved = Genre(genre='unsaved')
+        with self.assertRaises(ValueError):
+            _replace(
+                obj=self.initial,
+                related_objects=self.initial.band_set.all(),
+                attr_name='genre',
+                replacements=[self.replacement1, self.replacement2, unsaved]
+            )
+        self.assertTrue(Genre.objects.filter(pk=self.initial.pk).exists())
+        self.assertTrue(Genre.objects.filter(pk=self.replacement1.pk).exists())
+        self.assertTrue(Genre.objects.filter(pk=self.replacement2.pk).exists())
         self.assertQuerysetEqual(self.band1.genre.order_by('genre'), [self.initial])
-        self.assertQuerysetEqual(self.band2.genre.order_by('genre'), [self.initial])
-        self.assertQuerysetEqual(self.musiker.genre.order_by('genre'), [self.initial])
+        self.assertQuerysetEqual(self.band2.genre.order_by('genre'), [self.extra, self.initial])

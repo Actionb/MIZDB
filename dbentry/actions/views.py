@@ -806,7 +806,6 @@ class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.Template
 
 # TODO: superuser only?
 class Replace(MIZAdminMixin, ActionConfirmationView):
-    # template_name = 'admin/replace.html'
     form_class = ReplaceForm
     title = 'Ersetzen'
     action_name = 'replace'
@@ -842,7 +841,7 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
             change_message.append(
                 {'added': {'object': str(replacement), 'name': replacement._meta.verbose_name}}
             )
-        for changed_obj, field in changes:
+        for changed_obj in changes:
             create_logentry(self.request.user.pk, changed_obj, CHANGE, change_message)
         # TODO: add log entry for the deletion of `obj`?
         return None
