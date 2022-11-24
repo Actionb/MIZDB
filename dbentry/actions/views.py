@@ -15,7 +15,7 @@ from django.views.generic import FormView
 
 from dbentry import models as _models
 from dbentry.actions.base import (
-    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView, get_object_link
 )
 from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, BulkEditJahrgangForm, MergeConflictsFormSet,
@@ -851,34 +851,24 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
         return None
 
     def get_objects_list(self):
+        """
+        Provide links to the change pages of the records that are related with
+        the object to be replaced.
+        """
         to_replace = self.queryset.get()
         objects_list = []
 
         for rel in get_model_relations(self.model, forward=False):
             if rel.related_model == self.model:
                 related_set = getattr(to_replace, rel.remote_field.name)
-                # other_model = rel.model
-                model_name = rel.model._meta.verbose_name
             else:
                 related_set = getattr(to_replace, rel.get_accessor_name())
-                # other_model = rel.related_model
-                model_name = rel.related_model._meta.verbose_name
 
             for obj in related_set.all():
-                # TODO: add the a link
-                link = get_obj_link(
+                link = get_object_link(
                     obj=obj,
                     user=self.request.user,
                     site_name=self.model_admin.admin_site.name,
-                    blank=True
                 )
-                objects_list.append((f"{capfirst(model_name)}: {link}",))
-                # objects_list.append((
-                #     format_html(
-                #         '{model_name}: {link}',
-                #         model_name=capfirst(model_name),
-                #         link=link
-                #     ),
-                #     # (f"{capfirst(model_name)}: {link}",)
-                # ))
+                objects_list.append((link, ))
         return objects_list

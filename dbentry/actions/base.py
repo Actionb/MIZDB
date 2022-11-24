@@ -206,13 +206,14 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         # the redirect for us.
         return None
 
-    def get_objects_list(self) -> List[Tuple[SafeTextOrStr, List[SafeTextOrStr]]]:
+    def get_objects_list(self) -> List[Tuple]:
         """
         Compile a list of the objects that would be changed by this action.
 
-        Display them as a link to that object's respective change page,
-        if possible. If the action is aimed at the values of particular fields
-        of the objects, present those values as a nested list.
+        Returns a list of 2-tuples, where the first item is a link to the
+        change page of an object, and the second may be a nested list of the
+        values (which may include yet more links) of fields declared in
+        self.display_values.
         """
         user = self.request.user
         site_name = self.model_admin.admin_site.name

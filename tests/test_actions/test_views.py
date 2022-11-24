@@ -2036,3 +2036,21 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             {'added': {'object': str(self.obj2), 'name': 'Genre'}},
         ]
         self.assertLoggedChange(self.band, change_message=change_message)
+
+    def test_get_objects_list(self):
+        """
+        Assert that get_objects_list returns links to the objects that are
+        related to the object to be replaced.
+        """
+        opts = Band._meta
+        url = reverse(
+            f"{self.admin_site.name}:{opts.app_label}_{opts.model_name}_change",
+            args=[self.band.pk]
+        )
+        link = f'<a href="{url}" target="_blank">{self.band}</a>'
+
+        view = self.get_view(
+            request=self.get_request(),
+            queryset=self.model.objects.filter(pk=self.obj1.pk)
+        )
+        self.assertEqual(view.get_objects_list(), [(f'Band: {link}', )])
