@@ -95,6 +95,39 @@ class AudioAdmin(admin.ModelAdmin):
 
 
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
+class TestGetObjectLink(AdminTestCase):
+    admin_site = admin_site
+    model = Band
+    model_admin_class = BandAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, band_name='Khruangbin')
+        super().setUpTestData()
+
+    def test_get_object_link(self):
+        """
+        Assert that get_object_link returns the expected string:
+        '<model.verbose_name>: <url>'.
+        """
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(
+            get_object_link(self.obj, self.super_user, self.admin_site.name),
+            f'Band: <a href="{url}" target="_blank">Khruangbin</a>'
+        )
+
+    def test_get_object_link_no_change_page_URL(self):
+        """
+        Assert that get_object_link returns '<model.verbose_name>: <str(obj)>'
+        if no URL to the change page could be found.
+        """
+        self.assertEqual(
+            get_object_link(self.obj, self.noperms_user, self.admin_site.name),
+            'Band: Khruangbin'
+        )
+
+
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestConfirmations(AdminTestCase):
     """Integration test for ActionConfirmationView (and ConfirmationViewMixin)."""
 
@@ -314,29 +347,6 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view(self.post_request('/', data={'action_confirmed': '1'}))
         self.assertIn('data', view.get_form_kwargs())
         self.assertIn('files', view.get_form_kwargs())
-
-    def test_get_object_link(self):
-        """
-        Assert that get_object_link returns the expected string:
-        '<model.verbose_name>: <url>'.
-        """
-        # TODO: move this test into its own TestCase for get_object_link
-        url = self.change_path.format(pk=self.obj.pk)
-        self.assertEqual(
-            get_object_link(self.obj, self.super_user, self.admin_site.name),
-            f'Band: <a href="{url}" target="_blank">Khruangbin</a>'
-        )
-
-    def test_get_object_link_no_change_page_URL(self):
-        """
-        Assert that get_object_link returns '<model.verbose_name>: <str(obj)>'
-        if no URL to the change page could be found.
-        """
-        # TODO: move this test into its own TestCase for get_object_link
-        self.assertEqual(
-            get_object_link(self.obj, self.noperms_user, self.admin_site.name),
-            'Band: Khruangbin'
-        )
 
     def test_get_objects_list(self):
         view = self.get_view(
