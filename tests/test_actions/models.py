@@ -28,3 +28,13 @@ class Band(models.Model):
 
     def __str__(self):
         return self.band_name
+
+
+class Audio(models.Model):
+    title = models.CharField('Titel', max_length=100)
+
+    bands = models.ManyToManyField('test_actions.Band')
+
+    class Meta:
+        verbose_name = 'Audio-Material'
+        verbose_name_plural = 'Audio-Materialien'

@@ -33,7 +33,7 @@ from dbentry.sites import miz_site
 from dbentry.utils import get_obj_link
 from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
 from tests.factory import make
-from .models import Band, Genre
+from .models import Audio, Band, Genre
 
 admin_site = admin.AdminSite(name='test_actions')
 
@@ -87,6 +87,11 @@ class GenreAdmin(admin.ModelAdmin):
 
     def has_superuser_permission(self, request):
         return request.user.is_superuser
+
+
+@admin.register(Audio, site=admin_site)
+class AudioAdmin(admin.ModelAdmin):
+    pass
 
 
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
@@ -2023,7 +2028,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             ordered=False
         )
 
-    def test_get_perform_action(self):
+    def test_get_perform_action_genre(self):
         view = self.get_view(
             request=self.get_request(),
             queryset=self.model.objects.filter(pk=self.obj1.pk)
@@ -2037,7 +2042,25 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         ]
         self.assertLoggedChange(self.band, change_message=change_message)
 
-    def test_get_objects_list(self):
+    def test_perform_action_band(self):
+        replacement = make(Band)
+        audio = make(Audio, bands=[self.band])
+
+        view = self.get_view(
+            request=self.get_request(),
+            model_admin=BandAdmin(Band, self.admin_site),
+            queryset=Band.objects.filter(pk=self.band.pk)
+        )
+        view.perform_action(cleaned_data={'replacements': [str(replacement.pk)]})
+        self.assertQuerysetEqual(audio.bands.all(), [replacement])
+        self.assertFalse(Band.objects.filter(pk=self.band.pk).exists())
+        change_message = [
+            {'deleted': {'object': str(self.band), 'name': 'Band'}},
+            {'added': {'object': str(replacement), 'name': 'Band'}},
+        ]
+        self.assertLoggedChange(audio, change_message=change_message)
+
+    def test_get_objects_list_genre(self):
         """
         Assert that get_objects_list returns links to the objects that are
         related to the object to be replaced.
@@ -2055,11 +2078,34 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         )
         self.assertEqual(view.get_objects_list(), [(f'Band: {link}',)])
 
+    def test_get_objects_list_band(self):
+        """
+        Assert that get_objects_list can handle reverse relations declared on
+        the model of the object to be replaced.
+        """
+        # When replacing a Band object, the related Audio object should be
+        # included in the objects_list:
+        _replacement = make(Band)
+        audio = make(Audio, bands=[self.band])
+        opts = Audio._meta
+        url = reverse(
+            f"{self.admin_site.name}:{opts.app_label}_{opts.model_name}_change",
+            args=[audio.pk]
+        )
+        link = f'<a href="{url}" target="_blank">{audio}</a>'
+
+        view = self.get_view(
+            request=self.get_request(),
+            model_admin=BandAdmin(Band, self.admin_site),
+            queryset=Band.objects.filter(pk=self.band.pk)
+        )
+        self.assertIn((f'Audio-Material: {link}',), view.get_objects_list())
+
     @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
     def test_get_context_data(self):
         view = self.get_view(
             request=self.get_request(),
-            queryset=self.model.objects.filter(pk=self.obj1.pk)
+            queryset=self.model.objects.filter(pk=self.obj1.pk),
         )
         helptext = (
             f'Ersetze Genre "{self.obj1}" mit den folgenden Genres. '
