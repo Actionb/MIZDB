@@ -2,7 +2,8 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, Typ
 
 from django import views
 from django.contrib.admin import ModelAdmin, helpers
-from django.contrib.admin.utils import display_for_field, get_fields_from_path
+from django.contrib.admin.utils import display_for_field, get_fields_from_path, model_format_dict
+from django.contrib.auth.models import User
 from django.db.models import Model, QuerySet
 from django.db.models.options import Options
 from django.forms import Form
@@ -14,9 +15,23 @@ from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
 
 from dbentry.base.views import FixedSessionWizardView
-from dbentry.utils import get_obj_link
+from dbentry.utils import create_hyperlink, get_change_page_url
 
 SafeTextOrStr = Union[str, SafeText]
+
+
+def get_object_link(obj: Model, user: User, site_name: str) -> SafeText:
+    """
+    Return a safe string containing the model name and a link to the change
+    page of ``obj``.
+    """
+    model_name = capfirst(obj._meta.verbose_name)
+    url = get_change_page_url(obj, user, site_name)
+    if url:
+        link = create_hyperlink(url, obj, target='_blank')
+    else:
+        link = force_str(obj)
+    return format_html('{model_name}: {object_link}', model_name=model_name, object_link=link)
 
 
 class ConfirmationViewMixin(object):
@@ -127,14 +142,10 @@ class ConfirmationViewMixin(object):
 
         # Add view specific variables.
         title = self.title or getattr(self, 'short_description', '')
-        title = title % {'verbose_name_plural': self.opts.verbose_name_plural}
+        defaults['title'] = title % model_format_dict(self.model)
         breadcrumbs_title = self.breadcrumbs_title or title
-        breadcrumbs_title = breadcrumbs_title % {
-            'verbose_name_plural': self.opts.verbose_name_plural
-        }
+        defaults['breadcrumbs_title'] = breadcrumbs_title % model_format_dict(self.model)
 
-        defaults['title'] = title
-        defaults['breadcrumbs_title'] = breadcrumbs_title
         if not self.action_reversible:
             defaults['non_reversible_warning'] = self.non_reversible_warning
 
@@ -191,33 +202,17 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         # the redirect for us.
         return None
 
-    def get_objects_list(self) -> List[Tuple[SafeTextOrStr, List[SafeTextOrStr]]]:
+    def get_objects_list(self) -> list:
         """
         Compile a list of the objects that would be changed by this action.
 
-        Display them as a link to that object's respective change page,
-        if possible. If the action is aimed at the values of particular fields
-        of the objects, present those values as a nested list.
+        Returns a list of 2-tuples, where the first item is a link to the
+        change page of an object, and the second may be a nested list of the
+        values (which may include yet more links) of fields declared in
+        self.display_values.
         """
-
-        def linkify(model_instance: Model) -> SafeText:
-            object_link = get_obj_link(
-                model_instance, self.request.user,
-                self.model_admin.admin_site.name, blank=True
-            )
-            if "</a>" in object_link:
-                # get_obj_link returned a full link;
-                # add the model's verbose_name.
-                # noinspection PyUnresolvedReferences
-                return format_html(
-                    '{model_name}: {object_link}',
-                    model_name=capfirst(model_instance._meta.verbose_name),
-                    object_link=object_link
-                )
-            else:
-                # get_obj_link couldn't create a link and has simply returned
-                # {model_name}: force_str(obj)
-                return object_link
+        user = self.request.user
+        site_name = self.model_admin.admin_site.name
 
         objects = []
         for obj in self.queryset:
@@ -237,7 +232,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                             # values_list() will also gather None values
                             continue  # pragma: no cover
                         related_obj = field.related_model.objects.get(pk=pk)
-                        sub_list.append(linkify(related_obj))
+                        sub_list.append(get_object_link(related_obj, user, site_name))
                 else:
                     value = display_for_field(getattr(obj, field.name), field, '---')
                     verbose_name = field.verbose_name
@@ -246,9 +241,9 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                         verbose_name = verbose_name.title()
                     sub_list.append("{}: {}".format(verbose_name, str(value)))
             if self.display_fields:
-                links = (linkify(obj), sub_list)
+                links = (get_object_link(obj, user, site_name), sub_list)
             else:
-                links = (linkify(obj),)  # type: ignore[assignment]
+                links = (get_object_link(obj, user, site_name),)  # type: ignore[assignment]
             objects.append(links)
         return objects
 

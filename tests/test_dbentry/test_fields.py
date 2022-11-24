@@ -1,4 +1,5 @@
 import datetime
+from typing import Union
 from unittest.mock import patch
 
 from django import forms
@@ -187,6 +188,9 @@ class StdNumModel(models.Model):
     ean = EANField()
 
 
+TestCaseType = Union['StdNumFieldTestsMixin', 'MIZTestCase']
+
+
 class StdNumFieldTestsMixin(object):
     """Test method mixin with tests on the standard number model fields."""
     # Reminder: the field's cleaning methods will re-raise any errors as new
@@ -196,8 +200,10 @@ class StdNumFieldTestsMixin(object):
     model = StdNumModel
     model_field = None
     instance_data = None
+    valid = ()
+    invalid = ()
 
-    def create_model_instance(self, **kwargs):
+    def create_model_instance(self: TestCaseType, **kwargs):
         if self.instance_data is not None:
             instance_data = self.instance_data.copy()
         else:
@@ -205,20 +211,20 @@ class StdNumFieldTestsMixin(object):
         instance_data.update(kwargs)
         return self.model(**instance_data)
 
-    def test_to_python_empty_values(self):
+    def test_to_python_empty_values(self: TestCaseType):
         """Assert that to_python does not modify 'empty' values."""
         for empty_value in self.model_field.empty_values:
             with self.subTest(value=empty_value):
                 self.assertEqual(self.model_field.to_python(empty_value), empty_value)
 
-    def test_empty_values_widget(self):
+    def test_empty_values_widget(self: TestCaseType):
         """Assert that 'empty' values are not modified by the widget."""
         widget = self.model_field.formfield().widget
         for empty_value in self.model_field.empty_values:
             with self.subTest(value=empty_value):
                 self.assertEqual(widget.format_value(empty_value), empty_value)
 
-    def test_no_save_with_invalid_data(self):
+    def test_no_save_with_invalid_data(self: TestCaseType):
         """Assert that no objects can be saved with invalid data."""
         for invalid_number in self.invalid:
             model_instance = self.create_model_instance(
@@ -230,7 +236,7 @@ class StdNumFieldTestsMixin(object):
                     with self.assertRaises(ValidationError, msg=msg):
                         model_instance.save()
 
-    def test_no_query_with_invalid_data(self):
+    def test_no_query_with_invalid_data(self: TestCaseType):
         """Assert that no query can be attempted with invalid data (much like DateFields)."""
         for invalid_number in self.invalid:
             with self.subTest(invalid_number=invalid_number):
@@ -238,7 +244,7 @@ class StdNumFieldTestsMixin(object):
                 with self.assertRaises(ValidationError, msg=msg):
                     self.model.objects.filter(**{self.model_field.name: invalid_number})
 
-    def test_query_with_any_format(self):
+    def test_query_with_any_format(self: TestCaseType):
         """
         Assert queries are possible regardless of the format (pretty/compact)
         of the valid input.
@@ -249,7 +255,7 @@ class StdNumFieldTestsMixin(object):
                 with self.assertNotRaises(ValidationError, msg=msg):
                     self.model.objects.filter(**{self.model_field.name: valid_number})
 
-    def test_saves_as_compact(self):
+    def test_saves_as_compact(self: TestCaseType):
         """Assert that all std number are saved to the db in their compact format."""
         for valid_number in self.valid:
             model_instance = self.create_model_instance(**{self.model_field.name: valid_number})
@@ -258,7 +264,7 @@ class StdNumFieldTestsMixin(object):
             with self.subTest(valid_number=valid_number):
                 self.assertNotIn('-', getattr(model_instance, self.model_field.name))
 
-    def test_modelform_uses_pretty_format(self):
+    def test_modelform_uses_pretty_format(self: TestCaseType):
         """Assert that the value displayed on a modelform is the formatted version."""
         # Note that this test will always succeed for EAN fields, since the ean
         # module does not provide a format function.
@@ -274,7 +280,7 @@ class StdNumFieldTestsMixin(object):
                 # str(bound_field) will render the widget, including the value:
                 self.assertIn(value_displayed, str(model_form[self.model_field.name]))
 
-    def test_min_max_parameter_passed_to_formfield(self):
+    def test_formfield_sets_min_max_parameter(self: TestCaseType):
         """
         Assert that the correct min and max length parameters are passed to
         the field's formfield.
@@ -283,7 +289,7 @@ class StdNumFieldTestsMixin(object):
         self.assertEqual(formfield.min_length, self.model_field.min_length)
         self.assertEqual(formfield.max_length, self.model_field.max_length)
 
-    def test_widget_class_passed_to_formfield(self):
+    def test_widget_class_passed_to_formfield(self: TestCaseType):
         """
         Assert that the widget class needed to render the value in the
         correct format is passed to the formfield.
@@ -291,7 +297,7 @@ class StdNumFieldTestsMixin(object):
         formfield = self.model_field.formfield()
         self.assertIsInstance(formfield.widget, StdNumWidget)
 
-    def test_query_formatted_number(self):
+    def test_query_formatted_number(self: TestCaseType):
         """Assert that formatted numbers can be used in queries."""
         for valid_number in self.valid:
             # Save as compact, query with pretty format:
@@ -315,7 +321,7 @@ class StdNumFieldTestsMixin(object):
                 self.assertEqual(qs.get(), model_instance, msg="Query returned unexpected record.")
             model_instance.delete()
 
-    def test_modelform_handles_formats_as_the_same_data(self):
+    def test_modelform_handles_formats_as_the_same_data(self: TestCaseType):
         """
         Assert that a model form is not flagged as 'changed' because of
         different formatting of initial and bound value of the same number.
@@ -444,7 +450,7 @@ class TestISSNField(StdNumFieldTestsMixin, MIZTestCase):
         "1234-5670",  # InvalidChecksum
     ]
 
-    def test_min_max_parameter_passed_to_formfield(self):
+    def test_formfield_sets_min_max_parameter(self):
         """
         Assert that the correct min and max length parameters are passed to the
          field's formfield.

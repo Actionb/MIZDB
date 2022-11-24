@@ -1,11 +1,12 @@
 from typing import Callable, Type
 
-from django.db.models import Model, QuerySet
+from django.contrib.admin import ModelAdmin
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.views import View
 
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
 
 
@@ -32,20 +33,25 @@ def add_cls_attrs(view_cls: Type[View]) -> Callable:
 
 
 @add_cls_attrs(BulkEditJahrgang)
-def bulk_jg(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
+def bulk_jg(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
     return BulkEditJahrgang.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(MergeView)
-def merge_records(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
+def merge_records(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
     return MergeView.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(MoveToBrochure)
-def moveto_brochure(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
+def moveto_brochure(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
     return MoveToBrochure.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(ChangeBestand)
-def change_bestand(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
+def change_bestand(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
     return ChangeBestand.as_view(model_admin=model_admin, queryset=queryset)(request)
+
+
+@add_cls_attrs(Replace)
+def replace(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return Replace.as_view(model_admin=model_admin, queryset=queryset)(request)

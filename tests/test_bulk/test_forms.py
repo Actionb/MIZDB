@@ -89,18 +89,18 @@ class TestBulkFormAusgabe(DataTestCase):
         cls.prov = make(_models.Provenienz)
         cls.updated = make(
             cls.model,
-            magazin=cls.mag,
+            magazin=cls.mag,  # noqa
             ausgabejahr__jahr=[2000, 2001],
             ausgabenum__num=1
         )
         cls.multi1, cls.multi2 = batch(
             cls.model, 2,
-            magazin=cls.mag,
+            magazin=cls.mag,  # noqa
             ausgabejahr__jahr=[2000, 2001],
             ausgabenum__num=5,
             jahrgang=2
         )
-        cls.test_data = [cls.updated, cls.multi1, cls.multi2]
+        cls.test_data = [cls.updated, cls.multi1, cls.multi2]  # noqa
         super().setUpTestData()
 
     def setUp(self):

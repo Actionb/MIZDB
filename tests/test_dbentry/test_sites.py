@@ -57,7 +57,7 @@ class TestMIZAdminSite(RequestTestCase):
         """
         request = self.get_request(path=reverse('admin:index'))
         response = self.site.app_index(request, app_label='dbentry')
-        app_list = response.context_data['app_list']
+        app_list = response.context_data['app_list']  # noqa
         app_names = [d.get('name') for d in app_list if d.get('name')]
         for category in ['Archivgut', 'Stammdaten', 'Sonstige']:
             with self.subTest():

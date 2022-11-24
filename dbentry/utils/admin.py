@@ -37,6 +37,28 @@ def create_hyperlink(url: str, content: Any, **attrs: str) -> SafeText:
     )
 
 
+def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str:
+    """
+    Return the URL to the change page of ``obj``.
+
+    Returns an empty string if no change page could be found, or if the user
+    has no change permissions.
+    """
+    opts = obj._meta
+    try:
+        admin_url = reverse(
+            '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
+            args=[quote(obj.pk)]
+        )
+    except NoReverseMatch:
+        return ''
+
+    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
+    if not user.has_perm(perm):
+        return ''
+    return admin_url
+
+
 def get_obj_link(
         obj: Model,
         user: User,
@@ -57,23 +79,11 @@ def get_obj_link(
         site_name (str): namespace of the site/app
         blank (bool): if True, the link will have a target="_blank" attribute
     """
-    # noinspection PyUnresolvedReferences
-    opts = obj._meta
-    no_edit_link = format_html(
-        '%s: %s' % (capfirst(opts.verbose_name), force_str(obj))
-    )
-    try:
-        admin_url = reverse(
-            '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
-            args=[quote(obj.pk)]
+    admin_url = get_change_page_url(obj, user, site_name)
+    if not admin_url:
+        return format_html(
+            '%s: %s' % (capfirst(obj._meta.verbose_name), force_str(obj))
         )
-    except NoReverseMatch:
-        return no_edit_link
-
-    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
-    if not user.has_perm(perm):
-        return no_edit_link
-
     if blank:
         return create_hyperlink(admin_url, obj, target='_blank')
     return create_hyperlink(admin_url, obj)

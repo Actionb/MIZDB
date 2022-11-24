@@ -11,7 +11,7 @@ from django.urls import reverse
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
-# Generic URL name for the MIZWidgetMixin.
+# Generic URL-name for the MIZWidgetMixin.
 GENERIC_URL_NAME = 'acgeneric'
 
 # Name of the key under which views.ACTabular will add additional data for

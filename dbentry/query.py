@@ -54,8 +54,8 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
               django.core.validators.EMPTY_VALUES
             flatten (bool): if True, any values list that only contains one
               item will be replaced by just that item, removing the list. This
-              does not apply to values from reverse related fields, as an
-              iterable is expected here.
+              does not apply to values from reverse related fields; in that
+              case, an iterable is expected.
             **expressions: additional expressions for values()
 
         Returns:

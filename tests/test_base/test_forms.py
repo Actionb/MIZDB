@@ -217,7 +217,7 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
         cls.obj3 = make(Band, band_name='BRMC')
         cls.band_choices = [
             # Account for default ordering of the Band model:
-            (str(o.pk), str(o)) for o in [cls.obj3, cls.obj2, cls.obj1]
+            (str(o.pk), str(o)) for o in [cls.obj3, cls.obj2, cls.obj1]  # noqa
         ]
 
     def test_set_choices_list(self):
@@ -273,7 +273,7 @@ class MIZAdminInlineFormBaseTest(MIZTestCase):
     def setUpTestData(cls):
         cls.audio = make(Audio)
         cls.musiker = make(Musiker)
-        cls.m2m = MusikerAudioM2M.objects.create(audio=cls.audio, musiker=cls.musiker)
+        cls.m2m = MusikerAudioM2M.objects.create(audio=cls.audio, musiker=cls.musiker)  # noqa
 
     def test_validate_unique(self):
         """Assert that MIZAdminInlineFormBase flags duplicates for deletion."""

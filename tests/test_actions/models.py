@@ -7,6 +7,10 @@ class Genre(models.Model):
     def __str__(self):
         return self.genre
 
+    class Meta:
+        verbose_name = 'Genre'
+        verbose_name_plural = 'Genres'
+
 
 class Band(models.Model):
     class Status(models.TextChoices):
@@ -24,3 +28,13 @@ class Band(models.Model):
 
     def __str__(self):
         return self.band_name
+
+
+class Audio(models.Model):
+    title = models.CharField('Titel', max_length=100)
+
+    bands = models.ManyToManyField('test_actions.Band')
+
+    class Meta:
+        verbose_name = 'Audio-Material'
+        verbose_name_plural = 'Audio-Materialien'

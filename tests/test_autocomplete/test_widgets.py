@@ -246,7 +246,7 @@ class TestMakeWidget(MIZTestCase):
         )
 
     def test_assigns_create_field(self):
-        widget = make_widget(model=Ausgabe)
+        widget: MIZModelSelect2 = make_widget(model=Ausgabe)
         self.assertEqual(widget.create_field, 'name')
 
     @translation_override(language=None)
@@ -255,7 +255,7 @@ class TestMakeWidget(MIZTestCase):
         # Note that the values for forward are wrapped in a forward.Field
         # object.
         # Assert that make_widget can handle non-list 'forward' values:
-        widget = make_widget(model=Ausgabe, forward='magazin')
+        widget: MIZModelSelect2 = make_widget(model=Ausgabe, forward='magazin')
         self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(widget.attrs['data-placeholder'], "Bitte zuerst Magazin auswählen.")
 
@@ -280,7 +280,7 @@ class TestMakeWidget(MIZTestCase):
         """Assert that 'empty' values for forward are handled fine."""
         for val in [(), [], None, ""]:
             with self.subTest(value=val):
-                widget = make_widget(model=Ausgabe, forward=val)
+                widget: MIZModelSelect2 = make_widget(model=Ausgabe, forward=val)
                 self.assertFalse(widget.forward)
 
     def test_wraps(self):

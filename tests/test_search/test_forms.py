@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.forms import ChoiceField
 from django.test import TestCase
 
 from dbentry import models as _models
@@ -182,7 +183,7 @@ class TestSearchFormFactory(TestCase):
         with choices.
         """
         db_field = Ausgabe._meta.get_field('status')
-        formfield = self.factory.formfield_for_dbfield(db_field)
+        formfield: ChoiceField = self.factory.formfield_for_dbfield(db_field)
         self.assertIn(BLANK_CHOICE_DASH[0], formfield.choices)
 
     def test_get_search_form_ignores_invalid_fields(self):

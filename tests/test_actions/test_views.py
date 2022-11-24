@@ -1,4 +1,4 @@
-from unittest.mock import DEFAULT, Mock, PropertyMock, call, patch
+from unittest.mock import DEFAULT, Mock, PropertyMock, patch
 
 from django import forms
 from django.contrib import admin
@@ -10,21 +10,22 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.forms.formsets import ManagementForm
 from django.test import override_settings
-from django.utils.html import format_html
+from django.urls import reverse
 from django.utils.translation import override as translation_override
 from django.views.generic.base import ContextMixin, View
 from formtools.wizard.views import SessionWizardView, WizardView
 
 import dbentry.admin as _admin
 import dbentry.models as _models
+from dbentry.actions import actions as _actions
 from dbentry.actions.base import (
-    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView, get_object_link
 )
 from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, MergeConflictsFormSet, MergeFormSelectPrimary
 )
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
 from dbentry.base.forms import MIZAdminForm
 from dbentry.base.views import MIZAdminMixin
@@ -32,7 +33,7 @@ from dbentry.sites import miz_site
 from dbentry.utils import get_obj_link
 from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
 from tests.factory import make
-from .models import Band, Genre
+from .models import Audio, Band, Genre
 
 admin_site = admin.AdminSite(name='test_actions')
 
@@ -82,7 +83,48 @@ class BandAdmin(admin.ModelAdmin):
 
 @admin.register(Genre, site=admin_site)
 class GenreAdmin(admin.ModelAdmin):
+    actions = [_actions.replace]
+
+    def has_superuser_permission(self, request):
+        return request.user.is_superuser
+
+
+@admin.register(Audio, site=admin_site)
+class AudioAdmin(admin.ModelAdmin):
     pass
+
+
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
+class TestGetObjectLink(AdminTestCase):
+    admin_site = admin_site
+    model = Band
+    model_admin_class = BandAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, band_name='Khruangbin')
+        super().setUpTestData()
+
+    def test_get_object_link(self):
+        """
+        Assert that get_object_link returns the expected string:
+        '<model.verbose_name>: <url>'.
+        """
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(
+            get_object_link(self.obj, self.super_user, self.admin_site.name),
+            f'Band: <a href="{url}" target="_blank">Khruangbin</a>'
+        )
+
+    def test_get_object_link_no_change_page_URL(self):
+        """
+        Assert that get_object_link returns '<model.verbose_name>: <str(obj)>'
+        if no URL to the change page could be found.
+        """
+        self.assertEqual(
+            get_object_link(self.obj, self.noperms_user, self.admin_site.name),
+            'Band: Khruangbin'
+        )
 
 
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
@@ -216,13 +258,13 @@ class TestConfirmationViewMixin(ActionViewTestCase):
         'breadcrumbs_title' and 'non_reversible_warning'.
         """
         view = self.get_view(self.get_request())
-        view.title = 'Merge Bands'
-        view.breadcrumbs_title = 'Merging'
+        view.title = 'Merge %(verbose_name_plural)s'
+        view.breadcrumbs_title = 'Merging one %(verbose_name)s and another %(verbose_name)s'
         view.non_reversible_warning = 'This action cannot be reversed.'
 
         context = view.get_context_data()
         self.assertEqual(context['title'], 'Merge Bands')
-        self.assertEqual(context['breadcrumbs_title'], 'Merging')
+        self.assertEqual(context['breadcrumbs_title'], 'Merging one Band and another Band')
         self.assertEqual(context['non_reversible_warning'], 'This action cannot be reversed.')
 
     def test_get_context_data_adds_media(self):
@@ -276,14 +318,6 @@ class TestConfirmationViewMixin(ActionViewTestCase):
                 self.assertEqual(context['objects_name'], 'Bands')
 
 
-def get_obj_link_mock(obj, user, site_name, blank):
-    """Mock version of dbentry.admin.utils.get_obj_link"""
-    target = ''
-    if blank:
-        target = format_html(' target="_blank"')
-    return format_html('<a href="URL"{target}>{obj}</a>', target=target, obj=obj)
-
-
 @override_settings(ROOT_URLCONF='tests.test_actions.urls')
 class TestActionConfirmationView(ActionViewTestCase):
     class DummyView(ActionConfirmationView):
@@ -314,13 +348,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertIn('data', view.get_form_kwargs())
         self.assertIn('files', view.get_form_kwargs())
 
-    @patch('dbentry.actions.base.get_obj_link')
-    def test_get_objects_list(self, get_link_mock):
-        get_link_mock.side_effect = get_obj_link_mock
+    def test_get_objects_list(self):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),  # noqa
+            queryset=self.model.objects.all(),
             display_fields=['band_name', 'genres', 'status']
         )
         user = view.request.user
@@ -333,61 +365,51 @@ class TestActionConfirmationView(ActionViewTestCase):
         #       ...
         # ]
 
-        self.assertEqual(
-            len(get_link_mock.call_args_list), 3,
-            msg="Expected get_obj_link to be called three times, as three links are expected."
-        )
-        self.assertEqual(link_list[0][0], f'Band: <a href="URL" target="_blank">{self.obj}</a>')
-        # Note that the link for the object is created after the links of its 
-        # related objects. That means it is the last mock call.
-        self.assertEqual(
-            get_link_mock.call_args_list[-1], call(self.obj, user, self.admin_site.name, blank=True)
-        )
+        self.assertEqual(len(link_list), 1)
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(link_list[0][0], f'Band: <a href="{url}" target="_blank">{self.obj}</a>')
 
         # link_list[0][1] is the list of values for the display fields:
         display_field_values = link_list[0][1]
+        # 4 items: one for the band name, two for the genres, and one for the
+        # status:
+        self.assertEqual(len(display_field_values), 4)
+        # 'band_name' value:
         self.assertEqual(display_field_values[0], 'Bandname: ' + self.obj.band_name)
-
-        # The next two items should be links to the Genre objects:
+        # links to the genres:
         genres = Genre.objects.all().order_by('genre')
+        url_name = f"{self.admin_site.name}:{Genre._meta.app_label}_{Genre._meta.model_name}_change"
+        url = reverse(url_name, args=[genres[0].pk])
         self.assertEqual(
-            display_field_values[1], f'Genre: <a href="URL" target="_blank">{genres[0]}</a>'
+            display_field_values[1], f'Genre: <a href="{url}" target="_blank">{genres[0]}</a>'
         )
+        url = reverse(url_name, args=[genres[1].pk])
         self.assertEqual(
-            get_link_mock.call_args_list[0],
-            call(genres[0], user, self.admin_site.name, blank=True)
+            display_field_values[2], f'Genre: <a href="{url}" target="_blank">{genres[1]}</a>'
         )
-        self.assertEqual(
-            display_field_values[2], f'Genre: <a href="URL" target="_blank">{genres[1]}</a>'
-        )
-        self.assertEqual(
-            get_link_mock.call_args_list[1],
-            call(genres[1], user, self.admin_site.name, blank=True)
-        )
-
-        # And the last item should be the status:
+        # 'status' value:
         self.assertEqual(link_list[0][1][3], 'Status: Aktiv')
 
-    @patch('dbentry.actions.base.get_obj_link')
-    def test_get_objects_list_no_display_fields(self, get_link_mock):
-        get_link_mock.return_value = format_html('<a href="URL">a link</a>')
+    def test_get_objects_list_no_display_fields(self):
         view = self.get_view(
             self.get_request(),
             model_admin=self.model_admin,
-            queryset=self.model.objects.all(),  # noqa
+            queryset=self.model.objects.all(),
             display_fields=[]
         )
-        self.assertEqual(view.get_objects_list(), [('Band: <a href="URL">a link</a>',)])
+        url = self.change_path.format(pk=self.obj.pk)
+        self.assertEqual(
+            view.get_objects_list(),
+            [(f'Band: <a href="{url}" target="_blank">{self.obj}</a>',)]
+        )
 
-    @patch('dbentry.actions.base.get_obj_link')
-    def test_get_objects_list_no_link(self, get_link_mock):
+    def test_get_objects_list_no_link(self):
         """
         Assert that a string representation of the object is presented, if
         no link could be created for it.
         """
-        get_link_mock.return_value = f'Band: {self.obj}'
         view = self.get_view(
-            self.get_request(),
+            self.get_request(user=self.noperms_user),
             model_admin=self.model_admin,
             queryset=self.model.objects.all(),  # noqa
             display_fields=[]
@@ -1899,3 +1921,210 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # them has been deleted.
         args, kwargs = mocks['log_deletion'].call_args
         self.assertEqual((args[0], str(args[1])), (self.super_user.pk, str(deleted)))
+
+
+@override_settings(ROOT_URLCONF='tests.test_actions.urls')
+class TestReplace(ActionViewTestCase, LoggingTestMixin):
+    action_name = 'replace'
+    admin_site = admin_site
+    model = Genre
+    model_admin_class = GenreAdmin
+    view_class = Replace
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(Genre)
+        cls.obj2 = make(Genre)
+        cls.band = make(Band, genres=[cls.obj1])
+        super().setUpTestData()
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test(self):
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/action_confirmation.html')
+
+        # Fill out the form. We should be redirected back to the changelist,
+        # and obj1 should have been replaced and deleted.
+        request_data['action_confirmed'] = '1'
+        request_data['replacements'] = [str(self.obj2.pk)]
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateNotUsed(response, 'admin/action_confirmation.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
+        self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test_can_only_select_one(self):
+        """Assert that the action can only be called with one selected object."""
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
+        }
+        response = self.post_response(self.changelist_path, data=request_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateNotUsed(response, 'admin/action_confirmation.html')
+        self.assertMessageSent(
+            response.wsgi_request,
+            'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+            'bitte wählen Sie nur einen Datensatz aus.'
+        )
+
+    def test_adds_log_entries(self):
+        """
+        Assert that LogEntry change messages are added to the related objects
+        that were changed.
+        """
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk],
+            'action_confirmed': '1',
+            'replacements': [str(self.obj2.pk)],
+        }
+        self.post_response(self.changelist_path, data=request_data, follow=True)
+        change_message = [
+            {'deleted': {'object': str(self.obj1), 'name': 'Genre'}},
+            {'added': {'object': str(self.obj2), 'name': 'Genre'}},
+        ]
+        self.assertLoggedChange(self.band, change_message=change_message)
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test_requires_superuser_permission(self):
+        request_data = {
+            'action': self.action_name,
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk]
+        }
+
+        response = self.post_response(
+            self.changelist_path, user=self.staff_user, data=request_data, follow=True
+        )
+        self.assertEqual(response.status_code, 403)
+        # As superuser:
+        response = self.post_response(
+            self.changelist_path, user=self.super_user, data=request_data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_check_one_object_only(self):
+        for qs in (self.model.objects.all(), (self.model.objects.filter(pk=self.obj1.pk))):
+            with self.subTest(count=qs.count()):
+                # Get a request that went through the 'messages' middleware:
+                request = self.get_response('/').wsgi_request
+                view = self.get_view(queryset=qs, request=request)
+                if qs.count() == 1:
+                    self.assertTrue(view._check_one_object_only())
+                else:
+                    self.assertFalse(view._check_one_object_only())
+                    self.assertMessageSent(
+                        request,
+                        'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+                        'bitte wählen Sie nur einen Datensatz aus.'
+                    )
+
+    def test_get_form_kwargs_sets_choices(self):
+        """Assert that get_form_kwargs adds the choices for the replacements choice field."""
+        view = self.get_view(request=self.get_request())
+        form_kwargs = view.get_form_kwargs()
+        self.assertIn('choices', form_kwargs)
+        self.assertIn('replacements', form_kwargs['choices'])
+        self.assertQuerysetEqual(
+            form_kwargs['choices']['replacements'],
+            self.model.objects.all(),
+            ordered=False
+        )
+
+    def test_get_perform_action_genre(self):
+        view = self.get_view(
+            request=self.get_request(),
+            queryset=self.model.objects.filter(pk=self.obj1.pk)
+        )
+        view.perform_action(cleaned_data={'replacements': [str(self.obj2.pk)]})
+        self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
+        change_message = [
+            {'deleted': {'object': str(self.obj1), 'name': 'Genre'}},
+            {'added': {'object': str(self.obj2), 'name': 'Genre'}},
+        ]
+        self.assertLoggedChange(self.band, change_message=change_message)
+
+    def test_perform_action_band(self):
+        replacement = make(Band)
+        audio = make(Audio, bands=[self.band])
+
+        view = self.get_view(
+            request=self.get_request(),
+            model_admin=BandAdmin(Band, self.admin_site),
+            queryset=Band.objects.filter(pk=self.band.pk)
+        )
+        view.perform_action(cleaned_data={'replacements': [str(replacement.pk)]})
+        self.assertQuerysetEqual(audio.bands.all(), [replacement])
+        change_message = [
+            {'deleted': {'object': str(self.band), 'name': 'Band'}},
+            {'added': {'object': str(replacement), 'name': 'Band'}},
+        ]
+        self.assertLoggedChange(audio, change_message=change_message)
+
+    def test_get_objects_list_genre(self):
+        """
+        Assert that get_objects_list returns links to the objects that are
+        related to the object to be replaced.
+        """
+        opts = Band._meta
+        url = reverse(
+            f"{self.admin_site.name}:{opts.app_label}_{opts.model_name}_change",
+            args=[self.band.pk]
+        )
+        link = f'<a href="{url}" target="_blank">{self.band}</a>'
+
+        view = self.get_view(
+            request=self.get_request(),
+            queryset=self.model.objects.filter(pk=self.obj1.pk)
+        )
+        self.assertEqual(view.get_objects_list(), [(f'Band: {link}',)])
+
+    def test_get_objects_list_band(self):
+        """
+        Assert that get_objects_list can handle reverse relations declared on
+        the model of the object to be replaced.
+        """
+        # When replacing a Band object, the related Audio object should be
+        # included in the objects_list:
+        _replacement = make(Band)
+        audio = make(Audio, bands=[self.band])
+        opts = Audio._meta
+        url = reverse(
+            f"{self.admin_site.name}:{opts.app_label}_{opts.model_name}_change",
+            args=[audio.pk]
+        )
+        link = f'<a href="{url}" target="_blank">{audio}</a>'
+
+        view = self.get_view(
+            request=self.get_request(),
+            model_admin=BandAdmin(Band, self.admin_site),
+            queryset=Band.objects.filter(pk=self.band.pk)
+        )
+        self.assertIn((f'Audio-Material: {link}',), view.get_objects_list())
+
+    @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
+    def test_get_context_data(self):
+        view = self.get_view(
+            request=self.get_request(),
+            queryset=self.model.objects.filter(pk=self.obj1.pk),
+        )
+        helptext = (
+            f'Ersetze Genre "{self.obj1}" durch die unten ausgewählten Genres. '
+            f'Dabei werden auch die Datensätze verändert, die mit "{self.obj1}" verwandt sind.'
+        )
+        expected = [
+            ('title', 'Genre ersetzen'),
+            ('objects_name', 'Datensätze'),
+            ('view_helptext', helptext)
+        ]
+        context = view.get_context_data()
+        for key, value in expected:
+            with self.subTest(key=key):
+                self.assertIn(key, context)
+                self.assertEqual(context[key], value)

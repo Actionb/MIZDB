@@ -96,7 +96,7 @@ class TestComputedNameModel(MIZTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj: Person = make(cls.model, vorname='Alice', nachname='Tester')
-        cls.qs = cls.model.objects.filter(pk=cls.obj.pk)
+        cls.qs = cls.model.objects.filter(pk=cls.obj.pk)  # noqa
         super().setUpTestData()
 
     def test_init(self):

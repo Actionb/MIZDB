@@ -23,7 +23,7 @@ class TestCopyRelated(DataTestCase, RequestTestCase):
         v2 = make(Veranstaltung, band=[b2])
         v3 = make(Veranstaltung)
 
-        cls.obj1.veranstaltung.add(v1, v2, v3)
+        cls.obj1.veranstaltung.add(v1, v2, v3)  # noqa
 
     def test_copies_related_bands(self):
         """copy_related_set should copy the related Band instances."""
