@@ -806,10 +806,9 @@ class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.Template
         return context
 
 
-# TODO: superuser only?
 class Replace(MIZAdminMixin, ActionConfirmationView):
     form_class = ReplaceForm
-    title = 'Ersetzen'
+    title = '%(verbose_name)s ersetzen'
     action_name = 'replace'
     short_description = '%(verbose_name)s ersetzen'
     action_allowed_checks = ['_check_one_object_only']
@@ -835,7 +834,16 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
         kwargs['choices'] = {'replacements': self.model.objects.all()}
         return kwargs
 
-    def perform_action(self, cleaned_data) -> None:  # type: ignore[override]
+    def get_context_data(self, **kwargs: Any) -> dict:
+        context = super().get_context_data(**kwargs)
+        # 'objects_name' is used in the template to address the objects of the
+        # queryset. It's usually the verbose_name of the queryset's model, but
+        # since the 'replace' action creates changes on a range of different
+        # models, use a more generic term.
+        context['objects_name'] = 'Datensätze'
+        return context
+
+    def perform_action(self, cleaned_data: dict) -> None:  # type: ignore[override]
         obj = self.queryset.get()
         replacements = self.model.objects.filter(pk__in=cleaned_data['replacements'])
         changes = replace(obj, replacements)
@@ -850,7 +858,7 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
         # TODO: add log entry for the deletion of `obj`?
         return None
 
-    def get_objects_list(self):
+    def get_objects_list(self) -> list:
         """
         Provide links to the change pages of the records that are related with
         the object to be replaced.

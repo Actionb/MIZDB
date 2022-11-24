@@ -203,11 +203,12 @@ class BrochureActionFormOptions(MIZAdminForm):
 
 class ReplaceForm(DynamicChoiceFormMixin, MIZAdminForm):
     replacements = forms.MultipleChoiceField(
+        label='Ersetzen mit:',
         widget=FilteredSelectMultiple('Datensätze', False),
         choices=[],
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs, )
         model = kwargs['choices']['replacements'].model
         self.fields['replacements'].widget.verbose_name = model._meta.verbose_name_plural
