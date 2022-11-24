@@ -24,20 +24,21 @@ class MIZAdminMixin(object):
             self.admin_site = admin_site
 
     def get_context_data(self, **kwargs: Any) -> dict:
-        context = super().get_context_data(**kwargs)  # type: ignore[misc]
-        # Add admin site context.
-        context.update(self.admin_site.each_context(self.request))  # type: ignore[attr-defined]
-        # Enable popups behaviour for custom views.
-        context['is_popup'] = '_popup' in self.request.GET  # type: ignore[attr-defined]
+        context: dict = super().get_context_data(**kwargs)  # type: ignore[misc]
+
         # Context variables title & site_title for the html document's title.
         # (used by admin/base_site.html)
         if self.title:
-            context['title'] = self.title
+            context.setdefault('title', self.title)
         if self.site_title:
-            context['site_title'] = self.site_title
+            context.setdefault('site_title', self.site_title)
         if self.breadcrumbs_title:
-            context['breadcrumbs_title'] = self.breadcrumbs_title
-        return context
+            context.setdefault('breadcrumbs_title', self.breadcrumbs_title)
+        # Enable popups behaviour for custom views.
+        context['is_popup'] = '_popup' in self.request.GET  # type: ignore[attr-defined]
+        # Add the admin site context.
+        site_context = self.admin_site.each_context(self.request)  # type: ignore[attr-defined]
+        return {**site_context, **context}
 
 
 class OptionalFormView(views.generic.FormView):
