@@ -59,8 +59,6 @@ class TestReplace(DataTestCase):
             [self.replacement1, self.replacement2]
         )
 
-        self.assertFalse(Genre.objects.filter(pk=self.initial.pk).exists())
-
         self.assertCountEqual(changes, [self.band1, self.band2, self.musiker])
 
     def test_replace_reverse_relation_declared_on_obj(self):
@@ -74,7 +72,6 @@ class TestReplace(DataTestCase):
             self.audio.band.order_by('band_name'),
             [self.band2, self.band3]
         )
-        self.assertFalse(Band.objects.filter(pk=self.band1.pk).exists())
         self.assertCountEqual(changes, [self.audio, self.initial])
 
     def test_replace_rollback(self):

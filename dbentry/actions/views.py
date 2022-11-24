@@ -817,7 +817,6 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
         'Ersetze %(verbose_name)s "%(object)s" durch die unten ausgewählten '
         '%(verbose_name_plural)s. '
         'Dabei werden auch die Datensätze verändert, die mit "%(object)s" verwandt sind.'
-        '\nACHTUNG: %(verbose_name)s "%(object)s" wird anschließend gelöscht.'
     )
 
     def _check_one_object_only(self) -> bool:
@@ -865,7 +864,6 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
             )
         for changed_obj in changes:
             create_logentry(self.request.user.pk, changed_obj, CHANGE, change_message)
-        # TODO: add log entry for the deletion of `obj`?
         return None
 
     def get_objects_list(self) -> list:

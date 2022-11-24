@@ -55,5 +55,4 @@ def replace(obj: Model, replacements: List[Model]) -> List[Model]:
 
         changes.extend(_replace(obj, related_set.all(), attr_name, replacements))
 
-    obj.delete()
     return changes

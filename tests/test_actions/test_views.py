@@ -1947,7 +1947,6 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         self.assertTemplateNotUsed(response, 'admin/action_confirmation.html')
         self.assertTemplateUsed(response, 'admin/change_list.html')
         self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
-        self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
 
     @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
     def test_can_only_select_one(self):
@@ -2035,7 +2034,6 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         )
         view.perform_action(cleaned_data={'replacements': [str(self.obj2.pk)]})
         self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
-        self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
         change_message = [
             {'deleted': {'object': str(self.obj1), 'name': 'Genre'}},
             {'added': {'object': str(self.obj2), 'name': 'Genre'}},
@@ -2053,7 +2051,6 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         )
         view.perform_action(cleaned_data={'replacements': [str(replacement.pk)]})
         self.assertQuerysetEqual(audio.bands.all(), [replacement])
-        self.assertFalse(Band.objects.filter(pk=self.band.pk).exists())
         change_message = [
             {'deleted': {'object': str(self.band), 'name': 'Band'}},
             {'added': {'object': str(replacement), 'name': 'Band'}},
@@ -2110,7 +2107,6 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         helptext = (
             f'Ersetze Genre "{self.obj1}" durch die unten ausgewählten Genres. '
             f'Dabei werden auch die Datensätze verändert, die mit "{self.obj1}" verwandt sind.'
-            f'\nACHTUNG: Genre "{self.obj1}" wird anschließend gelöscht.'
         )
         expected = [
             ('title', 'Genre ersetzen'),
