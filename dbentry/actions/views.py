@@ -9,7 +9,6 @@ from django.db.models import Count, F, Model, ProtectedError
 from django.forms import ALL_FIELDS, BaseInlineFormSet, Form
 from django.http import HttpRequest, HttpResponse
 from django.utils.html import format_html
-from django.utils.text import capfirst
 from django.utils.translation import gettext, gettext_lazy
 from django.views.generic import FormView
 
@@ -814,6 +813,10 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
     action_allowed_checks = ['_check_one_object_only']
     allowed_permissions = ['superuser']
     action_reversible = True
+    view_helptext = (
+        'Ersetze %(verbose_name)s "%(object)s" mit den folgenden %(verbose_name_plural)s. '
+        'Dabei werden auch die Datensätze verändert, die mit "%(object)s" verwandt sind.'
+    )
 
     def _check_one_object_only(self) -> bool:
         """Check that the view is called with just one object."""
@@ -841,6 +844,11 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
         # since the 'replace' action creates changes on a range of different
         # models, use a more generic term.
         context['objects_name'] = 'Datensätze'
+        context['view_helptext'] = self.view_helptext % {
+            'verbose_name': self.model._meta.verbose_name,
+            'verbose_name_plural': self.model._meta.verbose_name_plural,
+            'object': str(self.queryset.get())
+        }
         return context
 
     def perform_action(self, cleaned_data: dict) -> None:  # type: ignore[override]
@@ -878,5 +886,5 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
                     user=self.request.user,
                     site_name=self.model_admin.admin_site.name,
                 )
-                objects_list.append((link, ))
+                objects_list.append((link,))
         return objects_list

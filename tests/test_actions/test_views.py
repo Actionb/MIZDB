@@ -2053,8 +2053,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             request=self.get_request(),
             queryset=self.model.objects.filter(pk=self.obj1.pk)
         )
-        self.assertEqual(view.get_objects_list(), [(f'Band: {link}', )])
-
+        self.assertEqual(view.get_objects_list(), [(f'Band: {link}',)])
 
     @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
     def test_get_context_data(self):
@@ -2062,9 +2061,14 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             request=self.get_request(),
             queryset=self.model.objects.filter(pk=self.obj1.pk)
         )
+        helptext = (
+            f'Ersetze Genre "{self.obj1}" mit den folgenden Genres. '
+            f'Dabei werden auch die Datensätze verändert, die mit "{self.obj1}" verwandt sind.'
+        )
         expected = [
             ('title', 'Genre ersetzen'),
             ('objects_name', 'Datensätze'),
+            ('view_helptext', helptext)
         ]
         context = view.get_context_data()
         for key, value in expected:
