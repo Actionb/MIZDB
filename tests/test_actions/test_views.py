@@ -220,13 +220,13 @@ class TestConfirmationViewMixin(ActionViewTestCase):
         'breadcrumbs_title' and 'non_reversible_warning'.
         """
         view = self.get_view(self.get_request())
-        view.title = 'Merge Bands'
-        view.breadcrumbs_title = 'Merging'
+        view.title = 'Merge %(verbose_name_plural)s'
+        view.breadcrumbs_title = 'Merging one %(verbose_name)s and another %(verbose_name)s'
         view.non_reversible_warning = 'This action cannot be reversed.'
 
         context = view.get_context_data()
         self.assertEqual(context['title'], 'Merge Bands')
-        self.assertEqual(context['breadcrumbs_title'], 'Merging')
+        self.assertEqual(context['breadcrumbs_title'], 'Merging one Band and another Band')
         self.assertEqual(context['non_reversible_warning'], 'This action cannot be reversed.')
 
     def test_get_context_data_adds_media(self):

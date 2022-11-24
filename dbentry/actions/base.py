@@ -2,7 +2,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, Typ
 
 from django import views
 from django.contrib.admin import ModelAdmin, helpers
-from django.contrib.admin.utils import display_for_field, get_fields_from_path
+from django.contrib.admin.utils import display_for_field, get_fields_from_path, model_format_dict
 from django.contrib.auth.models import User
 from django.db.models import Model, QuerySet
 from django.db.models.options import Options
@@ -142,14 +142,10 @@ class ConfirmationViewMixin(object):
 
         # Add view specific variables.
         title = self.title or getattr(self, 'short_description', '')
-        title = title % {'verbose_name_plural': self.opts.verbose_name_plural}
+        defaults['title'] = title % model_format_dict(self.model)
         breadcrumbs_title = self.breadcrumbs_title or title
-        breadcrumbs_title = breadcrumbs_title % {
-            'verbose_name_plural': self.opts.verbose_name_plural
-        }
+        defaults['breadcrumbs_title'] = breadcrumbs_title % model_format_dict(self.model)
 
-        defaults['title'] = title
-        defaults['breadcrumbs_title'] = breadcrumbs_title
         if not self.action_reversible:
             defaults['non_reversible_warning'] = self.non_reversible_warning
 
@@ -206,7 +202,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         # the redirect for us.
         return None
 
-    def get_objects_list(self) -> List[Tuple]:
+    def get_objects_list(self) -> list:
         """
         Compile a list of the objects that would be changed by this action.
 
