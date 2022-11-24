@@ -203,7 +203,7 @@ class BrochureActionFormOptions(MIZAdminForm):
 
 class ReplaceForm(DynamicChoiceFormMixin, MIZAdminForm):
     replacements = forms.MultipleChoiceField(
-        label='Ersetzen mit:',
+        label='Ersetzen durch:',
         widget=FilteredSelectMultiple('Datensätze', False),
         choices=[],
     )

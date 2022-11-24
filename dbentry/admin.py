@@ -804,7 +804,7 @@ class GenreAdmin(MIZModelAdmin):
     # search bar. Note that the fields declared here do not matter, as the
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
-    actions = [_actions.replace]
+    actions = [_actions.merge_records, _actions.replace]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1021,6 +1021,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     # search bar. Note that the fields declared here do not matter, as the
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
+    actions = [_actions.merge_records, _actions.replace]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {

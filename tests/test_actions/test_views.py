@@ -2108,8 +2108,9 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             queryset=self.model.objects.filter(pk=self.obj1.pk),
         )
         helptext = (
-            f'Ersetze Genre "{self.obj1}" mit den folgenden Genres. '
+            f'Ersetze Genre "{self.obj1}" durch die unten ausgewählten Genres. '
             f'Dabei werden auch die Datensätze verändert, die mit "{self.obj1}" verwandt sind.'
+            f'\nACHTUNG: Genre "{self.obj1}" wird anschließend gelöscht.'
         )
         expected = [
             ('title', 'Genre ersetzen'),

@@ -122,7 +122,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     )
         return errors
 
-    # noinspection PyMethodMayBeStatic
     def has_superuser_permission(self, request: HttpRequest) -> bool:
         return request.user.is_superuser
 

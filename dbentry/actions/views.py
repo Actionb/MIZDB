@@ -814,8 +814,10 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
     allowed_permissions = ['superuser']
     action_reversible = True
     view_helptext = (
-        'Ersetze %(verbose_name)s "%(object)s" mit den folgenden %(verbose_name_plural)s. '
+        'Ersetze %(verbose_name)s "%(object)s" durch die unten ausgewählten '
+        '%(verbose_name_plural)s. '
         'Dabei werden auch die Datensätze verändert, die mit "%(object)s" verwandt sind.'
+        '\nACHTUNG: %(verbose_name)s "%(object)s" wird anschließend gelöscht.'
     )
 
     def _check_one_object_only(self) -> bool:
