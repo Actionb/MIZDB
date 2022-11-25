@@ -7,8 +7,7 @@ from django.conf import settings
 from django.test.utils import get_runner
 
 if __name__ == "__main__":
-    # sys.path.insert(0, str(Path(os.getcwd()).parent))  # TODO: what is this needed for?
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.test_settings'
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
     django.setup()
     TestRunner = get_runner(settings)
     test_runner = TestRunner(keepdb=True)
