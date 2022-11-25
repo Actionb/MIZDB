@@ -9,7 +9,7 @@ from dbentry import models as _models
 from dbentry.tools.bulk.fields import BulkField, BulkJahrField
 from dbentry.tools.bulk.forms import BulkForm, BulkFormAusgabe
 from tests.case import DataTestCase, MIZTestCase
-from tests.factory import batch, make
+from tests.model_factory import batch, make
 
 
 class TestBulkForm(MIZTestCase):

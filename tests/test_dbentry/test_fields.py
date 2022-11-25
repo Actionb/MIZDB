@@ -15,7 +15,7 @@ from dbentry.fields import (
     PartialDateFormField, PartialDateWidget, StdNumField, StdNumFormField, StdNumWidget, YearField
 )
 from tests.case import DataTestCase, MIZTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 
 class TestYearField(MIZTestCase):

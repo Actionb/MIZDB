@@ -4,7 +4,7 @@ from dbentry import m2m as _m2m
 from dbentry import models as _models
 from dbentry.fts.query import SIMPLE, STEMMING
 from tests.case import MIZTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 
 def get_search_field_columns(field):

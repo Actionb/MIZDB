@@ -12,7 +12,7 @@ from dbentry.tools.views import (
     find_duplicates
 )
 from tests.case import DataTestCase, ViewTestCase
-from tests.factory import make
+from tests.model_factory import make
 from .models import Band, Genre, Musiker, Person
 
 

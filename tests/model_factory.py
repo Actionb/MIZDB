@@ -674,7 +674,7 @@ class AutorFactory(MIZModelFactory):
     class Meta:
         model = _models.Autor
 
-    person = SubFactory('tests.factory.PersonFactory', required=True)
+    person = SubFactory('tests.model_factory.PersonFactory', required=True)
 
     @factory.lazy_attribute
     def kuerzel(obj):  # noqa

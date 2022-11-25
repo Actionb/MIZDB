@@ -10,7 +10,7 @@ from dbentry.ac.widgets import RemoteModelWidgetWrapper, TabularResultsMixin
 from dbentry.forms import (ArtikelForm, AusgabeMagazinFieldForm, AutorForm, BuchForm, PersonForm)
 from dbentry.validators import DNBURLValidator
 from tests.case import ModelFormTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):

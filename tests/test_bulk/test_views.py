@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 import dbentry.models as _models
 from dbentry.tools.bulk.views import BulkAusgabe
 from tests.case import LoggingTestMixin, ViewTestCase
-from tests.factory import batch, make
+from tests.model_factory import batch, make
 
 
 class TestBulkAusgabe(ViewTestCase, LoggingTestMixin):

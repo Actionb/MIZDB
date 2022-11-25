@@ -9,7 +9,7 @@ from django.db import models
 from dbentry import models as _models
 from dbentry.query import CNQuerySet, MIZQuerySet, build_date
 from tests.case import DataTestCase, MIZTestCase
-from tests.factory import make
+from tests.model_factory import make
 from .models import Band
 
 

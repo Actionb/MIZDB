@@ -12,7 +12,7 @@ from dbentry import models as _models
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import TextSearchQuerySetMixin, _get_search_vector_field
 from tests.case import DataTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 
 class TestGetSearchVectorField(TestCase):

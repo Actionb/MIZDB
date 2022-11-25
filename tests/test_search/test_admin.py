@@ -15,7 +15,7 @@ from dbentry.search.admin import (
 )
 from dbentry.search.forms import MIZAdminSearchForm
 from tests.case import AdminTestCase, RequestTestCase
-from tests.factory import batch, make
+from tests.model_factory import batch, make
 from .admin import ArtikelAdmin, BandAdmin, admin_site
 from .models import Artikel, Ausgabe, Band, Genre
 

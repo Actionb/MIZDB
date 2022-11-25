@@ -13,7 +13,7 @@ from dbentry.base.admin import MIZModelAdmin
 from dbentry.changelist import MIZChangeList
 from dbentry.sites import miz_site
 from tests.case import AdminTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 admin_site = AdminSite()
 

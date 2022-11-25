@@ -9,7 +9,7 @@ from django.db import models as django_models
 
 from dbentry.base.models import BaseModel
 from tests.case import MIZTestCase
-from tests.factory import make
+from tests.model_factory import make
 from tests.test_base.models import Audio, MusikerAudioM2M, Person
 
 

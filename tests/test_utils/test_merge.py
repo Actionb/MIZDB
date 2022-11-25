@@ -3,7 +3,7 @@ from django.db import models
 
 from dbentry import utils
 from tests.case import DataTestCase, LoggingTestMixin, RequestTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 
 class Foo(models.Model):

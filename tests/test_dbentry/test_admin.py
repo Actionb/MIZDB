@@ -22,7 +22,7 @@ import dbentry.models as _models
 from dbentry.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.sites import miz_site
 from tests.case import AdminTestCase
-from tests.factory import make
+from tests.model_factory import make
 
 
 class AdminTestMethodsMixin(object):
@@ -1243,9 +1243,9 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1 = make(cls.model, datum='2022-10-17')
         cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
-        v1 = make(_models.Veranstaltung, name='Woodstock 1969', band=cls.band, musiker=cls.musiker)  # noqa
+        v1 = make(_models.Veranstaltung, name='Woodstock 1969', band=cls.band, musiker=cls.musiker)
         v2 = make(_models.Veranstaltung, name='Glastonbury 2004')
-        cls.obj1.veranstaltung.set([v1, v2])  # noqa
+        cls.obj1.veranstaltung.set([v1, v2])
         super().setUpTestData()
 
     def test_get_changelist_annotations(self):

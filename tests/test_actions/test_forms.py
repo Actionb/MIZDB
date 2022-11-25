@@ -3,8 +3,8 @@ from django.urls import reverse
 
 from dbentry.actions.forms import BrochureActionFormOptions, ReplaceForm
 from tests.case import DataTestCase
+from tests.model_factory import make
 from .models import Band, Genre
-from ..factory import make
 
 
 class TestBrochureActionFormOptions(TestCase):

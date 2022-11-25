@@ -10,7 +10,7 @@ import dbentry.models as _models
 from dbentry.ac import views
 from dbentry.ac.widgets import EXTRA_DATA_KEY, GENERIC_URL_NAME
 from tests.case import MIZTestCase, RequestTestCase, ViewTestCase
-from tests.factory import make
+from tests.model_factory import make
 from tests.test_autocomplete.models import Band, Genre, Musiker
 
 

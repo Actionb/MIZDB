@@ -11,7 +11,7 @@ from django.urls import NoReverseMatch
 
 from dbentry.utils import admin as admin_utils
 from tests.case import RequestTestCase
-from tests.factory import make
+from tests.model_factory import make
 from .admin import AudioAdmin, admin_site
 from .models import Audio, Band, Bestand, Genre, Kalender, Lagerort, Musiker
 

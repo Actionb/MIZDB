@@ -9,7 +9,7 @@ from django.test import TestCase
 from dbentry import models as _models
 from dbentry.fields import PartialDate, PartialDateFormField
 from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory
-from tests.factory import make
+from tests.model_factory import make
 from .models import Artikel, Ausgabe, Genre, InheritedPKModel, Magazin
 
 

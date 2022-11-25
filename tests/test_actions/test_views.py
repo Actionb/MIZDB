@@ -32,7 +32,7 @@ from dbentry.base.views import MIZAdminMixin
 from dbentry.sites import miz_site
 from dbentry.utils import get_obj_link
 from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
-from tests.factory import make
+from tests.model_factory import make
 from .models import Audio, Band, Genre
 
 admin_site = admin.AdminSite(name='test_actions')

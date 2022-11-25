@@ -4,7 +4,7 @@ from django.db.utils import IntegrityError
 
 from dbentry.utils import copyrelated as utils
 from tests.case import DataTestCase, RequestTestCase
-from tests.factory import make
+from tests.model_factory import make
 from .models import Audio, Band, Veranstaltung
 
 

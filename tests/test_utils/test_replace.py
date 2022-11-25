@@ -1,7 +1,7 @@
 from dbentry.utils.replace import _replace, replace
-from tests.factory import make
+from tests.case import DataTestCase
+from tests.model_factory import make
 from .models import Audio, Band, Genre, Musiker
-from ..case import DataTestCase
 
 
 class TestReplace(DataTestCase):

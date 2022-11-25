@@ -7,7 +7,7 @@ from stdnum import issn
 
 from dbentry import models as _models
 from tests.case import MIZTestCase
-from tests.factory import (
+from tests.model_factory import (
     M2MFactory, MIZDjangoOptions, RelatedFactory, RuntimeFactoryMixin, SelfFactory, UniqueFaker,
     factory, modelfactory_factory
 )
@@ -90,7 +90,7 @@ class TestRuntimeFactoryMixin(MIZTestCase):
 
         fac = self.SubFactory(self.__module__ + '.DoesNotExit', related_model=DummyModel)
         m = mock.Mock(return_value=DummyModelFactory)
-        with patch('tests.factory.modelfactory_factory', new=m):
+        with patch('tests.model_factory.modelfactory_factory', new=m):
             self.assertEqual(fac.factory, DummyModelFactory)
             m.assert_called_with(DummyModel)
 
@@ -359,7 +359,7 @@ class TestMIZDjangoOptions(MIZTestCase):
             Audio._meta.get_field('titel'), Audio._meta.get_field('tracks'),
             Audio._meta.get_field('beschreibung')
         ]
-        with mock.patch('tests.factory.get_model_fields', Mock(return_value=fields)):
+        with mock.patch('tests.model_factory.get_model_fields', Mock(return_value=fields)):
             opts.add_base_fields()
         # 'titel' is required, 'tracks' has default value, and 'beschreibung'
         # is not required (blank=True)
@@ -375,7 +375,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.model = Audio
         opts.factory = type('DummyFactory', (object,), {})
         rel = Audio._meta.get_field('band').remote_field
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
         self.assertTrue(hasattr(opts.factory, 'band'))
         self.assertEqual(getattr(opts.factory, 'band').related_model, Band)
@@ -384,7 +384,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.model = Band
         opts.factory = type('DummyFactory', (object,), {})
         rel = Band._meta.get_field('audio')
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
         self.assertTrue(hasattr(opts.factory, 'audio'))
         self.assertEqual(getattr(opts.factory, 'audio').related_model, Audio)
@@ -413,7 +413,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         # Relation from BaseClub to Players inherited by Club;
         # (rel.field.model is in Club._meta.parents)
         rel = BaseClub._meta.get_field('players').remote_field
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
         self.assertTrue(hasattr(opts.factory, 'players'))
         self.assertEqual(getattr(opts.factory, 'players').descriptor_name, 'players')
@@ -423,7 +423,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         # Relation from Fans to BaseClub inherited by Club;
         # (rel.field.related_model is in Club._meta.parents)
         rel = Fan._meta.get_field('clubs').remote_field
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_m2m_factories()
         self.assertTrue(hasattr(opts.factory, 'fans'))
         self.assertEqual(getattr(opts.factory, 'fans').descriptor_name, 'fans')
@@ -437,7 +437,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts = MIZDjangoOptions()
         opts.model = Band
         rel = Audio._meta.get_field('genre').remote_field
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=[rel])):
             with self.assertRaises(TypeError):
                 opts.add_m2m_factories()
 
@@ -451,7 +451,8 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.model = Audio
         m2o_rel = Bestand._meta.get_field('audio').remote_field
         m2m_rel = Audio._meta.get_field('band').remote_field
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[m2o_rel, m2m_rel])):
+        rels = [m2o_rel, m2m_rel]
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=rels)):
             opts.add_related_factories()
         self.assertTrue(hasattr(opts.factory, 'bestand'))
         related_fac = getattr(opts.factory, 'bestand')
@@ -477,7 +478,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.factory = type('FirmFactory', (object,), {})
         opts.model = Earth
         rel = Moon._meta.get_field('orbits').remote_field
-        with mock.patch('tests.factory.get_model_relations', Mock(return_value=[rel])):
+        with mock.patch('tests.model_factory.get_model_relations', Mock(return_value=[rel])):
             opts.add_related_factories()
         self.assertTrue(hasattr(opts.factory, 'moons'))
         related_fac = getattr(opts.factory, 'moons')
@@ -491,7 +492,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         opts.factory = type('AncestorFactory', (object,), {})
         opts.model = Ancestor
         field = Ancestor._meta.get_field('ancestor')
-        with mock.patch('tests.factory.get_model_fields', Mock(return_value=[field])):
+        with mock.patch('tests.model_factory.get_model_fields', Mock(return_value=[field])):
             opts.add_sub_factories()
         self.assertTrue(hasattr(opts.factory, 'ancestor'))
         self.assertIsInstance(getattr(opts.factory, 'ancestor'), SelfFactory)

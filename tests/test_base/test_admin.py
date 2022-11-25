@@ -11,7 +11,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from dbentry.base.admin import AutocompleteMixin
 from dbentry.changelist import MIZChangeList
 from tests.case import AdminTestCase
-from tests.factory import make
+from tests.model_factory import make
 from .admin import AudioAdmin, BandAdmin, admin_site
 from .models import Audio, Band, Bestand, Person, Veranstaltung
 

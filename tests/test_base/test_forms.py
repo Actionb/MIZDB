@@ -10,7 +10,7 @@ from dbentry.base.forms import (
     MinMaxRequiredFormMixin
 )
 from tests.case import MIZTestCase
-from tests.factory import make
+from tests.model_factory import make
 from tests.test_base.models import Audio, Band, Musiker, MusikerAudioM2M
 
 
