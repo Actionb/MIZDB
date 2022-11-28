@@ -10,7 +10,8 @@ class Musiker(models.Model):
         return self.kuenstler_name
 
     class Meta:
-        verbose_name = verbose_name_plural = 'Musiker'
+        verbose_name = 'Musiker'
+        verbose_name_plural = 'Musiker'
 
 
 class Band(models.Model):
@@ -50,11 +51,16 @@ class Audio(models.Model):
 
     musiker = models.ManyToManyField('test_utils.Musiker', through=MusikerAudioM2M)
     band = models.ManyToManyField('test_utils.Band')
+    genre = models.ManyToManyField('test_utils.Genre')
 
     veranstaltung = models.ManyToManyField('test_utils.Veranstaltung')
 
     class Meta:
-        verbose_name = 'Audio'
+        verbose_name = 'Audio-Material'
+        verbose_name_plural = 'Audio-Materialien'
+
+    def __str__(self):
+        return self.titel
 
 
 class VeranstaltungsReihe(models.Model):
