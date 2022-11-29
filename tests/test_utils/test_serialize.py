@@ -40,7 +40,6 @@ class TestSerializer(DataTestCase):
         self.assertEqual(doc['fields']['audio'], str(self.audio))
 
 
-
 class TestDocuments(DataTestCase):
     model = Audio
 

@@ -33,7 +33,7 @@ def _get_label(field):
     return capfirst(field.verbose_name or field.name.replace('_', ' '))
 
 
-def get_documents(queryset, fields=None, remove_empty=True, hooks=None) -> Generator[OrderedDict]:
+def get_documents(queryset, fields=None, remove_empty=True, hooks=None):
     """
     Yield ordered value dictionaries for the objects in ``queryset``.
 
