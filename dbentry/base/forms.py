@@ -46,7 +46,7 @@ class FieldGroup:
             max_fields (int): the maximum number of fields that may be
                 filled out
             error_messages (dict): a mapping of error_type (i.e. 'min','max')
-                to (ValidationError) error message
+                to (ValidationError) error message specific to this group
             format_callback (callable or str): a callable or the name of a
                 method of this group's form used to format the error messages
         """
@@ -100,9 +100,9 @@ class MinMaxRequiredFormMixin(object):
     """
     A mixin that allows setting groups of fields to be required.
 
-    By default, error messages are formatted with the number
-    of fields minimally (format kwarg: ``min``) or maximally (``max``) required
-    and a comma separated list of those fields (``fields``).
+    By default, error messages are formatted with the number of fields minimally
+    (format kwarg: ``min``) or maximally (``max``) required and a comma
+    separated list of those fields (``fields``).
 
     Attributes:
         - ``minmax_required``: an iterable of dicts, essentially the keyword
@@ -136,8 +136,8 @@ class MinMaxRequiredFormMixin(object):
                     for error_type, msg in error_messages.items()
                 }
 
-        If none of the three fields has data and the user is a viking
-        the form will display the min error:
+        If none of the three fields has data and the user is a viking the form
+        will display the min error:
             "Must have at least 1 of Spam, Bacon, Egg, you vile Viking!"
         If all three fields have data, the default max error will be shown
         (as minmax_required does not define a custom error for that group):
@@ -166,7 +166,7 @@ class MinMaxRequiredFormMixin(object):
         # to False.
         for group_kwargs in self.minmax_required or []:
             fields = group_kwargs.get('fields', [])
-            if not fields:
+            if not fields:  # pragma: no cover
                 continue
             try:
                 for field in fields:
@@ -175,6 +175,12 @@ class MinMaxRequiredFormMixin(object):
                 # At least one field in that group does not have a
                 # corresponding formfield; skip the entire group.
                 continue
+            # TODO: construct the 'error_messages' here and then include the
+            #  finished messages in the group_kwargs.
+            #  The group should not need to know the form method that creates
+            #  the error messages, and we don't need to delay the creation of
+            #  those messages until the groups are initialized.
+            #  (remember to update the docstrings (f.ex. of get_group_error_messages))
             self._groups.append(group_kwargs)
 
     def get_groups(self: Form) -> Iterator[FieldGroup]:
@@ -204,13 +210,11 @@ class MinMaxRequiredFormMixin(object):
 
     def _get_message_field_names(self: Form, group: FieldGroup) -> str:
         """Get a string of the verbose names of the group's fields."""
-        # @formatter:off
         return ", ".join(
             self.fields[field_name].label or snake_case_to_spaces(field_name).title()
             for field_name in group.fields
             if field_name in self.fields
         )
-        # @formatter:on
 
     def get_group_error_messages(
             self,
@@ -222,8 +226,8 @@ class MinMaxRequiredFormMixin(object):
         Prepare and format the error messages for the given group.
 
         If ``format_callback`` is provided (which can be either a callable or
-        the name of a method of this form instance), it will be called with
-        the following args:
+        the name of a method of this form class), it will be called with the
+        following args:
             self: this form's instance
             group (FieldGroup): the given group
             error_messages (dict): custom error messages to be formatted
@@ -261,7 +265,7 @@ class MinMaxRequiredFormMixin(object):
 
 
 class MIZAdminFormMixin(object):
-    """A mixin that adds django admin media and fieldsets."""
+    """A form mixin that adds django admin media and fieldsets."""
 
     class Media:
         css = {
@@ -297,7 +301,7 @@ class DynamicChoiceFormMixin(object):
 
     def __init__(self, *args: Any, choices: Optional[dict] = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)  # type: ignore[call-arg]
-        if choices:
+        if choices:  # pragma: no cover
             self.set_choices(choices)
 
     def set_choices(self: Form, choices: dict) -> None:
@@ -317,10 +321,7 @@ class DynamicChoiceFormMixin(object):
              TypeError: when choices argument is not a dictionary instance
         """
         if not isinstance(choices, dict):
-            raise TypeError(
-                "Expected mapping formfield_name: choices. Got %s."
-                % type(choices)
-            )
+            raise TypeError("Expected mapping formfield_name: choices. Got %s." % type(choices))
         for fld_name, fld in self.fields.items():
             if not isinstance(fld, forms.ChoiceField) or fld.choices:
                 # Not a choice field or the choices are already set.
@@ -330,7 +331,7 @@ class DynamicChoiceFormMixin(object):
             elif forms.ALL_FIELDS in choices:
                 field_choices = choices[forms.ALL_FIELDS]
             else:
-                continue
+                continue  # pragma: no cover
 
             if isinstance(field_choices, BaseManager):
                 # model.objects; need to call all() on it.
@@ -342,7 +343,7 @@ class DynamicChoiceFormMixin(object):
                 fld.choices = list(field_choices)
 
 
-class MIZAdminInlineFormBase(forms.ModelForm):
+class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: shouldn't this be a mixin?
     """
     A model form class that flags forms for deletion when the form's model
     instance would violate uniqueness.
@@ -379,22 +380,25 @@ class DiscogsFormMixin(object):
     url_field_name: str = ''
     release_id_field_name: str = ''
 
-    def __init__(self: Form, *args, **kwargs):
+    def __init__(self: Form, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)  # type: ignore[call-arg]
         if self.url_field_name in self.fields:
             self.fields[self.url_field_name].validators.append(
                 DiscogsURLValidator()
             )
 
+    # TODO: add a systems check to check that url_field_name and
+    #  release_id_field_name are set?
+
     def clean(self: Form) -> dict:
         """Validate and clean release_id and discogs_url."""
-        if (self.url_field_name in self._errors
-                or self.release_id_field_name in self._errors):
+        if self.url_field_name in self._errors or self.release_id_field_name in self._errors:  # pragma: no cover  # noqa
             return self.cleaned_data
-        release_id = str(
-            self.cleaned_data.get(self.release_id_field_name, '') or ''
-        )
+
+        # Reminder: cleaned_data['release_id'] could also be integer 0 or None:
+        release_id = str(self.cleaned_data.get(self.release_id_field_name, '') or '')
         discogs_url = self.cleaned_data.get(self.url_field_name) or ''
+
         if not (release_id or discogs_url):
             return self.cleaned_data
 

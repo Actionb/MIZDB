@@ -16,6 +16,7 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.widgets import EXTRA_DATA_KEY
+from dbentry.admin import AusgabenAdmin
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
@@ -208,16 +209,15 @@ class ACAusgabe(ACTabular):
 
     def get_queryset(self) -> AusgabeQuerySet:
         queryset = super().get_queryset()
-        from dbentry.admin import AusgabenAdmin, miz_site
         model_admin = AusgabenAdmin(self.model, miz_site)
         return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
 
     def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']  # pragma: no cover
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
 
     def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]  # pragma: no cover
+        return [result.num_string, result.lnum_string, result.jahr_string]
 
 
 class ACAutor(ACBase):
@@ -262,7 +262,7 @@ class ACBand(ACTabular):
     model = _models.Band
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
@@ -307,7 +307,7 @@ class ACMusiker(ACTabular):
     model = _models.Musiker
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
@@ -352,7 +352,7 @@ class ACSpielort(ACTabular):
     model = _models.Spielort
 
     def get_group_headers(self) -> list:
-        return ['Ort']  # pragma: no cover
+        return ['Ort']
 
     def get_extra_data(self, result: _models.Spielort) -> list:
         return [str(result.ort)]
@@ -362,7 +362,7 @@ class ACVeranstaltung(ACTabular):
     model = _models.Veranstaltung
 
     def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']  # pragma: no cover
+        return ['Datum', 'Spielort']
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]

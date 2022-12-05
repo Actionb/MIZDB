@@ -28,9 +28,8 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 
     def get_show_all_url(self) -> str:
         """Return the url for an unfiltered changelist showing all objects."""
-        return self.get_query_string(
-            new_params={ALL_VAR: ''}, remove=self.params
-        )
+        # NOTE: is removing *ALL* other params necessary/reasonable?
+        return self.get_query_string(new_params={ALL_VAR: ''}, remove=self.params)
 
 
 class AusgabeChangeList(MIZChangeList):
@@ -60,10 +59,11 @@ class BestandChangeList(ChangeList):
         # items 'bestand_class' and 'bestand_link'.
         self.model_admin.cache_bestand_data(
             request,
-            self.result_list.select_related(*[f.name for f in bestand_fields]),  # type: ignore[has-type]  # noqa
+            self.result_list.select_related(*[f.name for f in bestand_fields]),  # type: ignore
             bestand_fields
         )
         # Overwrite the result_list.
+        # noinspection PyAttributeOutsideInit
         self.result_list = self.result_list.select_related(  # type: ignore[has-type]
             *self.list_select_related,
             *[f.name for f in bestand_fields]

@@ -233,9 +233,7 @@ class Autor(ComputedNameModel):
             person_name = data['person___name'][0]
             # The person_name should not be a default value:
             # noinspection PyUnresolvedReferences
-            person_default = Person._name_default % {
-                'verbose_name': Person._meta.verbose_name
-            }
+            person_default = Person._name_default % {'verbose_name': Person._meta.verbose_name}
             if person_name in (person_default, 'unbekannt'):
                 # person_name is a default value:
                 # ('unbekannt' used to be the default for person__nachname)
@@ -295,6 +293,7 @@ class Ausgabe(ComputedNameModel):
         'magazin__ausgaben_merkmal', 'ausgabejahr__jahr', 'ausgabenum__num',
         'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
+    # TODO: magazin___fts as a related_search_vector?
 
     objects = AusgabeQuerySet.as_manager()
 
@@ -1413,7 +1412,7 @@ class Bestand(BaseModel):
     @property
     def bestand_object(self) -> Optional[models.Model]:
         """Return the archive object this Bestand instance refers to."""
-        if hasattr(self, '_bestand_object'):
+        if hasattr(self, '_bestand_object'):  # pragma: no cover
             return self._bestand_object
         self._bestand_object: Optional[models.Model] = None
         for field in get_model_fields(self, base=False, foreign=True, m2m=False):

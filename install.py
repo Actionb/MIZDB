@@ -150,6 +150,7 @@ def password_prompt():
 
 
 def install_system_packages():
+    """Install required system packages (apache2, postgresql, etc.)."""
     print("Installiere notwendige Pakete...")
     _run('sudo apt update')
     _run(
@@ -160,9 +161,11 @@ def install_system_packages():
 
 
 def check_postgres_server(port):
-    # Check that the postgres server on the given port has the correct version.
-    #
-    # Return a boolean indicating whether database migrations can be applied.
+    """
+    Check that the postgres server on the given port has the correct version.
+
+    Return a boolean indicating whether database migrations can be applied.
+    """
     print("Prüfe PostgreSQL...", end="", flush=True)
     cmd = _run(
         f'sudo -u postgres psql --port={port!s} -c "SHOW server_version;"',
@@ -229,6 +232,7 @@ def create_database(port, db_name, db_user, db_password):
 
 
 def create_venv(venv_directory):
+    """Create a virtual environment to install into and update pip."""
     if os.path.exists(venv_directory) and not confirm(
             f"{venv_directory} existiert bereits. Überschreiben? [J/n] "
     ):
@@ -240,6 +244,7 @@ def create_venv(venv_directory):
 
 
 def install_python_packages(venv_directory, project_directory):
+    """Install python requirements."""
     print("Installiere Python Pakete...", end="", flush=True)
     _run(f"{venv_directory}/bin/pip install -qr {project_directory}/requirements.txt")
     print("OK.")
@@ -306,7 +311,6 @@ def install_mod_wsgi(venv_directory, project_directory, host):
     _run("sudo -k service apache2 restart")
 
 
-# noinspection SpellCheckingInspection
 def install(venv_directory, port, host, db_name, db_user):
     project_directory = str(Path.cwd())
     if venv_directory:

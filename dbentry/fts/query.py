@@ -14,9 +14,10 @@ def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
     """
     Return the first SearchVectorField instance found for the given model.
     """
-    # exclude inherited search vector fields:
     # noinspection PyUnresolvedReferences
-    for field in model._meta.get_fields(include_parents=False):
+    opts = model._meta
+    # exclude inherited search vector fields:
+    for field in opts.get_fields(include_parents=False):
         if isinstance(field, SearchVectorField):
             return field
     return None
@@ -68,7 +69,6 @@ class TextSearchQuerySetMixin(object):
         be included in a query, and the config_name refers to the search config
         to use in the query on that related field.
         """
-        # TODO: why is this a method and not a function (like _get_search_vector_field is)?
         return getattr(self.model, 'related_search_vectors', [])  # type: ignore[attr-defined]
 
     def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> Any:
@@ -84,12 +84,15 @@ class TextSearchQuerySetMixin(object):
         """
         if not q:
             return self.none()  # type: ignore[attr-defined]
+        model = self.model  # type: ignore[attr-defined]
+        model_search_rank = related_search_rank = None
+        pk_name = model._meta.pk.name
 
         filters = Q()
         if q.isnumeric():
-            filters |= Q(pk=q)  # TODO: use model._meta.pk_name in place of 'pk'
-        model_search_rank = related_search_rank = None
-        model = self.model  # type: ignore[attr-defined]
+            # q is a number: include a filter for the primary key.
+            filters |= Q(**{pk_name: q})
+
         search_field = _get_search_vector_field(model)
         if search_field:
             # Add a query and a rank for every text search config defined on
@@ -145,7 +148,7 @@ class TextSearchQuerySetMixin(object):
         results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]
         if ranked or not self.query.order_by:  # type: ignore[attr-defined]
             # Apply ordering to the results.
-            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore[attr-defined]  # noqa
+            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore
             if ranked and getattr(model, 'name_field', None):
                 name_field = model.name_field
                 exact = ExpressionWrapper(
@@ -160,8 +163,7 @@ class TextSearchQuerySetMixin(object):
                 if q.isnumeric():
                     # Prepend an ordering for exact pk matches:
                     ordering.insert(
-                        # TODO: use model._meta.pk_name in place of 'pk'
-                        0, ExpressionWrapper(Q(pk=q), output_field=BooleanField()).desc()
+                        0, ExpressionWrapper(Q(**{pk_name: q}), output_field=BooleanField()).desc()
                     )
             results = results.order_by(*ordering)
         return results

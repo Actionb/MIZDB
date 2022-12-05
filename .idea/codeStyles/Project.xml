@@ -2,8 +2,12 @@
   <code_scheme name="Project" version="173">
     <option name="RIGHT_MARGIN" value="100" />
     <option name="SOFT_MARGINS" value="80" />
+    <option name="DO_NOT_FORMAT">
+      <list>
+        <fileSet type="globPattern" pattern="dbentry/admin.py" />
+      </list>
+    </option>
     <Python>
-      <option name="ALIGN_COLLECTIONS_AND_COMPREHENSIONS" value="false" />
       <option name="DICT_WRAPPING" value="5" />
       <option name="DICT_NEW_LINE_AFTER_LEFT_BRACE" value="true" />
       <option name="DICT_NEW_LINE_BEFORE_RIGHT_BRACE" value="true" />

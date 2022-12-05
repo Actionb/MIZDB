@@ -27,7 +27,7 @@ LOGGING = {
         },
     },
     'filters': {
-        # Do not log dev server autoreloads:
+        # Do not log dev server auto reloads:
         'not_autoreload': {
             '()': 'django.utils.log.CallbackFilter',
             'callback': lambda record: record.name != 'django.utils.autoreload'

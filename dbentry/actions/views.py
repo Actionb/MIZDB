@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from django import views
 from django.contrib import messages
-from django.contrib.admin.models import ADDITION
+from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.admin.options import InlineModelAdmin
 from django.db import transaction
 from django.db.models import Count, F, Model, ProtectedError
@@ -14,23 +14,26 @@ from django.views.generic import FormView
 
 from dbentry import models as _models
 from dbentry.actions.base import (
-    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView, get_object_link
 )
 from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, BulkEditJahrgangForm, MergeConflictsFormSet,
-    MergeFormSelectPrimary
+    MergeFormSelectPrimary, ReplaceForm
 )
+from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
 from dbentry.utils import (
-    get_changelist_link, get_model_from_string, get_obj_link, get_updatable_fields, is_protected,
+    get_changelist_link, get_model_from_string, get_model_relations, get_obj_link,
+    get_updatable_fields, is_protected,
     link_list, merge_records
 )
 from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )
+from dbentry.utils.replace import replace
 
 
-def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
+def check_same_magazin(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check that all objects in the view's queryset are related to the same
     Magazin instance.
@@ -47,7 +50,7 @@ def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
     return True
 
 
-def check_at_least_two_objects(view, **_kwargs: Any) -> bool:
+def check_at_least_two_objects(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """Check whether an insufficient number of objects has been selected."""
     if view.queryset.count() == 1:
         view.model_admin.message_user(
@@ -62,7 +65,7 @@ def check_at_least_two_objects(view, **_kwargs: Any) -> bool:
     return True
 
 
-def check_different_magazines(view, **_kwargs: Any) -> bool:
+def check_different_magazines(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check whether the Ausgabe instances are from different Magazin instances.
     """
@@ -84,7 +87,7 @@ def check_different_magazines(view, **_kwargs: Any) -> bool:
     return True
 
 
-def check_different_ausgaben(view, **_kwargs: Any) -> bool:
+def check_different_ausgaben(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check whether the Artikel instances are from different Ausgabe instances.
     """
@@ -105,7 +108,7 @@ def check_different_ausgaben(view, **_kwargs: Any) -> bool:
     return True
 
 
-class BulkEditJahrgang(ActionConfirmationView):
+class BulkEditJahrgang(MIZAdminMixin, ActionConfirmationView):
     """
     View that bulk edits the jahrgang of a collection of Ausgabe instances.
     """
@@ -133,7 +136,7 @@ class BulkEditJahrgang(ActionConfirmationView):
         "\nAlle bereits vorhandenen Angaben für Jahrgänge werden überschrieben."
     )
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
         kwargs['choices'] = {ALL_FIELDS: self.queryset}
         return kwargs
@@ -167,7 +170,7 @@ class BulkEditJahrgang(ActionConfirmationView):
             )
 
 
-class MergeView(WizardConfirmationView):
+class MergeView(MIZAdminMixin, WizardConfirmationView):
     """
     View that merges model instances.
 
@@ -360,7 +363,7 @@ class MergeView(WizardConfirmationView):
             # for its fields AND 'choices' for the DynamicChoiceFormMixin.
             data, choices, total_forms = {}, {}, 0
 
-            def add_prefix(key_name):
+            def add_prefix(key_name: str) -> str:
                 return prefix + '-' + str(total_forms) + '-' + key_name
 
             for fld_name, values in sorted(self.updates.items()):
@@ -445,16 +448,16 @@ class MergeView(WizardConfirmationView):
         return None
 
 
-def check_protected_artikel(view, **_kwargs: Any) -> bool:
+def check_protected_artikel(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check whether any of the Ausgabe are referenced through protected
     foreign keys on Artikel objects.
     """
     ausgaben_with_artikel = (
         view.queryset
-            .annotate(artikel_count=Count('artikel'))
-            .filter(artikel_count__gt=0)
-            .order_by('magazin')
+        .annotate(artikel_count=Count('artikel'))
+        .filter(artikel_count__gt=0)
+        .order_by('magazin')
     )
     if ausgaben_with_artikel.exists():
         msg_template = (
@@ -479,7 +482,7 @@ def check_protected_artikel(view, **_kwargs: Any) -> bool:
     return True
 
 
-class MoveToBrochure(ActionConfirmationView):
+class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
     """Moves a set of Ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
@@ -490,15 +493,14 @@ class MoveToBrochure(ActionConfirmationView):
 
     form_class = BrochureActionFormSet
 
-    def get_initial(self):
-        fields = (
-            'pk', '_name', 'beschreibung', 'bemerkungen', 'magazin_id',
-            'magazin__magazin_name', 'magazin_beschreibung'
-        )
+    def get_initial(self) -> List[dict]:
         values = (
             self.queryset
-                .annotate(magazin_beschreibung=F('magazin__beschreibung'))
-                .values_list(*fields)
+            .annotate(magazin_beschreibung=F('magazin__beschreibung'))
+            .values_list(
+                'pk', '_name', 'beschreibung', 'bemerkungen', 'magazin_id',
+                'magazin__magazin_name', 'magazin_beschreibung'
+            )
         )
         initial = []
         for (pk, _name, beschreibung, bemerkungen, magazin_id, magazin_name,
@@ -616,10 +618,10 @@ class MoveToBrochure(ActionConfirmationView):
                     message="Hinweis: "
                             "{verbose_name} wurde automatisch erstellt beim Verschieben"
                             " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
-                                verbose_name=brochure_class._meta.verbose_name,  # noqa
-                                str_ausgabe=str_ausgabe,
-                                str_magazin=str(magazin_instance)
-                            )
+                        verbose_name=brochure_class._meta.verbose_name,  # noqa
+                        str_ausgabe=str_ausgabe,
+                        str_magazin=str(magazin_instance)
+                    )
                 )
                 # Log the changes to the Bestand instances:
                 qs = _models.Bestand.objects.filter(brochure_id=new_brochure.pk)
@@ -698,7 +700,7 @@ class MoveToBrochure(ActionConfirmationView):
         return context
 
 
-class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
+class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.TemplateView):
     """Edit the Bestand set of the parent model instance(s)."""
 
     template_name = 'admin/change_bestand.html'
@@ -801,3 +803,88 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
                 )
             )
         return context
+
+
+class Replace(MIZAdminMixin, ActionConfirmationView):
+    form_class = ReplaceForm
+    title = '%(verbose_name)s ersetzen'
+    action_name = 'replace'
+    short_description = '%(verbose_name)s ersetzen'
+    action_allowed_checks = ['_check_one_object_only']
+    allowed_permissions = ['superuser']
+    action_reversible = True
+    view_helptext = (
+        'Ersetze %(verbose_name)s "%(object)s" durch die unten ausgewählten '
+        '%(verbose_name_plural)s. '
+        'Dabei werden auch die Datensätze verändert, die mit "%(object)s" verwandt sind.'
+    )
+
+    def _check_one_object_only(self) -> bool:
+        """Check that the view is called with just one object."""
+        if self.queryset.count() > 1:
+            self.model_admin.message_user(
+                request=self.request,
+                message=(
+                    'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+                    'bitte wählen Sie nur einen Datensatz aus.'
+                ),
+                level=messages.ERROR
+            )
+            return False
+        return True
+
+    def get_form_kwargs(self) -> dict:
+        kwargs = super().get_form_kwargs()
+        kwargs['choices'] = {'replacements': self.model.objects.all()}
+        return kwargs
+
+    def get_context_data(self, **kwargs: Any) -> dict:
+        context = super().get_context_data(**kwargs)
+        # 'objects_name' is used in the template to address the objects of the
+        # queryset. It's usually the verbose_name of the queryset's model, but
+        # since the 'replace' action creates changes on a range of different
+        # models, use a more generic term.
+        context['objects_name'] = 'Datensätze'
+        context['view_helptext'] = self.view_helptext % {
+            'verbose_name': self.model._meta.verbose_name,
+            'verbose_name_plural': self.model._meta.verbose_name_plural,
+            'object': str(self.queryset.get())
+        }
+        return context
+
+    def perform_action(self, cleaned_data: dict) -> None:  # type: ignore[override]
+        obj = self.queryset.get()
+        replacements = self.model.objects.filter(pk__in=cleaned_data['replacements'])
+        changes = replace(obj, replacements)
+
+        change_message = [{'deleted': {'object': str(obj), 'name': obj._meta.verbose_name}}]
+        for replacement in replacements:
+            change_message.append(
+                {'added': {'object': str(replacement), 'name': replacement._meta.verbose_name}}
+            )
+        for changed_obj in changes:
+            create_logentry(self.request.user.pk, changed_obj, CHANGE, change_message)
+        return None
+
+    def get_objects_list(self) -> list:
+        """
+        Provide links to the change pages of the records that are related with
+        the object to be replaced.
+        """
+        to_replace = self.queryset.get()
+        objects_list = []
+
+        for rel in get_model_relations(self.model, forward=False):
+            if rel.related_model == self.model:
+                related_set = getattr(to_replace, rel.remote_field.name)
+            else:
+                related_set = getattr(to_replace, rel.get_accessor_name())
+
+            for obj in related_set.all():
+                link = get_object_link(
+                    obj=obj,
+                    user=self.request.user,
+                    site_name=self.model_admin.admin_site.name,
+                )
+                objects_list.append((link,))
+        return objects_list

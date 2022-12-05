@@ -1,6 +1,4 @@
 """Settings shared by both production and development environments."""
-import logging
-import sys
 from pathlib import Path
 
 import yaml
@@ -130,15 +128,11 @@ MEDIA_URL = '/media/'
 # Override maximum number of post parameters to allow handling of user input during imports
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
+# Avoid having the session cookie expire during work hours by adding 12 hours
+# to the default cookie age (2 weeks).
+SESSION_COOKIE_AGE = (14 * 24 + 12) * 60 * 60
+
 # URL to the wiki.
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context
 WIKI_URL = config.get('WIKI_URL', '')
-
-if 'test' in sys.argv:
-    # Add a NullHandler to the root logger for test runs.
-    # This stops log messages to be printed to sys.stderr during tests
-    # if no other handlers are assigned.
-    # Note that django debug toolbar adds a handler to the root logger that
-    # handles all log records. The toolbar need not be enabled for this.
-    logging.getLogger().addHandler(logging.NullHandler())
