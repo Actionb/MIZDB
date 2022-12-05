@@ -28,6 +28,7 @@ class RelatedStringSerializer(BaseSerializer):
 
 
 def _get_label(field):
+    # TODO: remove: only leave RelatedStringSerializer
     if field.many_to_many:
         return field.related_model._meta.verbose_name_plural
     return capfirst(field.verbose_name or field.name.replace('_', ' '))
@@ -44,6 +45,7 @@ def get_documents(queryset, fields=None, remove_empty=True, hooks=None):
         hooks: a mapping of a field name from ``fields`` and a callable that
           returns a (label, value) pair for the current row
     """
+    # TODO: remove: only leave RelatedStringSerializer
     for row in RelatedStringSerializer().serialize(queryset, fields=fields):
         document = OrderedDict()
         document['Objekt'] = queryset.model._meta.verbose_name

@@ -1,15 +1,12 @@
 from collections import OrderedDict
 
-from django.db.models import QuerySet
-from django.test import TestCase
-
 from dbentry import models as _models
-from dbentry.utils.document import ArtikelDocument, get_documents
+from dbentry.utils.text_repr import get_documents
 from tests.case import DataTestCase
 from tests.model_factory import make
 
 
-class TestDocument(DataTestCase):
+class TestTextRepr(DataTestCase):
 
     model = _models.Artikel
 
@@ -27,18 +24,16 @@ class TestDocument(DataTestCase):
             schlagzeile='Die Dokumentenansicht funktioniert!',
             seite=20,
             seitenumfang='f',
+            zusammenfassung='Dieser Artikel existiert für Tests.',
             ausgabe=cls.ausgabe,
             musiker=[cls.musiker1, cls.musiker2],
             band=[cls.band1],
             genre=[cls.genre1, cls.genre2]
+            # TODO: add Veranstaltung
         )
         super().setUpTestData()
 
     def test(self):
-        fields = [
-            'ausgabe', 'schlagzeile', 'seite', 'beschreibung',
-            'musiker', 'band', 'genre'
-        ]
         documents = list(get_documents(self.model.objects.filter(pk=self.artikel.pk)))
         self.assertEqual(len(documents), 1)
 
@@ -48,10 +43,17 @@ class TestDocument(DataTestCase):
             'Ausgabe': f'{self.ausgabe} ({self.mag})',
             'Schlagzeile': 'Die Dokumentenansicht funktioniert!',
             'Seite': '20f',
+            'Zusammenfassung': 'Dieser Artikel existiert für Tests.',
             'Beschreibung': '',
-            'Musiker': 'John Lennon, Paul McCartney',
+            'Autoren': '',
+            'Musiker': 'John Lennon; Paul McCartney',
             'Bands': 'The Beatles',
-            'Genres': 'Beat, Rock',
+            'Schlagwörter': '',
+            'Genres': 'Beat; Rock',
+            'Orte': '',
+            'Spielorte': '',
+            'Veranstaltungen': '',
+            'Personen': ''
         })
         self.assertEqual(list(documents[0].keys()), list(expected.keys()))
         doc = documents[0].items().__iter__()
