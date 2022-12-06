@@ -30,6 +30,23 @@ def get_documents(queryset):
     return registry[queryset.model]().get_documents(queryset)
 
 
+def text_repr_action(_model_admin, _request, queryset):
+    """
+    Function for a model admin action that displays the selected items in text
+    form.
+    """
+    result = ""
+    for d in get_documents(queryset):
+        if result:
+            result += "<hr>"
+        for k, v in d.items():
+            result += f"<p>{k}: {v}</p>"
+    from django.http import HttpResponse
+    from django.utils.safestring import mark_safe
+    return HttpResponse(mark_safe(result))
+text_repr_action.short_description = 'textliche Darstellung'  # noqa
+
+
 def concat(objects, sep="; "):
     # TODO: use utils.concat_limit (rename concat_limit to just 'concat'?)
     return sep.join(str(o) for o in objects if o)
