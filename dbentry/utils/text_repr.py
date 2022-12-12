@@ -14,6 +14,9 @@ from dbentry import models as _models
 registry = {}
 
 
+# TODO: rename to 'summary'?
+
+
 def register(model):
     def inner(cls):
         registry[model] = cls
@@ -44,8 +47,6 @@ def text_repr_action(_model_admin, _request, queryset):
     from django.http import HttpResponse
     from django.utils.safestring import mark_safe
     return HttpResponse(mark_safe(result))
-
-
 text_repr_action.short_description = 'textliche Darstellung'  # noqa
 
 
@@ -59,6 +60,10 @@ def _get_array_agg(path, ordering=None):
     if not ordering:
         ordering = path
     return ArrayAgg(path, distinct=True, ordering=ordering)
+
+
+def _bool(v):
+    return 'Ja' if bool(v) else 'Nein'
 
 
 class Parser:
@@ -135,14 +140,14 @@ class MusikerParser(Parser):
                 'Objekt': 'Musiker',
                 'ID': obj.id,
                 'Künstlername': obj.kuenstler_name,
+                'Personen': obj.person,
                 'Beschreibung': obj.beschreibung,
-                'Person': obj.person,
-                'Bands': concat(obj.band_list),
-                'Aliases': concat(obj.musikeralias_set.all()),
                 'Webseiten': concat(obj.url_list),
                 'Genres': concat(obj.genre_list),
-                'Instrumente': concat(obj.instrument_list),
+                'Aliases': concat(obj.alias_list),
+                'Bands': concat(obj.band_list),
                 'Orte': concat(obj.ort_list),
+                'Instrumente': concat(obj.instrument_list),
             }
         )
 
@@ -154,6 +159,7 @@ class BandParser(Parser):
         return {
             'genre_list': _get_array_agg('genre__genre'),
             'musiker_list': _get_array_agg('musiker__kuenstler_name'),
+            'alias_list': _get_array_agg('bandalias__alias'),
             'ort_list': _get_array_agg('orte___name'),
             'url_list': _get_array_agg('urls__url'), 
         }
@@ -165,7 +171,7 @@ class BandParser(Parser):
                 'ID': obj.id,
                 'Bandname': obj.band_name,
                 'Beschreibung': obj.beschreibung,
-                'Aliases': concat(obj.bandalias_set.all()),
+                'Aliases': concat(obj.alias_list),
                 'Webseiten': concat(obj.url_list),
                 'Genres': concat(obj.genre_list),
                 'Musiker': concat(obj.musiker_list),
@@ -188,11 +194,11 @@ class AutorParser(Parser):
             {
                 'Objekt': 'Autor',
                 'ID': obj.id,
+                'Name': obj.person,
                 'Kürzel': obj.kuerzel,
                 'Beschreibung': obj.beschreibung,
-                'Person': obj.person,
                 'Webseiten': concat(obj.url_list),
-                'Magazine': None,
+                'Magazine': concat(obj.magazin_list),
             }
         )
 
@@ -202,8 +208,13 @@ class AusgabeParser(Parser):
 
     def get_annotations(self) -> dict:
         return {
+            'jahr_list': _get_array_agg('ausgabejahr__jahr'),
+            'num_list': _get_array_agg('ausgabenum__num'),
+            'lnum_list': _get_array_agg('ausgabelnum__lnum'),
+            'monat_list': _get_array_agg('ausgabemonat__monat__monat'),
             'audio_list': _get_array_agg('audio__titel'),
             'video_list': _get_array_agg('video__titel'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -211,21 +222,22 @@ class AusgabeParser(Parser):
             {
                 'Objekt': 'Ausgabe',
                 'ID': obj.id,
+                'Name': obj._name,
+                'Magazin': obj.magazin,
                 'Bearbeitungsstatus': obj.status,
+                'Ist Sonderausgabe': _bool(obj.sonderausgabe),
                 'Erscheinungsdatum': obj.e_datum,
                 'Jahrgang': obj.jahrgang,
-                'Sonderausgabe': obj.sonderausgabe,
                 'Beschreibung': obj.beschreibung,
-                'Magazin': obj.magazin,
-                'Jahre': None,
-                'Ausgabennummer': None,
-                'Laufende Nummer': None,
-                'Ausgabe-Monate': None,
-                'Artikel': None,
-                'Bestände': None,
-                'base brochures': None,
-                'Audio Materialien': None,
-                'Video Materialien': None,
+                'Ausgabennummern': concat(obj.num_list),
+                'Monate': concat(obj.monat_list),
+                'Laufende Nummern': concat(obj.lnum_list),
+                'Jahre': concat(obj.jahr_list),
+                'Bestände': concat(obj.bestand_list),
+                # 'Artikel': None,
+                # 'base brochures': None,
+                # 'Audio Materialien': None,
+                # 'Video Materialien': None,
             }
         )
 
@@ -247,16 +259,15 @@ class MagazinParser(Parser):
             {
                 'Objekt': 'Magazin',
                 'ID': obj.id,
-                'Magazin': obj.magazin_name,
-                'Ausgaben Merkmal': obj.ausgaben_merkmal,
-                'Fanzine': obj.fanzine,
+                'Name': obj.magazin_name,
+                'Ist Fanzine': _bool(obj.fanzine),
                 'ISSN': obj.issn,
                 'Beschreibung': obj.beschreibung,
-                'Ausgaben': None,
+                # 'Ausgaben': None,
                 'Webseiten': concat(obj.url_list),
                 'Genres': concat(obj.genre_list),
-                'Verlage': None,
-                'Herausgeber': None,
+                'Verlage': concat(obj.verlag_list),
+                'Herausgeber': concat(obj.herausgeber_list),
                 'Orte': concat(obj.ort_list),
             }
         )
@@ -319,6 +330,7 @@ class BuchParser(Parser):
             'person_list': _get_array_agg('person___name'),
             'herausgeber_list': _get_array_agg('herausgeber__herausgeber'),
             'verlag_list': _get_array_agg('verlag__verlag_name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -327,22 +339,21 @@ class BuchParser(Parser):
                 'Objekt': 'Buch',
                 'ID': obj.id,
                 'Titel': obj.titel,
-                'Titel (Original)': obj.titel_orig,
                 'Seitenumfang': obj.seitenumfang,
                 'Jahr': obj.jahr,
-                'Jahr (Original)': obj.jahr_orig,
                 'Auflage': obj.auflage,
-                'EAN': obj.EAN,
-                'ISBN': obj.ISBN,
-                'Ist Sammelband': obj.is_buchband,
-                'Beschreibung': obj.beschreibung,
                 'Schriftenreihe': obj.schriftenreihe,
                 'Sammelband': obj.buchband,
+                'Ist Sammelband': _bool(obj.is_buchband),
+                'ISBN': obj.ISBN,
+                'EAN': obj.EAN,
                 'Sprache': obj.sprache,
-                'Datei-Quellen': None,
-                'Bücher': None,
-                'Bestände': None,
-                'Autoren': None,
+                'Titel (Original)': obj.titel_orig,
+                'Jahr (Original)': obj.jahr_orig,
+                'Beschreibung': obj.beschreibung,
+                # TODO: include related Buch objects (if Sammelband)?
+                # 'Bücher': None,
+                'Autoren': concat(obj.autor_list),
                 'Musiker': concat(obj.musiker_list),
                 'Bands': concat(obj.band_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
@@ -351,8 +362,9 @@ class BuchParser(Parser):
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
                 'Personen': concat(obj.person_list),
-                'Herausgeber': None,
-                'Verlage': None,
+                'Herausgeber': concat(obj.herausgeber_list),
+                'Verlage': concat(obj.verlag_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -371,6 +383,7 @@ class AudioParser(Parser):
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
             'person_list': _get_array_agg('person___name'),
             'plattenfirma_list': _get_array_agg('plattenfirma__name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -383,17 +396,14 @@ class AudioParser(Parser):
                 'Laufzeit': obj.laufzeit,
                 'Jahr': obj.jahr,
                 'Land der Pressung': obj.land_pressung,
+                'Ist Originalmaterial': _bool(obj.original),
                 'Quelle': obj.quelle,
-                'Originalmaterial': obj.original,
+                'Speichermedium': obj.medium,
+                'Anzahl': obj.medium_qty,
                 'Plattennummer': obj.plattennummer,
                 'Release ID (discogs)': obj.release_id,
                 'Link discogs.com': obj.discogs_url,
                 'Beschreibung': obj.beschreibung,
-                'Speichermedium': obj.medium,
-                'Anzahl': obj.medium_qty,
-                'Audio-Musiker': None,
-                'Datei-Quellen': None,
-                'Bestände': None,
                 'Musiker': concat(obj.musiker_list),
                 'Bands': concat(obj.band_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
@@ -402,7 +412,8 @@ class AudioParser(Parser):
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
                 'Personen': concat(obj.person_list),
-                'Plattenfirmen': None,
+                'Plattenfirmen': concat(obj.plattenfirma_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -420,6 +431,7 @@ class PlakatParser(Parser):
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
             'person_list': _get_array_agg('person___name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -433,8 +445,7 @@ class PlakatParser(Parser):
                 'Zeitangabe': obj.datum,
                 'Beschreibung': obj.beschreibung,
                 'Bildreihe': obj.reihe,
-                'Datei-Quellen': None,
-                'Bestände': None,
+                # 'Datei-Quellen': None,
                 'Schlagwörter': concat(obj.schlagwort_list),
                 'Genres': concat(obj.genre_list),
                 'Musiker': concat(obj.musiker_list),
@@ -443,6 +454,7 @@ class PlakatParser(Parser):
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
                 'Personen': concat(obj.person_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -460,6 +472,7 @@ class DokumentParser(Parser):
             'ort_list': _get_array_agg('ort___name'),
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -469,8 +482,7 @@ class DokumentParser(Parser):
                 'ID': obj.id,
                 'Titel': obj.titel,
                 'Beschreibung': obj.beschreibung,
-                'Datei-Quellen': None,
-                'Bestände': None,
+                # 'Datei-Quellen': None,
                 'Genres': concat(obj.genre_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
                 'Personen': concat(obj.person_list),
@@ -479,6 +491,7 @@ class DokumentParser(Parser):
                 'Orte': concat(obj.ort_list),
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -496,6 +509,7 @@ class MemorabilienParser(Parser):
             'ort_list': _get_array_agg('ort___name'),
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -505,8 +519,7 @@ class MemorabilienParser(Parser):
                 'ID': obj.id,
                 'Titel': obj.titel,
                 'Beschreibung': obj.beschreibung,
-                'Datei-Quellen': None,
-                'Bestände': None,
+                # 'Datei-Quellen': None,
                 'Genres': concat(obj.genre_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
                 'Personen': concat(obj.person_list),
@@ -515,6 +528,7 @@ class MemorabilienParser(Parser):
                 'Orte': concat(obj.ort_list),
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -532,6 +546,7 @@ class TechnikParser(Parser):
             'ort_list': _get_array_agg('ort___name'),
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -541,7 +556,6 @@ class TechnikParser(Parser):
                 'ID': obj.id,
                 'Titel': obj.titel,
                 'Beschreibung': obj.beschreibung,
-                'Bestände': None,
                 'Genres': concat(obj.genre_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
                 'Personen': concat(obj.person_list),
@@ -550,6 +564,7 @@ class TechnikParser(Parser):
                 'Orte': concat(obj.ort_list),
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -567,6 +582,7 @@ class VideoParser(Parser):
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
             'person_list': _get_array_agg('person___name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -578,15 +594,14 @@ class VideoParser(Parser):
                 'Laufzeit': obj.laufzeit,
                 'Jahr': obj.jahr,
                 'Quelle': obj.quelle,
-                'Originalmaterial': obj.original,
+                'Ist Originalmaterial': _bool(obj.original),
                 'Release ID (discogs)': obj.release_id,
                 'Link discogs.com': obj.discogs_url,
-                'Beschreibung': obj.beschreibung,
                 'Speichermedium': obj.medium,
                 'Anzahl': obj.medium_qty,
-                'Video-Musiker': None,
-                'Datei-Quellen': None,
-                'Bestände': None,
+                'Beschreibung': obj.beschreibung,
+                # 'Video-Musiker': None,
+                # 'Datei-Quellen': None,
                 'Musiker': concat(obj.musiker_list),
                 'Bands': concat(obj.band_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
@@ -595,6 +610,7 @@ class VideoParser(Parser):
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
                 'Personen': concat(obj.person_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -650,19 +666,18 @@ class DateiParser(Parser):
                 'ID': obj.id,
                 'Titel': obj.titel,
                 'Media Typ': obj.media_typ,
-                'Datei': obj.datei_media,
                 'Datei-Pfad': obj.datei_pfad,
-                'Beschreibung': obj.beschreibung,
                 'Provenienz': obj.provenienz,
-                'Musiker': concat(obj.musiker_list),
-                'Datei-Quellen': None,
+                'Beschreibung': obj.beschreibung,
+                # 'Datei-Quellen': None,
                 'Genres': concat(obj.genre_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
-                'Personen': concat(obj.person_list),
+                'Musiker': concat(obj.musiker_list),
                 'Bands': concat(obj.band_list),
                 'Orte': concat(obj.ort_list),
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
+                'Personen': concat(obj.person_list),
             }
         )
 
@@ -672,9 +687,11 @@ class BrochureParser(Parser):
 
     def get_annotations(self) -> dict:
         return {
+            'jahr_list': _get_array_agg('jahre__jahr'),
             'genre_list': _get_array_agg('genre__genre'),
             'schlagwort_list': _get_array_agg('schlagwort__schlagwort'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -686,11 +703,11 @@ class BrochureParser(Parser):
                 'Zusammenfassung': obj.zusammenfassung,
                 'Ausgabe': obj.ausgabe,
                 'Beschreibung': obj.beschreibung,
-                'Bestände': None,
-                'Jahre': None,
                 'Webseiten': concat(obj.url_list),
+                'Jahre': concat(obj.jahr_list),
                 'Genres': concat(obj.genre_list),
                 'Schlagwörter': concat(obj.schlagwort_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -700,10 +717,12 @@ class KalenderParser(Parser):
 
     def get_annotations(self) -> dict:
         return {
+            'jahr_list': _get_array_agg('jahre__jahr'),
             'genre_list': _get_array_agg('genre__genre'),
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -714,14 +733,13 @@ class KalenderParser(Parser):
                 'Titel': obj.titel,
                 'Zusammenfassung': obj.zusammenfassung,
                 'Ausgabe': obj.ausgabe,
-                'Basebrochure ptr': obj.basebrochure_ptr,
                 'Beschreibung': obj.beschreibung,
-                'Bestände': None,
-                'Jahre': None,
                 'Webseiten': concat(obj.url_list),
+                'Jahre': concat(obj.jahr_list),
                 'Genres': concat(obj.genre_list),
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -731,8 +749,10 @@ class KatalogParser(Parser):
 
     def get_annotations(self) -> dict:
         return {
+            'jahr_list': _get_array_agg('jahre__jahr'),
             'genre_list': _get_array_agg('genre__genre'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -741,15 +761,14 @@ class KatalogParser(Parser):
                 'Objekt': 'Warenkatalog',
                 'ID': obj.id,
                 'Titel': obj.titel,
+                'Art d. Kataloges': obj.art,
                 'Zusammenfassung': obj.zusammenfassung,
                 'Ausgabe': obj.ausgabe,
-                'Basebrochure ptr': obj.basebrochure_ptr,
                 'Beschreibung': obj.beschreibung,
-                'Art d. Kataloges': obj.art,
-                'Bestände': None,
-                'Jahre': None,
                 'Webseiten': concat(obj.url_list),
+                'Jahre': concat(obj.jahr_list),
                 'Genres': concat(obj.genre_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )
 
@@ -767,6 +786,7 @@ class FotoParser(Parser):
             'spielort_list': _get_array_agg('spielort__name'),
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
             'person_list': _get_array_agg('person___name'),
+            'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
     def get_text_repr(self, obj) -> dict:
@@ -776,13 +796,12 @@ class FotoParser(Parser):
                 'ID': obj.id,
                 'Titel': obj.titel,
                 'Größe': obj.size,
-                'Zeitangabe': obj.datum,
                 'Art des Fotos': obj.typ,
-                'Farbfoto': obj.farbe,
+                'Zeitangabe': obj.datum,
+                'Ist Farbfoto': _bool(obj.farbe),
+                'Bildreihe': obj.reihe,
                 'Rechteinhaber': obj.owner,
                 'Beschreibung': obj.beschreibung,
-                'Bildreihe': obj.reihe,
-                'Bestände': None,
                 'Schlagwörter': concat(obj.schlagwort_list),
                 'Genres': concat(obj.genre_list),
                 'Musiker': concat(obj.musiker_list),
@@ -791,5 +810,6 @@ class FotoParser(Parser):
                 'Spielorte': concat(obj.spielort_list),
                 'Veranstaltungen': concat(obj.veranstaltung_list),
                 'Personen': concat(obj.person_list),
+                'Bestände': concat(obj.bestand_list),
             }
         )

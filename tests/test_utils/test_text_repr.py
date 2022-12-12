@@ -123,14 +123,14 @@ class TestMusikerParser(ParserTestCase):
         expected = [
             'Objekt', 'ID',
             'Künstlername',
+            'Personen',
             'Beschreibung',
-            'Person',
-            'Bands',
-            'Aliases',
             'Webseiten',
             'Genres',
-            'Instrumente',
+            'Aliases',
+            'Bands',
             'Orte',
+            'Instrumente',
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -151,10 +151,10 @@ class TestBandParser(ParserTestCase):
             'Objekt', 'ID',
             'Bandname',
             'Beschreibung',
-            'Musiker',
             'Aliases',
             'Webseiten',
             'Genres',
+            'Musiker',
             'Orte',
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
@@ -170,7 +170,7 @@ class TestAutorParser(ParserTestCase):
         self.assertCountEqual(list(annotations.keys()), expected)
 
     def test_get_text_repr(self):
-        expected = ['Objekt', 'ID', 'Name', 'Kürzel', 'Webseiten', 'Magazine']
+        expected = ['Objekt', 'ID', 'Name', 'Kürzel', 'Beschreibung', 'Webseiten', 'Magazine']
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
@@ -180,7 +180,7 @@ class TestAusgabeParser(ParserTestCase):
 
     def test_get_annotations(self):
         expected = [
-            'jahre_list', 'num_list', 'lnum_list', 'monat_list',
+            'jahr_list', 'num_list', 'lnum_list', 'monat_list',
             'audio_list', 'video_list', 'bestand_list'
         ]
         annotations = self.parser.get_annotations()
@@ -189,15 +189,15 @@ class TestAusgabeParser(ParserTestCase):
     def test_get_text_repr(self):
         expected = [
             'Objekt', 'ID',
-            'Magazine',
             'Name',
+            'Magazin',
             'Bearbeitungsstatus',
             'Ist Sonderausgabe',
-            'Beschreibung',
             'Erscheinungsdatum',
             'Jahrgang',
-            'Jahre', 'Nummern', 'lfd. Nummern', 'Monate',
-            'Audio-Materialien', 'Video-Materialien', 'Bestände'
+            'Beschreibung',
+            'Ausgabennummern', 'Monate', 'Laufende Nummern', 'Jahre',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -215,8 +215,13 @@ class TestMagazinParser(ParserTestCase):
 
     def test_get_text_repr(self):
         expected = [
-            'Objekt', 'ID', 'Name', 'Ist Fanzine', 'ISSN', 'Beschreibung',
-            'Webseiten', 'Genres', 'Verlage', 'Herausgeber', 'Orte'
+            'Objekt', 'ID',
+            'Name',
+            'Ist Fanzine',
+            'ISSN',
+            'Beschreibung',
+            'Webseiten',
+            'Genres', 'Verlage', 'Herausgeber', 'Orte'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -258,9 +263,9 @@ class TestBuchParser(ParserTestCase):
 
     def test_get_annotations(self):
         expected = [
-            'autor_list', 'musiker_list', 'band_list',
+            'musiker_list', 'band_list', 'autor_list',
             'genre_list', 'schlagwort_list',
-            'ort_list', 'spielort_list',
+            'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list', 'herausgeber_list', 'verlag_list',
             'bestand_list'
         ]
@@ -270,18 +275,20 @@ class TestBuchParser(ParserTestCase):
     def test_get_text_repr(self):
         expected = [
             'Objekt', 'ID',
-            'Titel', 'Titel (Original)',
-             'Seitenumfang',
-            'Jahr', 'Jahr (Original)',
+            'Titel',
+            'Seitenumfang',
+            'Jahr',
             'Auflage',
             'Schriftenreihe',
             'Sammelband', 'Ist Sammelband',
             'ISBN', 'EAN',
             'Sprache',
+            'Titel (Original)', 'Jahr (Original)',
             'Beschreibung',
             'Autoren', 'Musiker', 'Bands',
             'Schlagwörter', 'Genres',
             'Orte', 'Spielorte', 'Veranstaltungen',
+            'Personen',
             'Herausgeber', 'Verlage',
             'Bestände'
         ]
@@ -294,10 +301,11 @@ class TestAudioParser(ParserTestCase):
 
     def test_get_annotations(self):
         expected = [
-            'musiker_list', 'band_list', 'autor_list',
+            'musiker_list', 'band_list',
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
-            'person_list', 'plattenfirma_list'
+            'person_list', 'plattenfirma_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -309,19 +317,20 @@ class TestAudioParser(ParserTestCase):
             'Anz. Tracks',
             'Laufzeit',
             'Jahr',
-            'Land',
+            'Land der Pressung',
+            'Ist Originalmaterial',
             'Quelle',
-            'Originalmaterial',
+            'Speichermedium', 'Anzahl',
             'Plattennummer',
             'Release ID (discogs)',
             'Link discogs.com',
             'Beschreibung',
-            'Speichermedium',
             'Musiker', 'Bands',
             'Schlagwörter', 'Genres',
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Personen',
             'Plattenfirmen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -336,6 +345,7 @@ class TestPlakatParser(ParserTestCase):
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -350,9 +360,10 @@ class TestPlakatParser(ParserTestCase):
             'Beschreibung',
             'Bildreihe',
             'Schlagwörter', 'Genres',
-            'Musiker', 'Band',
+            'Musiker', 'Bands',
             'Orte', 'Spielorte', 'Veranstaltungen',
-            'Person'
+            'Personen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -367,6 +378,7 @@ class TestDokumentParser(ParserTestCase):
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -377,8 +389,9 @@ class TestDokumentParser(ParserTestCase):
             'Titel',
             'Beschreibung',
             'Genres', 'Schlagwörter',
-            'Personen', 'Band', 'Musiker',
+            'Personen', 'Bands', 'Musiker',
             'Orte', 'Spielorte', 'Veranstaltungen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -393,6 +406,7 @@ class TestMemorabilienParser(ParserTestCase):
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -403,8 +417,9 @@ class TestMemorabilienParser(ParserTestCase):
             'Titel',
             'Beschreibung',
             'Genres', 'Schlagwörter',
-            'Personen', 'Band', 'Musiker',
+            'Personen', 'Bands', 'Musiker',
             'Orte', 'Spielorte', 'Veranstaltungen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -419,6 +434,7 @@ class TestTechnikParser(ParserTestCase):
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -429,8 +445,9 @@ class TestTechnikParser(ParserTestCase):
             'Titel',
             'Beschreibung',
             'Genres', 'Schlagwörter',
-            'Personen', 'Band', 'Musiker',
+            'Personen', 'Bands', 'Musiker',
             'Orte', 'Spielorte', 'Veranstaltungen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -445,6 +462,7 @@ class TestVideoParser(ParserTestCase):
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -454,36 +472,38 @@ class TestVideoParser(ParserTestCase):
             'Objekt', 'ID',
             'Titel',
             'Laufzeit',
+            'Jahr',
             'Quelle',
             'Ist Originalmaterial',
-            'Release ID', 'Link discogs.com',
-            'Medium',
+            'Release ID (discogs)', 'Link discogs.com',
+            'Speichermedium', 'Anzahl',
             'Beschreibung',
-            'Musiker', 'Band',
+            'Musiker', 'Bands',
             'Schlagwörter', 'Genres',
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Personen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
-
-class TestBestandParser(ParserTestCase):
-    model = _models.Bestand
-
-    def test_get_annotations(self):
-        expected = [
-
-        ]
-        annotations = self.parser.get_annotations()
-        self.assertCountEqual(list(annotations.keys()), expected)
-
-    def test_get_text_repr(self):
-        expected = [
-
-        ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
-        self.assertEqual(list(text_repr.keys()), expected)
+#
+# class TestBestandParser(ParserTestCase):
+#     model = _models.Bestand
+#
+#     def test_get_annotations(self):
+#         expected = [
+#
+#         ]
+#         annotations = self.parser.get_annotations()
+#         self.assertCountEqual(list(annotations.keys()), expected)
+#
+#     def test_get_text_repr(self):
+#         expected = [
+#
+#         ]
+#         text_repr = self.parser.get_text_repr(self.queryset.get())
+#         self.assertEqual(list(text_repr.keys()), expected)
 
 
 class TestDateiParser(ParserTestCase):
@@ -504,13 +524,13 @@ class TestDateiParser(ParserTestCase):
             'Objekt', 'ID',
             'Titel',
             'Media Typ',
-            'Datei',
             'Datei-Pfad',
-            'Beschreibung',
             'Provenienz',
-            'Genres', 'Schlagwörter',
-            'Personen', 'Band', 'Musiker',
+            'Beschreibung',
+            'Genres','Schlagwörter',
+            'Musiker', 'Bands',
             'Orte', 'Spielorte', 'Veranstaltungen',
+            'Personen',
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
@@ -520,7 +540,7 @@ class TestBrochureParser(ParserTestCase):
     model = _models.Brochure
 
     def test_get_annotations(self):
-        expected = ['genre_list', 'schlagwort_list', 'url_list']
+        expected = ['jahr_list', 'genre_list', 'schlagwort_list', 'url_list', 'bestand_list']
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
 
@@ -528,12 +548,11 @@ class TestBrochureParser(ParserTestCase):
         expected = [
             'Objekt', 'ID',
             'Titel',
-            'Art d. Kataloges',
             'Zusammenfassung',
-            'Jahre',
             'Ausgabe',
             'Beschreibung',
             'Webseiten',
+            'Jahre',
             'Genres',
             'Schlagwörter',
             'Bestände',
@@ -546,7 +565,11 @@ class TestKalenderParser(ParserTestCase):
     model = _models.Kalender
 
     def test_get_annotations(self):
-        expected = ['genre_list', 'spielort_list', 'veranstaltung_list', 'url_list']
+        expected = [
+            'jahr_list', 'genre_list',
+            'spielort_list', 'veranstaltung_list',
+            'url_list', 'bestand_list'
+        ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
 
@@ -554,12 +577,11 @@ class TestKalenderParser(ParserTestCase):
         expected = [
             'Objekt', 'ID',
             'Titel',
-            'Art d. Kataloges',
             'Zusammenfassung',
-            'Jahre',
             'Ausgabe',
             'Beschreibung',
             'Webseiten',
+            'Jahre',
             'Genres',
             'Spielorte', 'Veranstaltungen',
             'Bestände',
@@ -572,7 +594,7 @@ class TestKatalogParser(ParserTestCase):
     model = _models.Katalog
 
     def test_get_annotations(self):
-        expected = ['genre_list', 'url_list']
+        expected = ['jahr_list', 'genre_list', 'url_list', 'bestand_list']
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
 
@@ -582,10 +604,10 @@ class TestKatalogParser(ParserTestCase):
             'Titel',
             'Art d. Kataloges',
             'Zusammenfassung',
-            'Jahre',
             'Ausgabe',
             'Beschreibung',
             'Webseiten',
+            'Jahre',
             'Genres',
             'Bestände',
         ]
@@ -602,6 +624,7 @@ class TestFotoParser(ParserTestCase):
             'schlagwort_list', 'genre_list',
             'ort_list', 'spielort_list', 'veranstaltung_list',
             'person_list',
+            'bestand_list'
         ]
         annotations = self.parser.get_annotations()
         self.assertCountEqual(list(annotations.keys()), expected)
@@ -611,16 +634,17 @@ class TestFotoParser(ParserTestCase):
             'Objekt', 'ID',
             'Titel',
             'Größe',
-            'Zeitangabe',
-            'Reihe',
             'Art des Fotos',
+            'Zeitangabe',
             'Ist Farbfoto',
+            'Bildreihe',
             'Rechteinhaber',
             'Beschreibung',
             'Schlagwörter', 'Genres',
-            'Band', 'Musiker',
+            'Musiker', 'Bands',
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Personen',
+            'Bestände'
         ]
         text_repr = self.parser.get_text_repr(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
