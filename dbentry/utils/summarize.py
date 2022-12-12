@@ -1,9 +1,9 @@
 """
-Provide useful text representations of model objects.
+Provide text summaries of model objects.
 
-The get_text_representations function, which takes a queryset as argument,
-returns a generator of OrderedDicts which contain the values for each object in
-the queryset.
+The get_summaries function, which takes a queryset as argument, returns a
+generator of OrderedDicts which contain the values for each object in the
+queryset.
 """
 from collections import OrderedDict
 
@@ -14,9 +14,6 @@ from dbentry import models as _models
 registry = {}
 
 
-# TODO: rename to 'summary'?
-
-
 def register(model):
     def inner(cls):
         registry[model] = cls
@@ -25,19 +22,19 @@ def register(model):
     return inner
 
 
-def get_text_representations(queryset):
+def get_summaries(queryset):
     if queryset.model not in registry:
         raise KeyError(f"No parser registered for model {queryset.model}.")
-    return registry[queryset.model]().get_text_representations(queryset)
+    return registry[queryset.model]().get_summaries(queryset)
 
 
-def text_repr_action(_model_admin, _request, queryset):
+def summary_action(_model_admin, _request, queryset):
     """
-    Function for a model admin action that displays the selected items in text
-    form.
+    Function for a model admin action that summarizes the selected items in
+    text form.
     """
     result = ""
-    for d in get_text_representations(queryset):
+    for d in get_summaries(queryset):
         if result:
             result += "<hr>"
         for k, v in d.items():
@@ -47,7 +44,7 @@ def text_repr_action(_model_admin, _request, queryset):
     from django.http import HttpResponse
     from django.utils.safestring import mark_safe
     return HttpResponse(mark_safe(result))
-text_repr_action.short_description = 'textliche Darstellung'  # noqa
+summary_action.short_description = 'Zusammenfassende textliche Darstellung'  # noqa
 
 
 def concat(objects, sep="; "):
@@ -81,12 +78,12 @@ class Parser:
             queryset = queryset.prefetch_related(*self.prefetch_related)
         return queryset.annotate(**self.get_annotations())
 
-    def get_text_repr(self, obj):
+    def get_summary(self, obj):
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def get_text_representations(self, queryset):
+    def get_summaries(self, queryset):
         for obj in self.modify_queryset(queryset):
-            yield self.get_text_repr(obj)
+            yield self.get_summary(obj)
 
 
 @register(_models.Person)
@@ -97,10 +94,10 @@ class PersonParser(Parser):
             'autor_list': _get_array_agg('autor___name'),
             'musiker_list': _get_array_agg('musiker__kuenstler_name'),
             'ort_list': _get_array_agg('orte___name'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Person',
@@ -131,10 +128,10 @@ class MusikerParser(Parser):
             'instrument_list': _get_array_agg('instrument__instrument'),
             'alias_list': _get_array_agg('musikeralias__alias'),
             'ort_list': _get_array_agg('orte___name'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Musiker',
@@ -161,10 +158,10 @@ class BandParser(Parser):
             'musiker_list': _get_array_agg('musiker__kuenstler_name'),
             'alias_list': _get_array_agg('bandalias__alias'),
             'ort_list': _get_array_agg('orte___name'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Band',
@@ -186,10 +183,10 @@ class AutorParser(Parser):
     def get_annotations(self) -> dict:
         return {
             'magazin_list': _get_array_agg('magazin__magazin_name'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Autor',
@@ -217,7 +214,7 @@ class AusgabeParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Ausgabe',
@@ -251,10 +248,10 @@ class MagazinParser(Parser):
             'verlag_list': _get_array_agg('verlag__verlag_name'),
             'herausgeber_list': _get_array_agg('herausgeber__herausgeber'),
             'ort_list': _get_array_agg('orte___name'),
-            'url_list': _get_array_agg('urls__url'), 
+            'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Magazin',
@@ -288,7 +285,7 @@ class ArtikelParser(Parser):
             'person_list': _get_array_agg('person___name'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Artikel',
@@ -333,7 +330,7 @@ class BuchParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Buch',
@@ -386,7 +383,7 @@ class AudioParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Audio Material',
@@ -434,7 +431,7 @@ class PlakatParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Plakat',
@@ -475,7 +472,7 @@ class DokumentParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Dokument',
@@ -512,7 +509,7 @@ class MemorabilienParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Memorabilia',
@@ -549,7 +546,7 @@ class TechnikParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Technik',
@@ -585,7 +582,7 @@ class VideoParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Video Material',
@@ -615,35 +612,6 @@ class VideoParser(Parser):
         )
 
 
-@register(_models.Bestand)
-class BestandParser(Parser):
-
-    def get_annotations(self) -> dict:
-        return {
-        }
-
-    def get_text_repr(self, obj) -> dict:
-        return OrderedDict(
-            {
-                'Objekt': 'Bestand',
-                'Signatur': obj.signatur,
-                'Lagerort': obj.lagerort,
-                'Anmerkungen': obj.anmerkungen,
-                'Provenienz': obj.provenienz,
-                'Audio': obj.audio,
-                'Ausgabe': obj.ausgabe,
-                'Brochure': obj.brochure,
-                'Buch': obj.buch,
-                'Dokument': obj.dokument,
-                'Foto': obj.foto,
-                'Memorabilien': obj.memorabilien,
-                'Plakat': obj.plakat,
-                'Technik': obj.technik,
-                'Video': obj.video,
-            }
-        )
-
-
 @register(_models.Datei)
 class DateiParser(Parser):
 
@@ -659,7 +627,7 @@ class DateiParser(Parser):
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Datei',
@@ -694,7 +662,7 @@ class BrochureParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Broschüre',
@@ -725,7 +693,7 @@ class KalenderParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Programmheft',
@@ -755,7 +723,7 @@ class KatalogParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Warenkatalog',
@@ -789,7 +757,7 @@ class FotoParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_text_repr(self, obj) -> dict:
+    def get_summary(self, obj) -> dict:
         return OrderedDict(
             {
                 'Objekt': 'Foto',

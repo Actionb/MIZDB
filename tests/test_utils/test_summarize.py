@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from dbentry import models as _models
-from dbentry.utils.text_repr import get_text_representations, registry
+from dbentry.utils.summarize import get_summaries, registry
 from tests.case import DataTestCase
 from tests.model_factory import make
 
@@ -34,7 +34,7 @@ class TestTextRepr(DataTestCase):
 
     def test(self):
         documents = list(
-            get_text_representations(self.model.objects.filter(pk=self.artikel.pk))
+            get_summaries(self.model.objects.filter(pk=self.artikel.pk))
         )
         self.assertEqual(len(documents), 1)
 
@@ -100,7 +100,7 @@ class TestPersonParser(ParserTestCase):
             'Objekt', 'ID', 'Vorname', 'Nachname', 'Normdatei ID', 'Normdatei Name',
             'Link DNB', 'Beschreibung', 'Webseiten', 'Musiker', 'Autoren', 'Orte'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -132,7 +132,7 @@ class TestMusikerParser(ParserTestCase):
             'Orte',
             'Instrumente',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -157,7 +157,7 @@ class TestBandParser(ParserTestCase):
             'Musiker',
             'Orte',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -171,7 +171,7 @@ class TestAutorParser(ParserTestCase):
 
     def test_get_text_repr(self):
         expected = ['Objekt', 'ID', 'Name', 'Kürzel', 'Beschreibung', 'Webseiten', 'Magazine']
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -199,7 +199,7 @@ class TestAusgabeParser(ParserTestCase):
             'Ausgabennummern', 'Monate', 'Laufende Nummern', 'Jahre',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -223,7 +223,7 @@ class TestMagazinParser(ParserTestCase):
             'Webseiten',
             'Genres', 'Verlage', 'Herausgeber', 'Orte'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -254,7 +254,7 @@ class TestArtikelParser(ParserTestCase):
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Personen',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -292,7 +292,7 @@ class TestBuchParser(ParserTestCase):
             'Herausgeber', 'Verlage',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -332,7 +332,7 @@ class TestAudioParser(ParserTestCase):
             'Plattenfirmen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -365,7 +365,7 @@ class TestPlakatParser(ParserTestCase):
             'Personen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -393,7 +393,7 @@ class TestDokumentParser(ParserTestCase):
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -421,7 +421,7 @@ class TestMemorabilienParser(ParserTestCase):
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -449,7 +449,7 @@ class TestTechnikParser(ParserTestCase):
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -484,26 +484,8 @@ class TestVideoParser(ParserTestCase):
             'Personen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
-
-#
-# class TestBestandParser(ParserTestCase):
-#     model = _models.Bestand
-#
-#     def test_get_annotations(self):
-#         expected = [
-#
-#         ]
-#         annotations = self.parser.get_annotations()
-#         self.assertCountEqual(list(annotations.keys()), expected)
-#
-#     def test_get_text_repr(self):
-#         expected = [
-#
-#         ]
-#         text_repr = self.parser.get_text_repr(self.queryset.get())
-#         self.assertEqual(list(text_repr.keys()), expected)
 
 
 class TestDateiParser(ParserTestCase):
@@ -527,12 +509,12 @@ class TestDateiParser(ParserTestCase):
             'Datei-Pfad',
             'Provenienz',
             'Beschreibung',
-            'Genres','Schlagwörter',
+            'Genres', 'Schlagwörter',
             'Musiker', 'Bands',
             'Orte', 'Spielorte', 'Veranstaltungen',
             'Personen',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -557,7 +539,7 @@ class TestBrochureParser(ParserTestCase):
             'Schlagwörter',
             'Bestände',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -586,7 +568,7 @@ class TestKalenderParser(ParserTestCase):
             'Spielorte', 'Veranstaltungen',
             'Bestände',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -611,7 +593,7 @@ class TestKatalogParser(ParserTestCase):
             'Genres',
             'Bestände',
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
 
@@ -646,5 +628,5 @@ class TestFotoParser(ParserTestCase):
             'Personen',
             'Bestände'
         ]
-        text_repr = self.parser.get_text_repr(self.queryset.get())
+        text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
