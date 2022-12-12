@@ -8,13 +8,15 @@ queryset.
 from collections import OrderedDict
 
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.http import HttpResponse
+from django.utils.safestring import mark_safe
 
 from dbentry import models as _models
 
 registry = {}
 
 
-def register(model):
+def _register(model):
     def inner(cls):
         registry[model] = cls
         return cls
@@ -23,6 +25,10 @@ def register(model):
 
 
 def get_summaries(queryset):
+    """
+    For each object in 'queryset', return an OrderedDict of values that
+    summarize the object.
+    """
     if queryset.model not in registry:
         raise KeyError(f"No parser registered for model {queryset.model}.")
     return registry[queryset.model]().get_summaries(queryset)
@@ -41,8 +47,6 @@ def summary_action(_model_admin, _request, queryset):
             # TODO: for 'many' relations, have v be a list of values and then
             #  use <ul>?
             result += f"<p>{k}: {v}</p>"
-    from django.http import HttpResponse
-    from django.utils.safestring import mark_safe
     return HttpResponse(mark_safe(result))
 summary_action.short_description = 'Zusammenfassende textliche Darstellung'  # noqa
 
@@ -86,7 +90,7 @@ class Parser:
             yield self.get_summary(obj)
 
 
-@register(_models.Person)
+@_register(_models.Person)
 class PersonParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -116,7 +120,7 @@ class PersonParser(Parser):
         )
 
 
-@register(_models.Musiker)
+@_register(_models.Musiker)
 class MusikerParser(Parser):
     select_related = ['person']
     prefetch_related = ['musikeralias_set', 'urls']
@@ -149,7 +153,7 @@ class MusikerParser(Parser):
         )
 
 
-@register(_models.Band)
+@_register(_models.Band)
 class BandParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -177,7 +181,7 @@ class BandParser(Parser):
         )
 
 
-@register(_models.Autor)
+@_register(_models.Autor)
 class AutorParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -200,7 +204,7 @@ class AutorParser(Parser):
         )
 
 
-@register(_models.Ausgabe)
+@_register(_models.Ausgabe)
 class AusgabeParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -239,7 +243,7 @@ class AusgabeParser(Parser):
         )
 
 
-@register(_models.Magazin)
+@_register(_models.Magazin)
 class MagazinParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -270,7 +274,7 @@ class MagazinParser(Parser):
         )
 
 
-@register(_models.Artikel)
+@_register(_models.Artikel)
 class ArtikelParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -310,7 +314,7 @@ class ArtikelParser(Parser):
         )
 
 
-@register(_models.Buch)
+@_register(_models.Buch)
 class BuchParser(Parser):
     select_related = ['schriftenreihe']
 
@@ -366,7 +370,7 @@ class BuchParser(Parser):
         )
 
 
-@register(_models.Audio)
+@_register(_models.Audio)
 class AudioParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -415,7 +419,7 @@ class AudioParser(Parser):
         )
 
 
-@register(_models.Plakat)
+@_register(_models.Plakat)
 class PlakatParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -456,7 +460,7 @@ class PlakatParser(Parser):
         )
 
 
-@register(_models.Dokument)
+@_register(_models.Dokument)
 class DokumentParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -493,7 +497,7 @@ class DokumentParser(Parser):
         )
 
 
-@register(_models.Memorabilien)
+@_register(_models.Memorabilien)
 class MemorabilienParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -530,7 +534,7 @@ class MemorabilienParser(Parser):
         )
 
 
-@register(_models.Technik)
+@_register(_models.Technik)
 class TechnikParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -566,7 +570,7 @@ class TechnikParser(Parser):
         )
 
 
-@register(_models.Video)
+@_register(_models.Video)
 class VideoParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -612,7 +616,7 @@ class VideoParser(Parser):
         )
 
 
-@register(_models.Datei)
+@_register(_models.Datei)
 class DateiParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -650,7 +654,7 @@ class DateiParser(Parser):
         )
 
 
-@register(_models.Brochure)
+@_register(_models.Brochure)
 class BrochureParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -680,7 +684,7 @@ class BrochureParser(Parser):
         )
 
 
-@register(_models.Kalender)
+@_register(_models.Kalender)
 class KalenderParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -712,7 +716,7 @@ class KalenderParser(Parser):
         )
 
 
-@register(_models.Katalog)
+@_register(_models.Katalog)
 class KatalogParser(Parser):
 
     def get_annotations(self) -> dict:
@@ -741,7 +745,7 @@ class KatalogParser(Parser):
         )
 
 
-@register(_models.Foto)
+@_register(_models.Foto)
 class FotoParser(Parser):
 
     def get_annotations(self) -> dict:
