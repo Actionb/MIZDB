@@ -1,32 +1,31 @@
 """
-Provide text summaries of model objects.
+Provide text summaries for model objects.
 
-The get_summaries function, which takes a queryset as argument, returns a
-generator of OrderedDicts which contain the values for each object in the
-queryset.
+The get_summaries function takes a queryset and yields OrderedDicts which
+contain the values for each object in the queryset.
 """
 from collections import OrderedDict
+from typing import Any, Callable, Iterable, Iterator, Optional, Type, TypeVar
 
+from django.contrib.admin import ModelAdmin
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.http import HttpResponse
+from django.db.models import Model, QuerySet
+from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
 from dbentry import models as _models
+from dbentry.utils.text import concat_limit
 
+ModelClass = TypeVar("ModelClass", bound=Type[Model])  # a django model class
+ModelObject = TypeVar("ModelObject", bound=Model)  # an instance of a model class
+
+# A mapping of model class to model parser.
 registry = {}
 
 
-def _register(model):
-    def inner(cls):
-        registry[model] = cls
-        return cls
-
-    return inner
-
-
-def get_summaries(queryset):
+def get_summaries(queryset: QuerySet) -> Iterator[OrderedDict]:
     """
-    For each object in 'queryset', return an OrderedDict of values that
+    For each model object in 'queryset' return an OrderedDict of values that
     summarize the object.
     """
     if queryset.model not in registry:
@@ -34,10 +33,26 @@ def get_summaries(queryset):
     return registry[queryset.model]().get_summaries(queryset)
 
 
-def summary_action(_model_admin, _request, queryset):
+def _register(model: ModelClass) -> Callable:
+    """Register the given model class with the decorated model parser class."""
+
+    def inner(cls: Type['Parser']) -> Type['Parser']:
+        registry[model] = cls
+        return cls
+
+    return inner
+
+
+# TODO: add permission restrictions on summary_action
+# noinspection PyUnusedLocal
+def summary_action(
+        model_admin: ModelAdmin,
+        request: HttpRequest,
+        queryset: QuerySet
+) -> HttpResponse:
     """
-    Function for a model admin action that summarizes the selected items in
-    text form.
+    Function for a model admin action that provides a text summary for the
+    selected items.
     """
     result = ""
     for d in get_summaries(queryset):
@@ -48,33 +63,39 @@ def summary_action(_model_admin, _request, queryset):
             #  use <ul>?
             result += f"<p>{k}: {v}</p>"
     return HttpResponse(mark_safe(result))
-summary_action.short_description = 'Zusammenfassende textliche Darstellung'  # noqa
+summary_action.short_description = 'textliche Zusammenfassung'  # type: ignore  # noqa
 
 
-def concat(objects, sep="; "):
-    # TODO: use utils.concat_limit (rename concat_limit to just 'concat'?)
-    return sep.join(str(o) for o in objects if o)
+def _concat(objects, sep="; "):
+    return concat_limit(objects, sep=sep)
 
 
-def _get_array_agg(path, ordering=None):
+def _get_array_agg(path: str, ordering: Optional[str] = None) -> ArrayAgg:
     """Return a Postgres ArrayAgg aggregation on 'path'."""
     if not ordering:
         ordering = path
     return ArrayAgg(path, distinct=True, ordering=ordering)
 
 
-def _bool(v):
+def _bool(v: Any) -> str:
     return 'Ja' if bool(v) else 'Nein'
 
 
 class Parser:
-    select_related = None
-    prefetch_related = None
+    """
+    Provide summaries of model objects in the form of OrderedDicts for each
+    object.
+    """
+
+    # arguments for QuerySet.select_related and prefetch_related
+    select_related: Iterable = ()
+    prefetch_related: Iterable = ()
 
     def get_annotations(self) -> dict:
+        """Return annotation declarations to be added to the queryset."""
         return {}
 
-    def modify_queryset(self, queryset):
+    def modify_queryset(self, queryset: QuerySet) -> QuerySet:
         """Modify the root queryset (f.ex. add annotations)."""
         if self.select_related:
             queryset = queryset.select_related(*self.select_related)
@@ -82,10 +103,12 @@ class Parser:
             queryset = queryset.prefetch_related(*self.prefetch_related)
         return queryset.annotate(**self.get_annotations())
 
-    def get_summary(self, obj):
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
+        """Return an OrderedDict summary of the given model object 'obj'."""
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def get_summaries(self, queryset):
+    def get_summaries(self, queryset: QuerySet) -> Iterator[OrderedDict]:
+        """Yield summaries (OrderedDicts) for each object in 'queryset'."""
         for obj in self.modify_queryset(queryset):
             yield self.get_summary(obj)
 
@@ -101,7 +124,7 @@ class PersonParser(Parser):
             'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Person',
@@ -112,10 +135,10 @@ class PersonParser(Parser):
                 'Normdatei Name': obj.gnd_name,
                 'Link DNB': obj.dnb_url,
                 'Beschreibung': obj.beschreibung,
-                'Webseiten': concat(obj.url_list),
-                'Musiker': concat(obj.musiker_list),
-                'Autoren': concat(obj.autor_list),
-                'Orte': concat(obj.ort_list),
+                'Webseiten': _concat(obj.url_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Autoren': _concat(obj.autor_list),
+                'Orte': _concat(obj.ort_list),
             }
         )
 
@@ -135,7 +158,7 @@ class MusikerParser(Parser):
             'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Musiker',
@@ -143,12 +166,12 @@ class MusikerParser(Parser):
                 'Künstlername': obj.kuenstler_name,
                 'Personen': obj.person,
                 'Beschreibung': obj.beschreibung,
-                'Webseiten': concat(obj.url_list),
-                'Genres': concat(obj.genre_list),
-                'Aliases': concat(obj.alias_list),
-                'Bands': concat(obj.band_list),
-                'Orte': concat(obj.ort_list),
-                'Instrumente': concat(obj.instrument_list),
+                'Webseiten': _concat(obj.url_list),
+                'Genres': _concat(obj.genre_list),
+                'Aliases': _concat(obj.alias_list),
+                'Bands': _concat(obj.band_list),
+                'Orte': _concat(obj.ort_list),
+                'Instrumente': _concat(obj.instrument_list),
             }
         )
 
@@ -165,18 +188,18 @@ class BandParser(Parser):
             'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Band',
                 'ID': obj.id,
                 'Bandname': obj.band_name,
                 'Beschreibung': obj.beschreibung,
-                'Aliases': concat(obj.alias_list),
-                'Webseiten': concat(obj.url_list),
-                'Genres': concat(obj.genre_list),
-                'Musiker': concat(obj.musiker_list),
-                'Orte': concat(obj.ort_list),
+                'Aliases': _concat(obj.alias_list),
+                'Webseiten': _concat(obj.url_list),
+                'Genres': _concat(obj.genre_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Orte': _concat(obj.ort_list),
             }
         )
 
@@ -190,7 +213,7 @@ class AutorParser(Parser):
             'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Autor',
@@ -198,8 +221,8 @@ class AutorParser(Parser):
                 'Name': obj.person,
                 'Kürzel': obj.kuerzel,
                 'Beschreibung': obj.beschreibung,
-                'Webseiten': concat(obj.url_list),
-                'Magazine': concat(obj.magazin_list),
+                'Webseiten': _concat(obj.url_list),
+                'Magazine': _concat(obj.magazin_list),
             }
         )
 
@@ -218,7 +241,7 @@ class AusgabeParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Ausgabe',
@@ -230,11 +253,11 @@ class AusgabeParser(Parser):
                 'Erscheinungsdatum': obj.e_datum,
                 'Jahrgang': obj.jahrgang,
                 'Beschreibung': obj.beschreibung,
-                'Ausgabennummern': concat(obj.num_list),
-                'Monate': concat(obj.monat_list),
-                'Laufende Nummern': concat(obj.lnum_list),
-                'Jahre': concat(obj.jahr_list),
-                'Bestände': concat(obj.bestand_list),
+                'Ausgabennummern': _concat(obj.num_list),
+                'Monate': _concat(obj.monat_list),
+                'Laufende Nummern': _concat(obj.lnum_list),
+                'Jahre': _concat(obj.jahr_list),
+                'Bestände': _concat(obj.bestand_list),
                 # 'Artikel': None,
                 # 'base brochures': None,
                 # 'Audio Materialien': None,
@@ -255,7 +278,7 @@ class MagazinParser(Parser):
             'url_list': _get_array_agg('urls__url'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Magazin',
@@ -265,11 +288,11 @@ class MagazinParser(Parser):
                 'ISSN': obj.issn,
                 'Beschreibung': obj.beschreibung,
                 # 'Ausgaben': None,
-                'Webseiten': concat(obj.url_list),
-                'Genres': concat(obj.genre_list),
-                'Verlage': concat(obj.verlag_list),
-                'Herausgeber': concat(obj.herausgeber_list),
-                'Orte': concat(obj.ort_list),
+                'Webseiten': _concat(obj.url_list),
+                'Genres': _concat(obj.genre_list),
+                'Verlage': _concat(obj.verlag_list),
+                'Herausgeber': _concat(obj.herausgeber_list),
+                'Orte': _concat(obj.ort_list),
             }
         )
 
@@ -289,7 +312,7 @@ class ArtikelParser(Parser):
             'person_list': _get_array_agg('person___name'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Artikel',
@@ -299,17 +322,17 @@ class ArtikelParser(Parser):
                 'Seite': f"{obj.seite}{obj.seitenumfang}",
                 'Zusammenfassung': obj.zusammenfassung,
                 'Beschreibung': obj.beschreibung,
-                'Autoren': concat(obj.autor_list),
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Genres': concat(obj.genre_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(
+                'Autoren': _concat(obj.autor_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Genres': _concat(obj.genre_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(
                     f"{v.name} ({v.spielort})" for v in obj.veranstaltung.order_by('name')
                 ),
-                'Personen': concat(obj.person_list),
+                'Personen': _concat(obj.person_list),
             }
         )
 
@@ -334,7 +357,7 @@ class BuchParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Buch',
@@ -354,18 +377,18 @@ class BuchParser(Parser):
                 'Beschreibung': obj.beschreibung,
                 # TODO: include related Buch objects (if Sammelband)?
                 # 'Bücher': None,
-                'Autoren': concat(obj.autor_list),
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Genres': concat(obj.genre_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Personen': concat(obj.person_list),
-                'Herausgeber': concat(obj.herausgeber_list),
-                'Verlage': concat(obj.verlag_list),
-                'Bestände': concat(obj.bestand_list),
+                'Autoren': _concat(obj.autor_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Genres': _concat(obj.genre_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Personen': _concat(obj.person_list),
+                'Herausgeber': _concat(obj.herausgeber_list),
+                'Verlage': _concat(obj.verlag_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -387,7 +410,7 @@ class AudioParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Audio Material',
@@ -405,16 +428,16 @@ class AudioParser(Parser):
                 'Release ID (discogs)': obj.release_id,
                 'Link discogs.com': obj.discogs_url,
                 'Beschreibung': obj.beschreibung,
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Genres': concat(obj.genre_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Personen': concat(obj.person_list),
-                'Plattenfirmen': concat(obj.plattenfirma_list),
-                'Bestände': concat(obj.bestand_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Genres': _concat(obj.genre_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Personen': _concat(obj.person_list),
+                'Plattenfirmen': _concat(obj.plattenfirma_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -435,7 +458,7 @@ class PlakatParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Plakat',
@@ -447,15 +470,15 @@ class PlakatParser(Parser):
                 'Beschreibung': obj.beschreibung,
                 'Bildreihe': obj.reihe,
                 # 'Datei-Quellen': None,
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Genres': concat(obj.genre_list),
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Personen': concat(obj.person_list),
-                'Bestände': concat(obj.bestand_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Genres': _concat(obj.genre_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Personen': _concat(obj.person_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -476,7 +499,7 @@ class DokumentParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Dokument',
@@ -484,15 +507,15 @@ class DokumentParser(Parser):
                 'Titel': obj.titel,
                 'Beschreibung': obj.beschreibung,
                 # 'Datei-Quellen': None,
-                'Genres': concat(obj.genre_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Personen': concat(obj.person_list),
-                'Bands': concat(obj.band_list),
-                'Musiker': concat(obj.musiker_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Bestände': concat(obj.bestand_list),
+                'Genres': _concat(obj.genre_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Personen': _concat(obj.person_list),
+                'Bands': _concat(obj.band_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -513,7 +536,7 @@ class MemorabilienParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Memorabilia',
@@ -521,15 +544,15 @@ class MemorabilienParser(Parser):
                 'Titel': obj.titel,
                 'Beschreibung': obj.beschreibung,
                 # 'Datei-Quellen': None,
-                'Genres': concat(obj.genre_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Personen': concat(obj.person_list),
-                'Bands': concat(obj.band_list),
-                'Musiker': concat(obj.musiker_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Bestände': concat(obj.bestand_list),
+                'Genres': _concat(obj.genre_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Personen': _concat(obj.person_list),
+                'Bands': _concat(obj.band_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -550,22 +573,22 @@ class TechnikParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Technik',
                 'ID': obj.id,
                 'Titel': obj.titel,
                 'Beschreibung': obj.beschreibung,
-                'Genres': concat(obj.genre_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Personen': concat(obj.person_list),
-                'Bands': concat(obj.band_list),
-                'Musiker': concat(obj.musiker_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Bestände': concat(obj.bestand_list),
+                'Genres': _concat(obj.genre_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Personen': _concat(obj.person_list),
+                'Bands': _concat(obj.band_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -586,7 +609,7 @@ class VideoParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Video Material',
@@ -603,15 +626,15 @@ class VideoParser(Parser):
                 'Beschreibung': obj.beschreibung,
                 # 'Video-Musiker': None,
                 # 'Datei-Quellen': None,
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Genres': concat(obj.genre_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Personen': concat(obj.person_list),
-                'Bestände': concat(obj.bestand_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Genres': _concat(obj.genre_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Personen': _concat(obj.person_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -631,7 +654,7 @@ class DateiParser(Parser):
             'veranstaltung_list': _get_array_agg('veranstaltung__name'),
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Datei',
@@ -642,14 +665,14 @@ class DateiParser(Parser):
                 'Provenienz': obj.provenienz,
                 'Beschreibung': obj.beschreibung,
                 # 'Datei-Quellen': None,
-                'Genres': concat(obj.genre_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Personen': concat(obj.person_list),
+                'Genres': _concat(obj.genre_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Personen': _concat(obj.person_list),
             }
         )
 
@@ -666,7 +689,7 @@ class BrochureParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Broschüre',
@@ -675,11 +698,11 @@ class BrochureParser(Parser):
                 'Zusammenfassung': obj.zusammenfassung,
                 'Ausgabe': obj.ausgabe,
                 'Beschreibung': obj.beschreibung,
-                'Webseiten': concat(obj.url_list),
-                'Jahre': concat(obj.jahr_list),
-                'Genres': concat(obj.genre_list),
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Bestände': concat(obj.bestand_list),
+                'Webseiten': _concat(obj.url_list),
+                'Jahre': _concat(obj.jahr_list),
+                'Genres': _concat(obj.genre_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -697,7 +720,7 @@ class KalenderParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Programmheft',
@@ -706,12 +729,12 @@ class KalenderParser(Parser):
                 'Zusammenfassung': obj.zusammenfassung,
                 'Ausgabe': obj.ausgabe,
                 'Beschreibung': obj.beschreibung,
-                'Webseiten': concat(obj.url_list),
-                'Jahre': concat(obj.jahr_list),
-                'Genres': concat(obj.genre_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Bestände': concat(obj.bestand_list),
+                'Webseiten': _concat(obj.url_list),
+                'Jahre': _concat(obj.jahr_list),
+                'Genres': _concat(obj.genre_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -727,7 +750,7 @@ class KatalogParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Warenkatalog',
@@ -737,10 +760,10 @@ class KatalogParser(Parser):
                 'Zusammenfassung': obj.zusammenfassung,
                 'Ausgabe': obj.ausgabe,
                 'Beschreibung': obj.beschreibung,
-                'Webseiten': concat(obj.url_list),
-                'Jahre': concat(obj.jahr_list),
-                'Genres': concat(obj.genre_list),
-                'Bestände': concat(obj.bestand_list),
+                'Webseiten': _concat(obj.url_list),
+                'Jahre': _concat(obj.jahr_list),
+                'Genres': _concat(obj.genre_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
 
@@ -761,7 +784,7 @@ class FotoParser(Parser):
             'bestand_list': _get_array_agg('bestand__lagerort___name')
         }
 
-    def get_summary(self, obj) -> dict:
+    def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
                 'Objekt': 'Foto',
@@ -774,14 +797,14 @@ class FotoParser(Parser):
                 'Bildreihe': obj.reihe,
                 'Rechteinhaber': obj.owner,
                 'Beschreibung': obj.beschreibung,
-                'Schlagwörter': concat(obj.schlagwort_list),
-                'Genres': concat(obj.genre_list),
-                'Musiker': concat(obj.musiker_list),
-                'Bands': concat(obj.band_list),
-                'Orte': concat(obj.ort_list),
-                'Spielorte': concat(obj.spielort_list),
-                'Veranstaltungen': concat(obj.veranstaltung_list),
-                'Personen': concat(obj.person_list),
-                'Bestände': concat(obj.bestand_list),
+                'Schlagwörter': _concat(obj.schlagwort_list),
+                'Genres': _concat(obj.genre_list),
+                'Musiker': _concat(obj.musiker_list),
+                'Bands': _concat(obj.band_list),
+                'Orte': _concat(obj.ort_list),
+                'Spielorte': _concat(obj.spielort_list),
+                'Veranstaltungen': _concat(obj.veranstaltung_list),
+                'Personen': _concat(obj.person_list),
+                'Bestände': _concat(obj.bestand_list),
             }
         )
