@@ -7,11 +7,8 @@ contain the values for each object in the queryset.
 from collections import OrderedDict
 from typing import Any, Callable, Iterable, Iterator, Optional, Type, TypeVar
 
-from django.contrib.admin import ModelAdmin
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Model, QuerySet
-from django.http import HttpRequest, HttpResponse
-from django.utils.safestring import mark_safe
 
 from dbentry import models as _models
 from dbentry.utils.text import concat_limit
@@ -41,27 +38,6 @@ def _register(model: ModelClass) -> Callable:
         return cls
 
     return inner
-
-
-# noinspection PyUnusedLocal
-def summary_action(
-        model_admin: ModelAdmin,
-        request: HttpRequest,
-        queryset: QuerySet
-) -> HttpResponse:
-    """
-    Function for a model admin action that provides a text summary for the
-    selected items.
-    """
-    result = ""
-    for d in get_summaries(queryset):
-        if result:
-            result += "<hr>"
-        for k, v in d.items():
-            result += f"<p>{k}: {v}</p>"
-    return HttpResponse(mark_safe(result))
-summary_action.short_description = 'textliche Zusammenfassung'  # type: ignore  # noqa
-summary_action.allowed_permissions = ('view',)  # type: ignore  # noqa
 
 
 def _concat(objects: Iterable, sep: str = "; "):

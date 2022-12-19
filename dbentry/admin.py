@@ -102,6 +102,7 @@ class AudioAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     form = _forms.AudioForm
     index_category = 'Archivgut'
@@ -135,7 +136,6 @@ class AudioAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -209,7 +209,8 @@ class AusgabenAdmin(MIZModelAdmin):
     actions = [
         _actions.merge_records, _actions.bulk_jg, _actions.change_bestand,
         _actions.moveto_brochure, 'change_status_unbearbeitet',
-        'change_status_inbearbeitung', 'change_status_abgeschlossen'
+        'change_status_inbearbeitung', 'change_status_abgeschlossen',
+        _actions.summarize
     ]
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[AusgabeChangeList]:
@@ -366,6 +367,7 @@ class AutorAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.AutorURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.AutorForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, MagazinInLine]
@@ -424,6 +426,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.ArtikelForm
     index_category = 'Archivgut'
     save_on_top = True
@@ -509,6 +512,7 @@ class BandAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BandURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.BandForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
@@ -584,6 +588,7 @@ class PlakatAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     form = _forms.PlakatForm
     index_category = 'Archivgut'
@@ -609,7 +614,6 @@ class PlakatAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'},
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -702,6 +706,7 @@ class BuchAdmin(MIZModelAdmin):
         model = _models.Buch.verlag.through
         verbose_model = _models.Verlag
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     changelist_link_labels = {'buch': 'Aufsätze'}
     form = _forms.BuchForm
@@ -743,7 +748,6 @@ class BuchAdmin(MIZModelAdmin):
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -784,11 +788,11 @@ class BuchAdmin(MIZModelAdmin):
 
 @admin.register(_models.Dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Genre, site=miz_site)
@@ -796,6 +800,7 @@ class GenreAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.GenreAlias
 
+    actions = [_actions.merge_records, _actions.replace]
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
@@ -804,7 +809,6 @@ class GenreAdmin(MIZModelAdmin):
     # search bar. Note that the fields declared here do not matter, as the
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
-    actions = [_actions.merge_records, _actions.replace]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -844,6 +848,7 @@ class MagazinAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):  # noqa
         model = _models.Magazin.orte.through
 
+    actions = [_actions.merge_records, _actions.summarize]
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
     list_display = ['magazin_name', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
@@ -890,11 +895,11 @@ class MagazinAdmin(MIZModelAdmin):
 
 @admin.register(_models.Memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Musiker, site=miz_site)
@@ -917,6 +922,7 @@ class MusikerAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.MusikerURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
@@ -956,6 +962,7 @@ class PersonAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.PersonURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     index_category = 'Stammdaten'
     inlines = [URLInLine, OrtInLine]
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
@@ -1013,6 +1020,7 @@ class SchlagwortAdmin(MIZModelAdmin):
         model = _models.SchlagwortAlias
         extra = 1
 
+    actions = [_actions.merge_records, _actions.replace]
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
@@ -1021,7 +1029,6 @@ class SchlagwortAdmin(MIZModelAdmin):
     # search bar. Note that the fields declared here do not matter, as the
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
-    actions = [_actions.merge_records, _actions.replace]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1050,11 +1057,11 @@ class SpielortAdmin(MIZModelAdmin):
 
 @admin.register(_models.Technik, site=miz_site)
 class TechnikAdmin(MIZModelAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Veranstaltung, site=miz_site)
@@ -1170,6 +1177,7 @@ class VideoAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     form = _forms.VideoForm
     index_category = 'Archivgut'
     collapse_all = True
@@ -1203,7 +1211,6 @@ class VideoAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1364,6 +1371,7 @@ class DateiAdmin(MIZModelAdmin):
         extra = 0
         description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
 
+    actions = [_actions.merge_records, _actions.summarize]
     collapse_all = True
     index_category = 'Archivgut'
     save_on_top = True
@@ -1401,6 +1409,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
+    actions = [_actions.merge_records, _actions.change_bestand]
     form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
@@ -1411,7 +1420,6 @@ class BaseBrochureAdmin(MIZModelAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_fieldsets(self, request: HttpRequest, obj: Optional[Model] = None) -> list:
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
@@ -1483,13 +1491,13 @@ class BrochureAdmin(BaseBrochureAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
 
 
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
         """
@@ -1527,6 +1535,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     inlines = [
         URLInLine, JahrInLine, GenreInLine, SpielortInLine,
         VeranstaltungInLine, BestandInLine]
@@ -1539,7 +1548,6 @@ class KalenderAdmin(BaseBrochureAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe', 'spielort', 'veranstaltung']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Foto, site=miz_site)
@@ -1571,6 +1579,7 @@ class FotoAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     form = _forms.FotoForm
     index_category = 'Archivgut'
@@ -1596,7 +1605,6 @@ class FotoAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'},
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {

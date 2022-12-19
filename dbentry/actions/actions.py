@@ -2,12 +2,14 @@ from typing import Callable, Type
 
 from django.contrib.admin import ModelAdmin
 from django.db.models import QuerySet
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
+from django.utils.safestring import mark_safe
 from django.views import View
 
 from dbentry.actions.views import (
     BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
+from dbentry.utils.summarize import get_summaries
 
 
 def add_cls_attrs(view_cls: Type[View]) -> Callable:
@@ -55,3 +57,21 @@ def change_bestand(model_admin: ModelAdmin, request: HttpRequest, queryset: Quer
 @add_cls_attrs(Replace)
 def replace(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
     return Replace.as_view(model_admin=model_admin, queryset=queryset)(request)
+
+
+# noinspection PyUnusedLocal
+def summarize(
+        model_admin: ModelAdmin,
+        request: HttpRequest,
+        queryset: QuerySet
+) -> HttpResponse:
+    """A model admin action that provides a summary for the selected items."""
+    result = ""
+    for d in get_summaries(queryset):
+        if result:
+            result += "<hr>"
+        for k, v in d.items():
+            result += f"<p>{k}: {v}</p>"
+    return HttpResponse(mark_safe(result))
+summarize.short_description = 'textliche Zusammenfassung'  # type: ignore  # noqa
+summarize.allowed_permissions = ('view',)  # type: ignore  # noqa
