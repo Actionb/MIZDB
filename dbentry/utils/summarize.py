@@ -20,7 +20,7 @@ ModelClass = TypeVar("ModelClass", bound=Type[Model])  # a django model class
 ModelObject = TypeVar("ModelObject", bound=Model)  # an instance of a model class
 
 # A mapping of model class to model parser.
-registry = {}
+registry: dict = {}
 
 
 def get_summaries(queryset: QuerySet) -> Iterator[OrderedDict]:
@@ -43,7 +43,6 @@ def _register(model: ModelClass) -> Callable:
     return inner
 
 
-# TODO: add permission restrictions on summary_action
 # noinspection PyUnusedLocal
 def summary_action(
         model_admin: ModelAdmin,
@@ -59,15 +58,14 @@ def summary_action(
         if result:
             result += "<hr>"
         for k, v in d.items():
-            # TODO: for 'many' relations, have v be a list of values and then
-            #  use <ul>?
             result += f"<p>{k}: {v}</p>"
     return HttpResponse(mark_safe(result))
 summary_action.short_description = 'textliche Zusammenfassung'  # type: ignore  # noqa
+summary_action.allowed_permissions = ('view',)  # type: ignore  # noqa
 
 
-def _concat(objects, sep="; "):
-    return concat_limit(objects, sep=sep)
+def _concat(objects: Iterable, sep: str = "; "):
+    return concat_limit(objects, sep=sep, width=0)
 
 
 def _get_array_agg(path: str, ordering: Optional[str] = None) -> ArrayAgg:
