@@ -1,77 +1,78 @@
 from collections import OrderedDict
+from unittest import mock
+
+from django.db.models import Count
+from django.test import TestCase
 
 from dbentry import models as _models
-from dbentry.utils.summarize import get_summaries, registry
+from dbentry.utils.summarize import Parser, get_summaries, registry
 from tests.case import DataTestCase
 from tests.model_factory import make
+from .models import Veranstaltung
 
 
-class TestTextRepr(DataTestCase):
-    model = _models.Artikel
+class DummyParser(Parser):
+    select_related = ('reihe',)
+    prefetch_related = ('band',)
+
+    def get_annotations(self):
+        return {'count': Count('id')}
+
+    def get_summary(self, obj):
+        return OrderedDict(
+            {
+                'Objekt': 'Veranstaltung',
+                'ID': obj.id,
+                'Name': obj.name,
+            }
+        )
+
+
+class TestGetSummaries(TestCase):
+
+    def test_get_summaries(self):
+        registry_mock = {Veranstaltung: DummyParser}
+        with mock.patch('dbentry.utils.summarize.registry', new=registry_mock):
+            with mock.patch.object(DummyParser, 'get_summaries') as get_summaries_mock:
+                get_summaries(Veranstaltung.objects.all())
+                get_summaries_mock.assert_called()
+
+    def test_get_summaries_model_not_registered(self):
+        with mock.patch('dbentry.utils.summarize.registry') as registry_mock:
+            registry_mock = {}
+            with self.assertRaises(KeyError):
+                get_summaries(Veranstaltung.objects.all())
+
+
+class TestParser(DataTestCase):
+    model = Veranstaltung
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
-        cls.ausgabe = make(_models.Ausgabe, magazin=cls.mag)
-        cls.musiker1 = make(_models.Musiker, kuenstler_name='John Lennon')
-        cls.musiker2 = make(_models.Musiker, kuenstler_name='Paul McCartney')
-        cls.band1 = make(_models.Band, band_name='The Beatles')
-        cls.genre1 = make(_models.Genre, genre='Rock')
-        cls.genre2 = make(_models.Genre, genre='Beat')
-        cls.artikel = make(
-            _models.Artikel,
-            schlagzeile='Die Dokumentenansicht funktioniert!',
-            seite=20,
-            seitenumfang='f',
-            zusammenfassung='Dieser Artikel existiert für Tests.',
-            ausgabe=cls.ausgabe,
-            musiker=[cls.musiker1, cls.musiker2],
-            band=[cls.band1],
-            genre=[cls.genre1, cls.genre2]
-            # TODO: add Veranstaltung
-        )
+        cls.obj = make(cls.model, band__extra=2)
         super().setUpTestData()
 
-    def test(self):
-        documents = list(
-            get_summaries(self.model.objects.filter(pk=self.artikel.pk))
-        )
-        self.assertEqual(len(documents), 1)
+    def setUp(self):
+        super().setUp()
+        self.parser = DummyParser()
 
-        expected = OrderedDict(
-            {
-                'Objekt': 'Artikel',
-                'ID': self.artikel.pk,
-                'Ausgabe': f'{self.ausgabe} ({self.mag})',
-                'Schlagzeile': 'Die Dokumentenansicht funktioniert!',
-                'Seite': '20f',
-                'Zusammenfassung': 'Dieser Artikel existiert für Tests.',
-                'Beschreibung': '',
-                'Autoren': '',
-                'Musiker': 'John Lennon; Paul McCartney',
-                'Bands': 'The Beatles',
-                'Schlagwörter': '',
-                'Genres': 'Beat; Rock',
-                'Orte': '',
-                'Spielorte': '',
-                'Veranstaltungen': '',
-                'Personen': '',
-            }
-        )
-        self.assertEqual(list(documents[0].keys()), list(expected.keys()))
-        doc = documents[0].items().__iter__()
-        exp = expected.items().__iter__()
-        i = 0
-        while True:
-            try:
-                doc_k, doc_v = next(doc)
-                exp_k, exp_v = next(exp)
-                with self.subTest(key=doc_k, i=i):
-                    self.assertEqual(doc_k, exp_k)
-                    self.assertEqual(doc_v, exp_v)
-            except StopIteration:
-                break
-            i += 1
+    def test_modify_queryset(self):
+        """Assert that modify_queryset adds annotations and select/prefetch_related."""
+        with self.assertNumQueries(2):
+            queryset = self.parser.modify_queryset(self.queryset)
+            list(queryset)  # force evaluation of the queryset
+        self.assertIsInstance(queryset.query.select_related, dict)
+        self.assertIn('reihe', queryset.query.select_related)
+        self.assertIn('count', queryset.query.annotations)
+
+    def test_modify_queryset_does_not_raise_exceptions(self):
+        """
+        Assert that modify_queryset does not propagate exceptions raised from
+        trying to apply select_related to an unsuitable queryset.
+        """
+        # Can't use select_related after values or values_list:
+        with self.assertNotRaises(TypeError):
+            self.parser.modify_queryset(self.queryset.values('id'))
 
 
 class ParserTestCase(DataTestCase):

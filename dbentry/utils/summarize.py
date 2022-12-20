@@ -67,23 +67,28 @@ class Parser:
 
     def get_annotations(self) -> dict:
         """Return annotation declarations to be added to the queryset."""
-        return {}
+        return {}  # pragma: no cover
 
     def modify_queryset(self, queryset: QuerySet) -> QuerySet:
         """Modify the root queryset (f.ex. add annotations)."""
         if self.select_related:
-            queryset = queryset.select_related(*self.select_related)
+            try:
+                queryset = queryset.select_related(*self.select_related)
+            except TypeError:
+                # select_related() after .values() or .values_list()
+                # Forgo queryset optimizations if the queryset is unsuitable.
+                pass
         if self.prefetch_related:
             queryset = queryset.prefetch_related(*self.prefetch_related)
         return queryset.annotate(**self.get_annotations())
 
     def get_summary(self, obj: ModelObject) -> OrderedDict:
         """Return an OrderedDict summary of the given model object 'obj'."""
-        raise NotImplementedError("Subclasses must implement this method.")
+        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
     def get_summaries(self, queryset: QuerySet) -> Iterator[OrderedDict]:
         """Yield summaries (OrderedDicts) for each object in 'queryset'."""
-        for obj in self.modify_queryset(queryset):
+        for obj in self.modify_queryset(queryset):  # pragma: no cover
             yield self.get_summary(obj)
 
 
