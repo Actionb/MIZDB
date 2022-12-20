@@ -1,7 +1,7 @@
 """
 Provide text summaries for model objects.
 
-The get_summaries function takes a queryset and yields OrderedDicts which
+The get_summaries function takes a queryset and returns OrderedDicts which
 contain the values for each object in the queryset.
 """
 from collections import OrderedDict
