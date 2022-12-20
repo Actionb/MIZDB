@@ -3,7 +3,6 @@ from typing import Callable, Type
 from django.contrib.admin import ModelAdmin
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
-from django.utils.safestring import mark_safe
 from django.views import View
 
 from dbentry.actions.views import (
@@ -66,12 +65,11 @@ def summarize(
         queryset: QuerySet
 ) -> HttpResponse:
     """A model admin action that provides a summary for the selected items."""
-    result = ""
+    response = HttpResponse()
     for d in get_summaries(queryset):
-        if result:
-            result += "<hr>"
         for k, v in d.items():
-            result += f"<p>{k}: {v}</p>"
-    return HttpResponse(mark_safe(result))
-summarize.short_description = 'textliche Zusammenfassung'  # type: ignore  # noqa
+            response.write(f'<p>{k}: {v}</p>')
+        response.write('<hr style="break-after:page;">')
+    return response
+summarize.short_description = 'textuelle Zusammenfassung'  # type: ignore  # noqa
 summarize.allowed_permissions = ('view',)  # type: ignore  # noqa
