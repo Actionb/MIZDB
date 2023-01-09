@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- summarize utility function and action that provide summaries of model objects
+
 ## [0.9] - 2022-12-05
 
 ### Finished test rework
