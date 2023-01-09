@@ -4,6 +4,7 @@ from typing import Any, Dict, List, OrderedDict as OrderedDictType, Sequence, Tu
 from django import views
 from django.apps import apps
 from django.contrib.admin.utils import get_fields_from_path
+from django.contrib.auth import get_permission_codename
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import (
     Count, F, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet,
@@ -396,11 +397,27 @@ class SiteSearchView(views.generic.TemplateView):
         """
         Return a list of models to be queried.
 
+        The user must have 'view' or 'change' permission for a model to be
+        included in the list.
+
         Args:
             app_label (str): name of the app whose models should be queried
         """
+
+        def has_permission(user, model):
+            opts = model._meta
+            codename_view = get_permission_codename('view', opts)
+            codename_change = get_permission_codename('change', opts)
+            return (
+                user.has_perm('%s.%s' % (opts.app_label, codename_view))
+                or user.has_perm('%s.%s' % (opts.app_label, codename_change))
+            )
+
         app = apps.get_app_config(app_label or self.app_label)
-        return app.get_models()
+        return [
+            model for model in app.get_models()
+            if has_permission(self.request.user, model)
+        ]
 
     def _search(self, model: Model, q: str) -> Any:
         """Search the given model for the search term ``q``."""
@@ -431,9 +448,6 @@ class SiteSearchView(views.generic.TemplateView):
 @register_tool(
     url_name='site_search',
     index_label='Datenbank durchsuchen',
-    # TODO: add required permissions
-    #  (create a 'search' permission that allows app-wide searching?)
-    # permission_required=['dbentry.view_artikel'],
     superuser_only=False
 )
 class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
