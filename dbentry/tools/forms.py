@@ -48,7 +48,6 @@ def get_dupe_field_choices(model: Type[Model]) -> Tuple:
         if field.concrete:
             if field.primary_key:
                 continue
-            # TODO: remove capitalizing the verbose name?
             if field.many_to_many:
                 # Add a choice for the related model's name_field, but add them
                 # to display_choices after all non-m2m choices.
