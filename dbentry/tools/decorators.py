@@ -26,7 +26,7 @@ def register_tool(
           to the decorated view on the index page for the current user.
         superuser_only (bool): If True, only superusers will see a link on the
           index page. This does not restrict access to the view in any way.
-        site (MIZAdminSite instance): the site to register the view with
+        site (MIZAdminSite instance): the site to _register the view with
     """
 
     def decorator(tool_view: View) -> View:
