@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.9] - 2022-12-05
+
 ### Finished test rework
 
 - rewrote and revised the MIZDB tests
