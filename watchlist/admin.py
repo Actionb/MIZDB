@@ -20,9 +20,9 @@ class WatchlistAdminMixin(object):
 
     def on_watchlist(self, request, object_id):
         watchlist = get_watchlist(request)
-        if self.opts.label not in watchlist:
+        if self.opts.label_lower not in watchlist:
             return False
-        return int(object_id) in [pk for pk, time_added in watchlist[self.opts.label]]
+        return int(object_id) in [pk for pk, time_added in watchlist[self.opts.label_lower]]
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """View for changing an object."""

@@ -115,7 +115,7 @@ def get_watchlist(request) -> dict[str, list]:
         # with labels sent to watchlist_toggle by AJAX requests that use all
         # lower case.
         # noinspection PyProtectedMember
-        model_label = watchlist_item.content_type.model_class()._meta.label.lower()
+        model_label = watchlist_item.content_type.model_class()._meta.label_lower
         if model_label not in watchlist:  # pragma: no cover
             watchlist[model_label] = []
         watchlist[model_label].append((
