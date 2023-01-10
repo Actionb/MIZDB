@@ -1,8 +1,8 @@
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from django import views
 from django.contrib import messages
-from django.contrib.admin.models import ADDITION
+from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.admin.options import InlineModelAdmin
 from django.db import transaction
 from django.db.models import Count, F, Model, ProtectedError
@@ -14,29 +14,33 @@ from django.views.generic import FormView
 
 from dbentry import models as _models
 from dbentry.actions.base import (
-    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView, get_object_link
 )
 from dbentry.actions.forms import (
     BrochureActionFormOptions, BrochureActionFormSet, BulkEditJahrgangForm, MergeConflictsFormSet,
-    MergeFormSelectPrimary
+    MergeFormSelectPrimary, ReplaceForm
 )
+from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
 from dbentry.utils import (
-    get_changelist_link, get_model_from_string, get_obj_link, get_updatable_fields, is_protected,
+    get_changelist_link, get_model_from_string, get_model_relations, get_obj_link,
+    get_updatable_fields, is_protected,
     link_list, merge_records
 )
 from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )
+from dbentry.utils.replace import replace
 
 
-# noinspection PyUnresolvedReferences
-def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
+def check_same_magazin(view: ActionConfirmationView, **_kwargs: Any) -> bool:
     """
     Check that all objects in the view's queryset are related to the same
     Magazin instance.
     """
+    # noinspection PyUnresolvedReferences
     if view.queryset.values('magazin_id').distinct().count() != 1:
+        # noinspection PyUnresolvedReferences
         view.model_admin.message_user(
             request=view.request, level=messages.ERROR,
             message='Aktion abgebrochen: Die ausgewählten %s gehören zu '
@@ -46,7 +50,65 @@ def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
     return True
 
 
-class BulkEditJahrgang(ActionConfirmationView):
+def check_at_least_two_objects(view: ActionConfirmationView, **_kwargs: Any) -> bool:
+    """Check whether an insufficient number of objects has been selected."""
+    if view.queryset.count() == 1:
+        view.model_admin.message_user(
+            request=view.request,
+            level=messages.WARNING,
+            message=(
+                'Es müssen mindestens zwei Objekte aus der Liste '
+                'ausgewählt werden, um diese Aktion durchzuführen.'
+            ),
+        )
+        return False
+    return True
+
+
+def check_different_magazines(view: ActionConfirmationView, **_kwargs: Any) -> bool:
+    """
+    Check whether the Ausgabe instances are from different Magazin instances.
+    """
+    if (view.model == _models.Ausgabe
+            and view.queryset.values_list('magazin').distinct().count() > 1):
+        # User is trying to merge ausgaben from different magazines.
+        # noinspection PyUnresolvedReferences
+        format_dict = {
+            'self_plural': view.opts.verbose_name_plural,
+            # Add a 'n' at the end because german grammar.
+            'other_plural': _models.Magazin._meta.verbose_name_plural + 'n'
+        }
+        view.model_admin.message_user(
+            request=view.request,
+            message=view.denied_message.format(**format_dict),
+            level=messages.ERROR
+        )
+        return False
+    return True
+
+
+def check_different_ausgaben(view: ActionConfirmationView, **_kwargs: Any) -> bool:
+    """
+    Check whether the Artikel instances are from different Ausgabe instances.
+    """
+    if (view.model == _models.Artikel
+            and view.queryset.values('ausgabe').distinct().count() > 1):
+        # User is trying to merge artikel from different ausgaben.
+        # noinspection PyUnresolvedReferences
+        format_dict = {
+            'self_plural': view.opts.verbose_name_plural,
+            'other_plural': _models.Ausgabe._meta.verbose_name_plural
+        }
+        view.model_admin.message_user(
+            request=view.request,
+            message=view.denied_message.format(**format_dict),
+            level=messages.ERROR
+        )
+        return False
+    return True
+
+
+class BulkEditJahrgang(MIZAdminMixin, ActionConfirmationView):
     """
     View that bulk edits the jahrgang of a collection of Ausgabe instances.
     """
@@ -56,7 +118,7 @@ class BulkEditJahrgang(ActionConfirmationView):
     action_name = 'bulk_jg'
     action_allowed_checks = [check_same_magazin]
 
-    affected_fields = ['jahrgang', 'ausgabejahr__jahr']
+    display_fields = ('jahrgang', 'ausgabejahr__jahr')
 
     form_class = BulkEditJahrgangForm
 
@@ -74,7 +136,7 @@ class BulkEditJahrgang(ActionConfirmationView):
         "\nAlle bereits vorhandenen Angaben für Jahrgänge werden überschrieben."
     )
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
         kwargs['choices'] = {ALL_FIELDS: self.queryset}
         return kwargs
@@ -108,7 +170,7 @@ class BulkEditJahrgang(ActionConfirmationView):
             )
 
 
-class MergeViewWizarded(WizardConfirmationView):
+class MergeView(MIZAdminMixin, WizardConfirmationView):
     """
     View that merges model instances.
 
@@ -124,9 +186,9 @@ class MergeViewWizarded(WizardConfirmationView):
     allowed_permissions = ['merge']
     action_name = 'merge_records'
     action_allowed_checks = [
-        '_check_too_few_objects',
-        '_check_different_magazines',
-        '_check_different_ausgaben'
+        check_at_least_two_objects,
+        check_different_magazines,
+        check_different_ausgaben
     ]
     # Admin message for some failed checks.
     denied_message = (
@@ -159,7 +221,7 @@ class MergeViewWizarded(WizardConfirmationView):
         "Datensatz übernommen werden sollen."
     )
 
-    view_helptext = {
+    view_helptext: dict = {  # type: ignore[assignment]
         SELECT_PRIMARY_STEP: step1_helptext,
         CONFLICT_RESOLUTION_STEP: step2_helptext
     }
@@ -185,67 +247,9 @@ class MergeViewWizarded(WizardConfirmationView):
                 attrs={'style': 'width: 100%;'}
             )
             context['current_step'] = '0'
+        context['view_helptext'] = self.view_helptext[self.steps.current]
         return context
 
-    # noinspection PyMethodParameters
-    def _check_too_few_objects(view, **_kwargs: Any) -> bool:
-        """Check whether an insufficient number of objects has been selected."""
-        if view.queryset.count() == 1:
-            view.model_admin.message_user(
-                request=view.request,
-                level=messages.WARNING,
-                message=(
-                    'Es müssen mindestens zwei Objekte aus der Liste '
-                    'ausgewählt werden, um diese Aktion durchzuführen.'
-                ),
-            )
-            return False
-        return True
-
-    # noinspection PyMethodParameters
-    def _check_different_magazines(view, **_kwargs: Any) -> bool:
-        """
-        Check whether the Ausgabe instances are from different Magazin instances.
-        """
-        if (view.model == _models.Ausgabe
-                and view.queryset.values_list('magazin').distinct().count() > 1):
-            # User is trying to merge ausgaben from different magazines.
-            # noinspection PyUnresolvedReferences
-            format_dict = {
-                'self_plural': view.opts.verbose_name_plural,
-                # Add a 'n' at the end because german grammar.
-                'other_plural': _models.Magazin._meta.verbose_name_plural + 'n'
-            }
-            view.model_admin.message_user(
-                request=view.request,
-                message=view.denied_message.format(**format_dict),
-                level=messages.ERROR
-            )
-            return False
-        return True
-
-    # noinspection PyMethodParameters
-    def _check_different_ausgaben(view, **_kwargs: Any) -> bool:
-        """
-        Check whether the Artikel instances are from different Ausgabe instances.
-        """
-        if (view.model == _models.Artikel
-                and view.queryset.values('ausgabe').distinct().count() > 1):
-            # User is trying to merge artikel from different ausgaben.
-            # noinspection PyUnresolvedReferences
-            format_dict = {
-                'self_plural': view.opts.verbose_name_plural,
-                'other_plural': _models.Ausgabe._meta.verbose_name_plural
-            }
-            view.model_admin.message_user(
-                request=view.request,
-                message=view.denied_message.format(**format_dict),
-                level=messages.ERROR
-            )
-            return False
-        return True
-
-    # noinspection PyAttributeOutsideInit
     @property
     def updates(self) -> dict:
         """
@@ -258,6 +262,7 @@ class MergeViewWizarded(WizardConfirmationView):
         """
         if not hasattr(self, '_updates'):
             step_data = self.storage.get_step_data(self.SELECT_PRIMARY_STEP)
+            # noinspection PyAttributeOutsideInit
             self._updates = step_data.get('updates', {})
         return self._updates
 
@@ -280,12 +285,11 @@ class MergeViewWizarded(WizardConfirmationView):
         """
         # Get the 'primary' object chosen by the user and
         # exclude it from the queryset we are working with.
-        # noinspection PyUnresolvedReferences
         try:
             original_pk = data[self.get_form_prefix() + '-primary']
             # noinspection PyUnresolvedReferences
             primary = self.model.objects.get(pk=original_pk)
-        except (KeyError, self.model.DoesNotExist):
+        except (KeyError, self.model.DoesNotExist):  # noqa
             return False, None
         qs = self.queryset.exclude(pk=primary.pk)
 
@@ -351,8 +355,7 @@ class MergeViewWizarded(WizardConfirmationView):
             step = self.steps.current
         # Note that WizardView.get_initkwargs turns the form_list into an
         # OrderedDict.
-        # noinspection PyTypeChecker
-        form_class: MergeFormSelectPrimary = self.form_list[step]  # type: ignore[assignment]
+        form_class: Union[MergeFormSelectPrimary, MergeConflictsFormSet] = self.form_list[step]
         prefix = self.get_form_prefix(step, form_class)
         if step == self.CONFLICT_RESOLUTION_STEP:
             # There is a conflict.
@@ -360,13 +363,13 @@ class MergeViewWizarded(WizardConfirmationView):
             # for its fields AND 'choices' for the DynamicChoiceFormMixin.
             data, choices, total_forms = {}, {}, 0
 
-            def add_prefix(key_name):
+            def add_prefix(key_name: str) -> str:
                 return prefix + '-' + str(total_forms) + '-' + key_name
 
             for fld_name, values in sorted(self.updates.items()):
                 if len(values) > 1:
-                    # We do not care about values with len <= 1 do not
-                    # cause merge conflicts (see _has_merge_conflicts).
+                    # Multiple different values possible for this field; let
+                    # the user choose one.
                     model_field = self.opts.get_field(fld_name)
                     verbose_fld_name = model_field.verbose_name.capitalize()
                     data[add_prefix('original_fld_name')] = fld_name
@@ -389,7 +392,6 @@ class MergeViewWizarded(WizardConfirmationView):
         elif step == self.SELECT_PRIMARY_STEP:
             # MergeFormSelectPrimary form:
             # choices for the selection of primary are objects in the queryset
-            # noinspection PyUnresolvedReferences
             kwargs['choices'] = {
                 prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset
             }
@@ -411,7 +413,7 @@ class MergeViewWizarded(WizardConfirmationView):
                     if isinstance(value, (list, tuple)):
                         update_data[fld_name] = value[0]
                     else:
-                        update_data[fld_name] = value
+                        update_data[fld_name] = value  # pragma: no cover
         original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
         primary = self.opts.model.objects.get(pk=original_pk)
         merge_records(primary, self.queryset, update_data, expand, user_id=self.request.user.pk)
@@ -446,34 +448,67 @@ class MergeViewWizarded(WizardConfirmationView):
         return None
 
 
-class MoveToBrochureBase(ActionConfirmationView):
-    """Moves a set of ausgabe instances to a BaseBrochure child model."""
+def check_protected_artikel(view: ActionConfirmationView, **_kwargs: Any) -> bool:
+    """
+    Check whether any of the Ausgabe are referenced through protected
+    foreign keys on Artikel objects.
+    """
+    ausgaben_with_artikel = (
+        view.queryset
+        .annotate(artikel_count=Count('artikel'))
+        .filter(artikel_count__gt=0)
+        .order_by('magazin')
+    )
+    if ausgaben_with_artikel.exists():
+        msg_template = (
+            'Aktion abgebrochen: Folgende Ausgaben besitzen '
+            'Artikel, die nicht verschoben werden können: {} ({})'
+        )
+        view.model_admin.message_user(
+            request=view.request,
+            level=messages.ERROR,
+            message=format_html(
+                msg_template,
+                link_list(view.request, ausgaben_with_artikel),
+                get_changelist_link(
+                    model=_models.Ausgabe,
+                    user=view.request.user,
+                    obj_list=ausgaben_with_artikel,
+                    blank=True
+                )
+            )
+        )
+        return False
+    return True
+
+
+class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
+    """Moves a set of Ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
     allowed_permissions = ['moveto_brochure']
-    action_allowed_checks = [check_same_magazin, '_check_protected_artikel', ]
+    action_allowed_checks = [check_same_magazin, check_protected_artikel]
 
     form_class = BrochureActionFormSet
 
-    def get_initial(self):
-        fields = (
-            'pk', 'beschreibung', 'bemerkungen', 'magazin_id',
-            'magazin__magazin_name', 'magazin_beschreibung'
-        )
+    def get_initial(self) -> List[dict]:
         values = (
             self.queryset
-                .annotate(magazin_beschreibung=F('magazin__beschreibung'))
-                .values_list(*fields)
+            .annotate(magazin_beschreibung=F('magazin__beschreibung'))
+            .values_list(
+                'pk', '_name', 'beschreibung', 'bemerkungen', 'magazin_id',
+                'magazin__magazin_name', 'magazin_beschreibung'
+            )
         )
         initial = []
-        for (pk, beschreibung, bemerkungen, magazin_id,
-                magazin_name, magazin_beschreibung) in values:
+        for (pk, _name, beschreibung, bemerkungen, magazin_id, magazin_name,
+             magazin_beschreibung) in values:
             initial.append(
                 {
                     'ausgabe_id': pk,
-                    'titel': magazin_name,
+                    'titel': f"{magazin_name} {_name}",
                     'zusammenfassung': magazin_beschreibung,
                     'beschreibung': beschreibung,
                     'bemerkungen': bemerkungen,
@@ -482,7 +517,6 @@ class MoveToBrochureBase(ActionConfirmationView):
             )
         return initial
 
-    # noinspection PyAttributeOutsideInit
     @property
     def magazin_instance(self) -> Magazin:
         """Return the magazin instance common to all queryset objects."""
@@ -490,70 +524,28 @@ class MoveToBrochureBase(ActionConfirmationView):
         # that the queryset contains more than one magazin.
         if not hasattr(self, '_magazin_instance'):
             ausgabe_instance = self.queryset.select_related('magazin').first()
-            if ausgabe_instance:
-                self._magazin_instance = ausgabe_instance.magazin
-            else:
-                self._magazin_instance = None
+            # noinspection PyAttributeOutsideInit
+            self._magazin_instance = ausgabe_instance.magazin
         return self._magazin_instance
 
-    # noinspection PyAttributeOutsideInit
     @property
     def can_delete_magazin(self) -> bool:
         """
         Assess if the magazin instance can be deleted following the action.
         """
         if not hasattr(self, '_can_delete_magazin'):
-            if not self.magazin_instance:
-                # This should be virtually impossible at this stage:
-                # every ausgabe instance must have a magazin and django
-                # enforces that at least one instance be selected from the
-                # changelist to start an action.
-                self._can_delete_magazin = False
-            else:
-                # Compare the set of all ausgabe instances of the magazin with
-                # the set of the selected ausgaben.
-                # If the sets match, all ausgabe instances of magazin will be
-                # moved and the magazin will be open to deletion afterwards.
-                # noinspection PyUnresolvedReferences
-                magazin_ausgabe_set = set(
-                    self.magazin_instance.ausgabe_set.values_list('pk', flat=True)
-                )
-                selected = set(
-                    self.queryset.values_list('pk', flat=True)
-                )
-                self._can_delete_magazin = magazin_ausgabe_set == selected
+            # Compare the set of all ausgabe instances of the magazin with
+            # the set of the selected ausgaben.
+            # If the sets match, all ausgabe instances of magazin will be
+            # moved and the magazin will be open to deletion afterwards.
+            # noinspection PyUnresolvedReferences
+            magazin_ausgabe_set = set(
+                self.magazin_instance.ausgabe_set.values_list('pk', flat=True)
+            )
+            selected = set(self.queryset.values_list('pk', flat=True))
+            # noinspection PyAttributeOutsideInit
+            self._can_delete_magazin = magazin_ausgabe_set == selected
         return self._can_delete_magazin
-
-    # noinspection PyMethodParameters
-    def _check_protected_artikel(view, **_kwargs: Any) -> bool:
-        """Check whether any of the Artikel instances cannot be deleted."""
-        ausgaben_with_artikel = (
-            view.queryset
-                .annotate(artikel_count=Count('artikel'))
-                .filter(artikel_count__gt=0)
-                .order_by('magazin')
-        )
-        if ausgaben_with_artikel.exists():
-            msg_template = (
-                'Aktion abgebrochen: Folgende Ausgaben besitzen '
-                'Artikel, die nicht verschoben werden können: {} ({})'
-            )
-            view.model_admin.message_user(
-                request=view.request,
-                level=messages.ERROR,
-                message=format_html(
-                    msg_template,
-                    link_list(view.request, ausgaben_with_artikel),
-                    get_changelist_link(
-                        model=_models.Ausgabe,
-                        user=view.request.user,
-                        obj_list=ausgaben_with_artikel,
-                        blank=True
-                    )
-                )
-            )
-            return False
-        return True
 
     def form_valid(self, form: Form) -> Optional[HttpResponse]:
         options_form = self.get_options_form(data=self.request.POST)
@@ -575,18 +567,18 @@ class MoveToBrochureBase(ActionConfirmationView):
         # form validation.
         brochure_art = options_form_cleaned_data.get('brochure_art', '')
         brochure_class = get_model_from_string(brochure_art)
+        # Must set self._magazin_instance before we begin deleting Ausgabe
+        # instances.
+        magazin_instance = self.magazin_instance
 
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
 
             # Verify that the ausgabe exists and can be deleted
-            # noinspection PyUnresolvedReferences
             try:
-                ausgabe_instance = _models.Ausgabe.objects.get(
-                    pk=data['ausgabe_id']
-                )
-            except (_models.Ausgabe.DoesNotExist, _models.Ausgabe.MultipleObjectsReturned):
+                ausgabe_instance = _models.Ausgabe.objects.get(pk=data['ausgabe_id'])
+            except (_models.Ausgabe.DoesNotExist, _models.Ausgabe.MultipleObjectsReturned):  # noqa
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -619,7 +611,6 @@ class MoveToBrochureBase(ActionConfirmationView):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                # noinspection PyUnresolvedReferences
                 create_logentry(
                     user_id=self.request.user.pk,
                     obj=new_brochure,
@@ -627,10 +618,10 @@ class MoveToBrochureBase(ActionConfirmationView):
                     message="Hinweis: "
                             "{verbose_name} wurde automatisch erstellt beim Verschieben"
                             " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
-                                verbose_name=brochure_class._meta.verbose_name,
-                                str_ausgabe=str_ausgabe,
-                                str_magazin=str(self.magazin_instance)
-                            )
+                        verbose_name=brochure_class._meta.verbose_name,  # noqa
+                        str_ausgabe=str_ausgabe,
+                        str_magazin=str(magazin_instance)
+                    )
                 )
                 # Log the changes to the Bestand instances:
                 qs = _models.Bestand.objects.filter(brochure_id=new_brochure.pk)
@@ -670,7 +661,7 @@ class MoveToBrochureBase(ActionConfirmationView):
         if delete_magazin:
             try:
                 with transaction.atomic():
-                    self.magazin_instance.delete()
+                    magazin_instance.delete()
             except ProtectedError:
                 # Seems like the magazin was still protected after all.
                 self.model_admin.message_user(
@@ -679,12 +670,12 @@ class MoveToBrochureBase(ActionConfirmationView):
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
                         get_obj_link(
-                            obj=self.magazin_instance, user=self.request.user, blank=True
+                            obj=magazin_instance, user=self.request.user, blank=True
                         )
                     )
                 )
             else:
-                log_deletion(self.request.user.pk, self.magazin_instance)
+                log_deletion(self.request.user.pk, magazin_instance)
 
     def get_options_form(self, **kwargs: Any) -> Form:
         """Return the form that configures this action."""
@@ -709,7 +700,7 @@ class MoveToBrochureBase(ActionConfirmationView):
         return context
 
 
-class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
+class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.TemplateView):
     """Edit the Bestand set of the parent model instance(s)."""
 
     template_name = 'admin/change_bestand.html'
@@ -748,11 +739,9 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
         # We can get the correct change message for the LogEntry objects
         # of the parent instance from the model_admin's
         # construct_change_message method, which requires a form argument.
-        # Since we're not changing anything on the instance itself, an empty
-        # model form will do.
-        form = self.model_admin.get_form(
-            self.request, obj=formset.instance, change=True
-        )()
+        # Since we are never changing anything on the instance itself, a very
+        # basic model form will do.
+        form = self.model_admin.get_form(self.request, obj=formset.instance, fields=['id'])()
         # 'add' argument is always False as we are always working on an already
         # existing parent instance.
         change_message = self.model_admin.construct_change_message(
@@ -772,16 +761,12 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
             self, request: HttpRequest, obj: Model
     ) -> Tuple[BaseInlineFormSet, InlineModelAdmin]:
         """Return the Bestand formset and model admin inline for this object."""
-        formsets_with_inlines = self.model_admin.get_formsets_with_inlines(
-            request, obj
-        )
+        formsets_with_inlines = self.model_admin.get_formsets_with_inlines(request, obj)
         for formset_class, inline in formsets_with_inlines:
             if inline.model == _models.Bestand:
                 break
         else:
-            raise ValueError(
-                "Model admin '%s' has no inline for model Bestand!" % self.model_admin
-            )
+            raise ValueError(f"Model admin '{self.model_admin}' has no inline for model Bestand!")
         formset_params = {
             'instance': obj,
             'prefix': "%s-%s" % (formset_class.get_default_prefix(), obj.pk),
@@ -818,3 +803,88 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
                 )
             )
         return context
+
+
+class Replace(MIZAdminMixin, ActionConfirmationView):
+    form_class = ReplaceForm
+    title = '%(verbose_name)s ersetzen'
+    action_name = 'replace'
+    short_description = '%(verbose_name)s ersetzen'
+    action_allowed_checks = ['_check_one_object_only']
+    allowed_permissions = ['superuser']
+    action_reversible = True
+    view_helptext = (
+        'Ersetze %(verbose_name)s "%(object)s" durch die unten ausgewählten '
+        '%(verbose_name_plural)s. '
+        'Dabei werden auch die Datensätze verändert, die mit "%(object)s" verwandt sind.'
+    )
+
+    def _check_one_object_only(self) -> bool:
+        """Check that the view is called with just one object."""
+        if self.queryset.count() > 1:
+            self.model_admin.message_user(
+                request=self.request,
+                message=(
+                    'Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: '
+                    'bitte wählen Sie nur einen Datensatz aus.'
+                ),
+                level=messages.ERROR
+            )
+            return False
+        return True
+
+    def get_form_kwargs(self) -> dict:
+        kwargs = super().get_form_kwargs()
+        kwargs['choices'] = {'replacements': self.model.objects.all()}
+        return kwargs
+
+    def get_context_data(self, **kwargs: Any) -> dict:
+        context = super().get_context_data(**kwargs)
+        # 'objects_name' is used in the template to address the objects of the
+        # queryset. It's usually the verbose_name of the queryset's model, but
+        # since the 'replace' action creates changes on a range of different
+        # models, use a more generic term.
+        context['objects_name'] = 'Datensätze'
+        context['view_helptext'] = self.view_helptext % {
+            'verbose_name': self.model._meta.verbose_name,
+            'verbose_name_plural': self.model._meta.verbose_name_plural,
+            'object': str(self.queryset.get())
+        }
+        return context
+
+    def perform_action(self, cleaned_data: dict) -> None:  # type: ignore[override]
+        obj = self.queryset.get()
+        replacements = self.model.objects.filter(pk__in=cleaned_data['replacements'])
+        changes = replace(obj, replacements)
+
+        change_message = [{'deleted': {'object': str(obj), 'name': obj._meta.verbose_name}}]
+        for replacement in replacements:
+            change_message.append(
+                {'added': {'object': str(replacement), 'name': replacement._meta.verbose_name}}
+            )
+        for changed_obj in changes:
+            create_logentry(self.request.user.pk, changed_obj, CHANGE, change_message)
+        return None
+
+    def get_objects_list(self) -> list:
+        """
+        Provide links to the change pages of the records that are related with
+        the object to be replaced.
+        """
+        to_replace = self.queryset.get()
+        objects_list = []
+
+        for rel in get_model_relations(self.model, forward=False):
+            if rel.related_model == self.model:
+                related_set = getattr(to_replace, rel.remote_field.name)
+            else:
+                related_set = getattr(to_replace, rel.get_accessor_name())
+
+            for obj in related_set.all():
+                link = get_object_link(
+                    obj=obj,
+                    user=self.request.user,
+                    site_name=self.model_admin.admin_site.name,
+                )
+                objects_list.append((link,))
+        return objects_list

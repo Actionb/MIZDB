@@ -1,5 +1,4 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
-# TODO: use models.TextField instead of CharField where no max_length is necessary
 from typing import Optional
 
 from django.conf import settings
@@ -74,6 +73,7 @@ class Person(ComputedNameModel):
 
 
 class PersonURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Person', models.CASCADE, related_name='urls')
 
 
@@ -120,6 +120,7 @@ class MusikerAlias(BaseAliasModel):
 
 
 class MusikerURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Musiker', models.CASCADE, related_name='urls')
 
 
@@ -188,6 +189,7 @@ class BandAlias(BaseAliasModel):
 
 
 class BandURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Band', models.CASCADE, related_name='urls')
 
 
@@ -236,9 +238,7 @@ class Autor(ComputedNameModel):
             person_name = data['person___name'][0]
             # The person_name should not be a default value:
             # noinspection PyUnresolvedReferences
-            person_default = Person._name_default % {
-                'verbose_name': Person._meta.verbose_name
-            }
+            person_default = Person._name_default % {'verbose_name': Person._meta.verbose_name}
             if person_name in (person_default, 'unbekannt'):
                 # person_name is a default value:
                 # ('unbekannt' used to be the default for person__nachname)
@@ -256,21 +256,19 @@ class Autor(ComputedNameModel):
 
 
 class AutorURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Autor', models.CASCADE, related_name='urls')
 
 
 class Ausgabe(ComputedNameModel):
-    UNBEARBEITET = 'unb'
-    INBEARBEITUNG = 'iB'
-    ABGESCHLOSSEN = 'abg'
-    KEINEBEARBEITUNG = 'kB'
-    STATUS_CHOICES = [
-        (UNBEARBEITET, 'unbearbeitet'), (INBEARBEITUNG, 'in Bearbeitung'),
-        (ABGESCHLOSSEN, 'abgeschlossen'), (KEINEBEARBEITUNG, 'keine Bearbeitung vorgesehen')
-    ]
+    class Status(models.TextChoices):
+        UNBEARBEITET = ('unb', 'unbearbeitet')
+        INBEARBEITUNG = ('iB', 'in Bearbeitung')
+        ABGESCHLOSSEN = ('abg', 'abgeschlossen')
+        KEINEBEARBEITUNG = ('kB', 'keine Bearbeitung vorgesehen')
 
     status = models.CharField(
-        'Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=UNBEARBEITET
+        'Bearbeitungsstatus', max_length=40, choices=Status.choices, default=Status.UNBEARBEITET
     )
     e_datum = models.DateField(
         'Erscheinungsdatum', null=True, blank=True,
@@ -301,6 +299,7 @@ class Ausgabe(ComputedNameModel):
         'magazin__ausgaben_merkmal', 'ausgabejahr__jahr', 'ausgabenum__num',
         'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
+    # TODO: magazin___fts as a related_search_vector?
 
     objects = AusgabeQuerySet.as_manager()
 
@@ -379,11 +378,11 @@ class Ausgabe(ComputedNameModel):
         if 'magazin__ausgaben_merkmal' in data:
             merkmal = data['magazin__ausgaben_merkmal'][0]
         if merkmal:
-            if merkmal == 'e_datum' and e_datum:
+            if merkmal == Magazin.Merkmal.E_DATUM and e_datum:
                 return str(e_datum)
-            elif merkmal == 'monat' and monate:
+            elif merkmal == Magazin.Merkmal.MONAT and monate:
                 return "{}-{}".format(jahre, monate)
-            elif merkmal == 'lnum' and lnums:
+            elif merkmal == Magazin.Merkmal.LNUM and lnums:
                 if jahre == "k.A.":
                     return lnums
                 else:
@@ -472,6 +471,8 @@ class Monat(BaseModel):
         ]
     )
 
+    name_field = 'monat'
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
@@ -482,17 +483,15 @@ class Monat(BaseModel):
 
 
 class Magazin(BaseModel):
-    NUM = 'num'
-    LNUM = 'lnum'
-    MONAT = 'monat'
-    E_DATUM = 'e_datum'
-    MERKMAL_CHOICES = [
-        (NUM, 'Nummer'), (LNUM, 'Lfd.Nummer'), (MONAT, 'Monat'), (E_DATUM, 'Ersch.Datum')
-    ]
+    class Merkmal(models.TextChoices):
+        NUM = ('num', 'Nummer')
+        LNUM = ('lnum', 'Lfd.Nummer')
+        MONAT = ('monat', 'Monat')
+        E_DATUM = ('e_datum', 'Ersch.Datum')
 
     magazin_name = models.CharField('Magazin', max_length=200)
     ausgaben_merkmal = models.CharField(
-        'Ausgaben Merkmal', max_length=8, blank=True, choices=MERKMAL_CHOICES,
+        'Ausgaben Merkmal', max_length=8, blank=True, choices=Merkmal.choices,
         help_text=(
             'Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die '
             'Darstellung der Ausgaben in der Änderungsliste.'
@@ -556,7 +555,6 @@ class Verlag(BaseModel):
         ordering = ['verlag_name', 'sitz']
 
 
-# TODO: clean up the data of models: ort/land/bland
 class Ort(ComputedNameModel):
     stadt = models.CharField(max_length=200, blank=True)
 
@@ -700,14 +698,14 @@ class SchlagwortAlias(BaseAliasModel):
 
 
 class Artikel(BaseModel):
-    F = 'f'
-    FF = 'ff'
-    SU_CHOICES = [(F, 'f'), (FF, 'ff')]
+    class Umfang(models.TextChoices):
+        F = ('f', 'f')
+        FF = ('ff', 'ff')
 
-    schlagzeile = models.CharField(max_length=200)
+    schlagzeile = models.CharField(max_length=200)  # TODO: use TextField?
     seite = models.PositiveSmallIntegerField()
     seitenumfang = models.CharField(
-        max_length=3, blank=True, choices=SU_CHOICES, default='',
+        max_length=3, blank=True, choices=Umfang.choices, default='',
         help_text='Zwei Seiten: f; mehr als zwei Seiten: ff.'
     )
     zusammenfassung = models.TextField(blank=True)
@@ -759,6 +757,7 @@ class Artikel(BaseModel):
 
 class Buch(BaseModel):
     # TODO: übersetzer feld
+    # TODO: use TextField instead of CharField for titel, titel_orig
     titel = models.CharField(max_length=200)
     titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
     seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)
@@ -799,7 +798,6 @@ class Buch(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-            # TODO: add columns for ISBN and EAN (autocomplete: looking up an object via its ISBN)
         ]
     )
 
@@ -1108,6 +1106,7 @@ class Spielort(BaseModel):
 
 
 class SpielortURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Spielort', models.CASCADE, related_name='urls')
 
 
@@ -1152,7 +1151,7 @@ class Technik(BaseModel):
 
 
 class Veranstaltung(BaseModel):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)  # TODO: use TextField
     datum = PartialDateField(blank=False)
 
     spielort = models.ForeignKey('Spielort', models.PROTECT)
@@ -1200,6 +1199,7 @@ class VeranstaltungAlias(BaseAliasModel):
 
 
 class VeranstaltungURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Veranstaltung', models.CASCADE, related_name='urls')
 
 
@@ -1222,7 +1222,7 @@ class Veranstaltungsreihe(BaseModel):
 
 
 class Video(BaseModel):
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     laufzeit = models.DurationField(
         blank=True, null=True,
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
@@ -1296,23 +1296,21 @@ class VideoMedium(BaseModel):
 
 
 class Provenienz(BaseModel):
-    SCHENK = 'Schenkung'
-    SPENDE = 'Spende'
-    FUND = 'Fund'
-    LEIHG = 'Leihgabe'
-    DAUERLEIHG = 'Dauerleihgabe'
-    TYP_CHOICES = [
-        (SCHENK, 'Schenkung'), (SPENDE, 'Spende'), (FUND, 'Fund'),
-        (LEIHG, 'Leihgabe'), (DAUERLEIHG, 'Dauerleihgabe')
-    ]
+    class Types(models.TextChoices):
+        SCHENKUNG = 'Schenkung'
+        SPENDE = 'Spende'
+        FUND = 'Fund'
+        LEIHGABE = 'Leihgabe'
+        DAUERLEIHGABE = 'Dauerleihgabe'
 
     typ = models.CharField(
-        'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=SCHENK
+        'Art der Provenienz', max_length=100, choices=Types.choices, default=Types.SCHENKUNG
     )
 
     geber = models.ForeignKey('Geber', models.PROTECT)
 
-    # TODO: FTS SearchVectorField
+    name_field = 'geber'
+    related_search_vectors = [('geber___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         ordering = ['geber', 'typ']
@@ -1326,11 +1324,7 @@ class Provenienz(BaseModel):
 class Geber(BaseModel):
     name = models.CharField(max_length=200)
 
-    _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('name', 'A', SIMPLE),
-        ]
-    )
+    _fts = SearchVectorField(columns=[WeightedColumn('name', 'A', SIMPLE)])
 
     name_field = create_field = 'name'
 
@@ -1413,6 +1407,8 @@ class Bestand(BaseModel):
     technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
+    _fts = SearchVectorField(columns=[WeightedColumn('anmerkungen', 'A', STEMMING)])
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
         verbose_name_plural = 'Bestände'
@@ -1424,7 +1420,7 @@ class Bestand(BaseModel):
     @property
     def bestand_object(self) -> Optional[models.Model]:
         """Return the archive object this Bestand instance refers to."""
-        if hasattr(self, '_bestand_object'):
+        if hasattr(self, '_bestand_object'):  # pragma: no cover
             return self._bestand_object
         self._bestand_object: Optional[models.Model] = None
         for field in get_model_fields(self, base=False, foreign=True, m2m=False):
@@ -1442,26 +1438,24 @@ class Bestand(BaseModel):
 
 
 class Datei(BaseModel):
-    MEDIA_AUDIO = 'audio'
-    MEDIA_BILD = 'bild'
-    MEDIA_SONSTIGE = 'sonstige'
-    MEDIA_TEXT = 'text'
-    MEDIA_VIDEO = 'video'
-    MEDIA_TYP_CHOICES = [
-        (MEDIA_AUDIO, 'Audio'), (MEDIA_VIDEO, 'Video'), (MEDIA_BILD, 'Bild'),
-        (MEDIA_TEXT, 'Text'), (MEDIA_SONSTIGE, 'Sonstige')
-    ]
+    class Media(models.TextChoices):
+        # TODO: consider using values in all capitals and in alphabetical order
+        #  (this would require a migration)
+        AUDIO = 'audio'
+        VIDEO = 'video'
+        BILD = 'bild'
+        TEXT = 'text'
+        SONSTIGE = 'sonstige'
 
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     media_typ = models.CharField(
-        'Media Typ', max_length=200, choices=MEDIA_TYP_CHOICES,
-        default=MEDIA_AUDIO
+        'Media Typ', max_length=200, choices=Media.choices, default=Media.AUDIO
     )
     datei_media = models.FileField(  # Datei Media Server
         'Datei', blank=True, null=True, editable=False,
         help_text="Datei auf Datenbank-Server hoch- bzw herunterladen."
     )
-    datei_pfad = models.CharField(
+    datei_pfad = models.CharField(  # TODO: use TextField
         'Datei-Pfad', max_length=200, blank=True,
         help_text="Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner."
     )
@@ -1499,7 +1493,7 @@ class Datei(BaseModel):
 
 
 class Plattenfirma(BaseModel):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)  # TODO: use TextField
 
     _fts = SearchVectorField(
         columns=[
@@ -1524,7 +1518,7 @@ class BrochureURL(AbstractURLModel):
 
 
 class BaseBrochure(BaseModel):
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     zusammenfassung = models.TextField(blank=True)
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -1550,6 +1544,9 @@ class BaseBrochure(BaseModel):
 
     def resolve_child(self) -> models.Model:
         """Fetch a child instance from this parent instance."""
+        # NOTE: technically a BaseBrochure can have more than one child (one
+        #  from each model that inherits it) - and this returns the first child
+        #  found.
         for rel in get_model_relations(self, forward=False, reverse=True):
             # Look for a reverse relation that is a PK and originates from a
             # subclass.
@@ -1605,19 +1602,16 @@ class Kalender(BaseBrochure):
 
 
 class Katalog(BaseBrochure):
-    ART_BUCH = 'buch'
-    ART_MERCH = 'merch'
-    ART_OTHER = 'other'
-    ART_TECH = 'tech'
-    ART_TON = 'ton'
-    ART_CHOICES = [
-        (ART_MERCH, 'Merchandise'), (ART_TECH, 'Instrumente & Technik'),
-        (ART_TON, 'Tonträger'), (ART_BUCH, 'Bücher'), (ART_OTHER, 'Anderes')
-    ]
+    class Types(models.TextChoices):
+        MERCH = ('merch', 'Merchandise')
+        TECH = ('tech', 'Instrumente & Technik')
+        TON = ('ton', 'Tonträger')
+        BUCH = ('buch', 'Bücher')
+        OTHER = ('other', 'Anderes')
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Kataloges')
     art = models.CharField(
-        'Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH
+        'Art d. Kataloges', max_length=40, choices=Types.choices, default=Types.MERCH
     )
 
     _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
@@ -1633,20 +1627,17 @@ class Katalog(BaseBrochure):
 
 
 class Foto(BaseModel):
-    ART_NEGATIV = 'negativ'
-    ART_POSITIV = 'positiv'
-    ART_REPRINT = 'reprint'
-    ART_POLAROID = 'polaroid'
-    ART_CHOICES = [
-        (ART_NEGATIV, 'negativ'), (ART_POSITIV, 'positiv'),
-        (ART_REPRINT, 'Neuabzug (reprint)'), (ART_POLAROID, 'Polaroid')
-    ]
+    class Types(models.TextChoices):
+        NEGATIV = ('negativ', 'negativ')
+        POSITIV = ('positiv', 'positiv')
+        REPRINT = ('reprint', 'Neuabzug (reprint)')
+        POLAROID = ('polaroid', 'Polaroid')
 
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
     typ = models.CharField(
-        'Art des Fotos', max_length=100, choices=ART_CHOICES, default=ART_NEGATIV
+        'Art des Fotos', max_length=100, choices=Types.choices, default=Types.NEGATIV
     )
     farbe = models.BooleanField('Farbfoto')
     owner = models.CharField('Rechteinhaber', max_length=200, blank=True)

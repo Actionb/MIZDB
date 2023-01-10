@@ -33,7 +33,7 @@ class InvalidComponent(MsgValidationError):
     message = gettext_lazy("One of the parts of the number are invalid or unknown.")
 
 
-def _validate(stdnum_module, number: str) -> bool:
+def _validate(stdnum_module: Any, number: str) -> bool:
     """
     Validate ``number`` using the validate function of the given standard
     number module ``std``.

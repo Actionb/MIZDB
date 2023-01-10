@@ -3,7 +3,6 @@ from typing import Dict, Optional, Tuple
 from django.db import models, transaction
 from django.db.models import Model, QuerySet
 from django.db.utils import IntegrityError
-from django.http import HttpRequest
 
 from dbentry.utils.admin import log_addition, log_change, log_deletion
 from dbentry.utils.models import (
@@ -12,7 +11,6 @@ from dbentry.utils.models import (
 )
 
 
-# noinspection  PyUnresolvedReferences
 def merge_records(
         original: Model,
         queryset: QuerySet,
@@ -42,6 +40,7 @@ def merge_records(
             updates performed on that instance.
     """
     queryset = queryset.exclude(pk=original.pk)
+    # noinspection PyUnresolvedReferences
     model = original._meta.model
     original_qs = model.objects.filter(pk=original.pk)
     updatable_fields = get_updatable_fields(original)
@@ -63,12 +62,13 @@ def merge_records(
         if expand_original and update_data:
             original_qs.update(**update_data)
             if user_id:
-                log_change(user_id, original_qs.get(), update_data.keys())
+                log_change(user_id, original_qs.get(), list(update_data.keys()))
 
         for rel in get_model_relations(model, forward=False):
             related_model, related_field = get_relation_info_to(model, rel)
             # Get all the related objects that are going to be updated to be
             # related to original:
+            # noinspection PyUnresolvedReferences
             merger_related = related_model.objects.filter(
                 **{related_field.name + '__in': queryset}
             )
@@ -78,6 +78,7 @@ def merge_records(
 
             # Exclude all related objects that the original has already to
             # avoid IntegrityErrors due to UNIQUE CONSTRAINT violations.
+            # noinspection PyUnresolvedReferences
             for unique_together in related_model._meta.unique_together:
                 if related_field.name in unique_together:
                     # The ForeignKey field that led us from original's model
@@ -95,13 +96,11 @@ def merge_records(
                     # parameters passed to values().
                     unique_together = list(unique_together)
                     unique_together.remove(related_field.name)
-                    if not unique_together:
+                    if not unique_together:  # pragma: no cover
                         continue
-                for values in (
-                        related_model.objects
-                        .filter(**{related_field.name: original})
-                        .values(*unique_together)
-                ):
+                # noinspection PyUnresolvedReferences
+                already_related = related_model.objects.filter(**{related_field.name: original})
+                for values in already_related.values(*unique_together):
                     # Exclude all values that would violate the unique
                     # constraints (i.e. values that original has already):
                     qs_to_be_updated = qs_to_be_updated.exclude(**values)
@@ -119,6 +118,7 @@ def merge_records(
                 # qs_to_be_updated and do the update individually.
                 updated_ids = []
                 for pk in qs_to_be_updated.values_list('pk', flat=True):
+                    # noinspection PyUnresolvedReferences
                     loop_qs = related_model.objects.filter(pk=pk)
                     try:
                         with transaction.atomic():
@@ -133,6 +133,7 @@ def merge_records(
 
             # Log the changes:
             for pk in updated_ids:
+                # noinspection PyUnresolvedReferences
                 obj = related_model.objects.get(pk=pk)
                 if user_id:
                     # Log the addition of a new related object for original.
@@ -144,9 +145,11 @@ def merge_records(
             if rel.on_delete == models.PROTECT:
                 not_updated = merger_related.exclude(pk__in=updated_ids)
                 if not_updated.exists() and not is_protected(not_updated):
-                    # Some related objects could not be updated (probably
-                    # because the original already has identical related objects).
-                    # Delete the troublemakers?
+                    # FIXME: unreachable code: if the relation is protected,
+                    #  then how could is_protected(not_updated) be False?
+                    # A protected related object was not updated (maybe a
+                    # UNIQUE CONSTRAINT violation) to reference the 'original'.
+                    # Delete the related object now, or the merge will fail.
                     if user_id:
                         for obj in not_updated:
                             log_deletion(user_id, obj)

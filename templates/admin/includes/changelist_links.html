@@ -1,0 +1,8 @@
+{% if change and changelist_links %}
+<div class="module">
+<h2>Verwandte Objekte</h2>
+{% for link in changelist_links %}
+<a href="{{link.url}}" style="margin:0 10px 0 10px;vertical-align:-5px;" target="_blank">{{link.label}}</a>
+{% endfor %}
+</div>
+{% endif %}

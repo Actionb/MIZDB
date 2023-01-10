@@ -5,18 +5,17 @@ from typing import Any, Dict, List, Optional, Type, Union
 from dal import autocomplete
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField, Min,
-    OuterRef,
-    QuerySet, Subquery,
-    Value
+    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField,
+    Model, Min, OuterRef, QuerySet, Subquery, Value
 )
 from django.db.models.functions import Coalesce
-from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
+from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
 from django_admin_logs.admin import LogEntryAdmin
@@ -30,7 +29,7 @@ from dbentry.base.admin import (
     BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseOrtInLine, BaseSchlagwortInline,
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
-from dbentry.changelist import AusgabeChangeList
+from dbentry.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -103,6 +102,7 @@ class AudioAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     form = _forms.AudioForm
     index_category = 'Archivgut'
@@ -136,20 +136,19 @@ class AudioAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
+            ),
             'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name')
+                'band__band_name', distinct=True, ordering='band__band_name'
+            )
         }
 
     def kuenstler_string(self, obj: _models.Audio) -> str:
-        # band_list and musiker_list added by annotations
-        # noinspection PyUnresolvedReferences
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -210,7 +209,8 @@ class AusgabenAdmin(MIZModelAdmin):
     actions = [
         _actions.merge_records, _actions.bulk_jg, _actions.change_bestand,
         _actions.moveto_brochure, 'change_status_unbearbeitet',
-        'change_status_inbearbeitung', 'change_status_abgeschlossen'
+        'change_status_inbearbeitung', 'change_status_abgeschlossen',
+        _actions.summarize
     ]
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[AusgabeChangeList]:
@@ -226,7 +226,7 @@ class AusgabenAdmin(MIZModelAdmin):
     magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
     magazin_name.admin_order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
-    def get_result_list_annotations(self) -> dict:
+    def get_changelist_annotations(self) -> dict:
         # Can't use ArrayAgg directly to get a list of distinct monat__abk
         # values as we are ordering by monat__ordinal: using distinct AND
         # ordering requires that the ordering expressions are present in the
@@ -286,12 +286,14 @@ class AusgabenAdmin(MIZModelAdmin):
     def monat_string(self, obj: _models.Ausgabe) -> str:
         return obj.monat_string  # added by annotations  # noqa
     monat_string.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
-    monat_string.admin_order_field = 'monat_string'  # type: ignore[attr-defined]  # noqa
 
     def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
         """Update the ``status`` of the Ausgabe instances in ``queryset``."""
         with transaction.atomic():
-            queryset.update(status=status, _changed_flag=False)
+            # Remove ordering, as queryset ordering may depend on annotations
+            # which would be removed before the update.
+            # See: https://code.djangoproject.com/ticket/28897
+            queryset.order_by().update(status=status, _changed_flag=False)
         try:
             with transaction.atomic():
                 for obj in queryset:
@@ -310,7 +312,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         UNBEARBEITET.
         """
-        self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
+        self._change_status(request, queryset, str(_models.Ausgabe.Status.UNBEARBEITET))
     change_status_unbearbeitet.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
     change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'  # type: ignore[attr-defined]  # noqa
 
@@ -319,7 +321,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         INBEARBEITUNG.
         """
-        self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
+        self._change_status(request, queryset, str(_models.Ausgabe.Status.INBEARBEITUNG))
     change_status_inbearbeitung.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
     change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'  # type: ignore[attr-defined]  # noqa
 
@@ -328,7 +330,7 @@ class AusgabenAdmin(MIZModelAdmin):
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         ABGESCHLOSSEN.
         """
-        self._change_status(request, queryset, _models.Ausgabe.ABGESCHLOSSEN)
+        self._change_status(request, queryset, str(_models.Ausgabe.Status.ABGESCHLOSSEN))
     change_status_abgeschlossen.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'  # type: ignore[attr-defined]  # noqa
 
@@ -338,7 +340,8 @@ class AusgabenAdmin(MIZModelAdmin):
         Check that the request's user has permission to add Brochure objects
         and permission to delete Ausgabe objects.
         """
-        from django.contrib.auth import get_permission_codename
+        # This method is called by admin.checks._check_action_permission_methods
+        # TODO: just declare perms list - without the loop
         perms = []
         # noinspection PyUnresolvedReferences
         for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
@@ -346,7 +349,7 @@ class AusgabenAdmin(MIZModelAdmin):
         # noinspection PyUnresolvedReferences
         return request.user.has_perms(perms)
 
-    def _get_crosslink_relations(self):
+    def _get_changelist_link_relations(self) -> list:
         return [
             (_models.Artikel, 'ausgabe', 'Artikel'),
             (_models.Brochure, 'ausgabe', 'Broschüren'),
@@ -364,6 +367,7 @@ class AutorAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.AutorURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.AutorForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, MagazinInLine]
@@ -372,10 +376,11 @@ class AutorAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['magazin', 'person']}
     ordering = ['_name']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'magazin_list': ArrayAgg(
-                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'),
+                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'
+            )
         }
 
     def autor_name(self, obj: _models.Autor) -> str:
@@ -421,6 +426,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.ArtikelForm
     index_category = 'Archivgut'
     save_on_top = True
@@ -450,14 +456,17 @@ class ArtikelAdmin(MIZModelAdmin):
         'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
+            ),
             'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
+            ),
             'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name')
+                'band__band_name', distinct=True, ordering='band__band_name'
+            )
         }
 
     def ausgabe_name(self, obj: _models.Artikel) -> str:
@@ -483,9 +492,7 @@ class ArtikelAdmin(MIZModelAdmin):
     schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
     def kuenstler_string(self, obj: _models.Artikel) -> str:
-        # band_list and musiker_list added by annotations
-        # noinspection PyUnresolvedReferences
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display() # added by annotations  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -505,6 +512,7 @@ class BandAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BandURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.BandForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
@@ -518,13 +526,15 @@ class BandAdmin(MIZModelAdmin):
         'tabular': ['musiker']
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
             'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
+            ),
             'alias_list': ArrayAgg(
-                'bandalias__alias', distinct=True, ordering='bandalias__alias'),
+                'bandalias__alias', distinct=True, ordering='bandalias__alias'
+            ),
             'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
         }
 
@@ -578,6 +588,7 @@ class PlakatAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     form = _forms.PlakatForm
     index_category = 'Archivgut'
@@ -603,9 +614,8 @@ class PlakatAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'},
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'veranstaltung_list':
                 ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
@@ -621,31 +631,13 @@ class PlakatAdmin(MIZModelAdmin):
     veranstaltung_string.short_description = 'Veranstaltungen'  # type: ignore[attr-defined]  # noqa
     veranstaltung_string.admin_order_field = 'veranstaltung_list'  # type: ignore[attr-defined]  # noqa
 
-    def get_fields(self, request: HttpRequest, obj: _models.Plakat = None) -> List[str]:
+    def get_fields(self, request: HttpRequest, obj: Optional[_models.Plakat] = None) -> List[str]:
         """
-        Remove the 'copy_related' formfield if the user does not have change
+        Remove the 'copy_related' formfield, if the user does not have change
         permissions on the object.
         """
         fields = super().get_fields(request, obj)
-        if obj is None:
-            return fields
-        # Remove the 'copy_related' field from the change form if the user
-        # only has view permissions and thus can't use copy_related.
-        if not (obj and hasattr(request, 'user') and 'copy_related' in fields):
-            # Either this is an 'add' form or 'copy_related' isn't even
-            # included in the fields.
-            #
-            # request.user is set by AuthenticationMiddleware to either an
-            # auth.User instance or an AnonymousUser instance. Only mocked
-            # request objects would bypass the middleware, which could allow
-            # a request object to *not* have a user attribute.
-            # NOTE: Honestly, I'm not sure why I am checking for the attribute
-            # here (I'm assuming it's for tests), but I'm just going to leave
-            # it in.
-            return fields
-        has_change_perms = self.has_change_permission(request, obj)
-        if not (obj.pk and has_change_perms) and 'copy_related' in fields:
-            # Return a copy without 'copy_related':
+        if not self.has_change_permission(request, obj):
             return [f for f in fields if f != 'copy_related']
         return fields
 
@@ -714,8 +706,9 @@ class BuchAdmin(MIZModelAdmin):
         model = _models.Buch.verlag.through
         verbose_model = _models.Verlag
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
-    crosslink_labels = {'buch': 'Aufsätze'}
+    changelist_link_labels = {'buch': 'Aufsätze'}
     form = _forms.BuchForm
     index_category = 'Archivgut'
     save_on_top = True
@@ -755,18 +748,20 @@ class BuchAdmin(MIZModelAdmin):
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
             'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
+            ),
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
             'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
+            ),
             'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name')
+                'band__band_name', distinct=True, ordering='band__band_name'
+            )
         }
 
     def autoren_string(self, obj: _models.Buch) -> str:
@@ -793,11 +788,11 @@ class BuchAdmin(MIZModelAdmin):
 
 @admin.register(_models.Dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Genre, site=miz_site)
@@ -805,12 +800,17 @@ class GenreAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.GenreAlias
 
+    actions = [_actions.merge_records, _actions.replace]
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
     ordering = ['genre']
+    # Need to define search_fields to have the template render the default
+    # search bar. Note that the fields declared here do not matter, as the
+    # search will be a postgres text search on the model's SearchVectorField.
+    search_fields = ['__ANY__']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
         }
@@ -819,7 +819,7 @@ class GenreAdmin(MIZModelAdmin):
         return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
-    def _get_crosslink_relations(self):
+    def _get_changelist_link_relations(self) -> list:
         return [
             (_models.Musiker, 'genre', None), (_models.Band, 'genre', None),
             (_models.Magazin, 'genre', None), (_models.Artikel, 'genre', None),
@@ -848,6 +848,7 @@ class MagazinAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):  # noqa
         model = _models.Magazin.orte.through
 
+    actions = [_actions.merge_records, _actions.summarize]
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
     list_display = ['magazin_name', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
@@ -857,14 +858,15 @@ class MagazinAdmin(MIZModelAdmin):
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
             'anz_ausgaben': Count('ausgabe', distinct=True)
         }
 
     def anz_ausgaben(self, obj: _models.Magazin) -> int:
-        return obj.anz_ausgaben # added by annotations  # noqa
+        return obj.anz_ausgaben  # added by annotations  # noqa
+
     anz_ausgaben.short_description = 'Anz. Ausgaben'  # type: ignore[attr-defined]  # noqa
     anz_ausgaben.admin_order_field = 'anz_ausgaben'  # type: ignore[attr-defined]  # noqa
 
@@ -893,11 +895,11 @@ class MagazinAdmin(MIZModelAdmin):
 
 @admin.register(_models.Memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Musiker, site=miz_site)
@@ -920,6 +922,7 @@ class MusikerAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.MusikerURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     form = _forms.MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
@@ -929,7 +932,7 @@ class MusikerAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
     ordering = ['kuenstler_name']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
@@ -959,6 +962,7 @@ class PersonAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.PersonURL
 
+    actions = [_actions.merge_records, _actions.summarize]
     index_category = 'Stammdaten'
     inlines = [URLInLine, OrtInLine]
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
@@ -981,14 +985,17 @@ class PersonAdmin(MIZModelAdmin):
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def get_result_list_annotations(self) -> dict:
+    def get_changelist_annotations(self) -> dict:
         return {
             'is_musiker': Exists(
-                _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
+                _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))
+            ),
             'is_autor': Exists(
-                _models.Autor.objects.only('id').filter(person_id=OuterRef('id'))),
+                _models.Autor.objects.only('id').filter(person_id=OuterRef('id'))
+            ),
             'orte_list': ArrayAgg(
-                'orte___name', distinct=True, ordering='orte___name')
+                'orte___name', distinct=True, ordering='orte___name'
+            )
         }
 
     def is_musiker(self, obj: _models.Person) -> bool:
@@ -1013,12 +1020,17 @@ class SchlagwortAdmin(MIZModelAdmin):
         model = _models.SchlagwortAlias
         extra = 1
 
+    actions = [_actions.merge_records, _actions.replace]
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
     ordering = ['schlagwort']
+    # Need to define search_fields to have the template render the default
+    # search bar. Note that the fields declared here do not matter, as the
+    # search will be a postgres text search on the model's SearchVectorField.
+    search_fields = ['__ANY__']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
         }
@@ -1045,11 +1057,11 @@ class SpielortAdmin(MIZModelAdmin):
 
 @admin.register(_models.Technik, site=miz_site)
 class TechnikAdmin(MIZModelAdmin):
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Veranstaltung, site=miz_site)
@@ -1091,12 +1103,14 @@ class VeranstaltungAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band'],
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
+            ),
             'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name')
+                'band__band_name', distinct=True, ordering='band__band_name'
+            )
         }
 
     def kuenstler_string(self, obj: _models.Veranstaltung) -> str:
@@ -1163,6 +1177,7 @@ class VideoAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     form = _forms.VideoForm
     index_category = 'Archivgut'
     collapse_all = True
@@ -1196,14 +1211,15 @@ class VideoAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
+            ),
             'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name')
+                'band__band_name', distinct=True, ordering='band__band_name'
+            )
         }
 
     def kuenstler_string(self, obj: _models.Video) -> str:
@@ -1231,13 +1247,13 @@ class OrtAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
-    search_form_kwargs = {'fields': ['land', 'bland']}
+    search_form_kwargs = {'fields': ['land', 'bland']}  # FIXME: forward land to bland
     ordering = ['land', 'bland', 'stadt']
     list_select_related = ['land', 'bland']
 
     def formfield_for_foreignkey(
             self, db_field: ModelField, request: HttpRequest, **kwargs: Any
-    ) -> FormField:
+    ) -> ChoiceField:
         if db_field == self.opts.get_field('bland'):
             # Limit the choices to the Land instance selected in 'land':
             kwargs['widget'] = make_widget(model=db_field.related_model, forward=['land'])
@@ -1251,32 +1267,68 @@ class BestandAdmin(MIZModelAdmin):
         'memorabilien', 'plakat', 'technik', 'video'
     ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
-    search_form_kwargs = {'fields': ['lagerort', 'signatur']}
+    list_select_related = ['lagerort', 'provenienz__geber']
+    search_form_kwargs = {'fields': ['lagerort', 'provenienz', 'signatur']}
     superuser_only = True
-    # FIXME: the search form is missing a text search element ('q')
-    # FIXME: the search form is missing a 'show all'
 
-    def get_queryset(self, request: HttpRequest, **kwargs: Any) -> QuerySet:
-        # noinspection PyAttributeOutsideInit
-        self.request = request  # save the request for bestand_link()
-        return super().get_queryset(request)
+    def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[BestandChangeList]:
+        return BestandChangeList
+
+    def cache_bestand_data(
+            self,
+            request: HttpRequest,
+            result_list: QuerySet,
+            bestand_fields: list
+    ) -> None:
+        """
+        Use the changelist's result_list queryset to cache the data needed for
+        the list display items 'bestand_class' and 'bestand_link'.
+
+        Args:
+            request (HttpRequest): the request for the changelist page
+            result_list (QuerySet): result_list queryset for the results page
+            bestand_fields (list): list of the ForeignKey fields of the Bestand
+              model that reference models of archive objects (i.e. Ausgabe,
+              Audio, etc.)
+        """
+        field_names = [f.name for f in bestand_fields]
+
+        self._cache = {}
+        for obj in result_list.select_related(*field_names):
+            relation_field = None
+            for field in bestand_fields:
+                if getattr(obj, field.name) is not None:
+                    relation_field = field
+                    break
+            if not relation_field:
+                continue
+            # noinspection PyUnresolvedReferences
+            self._cache[obj.pk] = {
+                'bestand_class': relation_field.related_model._meta.verbose_name,
+                'bestand_link': get_obj_link(
+                    getattr(obj, relation_field.name), request.user, blank=True
+                )
+            }
 
     def bestand_class(self, obj: _models.Bestand) -> str:
-        if obj.bestand_object:
-            # noinspection PyUnresolvedReferences
-            return obj.bestand_object._meta.verbose_name
-        return ''
+        try:
+            return self._cache[obj.pk]['bestand_class']
+        except KeyError:
+            return ''
     bestand_class.short_description = 'Art'  # type: ignore[attr-defined]  # noqa
 
     def bestand_link(self, obj: _models.Bestand) -> Union[SafeText, str]:
-        if obj.bestand_object:
-            # noinspection PyUnresolvedReferences
-            return get_obj_link(obj.bestand_object, self.request.user, blank=True)
-        return ''
+        try:
+            return self._cache[obj.pk]['bestand_link']
+        except KeyError:
+            return ''
     bestand_link.short_description = 'Link'  # type: ignore[attr-defined]  # noqa
 
     def _check_search_form_fields(self, **kwargs: Any) -> list:
         # Ignore the search form fields check for BestandAdmin.
+        # The check warns when a relation is missing from the search form, but
+        # BestandAdmin deliberately excludes most of the relations from the
+        # search form.
         return []
 
 
@@ -1319,6 +1371,7 @@ class DateiAdmin(MIZModelAdmin):
         extra = 0
         description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
 
+    actions = [_actions.merge_records, _actions.summarize]
     collapse_all = True
     index_category = 'Archivgut'
     save_on_top = True
@@ -1356,6 +1409,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
+    actions = [_actions.merge_records, _actions.change_bestand]
     form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
@@ -1366,10 +1420,11 @@ class BaseBrochureAdmin(MIZModelAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_fieldsets(self, request: HttpRequest, obj: _models.BaseBrochure = None) -> list:
+    def get_fieldsets(self, request: HttpRequest, obj: Optional[Model] = None) -> list:
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
+        # TODO: why do this in get_fieldsets instead of declaring the fieldsets
+        #  via fields attribute? fields = [(None, ...), ..., ('Beilage von Ausgabe', {...})]
         fieldsets = super().get_fieldsets(request, obj)
         # django default implementation adds at minimum:
         # [(None, {'fields': self.get_fields()})]
@@ -1377,7 +1432,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
         # 'ausgabe__magazin' is returned by get_fields() due to being a base
         # field of this ModelAdmin's form class.
         default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:
+        if not default_fieldset:  # pragma: no cover
             return fieldsets
         fields = default_fieldset['fields'].copy()
         ausgabe_fields = ('ausgabe__magazin', 'ausgabe')
@@ -1394,13 +1449,13 @@ class BaseBrochureAdmin(MIZModelAdmin):
             default_fieldset['fields'] = fields
         return fieldsets
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         # Add the annotation necessary for the proper ordering:
         return super().get_queryset(request).annotate(jahr_min=Min('jahre__jahr')).order_by(
             'titel', 'jahr_min', 'zusammenfassung'
         )
 
-    def get_result_list_annotations(self) -> dict:
+    def get_changelist_annotations(self) -> dict:
         return {
             'jahr_string': Func(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
@@ -1436,23 +1491,23 @@ class BrochureAdmin(BaseBrochureAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
 
 
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
-
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
-    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
         """
         Swap fieldset fields 'art' and 'zusammenfassung' without having to
         redeclare the entire fieldsets attribute.
         """
+        # TODO: just declare the fieldsets attribute
         fieldsets = super().get_fieldsets(*args, **kwargs)
         default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:
+        if not default_fieldset:  # pragma: no cover
             return fieldsets
         fields = default_fieldset['fields'].copy()
         if all(f in fields for f in ('art', 'zusammenfassung')):
@@ -1480,6 +1535,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     inlines = [
         URLInLine, JahrInLine, GenreInLine, SpielortInLine,
         VeranstaltungInLine, BestandInLine]
@@ -1492,7 +1548,6 @@ class KalenderAdmin(BaseBrochureAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe', 'spielort', 'veranstaltung']
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Foto, site=miz_site)
@@ -1524,6 +1579,7 @@ class FotoAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
+    actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     collapse_all = True
     form = _forms.FotoForm
     index_category = 'Archivgut'
@@ -1549,9 +1605,8 @@ class FotoAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'},
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
-    actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'schlagwort_list':
                 ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
@@ -1576,13 +1631,18 @@ class FotoAdmin(MIZModelAdmin):
     schlagwort_list.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
 
+@admin.register(_models.Plattenfirma, site=miz_site)
+class PlattenfirmaAdmin(MIZModelAdmin):
+    search_fields = ['__ANY__']
+
+
 @admin.register(
-    _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
-    _models.Provenienz, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
-    _models.VideoMedium, _models.AudioMedium,
+    _models.Monat, _models.Lagerort, _models.Geber, _models.Provenienz, _models.Schriftenreihe,
+    _models.Bildreihe, _models.Veranstaltungsreihe, _models.VideoMedium, _models.AudioMedium,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
+    search_fields = ['__ANY__']
     superuser_only = True
 
 
@@ -1598,13 +1658,14 @@ class AuthAdminMixin(object):
     """
 
     def formfield_for_manytomany(
-            self, db_field: ManyToManyField, request: Optional[HttpRequest] = None, **kwargs: Any
-    ) -> FormField:
+            self, db_field: ManyToManyField,
+            request: Optional[HttpRequest] = None,
+            **kwargs: Any
+    ) -> ChoiceField:
         """
-        Get a form field for a ManyToManyField. If it's the formfield for
+        Get a form field for a ManyToManyField. If it is the formfield for
         Permissions, adjust the choices to include the models' class names.
         """
-        # noinspection PyUnresolvedReferences
         formfield = super().formfield_for_manytomany(  # type: ignore[misc]
             db_field, request=request, **kwargs
         )
@@ -1635,14 +1696,14 @@ class MIZUserAdmin(AuthAdminMixin, UserAdmin):
         'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'activity'
     )
 
-    def get_queryset(self, request: HttpRequest):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         queryset = super().get_queryset(request)
         # Note that the order_by and values calls are required:
         # see django docs expressions/#using-aggregates-within-a-subquery-expression
         recent_logs = LogEntry.objects.filter(
             user_id=OuterRef('id'),
             action_time__date__gt=datetime.now() - timedelta(days=32)
-        ) .order_by().values('user_id')
+        ).order_by().values('user_id')
         subquery = Subquery(
             recent_logs.annotate(c=Count('*')).values('c'), output_field=IntegerField()
         )
@@ -1654,7 +1715,6 @@ class MIZUserAdmin(AuthAdminMixin, UserAdmin):
         return user.activity or 0
     activity.short_description = 'Aktivität letzte 30 Tage'  # type: ignore[attr-defined]
     activity.admin_order_field = 'activity'  # type: ignore[attr-defined]
-    pass
 
 
 @admin.register(LogEntry, site=miz_site)
@@ -1677,13 +1737,14 @@ class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
         }
     }
 
-    def object(self, obj):
+    def object(self, obj: LogEntry) -> str:
+        """Return the admin link to the log entry object."""
         return self.object_link(obj)
 
-    def change_message_verbose(self, obj):
+    def change_message_verbose(self, obj: LogEntry) -> str:
         return obj.get_change_message()
     change_message_verbose.short_description = 'Änderungsmeldung'  # type: ignore[attr-defined]
 
-    def change_message_raw(self, obj):
+    def change_message_raw(self, obj: LogEntry) -> str:
         return obj.change_message
     change_message_raw.short_description = 'Datenbank-Darstellung'  # type: ignore[attr-defined]

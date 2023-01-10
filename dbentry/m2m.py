@@ -1,4 +1,5 @@
 from django.db import models
+
 from dbentry.base.models import BaseM2MModel
 from dbentry.utils.models import get_model_fields
 
@@ -37,7 +38,7 @@ class m2m_video_musiker(BaseM2MModel):
         verbose_name_plural = 'Video-Musiker'
 
 
-# noinspection PyUnresolvedReferences,PyPep8Naming
+# noinspection PyPep8Naming
 class m2m_datei_musiker(BaseM2MModel):
     datei = models.ForeignKey('Datei', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
@@ -52,7 +53,9 @@ class m2m_datei_musiker(BaseM2MModel):
         verbose_name_plural = 'Musiker'
 
     def __str__(self) -> str:
+        # noinspection PyUnresolvedReferences
         if self.instrument.exists():
+            # noinspection PyUnresolvedReferences
             instr = ",".join([str(i.kuerzel) for i in self.instrument.all()])
             return "{} ({})".format(str(getattr(self, 'musiker')), instr)
         return str(getattr(self, 'musiker'))
@@ -79,7 +82,8 @@ class m2m_datei_quelle(BaseM2MModel):
     def get_quelle_art(self, as_field=True):
         return None
         foreignkey_fields = get_model_fields(
-            m2m_datei_quelle, base=False, foreign=True, m2m=False)
+            m2m_datei_quelle, base=False, foreign=True, m2m=False
+        )
         for fld in foreignkey_fields:
             if fld.name != 'datei' and fld.value_from_object(self):
                 if as_field:
@@ -88,7 +92,6 @@ class m2m_datei_quelle(BaseM2MModel):
                     return fld.name
         return ''
 
-    # noinspection PyUnresolvedReferences
     def __str__(self):
         art = self.get_quelle_art()
         if art:

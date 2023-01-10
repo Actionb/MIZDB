@@ -14,9 +14,10 @@ def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
     """
     Return the first SearchVectorField instance found for the given model.
     """
-    # exclude inherited search vector fields:
     # noinspection PyUnresolvedReferences
-    for field in model._meta.get_fields(include_parents=False):
+    opts = model._meta
+    # exclude inherited search vector fields:
+    for field in opts.get_fields(include_parents=False):
         if isinstance(field, SearchVectorField):
             return field
     return None
@@ -76,20 +77,22 @@ class TextSearchQuerySetMixin(object):
 
         If ``ranked`` is True (which is the default) or if the queryset is
         unordered, order the results by how closely they matched the search
-        term: exact matches first, then matches that start with the search term,
-        then ordered by text search rank, and finally ordered either according
-        to the queryset ordering or - if the queryset wasn't ordered - by the
-        model's default ordering.
+        term: matches for primary keys first, then exact matches, then matches
+        that start with the search term, then ordered by text search rank, and
+        finally ordered either according to the queryset ordering or - if the
+        queryset wasn't ordered - by the model's default ordering.
         """
         if not q:
-            # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
+        model = self.model  # type: ignore[attr-defined]
+        model_search_rank = related_search_rank = None
+        pk_name = model._meta.pk.name
 
         filters = Q()
-        model_search_rank = related_search_rank = None
+        if q.isnumeric():
+            # q is a number: include a filter for the primary key.
+            filters |= Q(**{pk_name: q})
 
-        # noinspection PyUnresolvedReferences
-        model = self.model  # type: ignore[attr-defined]
         search_field = _get_search_vector_field(model)
         if search_field:
             # Add a query and a rank for every text search config defined on
@@ -131,7 +134,6 @@ class TextSearchQuerySetMixin(object):
 
         if not filters:
             # Neither of the loops ran: nothing to filter with.
-            # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
 
         # Only use the rank of the closest matching related row; this should
@@ -143,12 +145,10 @@ class TextSearchQuerySetMixin(object):
         else:
             search_rank = model_search_rank or Max(related_search_rank)
 
-        results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]  # noqa
-        # noinspection PyUnresolvedReferences
+        results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]
         if ranked or not self.query.order_by:  # type: ignore[attr-defined]
             # Apply ordering to the results.
-            # noinspection PyUnresolvedReferences
-            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore[attr-defined]  # noqa
+            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore
             if ranked and getattr(model, 'name_field', None):
                 name_field = model.name_field
                 exact = ExpressionWrapper(
@@ -160,5 +160,10 @@ class TextSearchQuerySetMixin(object):
                     output_field=BooleanField()
                 )
                 ordering = [exact.desc(), startswith.desc()] + ordering
+                if q.isnumeric():
+                    # Prepend an ordering for exact pk matches:
+                    ordering.insert(
+                        0, ExpressionWrapper(Q(**{pk_name: q}), output_field=BooleanField()).desc()
+                    )
             results = results.order_by(*ordering)
         return results

@@ -13,7 +13,7 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        parser.add_argument(  # pragma: no cover
             '-f', '--force',
             action='store_true',
             help='Force the update of all model instances.'
@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         models = [
             model
-            for model in apps.get_models('dbentry')
+            for model in apps.get_models('dbentry')  # FIXME: the app name shouldn't be hardcoded
             if issubclass(model, ComputedNameModel)
         ]
         for model in models:
