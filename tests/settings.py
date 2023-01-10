@@ -12,6 +12,7 @@ SECRET_KEY = 'abcdefghi'
 
 ALWAYS_INSTALLED_APPS = [
     'dbentry',
+    'watchlist',
     'dal',
     'dal_select2',
     'django.contrib.admin',

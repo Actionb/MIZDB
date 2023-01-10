@@ -8,8 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import RequestFactory
 
 from dbentry.models import Genre
-from dbentry.tests.base import UserTestCase
-from dbentry.tests.mixins import TestDataMixin
+from tests.case import DataTestCase, UserTestCase
 
 from watchlist.models import Watchlist
 from watchlist.views import get_watchlist, watchlist_toggle
@@ -24,7 +23,7 @@ def add_session(request):
     request.session = session
 
 
-class TestWatchlist(TestDataMixin, UserTestCase):
+class TestWatchlist(DataTestCase, UserTestCase):
 
     model = Genre
     model_label = 'dbentry.genre'
