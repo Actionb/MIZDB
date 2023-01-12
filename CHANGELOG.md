@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- text search: accept string of comma-separated values as search term for ids
+
 ### Added
 
 - summarize utility function and action that provide summaries of model objects
