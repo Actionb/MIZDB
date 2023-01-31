@@ -36,6 +36,16 @@ from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
 
 
+# FIXME: deleting a related m2m object and then saving the parent form results
+#  in a form error since the select for that relation still references the
+#  deleted object (via the id)
+# 1. create artikel
+# 2. add band
+# 3. save artikel
+# 4. delete band
+# 5. save artikel -> errors
+
+
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     form = _forms.BestandInlineForm
