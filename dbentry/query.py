@@ -226,11 +226,9 @@ class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
 
     def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
-        # QuerySet._chain() will update the clone's __dict__ with the kwargs
-        # we give it. (in django1.11: QuerySet._clone() did this job)
-        if 'chronologically_ordered' not in kwargs:
-            kwargs['chronologically_ordered'] = self.chronologically_ordered
-        return super()._chain(**kwargs)
+        clone = super()._chain(**kwargs)
+        clone.chronologically_ordered = self.chronologically_ordered
+        return clone
 
     def order_by(self, *field_names: str) -> 'AusgabeQuerySet':
         # Any call to order_by is almost guaranteed to break the

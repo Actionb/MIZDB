@@ -10,6 +10,16 @@
 
 - summarize utility function and action that provide summaries of model objects
 
+### Other
+- updated package versions:
+  - Django updated to version 4.1
+  - `django-autocomplete-light` updated to verson 3.9.4
+  - use own fork of `django-tsvector-field` to make it compatible with Django 4
+  - other minor package updates
+
+- updated tox tests
+- force using jQuery version 3.5.1 (due to a bug with select2 and jQuery 3.6)
+
 ## [0.9] - 2022-12-05
 
 ### Finished test rework
