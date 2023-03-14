@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'formtools',
     'django.contrib.postgres',
-    'django_admin_logs'
+    'django_admin_logs',
+    'dbentry.site',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'MIZDB.urls'
+
+LOGIN_URL = 'mizdb:login'
 
 TEMPLATES = [
     {

@@ -1,0 +1,73 @@
+{% load static %}<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }} | MIZDB{% endblock title %}</title>
+    <link rel="stylesheet" href="{% block stylesheet %}{% static "mizdb/css/base.css" %}{% endblock %}">
+    {% block dark-mode-vars %}
+        <link rel="stylesheet" href="{% static "mizdb/css/dark_mode.css" %}">
+    {% endblock %}
+    {% block extrastyle %}{% endblock %}
+    {% block extrahead %}{% endblock %}
+</head>
+<body>
+
+<!-- Container -->
+<div id="container">
+    <!-- Header -->
+    {% block header %}
+    <div id="header">
+        <div id="branding">
+        {% block branding %}
+            <h1 id="site-name><a href="{% url 'mizdb:index' %}">MIZDB</a></h1>
+        {% endblock %}
+        </div>
+        {% block usertools %}
+        {% if has_permission %}
+        <div id="user-tools">
+            {% block welcome-msg %}
+                Willkommen, <strong>{% firstof user.get_short_name user.get_username %}</strong>.
+            {% endblock welcome-msg %}
+            {% block userlinks %}
+                {% if wiki_url %}
+                    <a href="{{ wiki_url }} " target="_blank">Wiki</a>
+                {% endif %}
+                {% if user.has_usable_password %}
+                <a href="{% url 'admin:password_change' %}">Passwort ändern</a> /
+                {% endif %}
+                <form id="logout-form" method="post" action="{% url 'mizdb:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Abmelden</button>
+                </form>
+            {% endblock userlinks %}
+        </div>
+        {% endif %}
+        {% endblock usertools %}
+    </div>
+    {% endblock header %}
+    <!-- END Header -->
+    {% block breadcrumbs %}
+    <div class="breadcrumbs">
+        {# TODO: use bootstrap breadcrumbs #}
+        <a href="{% url 'mizdb:index' %}">Index</a>
+        {% if title %} &rsaquo; {{ title }}{% endif %}
+    </div>
+    {% endblock %}
+
+    <main class="main" id="main">
+        {% block messages %}{# TODO: add message block #}{% endblock messages %}
+        <!-- Content -->
+        <div id="content">
+            {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+            {% block content %}{{ content }}{% endblock %}
+            {% block sidebar %}{% endblock %}
+          <br class="clear">
+        </div>
+        <!-- END Content -->
+
+    </main>
+</div>
+<!-- END Container -->
+</body>
+</html>
