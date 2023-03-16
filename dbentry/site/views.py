@@ -1,6 +1,11 @@
-from django.contrib.auth.views import LoginView as BaseLoginView
+from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
+
+
+class LoginView(auth_views.LoginView):
+    template_name = "mizdb/registration/login.html"
+    next_page = reverse_lazy("mizdb:index")
 
 
 class Index(TemplateView):
@@ -10,8 +15,3 @@ class Index(TemplateView):
         ctx = super().get_context_data(**kwargs)
         ctx['has_permission'] = True
         return ctx
-
-
-# class LoginView(BaseLoginView):
-#     template_name = "site/login.html"
-#     success_url = reverse_lazy("site:index")
