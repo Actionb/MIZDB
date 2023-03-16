@@ -1,0 +1,17 @@
+{% extends "mizdb/base.html" %}
+{% load formsetify static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {{ form.media }}
+  <script type="module" src="{% static 'formset/js/django-formset.js' %}"></script>
+  <link href="{% static 'formset/css/bootstrap5-extra.css' %}" rel="stylesheet">
+  <link href="{% static 'formset/css/collections.css' %}" rel="stylesheet">
+{% endblock extrahead %}
+
+{% block content %}
+<django-formset endpoint="{{ request.path }}" csrf-token="{{ csrf_token }}">
+  {% render_form form %}
+  <button type="button" click="submit -> proceed">Submit</button>
+</django-formset>
+{% endblock content %}

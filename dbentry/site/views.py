@@ -1,6 +1,14 @@
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, CreateView
+from formset.views import FormView, IncompleteSelectResponseMixin, FormViewMixin
+
+from dbentry import models as _models
+from .forms import ArtikelForm
+
+
+class AutocompleteMixin(IncompleteSelectResponseMixin, FormViewMixin):
+    pass
 
 
 class LoginView(auth_views.LoginView):
@@ -32,4 +40,15 @@ class Index(MIZContextMixin, TemplateView):
             ('Stammdaten', [_models.Band._meta, _models.Musiker._meta, _models.Magazin._meta]),
             ('Sonstige', [_models.Lagerort._meta])
         ]
+        return ctx
+
+
+class ArtikelView(AutocompleteMixin, CreateView):
+    form_class = ArtikelForm
+    model = _models.Artikel
+    template_name = "mizdb/base_form.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['title'] = 'Artikel hinzufügen'
         return ctx
