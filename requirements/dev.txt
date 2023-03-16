@@ -6,3 +6,4 @@ pipreqs==0.4.11
 django-debug-toolbar==3.5.0
 factory-boy==3.2.1
 requests_mock==1.10.0
+beautifulsoup4==4.11.2

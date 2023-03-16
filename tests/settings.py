@@ -23,6 +23,7 @@ ALWAYS_INSTALLED_APPS = [
     'formtools',
     'django.contrib.postgres',
     'django_admin_logs',
+    'dbentry.site',
 ]
 
 TEST_APPS = [
