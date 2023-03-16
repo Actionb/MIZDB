@@ -1,5 +1,73 @@
 {% extends "mizdb/base.html" %}
+{% load mizdb admin_urls %}
+
+{% block extrastyle %}
+<style>
+{# TODO: put in a .css file #}
+.addlink {
+  padding-left: 16px;
+  background: url(static/admin/img/icon-addlink.svg) 0 1px no-repeat;
+}
+</style>
+{% endblock extrastyle %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{#{% block breadcrumbs %}{% endblock %}#}
 
 {% block content %}
-Hey there
+<div>
+{% for category, models in model_groups %}
+<table class="table table-hover">
+    <thead><tr class="table-primary"><th scope="row" colspan="2">{{ category }}</th></tr></thead>
+    <tbody>
+    {% for opts in models %}
+        <tr>
+        <th class="container-fluid" scope="row"><a class="text-decoration-none" href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name }}</a></th>
+        {% has_perm user 'add' opts as has_add_perm %}
+        {% if has_add_perm %}
+          <td><a href="{% url opts|admin_urlname:'add' %}" class="addlink">Hinzufügen</a></td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        </tr>
+    {% comment %}{% endcomment %}
+    {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+</div>
 {% endblock content %}
+
+{% block sidebar %}
+<div id="content-related" class="secondary-bg-subtle">
+    {% if user.is_authenticated %}
+    <div class="module" id="recent-actions-module">
+        <h3>Letzte Änderungen</h3>
+        {% load log %}
+        {% get_admin_log 10 as admin_log for_user user %}
+        {% if not admin_log %}
+        <p>Keine vorhanden</p>
+        {% else %}
+        <ul class="actionlist">
+        {% for entry in admin_log %}
+        <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+            {% if entry.is_deletion or not entry.get_admin_url %}
+                {{ entry.object_repr }}
+            {% else %}
+                <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+            {% endif %}
+            <br>
+            {% if entry.content_type %}
+                <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+            {% else %}
+                <span class="mini quiet">Unbekannt</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
