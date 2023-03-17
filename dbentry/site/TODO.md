@@ -51,3 +51,10 @@ Code that should not be coupled to admin stuff:
 - delete view
 - related widget wrapper
 - template tags (f.ex. `admin_urls` providing the tag `admin_urlname`)
+
+# Other TODOs:
+
+- use bootstrap modal for login (and password reset)
+- add dark mode
+- implement a theme switcher
+- IMPORTANT: richtexteditor content spills out below?!
