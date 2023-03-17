@@ -1,0 +1,22 @@
+{% load mizdb admin_urls %}
+
+{% for category, models in model_groups %}
+<table class="table table-hover">
+    <thead><tr class="table-primary"><th scope="row" colspan="2">{{ category }}</th></tr></thead>
+    <tbody>
+    {% for opts in models %}
+        <tr>
+        <th class="container-fluid" scope="row">
+            <a class="text-decoration-none" href="{% url opts|admin_urlname:'changelist' %}" target="_blank">{{ opts.verbose_name }}</a>
+        </th>
+        {% has_perm user 'add' opts as has_add_perm %}
+        {% if has_add_perm %}
+          <td><a href="{% url opts|admin_urlname:'add' %}" class="addlink" target="_blank">Hinzufügen</a></td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
