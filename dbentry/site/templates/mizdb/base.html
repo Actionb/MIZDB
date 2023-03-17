@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ title }} | MIZDB{% endblock title %}</title>
     <link rel="stylesheet" href="{% block stylesheet %}{% static "mizdb/css/base.css" %}{% endblock %}">
-    {% block dark-mode-vars %}
-        <link rel="stylesheet" href="{% static "mizdb/css/dark_mode.css" %}">
-    {% endblock %}
     {% block extrastyle %}{% endblock extrastyle %}
     {% block extrahead %}{% endblock extrahead %}
     {% block bootstrap %}
@@ -17,25 +14,24 @@
         <script src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
         <link href="{% static 'bootstrap/css/flatly/bootstrap.css' %}" rel="stylesheet">
     {% endblock bootstrap %}
-
-</head>
 <body class="{% block bodyclass %}{% endblock %}">
 
 <!-- Header -->
 {% block header %}
 <header class="navbar navbar-dark bg-primary">
 <div id="branding-user-links" class="container-fluid">
-    <a class="navbar-brand" href="{% url 'mizdb:index' %}">MIZDB</a>
+    {# TODO: the entire navbar should be one responsive item. Currently, items just wrap individually #}
+    {% block branding %}<a class="navbar-brand" href="{% url 'mizdb:index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
 
     {% block nav %}
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-                {% block breadcrumbs %}
-                    <li class="breadcrumb-item"><a href="{% url 'mizdb:index' %}">Index</a></li>
-                    {% if title %}<li class="breadcrumb-item active" aria-current="page">{{ title }}</li>{% endif %}
-                {% endblock breadcrumbs %}
-          </ol>
-        </nav>
+        <button class="btn btn-info navbar-toggler p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="bi" fill="currentColor"
+                viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z">
+                </path>
+            </svg>
+        </button>
     {% endblock nav %}
 
     {% block searchbar %}
@@ -47,13 +43,13 @@
     {% block user-links %}
         <div id="user-links" class="d-flex gap-2">
             {% if wiki_url %}
-                <a class="btn btn-secondary" href="{{ wiki_url }}" target="_blank" title="Hilfe">
+                <a class="btn btn-info navbar-toggler p-2" href="{{ wiki_url }}" target="_blank" title="Hilfe">
                     <img src="{% static 'mizdb/img/help-circle-white.svg' %}" alt="Hilfe" role="img">
                 </a>
             {% endif %}
             {% block account %}
                 <div id="user-account" class="btn-group" role="group">
-                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Benutzerkonto">
+                    <button type="button" class="btn btn-info dropdown-toggle navbar-toggler p-2" data-bs-toggle="dropdown" aria-expanded="false" title="Benutzerkonto">
                         <img src="{% static 'mizdb/img/user-white.svg' %}" alt="Benutzerkonto" role="img">
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -61,7 +57,8 @@
                             <li><span class="dropdown-item-text">Willkommen, <strong>{% firstof user.get_short_name user.get_username %}</strong>.</span></li>
                             <li><hr class="dropdown-divider"></li>
                             {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Seite</a></li>{% endif %}
-                            {% if user.has_usable_password %}<li><a class="dropdown-item" href="{% url 'mizdb:password_change' %}">Passwort ändern</a></li>{% endif %}
+                        {# TODO: re-enable password change #}
+                            {% if user.has_usable_password %}<li><a class="dropdown-item" href="{#{% url 'mizdb:password_change' %}#}">Passwort ändern</a></li>{% endif %}
                             <li><form id="logout-form" method="post" action="{% url 'mizdb:logout' %}">
                                 {% csrf_token %}
                                 <button class="dropdown-item" type="submit">Abmelden</button>
@@ -72,19 +69,6 @@
                     </ul>
                 </div>
             {% endblock account %}
-
-            {% block theme-switch %}
-            {% comment %}
-            {# TODO: implement a theme switcher? #}
-            <div id="theme-switch" class="dropdown">
-                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Theme ändern</button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="light">Light</button></li>
-                        <li><button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="dark">Dark</button></li>
-                    </ul>
-            </div>
-            {% endcomment %}
-            {% endblock theme-switch %}
         </div>
     {% endblock user-links %}
 </div>
@@ -92,19 +76,27 @@
 {% endblock header %}
 <!-- END Header -->
 
+{% block nav-sidebar %}
+<aside>
+    <div id="nav-sidebar" class="offcanvas offcanvas-start">
+        <div class="offcanvas-header border-bottom">
+            <h5>Tabellen</h5>
+        </div>
+        <div class="offcanvas-body">
+            {% include "mizdb/includes/model_list.html" %}
+        </div>
+    </div>
+</aside>
+{% endblock nav-sidebar %}
+
 <main id="main" class="container-lg">
     {% block messages %}{# TODO: add message block #}{% endblock messages %}
     <!-- Content -->
     {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
-    <div id="content" class="py-3 row">
-        <div id="content-main" class="col-8">
+    <div id="content" class="py-3">
         {% block content %}{{ content }}{% endblock %}
-        </div>
-        <aside class="col-4">
-        {% block sidebar %}{% endblock %}
-        </aside>
-      <br class="clear">
     </div>
+    <br class="clear">
     <!-- END Content -->
 </main>
 {% block extrascript %}
