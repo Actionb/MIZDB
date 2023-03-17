@@ -11,9 +11,9 @@ class AutocompleteMixin(IncompleteSelectResponseMixin, FormViewMixin):
     pass
 
 
-class LoginView(auth_views.LoginView):
+class LoginView(FormViewMixin, auth_views.LoginView):
     template_name = "mizdb/registration/login.html"
-    next_page = reverse_lazy("mizdb:index")
+    success_url = next_page = reverse_lazy("mizdb:index")
 
 
 class MIZContextMixin:
