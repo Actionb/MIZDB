@@ -36,6 +36,7 @@ TEST_APPS = [
     "tests.test_factory",
     "tests.test_tools",
     "tests.test_search",
+    "tests.test_site",
     "tests.test_templatetags",
     "tests.test_utils",
 ]
