@@ -43,7 +43,7 @@ class Index(MIZContextMixin, TemplateView):
         return ctx
 
 
-class ArtikelView(AutocompleteMixin, CreateView):
+class ArtikelView(MIZContextMixin, AutocompleteMixin, CreateView):
     form_class = ArtikelForm
     model = _models.Artikel
     template_name = "mizdb/base_form.html"
