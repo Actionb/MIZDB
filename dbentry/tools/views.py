@@ -12,7 +12,7 @@ from django.db.models import (
 )
 from django.db.models.query import RawQuerySet
 from django.forms import Form
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
@@ -468,3 +468,13 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
     def _search(self, model: Model, q: str) -> Any:
         # noinspection PyUnresolvedReferences
         return model.objects.search(q, ranked=False)  # pragma: no cover
+
+
+class SearchbarSearch(MIZSiteSearch):
+
+    def get(self, request: HttpRequest, **kwargs: Any) -> JsonResponse:
+        if q := request.GET.get('q', ''):
+            results = self.get_result_list(q)
+        else:
+            results = []
+        return JsonResponse({'results': results})

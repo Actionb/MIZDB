@@ -1,4 +1,12 @@
-<form class="d-flex">
-    <input class="form-control me-sm-2" type="search" placeholder="Search">
-    <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
-</form>
+<div id="searchBar">
+<button id="searchButton" type="button" class="btn btn-primary border-dark d-flex align-items-center w-100" data-bs-toggle="modal" data-bs-target="#searchModal">
+    <span class="d-flex align-items-center">
+        <img src="/static/mizdb/img/search.svg"><img>
+        <span id="searchPlaceholder" class="ps-1 nav-text">Suchen</span>
+    </span>
+</button>
+</div>
+
+{% block searchmodal %}
+{% include "mizdb/includes/search_modal.html" %}
+{% endblock searchmodal %}
