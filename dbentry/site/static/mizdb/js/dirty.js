@@ -1,26 +1,27 @@
 /*
  * Issue a warning if the user tries to leave a form with unsaved changes.
- * Relies on django-formset setting django-field-groups to a dirty state ('dj-dirty' class).
+ * Relies on `django-formset` setting django-field-groups to a dirty state ('dj-dirty' class),
+ * and a custom event fired by the submit buttons.
 */
 
-var isDirty = function() {
-    return document.querySelector(".dj-dirty") !== null
- }
+window.addEventListener("load", (event) => {
 
-window.onload = function() {
+    /* The element class django-formset assigns to dirty inputs */
+    const dirty_flag = "dj-dirty"
 
-    const Dirty = {
-    /* FIXME: this doesn't work on django-formset submit buttons because they are outside the form element? */
-        is_submitting: false
+    const form = {
+        submitted: false
     }
 
-    window.addEventListener("submit", (event) => {
-        Dirty.is_submitting = true;
+    /* This event is emitted by the django-formset submit buttons. */
+    window.addEventListener("FormSubmitted", (event) => {
+        form.submitted = true;
     });
+
     window.addEventListener("beforeunload", function (e) {
-        if (isDirty() && !Dirty.is_submitting) {
+        if (!form.submitted && document.querySelector(`.${dirty_flag}`) !== null) {
             e.preventDefault();
-            return "HEYYYYYYYY"; /* TODO: add message -- also why is only a default message and not this custom message displayed? */
+            return "Es gibt nicht gespeicherte Änderungen auf dieser Seite, die verworfen werden, wenn Sie fortfahren.";
         }
     });
-};
+});
