@@ -25,13 +25,9 @@
     {% block branding %}<a class="navbar-brand" href="{% url 'mizdb:index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
 
     {% block nav %}
-        <button class="btn btn-info navbar-toggler p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="bi" fill="currentColor"
-                viewBox="0 0 16 16">
-                <path fill-rule="evenodd"
-                    d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z">
-                </path>
-            </svg>
+        <button class="btn btn-primary border-dark p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
+            <span class="navbar-toggler-icon"></span>
+            <span class="nav-text">Navigation</span>
         </button>
     {% endblock nav %}
 
@@ -44,14 +40,16 @@
     {% block user-links %}
         <div id="user-links" class="d-flex gap-2">
             {% if wiki_url %}
-                <a class="btn btn-info navbar-toggler p-2" href="{{ wiki_url }}" target="_blank" title="Hilfe">
+                <a class="btn btn-primary border-dark p-2" href="{{ wiki_url }}" target="_blank" title="Hilfe">
                     <img src="{% static 'mizdb/img/help-circle-white.svg' %}" alt="Hilfe" role="img">
+                    <span class="nav-text">Hilfe</span>
                 </a>
             {% endif %}
             {% block account %}
                 <div id="user-account" class="btn-group" role="group">
-                    <button type="button" class="btn btn-info dropdown-toggle navbar-toggler p-2" data-bs-toggle="dropdown" aria-expanded="false" title="Benutzerkonto">
+                    <button type="button" class="btn btn-primary border-dark p-2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Benutzerkonto">
                         <img src="{% static 'mizdb/img/user-white.svg' %}" alt="Benutzerkonto" role="img">
+                        <span class="nav-text">Benutzer</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         {% if user.is_authenticated %}
