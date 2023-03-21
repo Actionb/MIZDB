@@ -2,6 +2,8 @@
 
 Code that should not be coupled to admin stuff:
 
+- site search page
+
 - queryset annotations for changelists (also need those annotations for non-admin ListViews)
 
 - dbentry.ac.views.ACAusgabe relies on admin annotations (see above)
