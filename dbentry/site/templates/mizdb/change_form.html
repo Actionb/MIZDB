@@ -1,26 +1,10 @@
-{% extends "mizdb/base.html" %}
-{% load static %}
-
-{% block extrahead %}
-    {{ block.super }}
-    {{ media }}
-{% endblock %}
-
-{% block extrastyle %}
-{{ block.super }}
-<link rel="stylesheet" href="{% static "mizdb/css/forms.css" %}">
-{% endblock %}
-
-{% block breadcrumbs %}
-{# TODO: use bootstrap breadcrumbs #}
-<div class="breadcrumbs">
-<a href="{% url 'mizdb:index' %}">Index</a>
-&rsaquo; <a href="{% url opts|urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-&rsaquo; {% if add %}Add {{ opts.verbose_name }}{% else %}{{ original|truncatewords:"18" }}{% endif %}
-</div>
-{% endblock %}
+{% extends "mizdb/base_form.html" %}
+{% load formsetify static %}
 
 {% block content %}
+
+{% comment %}
+{# TODO: add object tools (history, id selector, etc.) #}
 {% block object-tools %}
     {% if change %}
       <ul class="object-tools">
@@ -30,10 +14,13 @@
       </ul>
     {% endif %}
 {% endblock object-tools %}
+{% endcomment %}
 
-<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}method="post" id="{{ opts.model_name }}_form">
-    {% csrf_token %}
-    {% block form_top %}{% endblock %}
-    <div>
-        {% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+<django-formset endpoint="{{ request.path }}" csrf-token="{{ csrf_token }}">
+  {% render_form form %}
+  {# TODO: check for permissions for these buttons (use django admin submit row in admin_modify) #}
+  <button type="button" click="submit({add_another: true}) -> emit('FormSubmitted') -> proceed">Sichern und neu hinzufügen</button>
+  <button type="button" click="submit({continue: true}) -> emit('FormSubmitted') -> proceed">Sichern und weiter bearbeiten</button>
+  <button type="button" click="submit({add: true}) -> emit('FormSubmitted') -> proceed">Sichern</button>
+</django-formset>
 {% endblock content %}
