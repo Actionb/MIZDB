@@ -30,12 +30,12 @@ class TestRegistry(TestCase):
         self.assertEqual(test_site.changelists, {Foo: ChangelistView})
 
     def test_categories(self):
-        expected = OrderedDict({
-            ModelType.ARCHIVGUT.value: [Foo._meta],
-            ModelType.STAMMDATEN.value: [],
-            ModelType.SONSTIGE.value: [],
-        })
-        self.assertEqual(test_site.categories, expected)
+        expected = [
+            (ModelType.ARCHIVGUT.value, [Foo._meta]),
+            (ModelType.STAMMDATEN.value, []),
+            (ModelType.SONSTIGE.value, []),
+        ]
+        self.assertEqual(list(test_site.model_list), expected)
 
     def test_register_edit(self):
         for model_arg in (Foo, [Foo]):

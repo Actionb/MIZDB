@@ -16,7 +16,7 @@ class Registry:
     def __init__(self):
         self.views = {}
         self.changelists = {}
-        self._category_list = OrderedDict({
+        self._model_list = OrderedDict({
             ModelType.ARCHIVGUT.value: [],
             ModelType.STAMMDATEN.value: [],
             ModelType.SONSTIGE.value: []
@@ -28,24 +28,15 @@ class Registry:
 
     def register_changelist(self, models, view, category):
         for model in models:
-            self._category_list[category].append(model)
+            self._model_list[category].append(model)
             self.changelists[model] = view
 
     @property
-    def categories(self):
-        if hasattr(self, '_categories'):
-            return self._categories
-
-        self._categories = OrderedDict({
-            ModelType.ARCHIVGUT.value: [],
-            ModelType.STAMMDATEN.value: [],
-            ModelType.SONSTIGE.value: []
-        })
-        for category, models in self._category_list.items():
-            self._categories[category] = sorted(
+    def model_list(self):
+        for category, models in self._model_list.items():
+            yield category, sorted(
                 [m._meta for m in models], key=lambda opts: opts.verbose_name
             )
-        return self._categories
 
     def get_urls(self):
         urlpatterns = []
@@ -94,6 +85,7 @@ def register_edit(models, site=miz_site):
     """Register an edit (add/change) view for the given models."""
     if isinstance(models, ModelBase):
         models = [models]
+
     def wrapper(view):
         site.register_edit(models, view)
         return view
