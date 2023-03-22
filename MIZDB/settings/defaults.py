@@ -62,6 +62,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Namespace for the urls of the (non-admin) site, as configured in ROOT_URLCONF:
+SITE_NAMESPACE = 'mizdb'
+
 ROOT_URLCONF = 'MIZDB.urls'
 
 LOGIN_URL = 'mizdb:login'
