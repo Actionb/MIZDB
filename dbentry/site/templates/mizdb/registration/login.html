@@ -2,12 +2,18 @@
 
 {% block title %}Anmelden | MIZDB{% endblock title %}
 
+{% block style %}{% endblock style %}
+
+{% block script %}{% endblock script %}
+
 {% block header %}
     <header class="navbar navbar-dark bg-primary justify-content-center">
         {% block branding %}{{ block.super }}{% endblock branding %}
     </header>
 {% endblock header %}
 
+{% block nav-sidebar %}{% endblock nav-sidebar %}
+
 {% block content %}
     {% include "mizdb/registration/login_form.html" %}
-{% endblock %}
+{% endblock content %}
