@@ -1,8 +1,10 @@
 from django.contrib.auth.views import logout_then_login
-from django.urls import path
+from django.urls import path, include
 
 from .views import Index, LoginView, ArtikelView
 from dbentry.tools.views import SearchbarSearch
+from .registry import miz_site
+
 
 app_name = "site"
 urlpatterns = [
@@ -10,7 +12,7 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name="login"),
     path('logout/', logout_then_login, name="logout"),
     # models
-    path('artikel/add', ArtikelView.as_view(), name='dbentry_artikel_add'),
+    path('', include(miz_site.urls)),
     # search
     path('searchbar/', SearchbarSearch.as_view(), name='searchbar_search')
 ]
