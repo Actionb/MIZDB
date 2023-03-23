@@ -168,6 +168,23 @@ class BaseEditView(BaseModelView, UpdateView):
             return super().get_object(queryset)
 
     def get_success_url(self):
+        """
+        Return the success_url that corresponds with the submit button that was
+        pressed.
+
+        The submit buttons add a little 'extra_data' to the request:
+          - 'add_another' -> return the same view with an empty form
+          - 'continue' -> show the change form of the current object
+          - 'add' -> return to the changelist (default)
+        """
+        if extra_data := self.get_extra_data():
+            if extra_data.get('add_another'):
+                return self.request.path
+            elif extra_data.get('continue'):
+                return reverse(
+                    f'{self.url_namespace}:{self.opts.app_label}_{self.opts.model_name}_change',
+                    args=[self.object.pk]
+                )
         return reverse(
             f"{self.url_namespace}:{self.opts.app_label}_{self.opts.model_name}_changelist"
         )
@@ -187,19 +204,4 @@ class BaseEditView(BaseModelView, UpdateView):
             # TODO: don't we need to add the formset errors to the context?
             return self.form_invalid(form)
 
-        # Redirect back to the changelist (get_success_url), unless the user
-        # wants to add another object or if they want to continue working on
-        # the current object.
-        success_url = self.get_success_url()
-        if extra_data := self.get_extra_data():
-            # NOTE: these values are passed in by the submit button
-            if extra_data.get('add_another'):
-                return JsonResponse({'success_url': self.request.path})
-            elif extra_data.get('continue'):
-                success_url = reverse(
-                    f'{self.url_namespace}:{self.opts.app_label}_{self.opts.model_name}_change',
-                    args=[self.object.pk]
-                )
-                # TODO: do we need the 'pk' item in the response?
-                return JsonResponse({'success_url': success_url, 'pk': self.object.pk})
-        return JsonResponse({'success_url': success_url})
+        return JsonResponse({'success_url': self.get_success_url()})
