@@ -1,6 +1,11 @@
 {% extends "mizdb/base_form.html" %}
 {% load formsetify static %}
 
+{% block extrahead %}
+  {{ block.super }}
+  <script src="{% static 'mizdb/js/dirty.js' %}"></script>
+{% endblock extrahead %}
+
 {% block content %}
 
 {% comment %}
