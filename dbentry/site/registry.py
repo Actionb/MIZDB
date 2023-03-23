@@ -39,6 +39,7 @@ class Registry:
             )
 
     def get_urls(self):
+        from dbentry.site.views import DeleteView, HistoryView
         urlpatterns = []
         for model, view in self.changelists.items():
             opts = model._meta
@@ -56,19 +57,18 @@ class Registry:
                 path(
                     '<path:object_id>/change/',
                     view.as_view(extra_context={'add': False}),
-                    name=f"{opts.app_label}_{opts.model_name}_add"
+                    name=f"{opts.app_label}_{opts.model_name}_change"
                 ),
-                # TODO: enable delete and history views
-                # path(
-                #     '<path:object_id>/delete/',
-                #     DeleteView.as_view(),
-                #     name=f"{opts.app_label}_{opts.model_name}_delete"
-                # ),
-                # path(
-                #     "<path:object_id>/history/",
-                #     HistoryView.as_view(),
-                #     name=f"{opts.app_label}_{opts.model_name}_history"
-                # ),
+                path(
+                    '<path:object_id>/delete/',
+                    DeleteView.as_view(model=model),
+                    name=f"{opts.app_label}_{opts.model_name}_delete"
+                ),
+                path(
+                    "<path:object_id>/history/",
+                    HistoryView.as_view(model=model),
+                    name=f"{opts.app_label}_{opts.model_name}_history"
+                ),
             ]
             urlpatterns.append(path(f'{opts.model_name}/', include(patterns)))
         return urlpatterns
