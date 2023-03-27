@@ -26,6 +26,10 @@ class Band(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = 'Band'
+        verbose_name_plural = 'Bands'
+
 
 class Country(models.Model):
     name = models.TextField()
@@ -36,8 +40,12 @@ class Country(models.Model):
 
 class Musician(models.Model):
     name = models.TextField()
-    band = models.ForeignKey('test_site.Band', on_delete=models.CASCADE)
-    origin = models.ForeignKey('test_site.Country', on_delete=models.CASCADE)
+    band = models.ForeignKey('test_site.Band', on_delete=models.CASCADE, null=True, blank=True)
+    origin = models.ForeignKey('test_site.Country', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = 'Musician'
+        verbose_name_plural = 'Musicians'

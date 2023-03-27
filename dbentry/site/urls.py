@@ -2,9 +2,9 @@ from django.contrib.auth.views import logout_then_login
 from django.urls import path, include
 
 from dbentry.site.registry import miz_site
-from dbentry.site.views.list import Index
 from dbentry.site.views.auth import LoginView, PasswordChangeView, PasswordChangeDoneView
-from dbentry.tools.views import SearchbarSearch
+from dbentry.site.views.list import Index
+from dbentry.site.views.search import SearchbarSearch
 
 app_name = "site"
 urlpatterns = [

@@ -105,4 +105,4 @@ STATIC_URL = '/static/'
 
 WIKI_URL = 'http://test.wiki.org/'
 
-SITE_NAMESPACE = 'testsite'
+SITE_NAMESPACE = 'test_namespace'
