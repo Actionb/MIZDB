@@ -1,10 +1,8 @@
 import json
 import re
-from unittest.mock import patch, Mock
 
 from django import forms
-from django.conf import settings
-from django.urls import path, reverse, include
+from django.urls import path, reverse
 from django.test import override_settings
 from django.views import View
 
@@ -39,13 +37,10 @@ class ChangelistView(View):
 
 class URLConf:
     app_name = 'test_site'
-    foo = [
+    urlpatterns = [
         path('add/', FooView.as_view(extra_context={'add': True}), name='test_site_foo_add'),
         path('<path:object_id>/change/', FooView.as_view(extra_context={'add': False}), name='test_site_foo_change'),
         path('', ChangelistView.as_view(), name='test_site_foo_changelist')
-    ]
-    urlpatterns = [
-        path('foo/', include((foo, 'test_site'), namespace=settings.SITE_NAMESPACE))
     ]
 
 
@@ -54,7 +49,6 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
 
     model = Foo
     view_class = FooView
-    namespace = settings.SITE_NAMESPACE
 
     @classmethod
     def setUpTestData(cls):
@@ -98,7 +92,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         having submitted a valid form via the 'add' button.
         """
         response = self.post_response(
-            reverse(f'{self.namespace}:test_site_foo_add'),
+            reverse('test_site_foo_add'),
             data=json.dumps({'formset_data': {'bar': 42}, '_extra': {'add': True}}),
             content_type='application/json'
         )
@@ -107,7 +101,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertIn('success_url', response_json)
         self.assertEqual(
             response_json['success_url'],
-            reverse(f'{self.namespace}:test_site_foo_changelist')
+            reverse('test_site_foo_changelist')
         )
 
     def test_form_valid_add_another(self):
@@ -116,7 +110,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         having submitted a valid form via the 'add another' button.
         """
         response = self.post_response(
-            reverse(f'{self.namespace}:test_site_foo_add'),
+            reverse('test_site_foo_add'),
             data=json.dumps({'formset_data': {'bar': 42}, '_extra': {'add_another': True}}),
             content_type='application/json'
         )
@@ -125,7 +119,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertIn('success_url', response_json)
         self.assertEqual(
             response_json['success_url'],
-            reverse(f'{self.namespace}:test_site_foo_add')
+            reverse('test_site_foo_add')
         )
 
     def test_form_valid_continue(self):
@@ -134,7 +128,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         be saved and be displayed again for further changes.
         """
         response = self.post_response(
-            reverse(f'{self.namespace}:test_site_foo_add'),
+            reverse('test_site_foo_add'),
             data=json.dumps({'formset_data': {'bar': 42}, '_extra': {'continue': True}}),
             content_type='application/json'
         )
@@ -144,6 +138,6 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         # We don't know the id of the saved object.
         # Reverse a change page with a placeholder id, then check against a
         # regex with the placeholder replaced with the '\d' pattern.
-        change_url = reverse(f"{self.namespace}:test_site_foo_change", args=[999])
+        change_url = reverse("test_site_foo_change", args=[999])
         regex = re.compile(re.sub('999', r'\\d+', change_url))
         self.assertRegex(response_json['success_url'], regex)

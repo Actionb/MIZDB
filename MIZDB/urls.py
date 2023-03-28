@@ -26,7 +26,7 @@ from dbentry.sites import miz_site
 urlpatterns = [
     path('admin/', include('dbentry.urls')),  # TODO: tool views should be accessible outside of admin/
     path('admin/', miz_site.urls),
-    path('', include('dbentry.site.urls', namespace=settings.SITE_NAMESPACE)),
+    path('', include('dbentry.site.urls'))
 ]
 
 if settings.DEBUG:

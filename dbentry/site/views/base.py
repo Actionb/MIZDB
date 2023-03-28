@@ -112,7 +112,7 @@ class BaseViewMixin(ContextMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.url_namespace = settings.SITE_NAMESPACE
+        # self.url_namespace = settings.SITE_NAMESPACE
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -267,11 +267,11 @@ class BaseEditView(BaseModelView, UpdateView):
                 return self.request.path
             elif extra_data.get('continue'):
                 return reverse(
-                    f'{self.url_namespace}:{self.opts.app_label}_{self.opts.model_name}_change',
+                    f'{self.opts.app_label}_{self.opts.model_name}_change',
                     args=[self.object.pk]
                 )
         return reverse(
-            f"{self.url_namespace}:{self.opts.app_label}_{self.opts.model_name}_changelist"
+            f'{self.opts.app_label}_{self.opts.model_name}_changelist'
         )
 
     def form_valid(self, form):

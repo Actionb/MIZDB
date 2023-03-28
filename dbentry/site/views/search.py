@@ -6,7 +6,8 @@ from django.views import View
 
 from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.site.registry import miz_site
-from dbentry.utils import get_changelist_url, get_obj_link, create_hyperlink
+from dbentry.utils import get_obj_link, create_hyperlink
+from dbentry.utils.url import get_changelist_url
 
 
 class SearchbarSearch(View):
@@ -54,7 +55,6 @@ class SearchbarSearch(View):
         url = get_changelist_url(
             queryset.query.model,
             self.request.user,
-            site_name=settings.SITE_NAMESPACE,
             obj_list=queryset,
         )
         if queryset.count() > 1:
