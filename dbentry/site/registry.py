@@ -4,6 +4,8 @@ from enum import Enum
 from django.db.models.base import ModelBase
 from django.urls import path, include
 
+from dbentry.utils.url import urlname
+
 
 class ModelType(Enum):
     ARCHIVGUT = 'Archivgut'
@@ -43,8 +45,9 @@ class Registry:
         urlpatterns = []
         for model, view in self.changelists.items():
             opts = model._meta
-            url_name = f"{opts.app_label}_{opts.model_name}_changelist"
-            urlpatterns.append(path(f'{opts.model_name}/', view.as_view(), name=url_name))
+            urlpatterns.append(
+                path(f'{opts.model_name}/', view.as_view(), name=urlname('changelist', opts))
+            )
 
         for model, view in self.views.items():
             opts = model._meta
@@ -52,22 +55,22 @@ class Registry:
                 path(
                     'add/',
                     view.as_view(extra_context={'add': True}),
-                    name=f"{opts.app_label}_{opts.model_name}_add"
+                    name=urlname('add', opts)
                 ),
                 path(
                     '<path:object_id>/change/',
                     view.as_view(extra_context={'add': False}),
-                    name=f"{opts.app_label}_{opts.model_name}_change"
+                    name=urlname('change', opts)
                 ),
                 path(
                     '<path:object_id>/delete/',
                     DeleteView.as_view(model=model),
-                    name=f"{opts.app_label}_{opts.model_name}_delete"
+                    name=urlname('delete', opts)
                 ),
                 path(
                     "<path:object_id>/history/",
                     HistoryView.as_view(model=model),
-                    name=f"{opts.app_label}_{opts.model_name}_history"
+                    name=urlname('history', opts)
                 ),
             ]
             urlpatterns.append(path(f'{opts.model_name}/', include(patterns)))
@@ -89,6 +92,7 @@ def register_edit(models, site=miz_site):
     def wrapper(view):
         site.register_edit(models, view)
         return view
+
     return wrapper
 
 
@@ -109,4 +113,5 @@ def register_changelist(models, category=ModelType.SONSTIGE, site=miz_site):
     def wrapper(view):
         site.register_changelist(models, view, category)
         return view
+
     return wrapper

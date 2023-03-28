@@ -1,21 +1,23 @@
 from django import template
-from django.conf import settings
 from django.contrib.auth import get_permission_codename
+
+from dbentry.utils import url
 
 register = template.Library()
 
 
 @register.simple_tag
-def urlname(name, opts=None):
+def urlname(name, opts=None, current_app="mizdb"):
     """
-    Return the 'url name' for the given name in the current namespace.
+    Return the 'url name' for the given name/action.
 
-    If passing the second argument `opts`, prepend app_label and model_name to
-    the name.
+    If model options ``opts`` is given, prepend app_label and model_name to
+    the name:
+        {opts.app_label}_{opts.model_name}_{name}
+    If ``current_app`` is given, prepend the app namespace to the name:
+        {current_app}:{name}
     """
-    if opts:
-        name = f"{opts.app_label}_{opts.model_name}_{name}"
-    return f"{settings.SITE_NAMESPACE}:{name}"
+    return url.urlname(name, opts, current_app)
 
 
 @register.simple_tag
