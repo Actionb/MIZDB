@@ -1,10 +1,6 @@
-from collections import OrderedDict
-
-from django import forms
 from django.views import View
 from django.test import TestCase
 
-from dbentry.site.views import BaseModelView
 from .models import Foo
 from dbentry.site.registry import register_edit, register_changelist, Registry, ModelType
 
