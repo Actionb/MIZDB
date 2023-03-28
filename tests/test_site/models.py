@@ -23,6 +23,8 @@ class Band(models.Model):
 
     objects = TextSearchQuery.as_manager()
 
+    name_field = 'name'
+
     def __str__(self):
         return self.name
 
@@ -37,11 +39,17 @@ class Country(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = 'Country'
+        verbose_name_plural = 'Countries'
+
 
 class Musician(models.Model):
     name = models.TextField()
     band = models.ForeignKey('test_site.Band', on_delete=models.CASCADE, null=True, blank=True)
     origin = models.ForeignKey('test_site.Country', on_delete=models.CASCADE, null=True, blank=True)
+
+    name_field = 'name'
 
     def __str__(self):
         return self.name

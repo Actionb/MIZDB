@@ -1,42 +1,53 @@
+from itertools import chain
+
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.views import View
 
-from dbentry import models as _models
+from dbentry.fts.query import TextSearchQuerySetMixin
+from dbentry.site.registry import miz_site
 from dbentry.utils import get_changelist_url, get_obj_link, create_hyperlink
 
 
 class SearchbarSearch(View):
-
-    max_result_models = 3
-    max_model_items = 6
     blank = False
+
     # TODO: add variable that dictates whether to include target="_blank" in the links
     #  (blank if in a add/change form)
 
     def get(self, request, **kwargs):
-        # TODO: return a JSONResponse and let the javascript handle the HTML instead?
-        #  that way, you wouldn't have to decode the response byte string in JS
+        # TODO: stagger the searches? Search important models first and return
+        #  those results before searching less important ones?
+        data = {'results': [], 'total_count': 0}
         if q := request.GET.get('q', ''):
-            results = self.get_results(q)
-            if results:
-                return HttpResponse(content=self.get_result_html(results))
-        return HttpResponse("Keine Ergebnisse")
+            for queryset in self.get_results(q):
+                data['total_count'] += queryset.count()
+                data['results'].append({
+                    'category': self.get_changelist_link(queryset),
+                    'items': [
+                        get_obj_link(obj, self.request.user, site_name=settings.SITE_NAMESPACE, blank=self.blank)
+                        for obj in queryset
+                    ]
+                })
+        return JsonResponse(data)
 
     def get_results(self, q):
         results = []
-        for model in self.models:
-            model_results = model.objects.search(q, ranked=False)
+        for model in self.get_models():
+            queryset = model.objects.all()
+            if isinstance(queryset, TextSearchQuerySetMixin):
+                model_results = queryset.search(q, ranked=False)
+            elif name_field := getattr(model, 'name_field', None):
+                model_results = queryset.filter(**{name_field + '__icontains': q})
+            else:
+                continue  # pragma: no cover https://github.com/nedbat/coveragepy/issues/198#issuecomment-399705984
             if model_results.exists():
                 results.append(model_results)
         return results
 
-    def get_result_html(self, results):
-        if (len(results) < self.max_result_models
-                and all(result.count() < self.max_model_items for result in results)):
-            return self._detail_html(results)
-        else:
-            return self._list_html(results)
+    def get_models(self):
+        """Hook for specifying which models to query."""
+        return set(chain(miz_site.views.keys(), miz_site.changelists.keys()))
 
     def get_changelist_link(self, queryset):
         opts = queryset.query.get_meta()
@@ -55,33 +66,3 @@ class SearchbarSearch(View):
         if self.blank:
             return create_hyperlink(url, label, target='_blank')
         return create_hyperlink(url, label)
-
-    def _detail_html(self, results):
-        indent = "\t"
-        lists = ""
-        for queryset in results:
-            items = ""
-            for obj in queryset:
-                link = get_obj_link(obj, self.request.user, site_name=settings.SITE_NAMESPACE, blank=self.blank)
-                items += f"{indent * 2}<li>{link}</li>\n"
-            sublist = f"\n{indent}<ul>\n{items}\n{indent}</ul>\n{indent}"
-            lists += f"{indent}<li>{self.get_changelist_link(queryset)}{sublist}</li>"
-        return f"<ul>{lists}</ul>"
-
-    def _list_html(self, results):
-        items = ""
-        for queryset in results:
-            items += f"<li>{self.get_changelist_link(queryset)}</li>"
-        return f"<ul>{items}</ul>"
-
-    @property
-    def models(self):
-        # TODO: implement this
-        return [_models.Band]
-
-        if hasattr(self, '_models'):
-            return self._models
-
-
-
-
