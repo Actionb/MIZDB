@@ -28,6 +28,8 @@ from dbentry.utils.url import get_changelist_url
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 
+# TODO: must make SiteSearchView available for both site and admin app (URL namespace)
+
 
 def find_duplicates(queryset: QuerySet, fields: Sequence[str]) -> RawQuerySet:
     """

@@ -59,10 +59,8 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
 
     def get_success_url(self):
         if not perms.has_view_permission(self.request.user, self.opts):
-            return reverse(f"{self.url_namespace}:index")
-        return reverse(
-            f"{self.url_namespace}:{self.opts.app_label}_{self.opts.model_name}_changelist"
-        )
+            return reverse("index")
+        return reverse(url.urlname('changelist', self.opts))
 
     def form_valid(self, form):
         # NOTE: we're only logging the deletion of the main object.

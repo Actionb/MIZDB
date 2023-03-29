@@ -2,6 +2,9 @@ from django.urls import reverse, NoReverseMatch
 
 from dbentry.utils import permission as perms
 
+# TODO: check if anything actually uses the get_x_url functions
+#  all they do is include a permission check and it might be better to do that explicitly where needed anyway
+
 
 def urlname(name, opts=None, namespace=''):
     """

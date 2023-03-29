@@ -23,7 +23,7 @@ from dbentry.site.registry import miz_site
 from dbentry.utils import permission as perms
 from dbentry.utils.html import create_hyperlink
 from dbentry.utils.permission import has_view_permission
-from dbentry.utils.url import get_change_url
+from dbentry.utils.url import get_change_url, urlname
 
 # Constants for the changelist views
 ALL_VAR = "all"
@@ -271,17 +271,14 @@ class BaseEditView(BaseModelView, UpdateView):
           - 'continue' -> show the change form of the current object
           - 'add' -> return to the changelist (default)
         """
+        # TODO: check permissions - use get_change_url and get_changelist_url
         if extra_data := self.get_extra_data():
             if extra_data.get('add_another'):
+                # TODO: should return request.path if self.add and urlname('add') otherwise
                 return self.request.path
             elif extra_data.get('continue'):
-                return reverse(
-                    f'{self.opts.app_label}_{self.opts.model_name}_change',
-                    args=[self.object.pk]
-                )
-        return reverse(
-            f'{self.opts.app_label}_{self.opts.model_name}_changelist'
-        )
+                return reverse(urlname('change', self.opts), args=[self.object.pk])
+        return reverse(urlname('changelist', self.opts))
 
     def form_valid(self, form):
         # Do not save the form instance until the formsets have been validated.
