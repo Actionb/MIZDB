@@ -1,5 +1,6 @@
 import json
 import re
+from unittest.mock import patch
 
 from django import forms
 from django.test import override_settings
@@ -37,7 +38,7 @@ class URLConf:
     urlpatterns = [
         path('add/', FooView.as_view(extra_context={'add': True}), name='test_site_foo_add'),
         path('<path:object_id>/change/', FooView.as_view(extra_context={'add': False}), name='test_site_foo_change'),
-        path('', ChangelistView.as_view(), name='test_site_foo_changelist')
+        path('changelist/', ChangelistView.as_view(), name='test_site_foo_changelist')
     ]
 
 
@@ -81,6 +82,56 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertEqual(view.get_object(), self.obj)
         view = self.get_view(extra_context={'add': True})
         self.assertFalse(view.get_object())
+
+    def test_get_success_url(self):
+        """
+        The success url should return the 'changelist' URL after clicking the
+        'add' submit button (basic save button).
+        """
+        for is_add in (True, False):
+            if is_add:
+                request = self.get_request(reverse('test_site_foo_add'))
+            else:
+                request = self.get_request(reverse('test_site_foo_change', args=[self.obj.pk]))
+            for submit_btn_extra_data in ('', 'add'):
+                with self.subTest(add=is_add, extra_data=submit_btn_extra_data):
+                    view = self.get_view(request, extra_context={'add': is_add})
+                    with patch.object(view, 'get_extra_data') as extra_data_mock:
+                        extra_data_mock.return_value = {submit_btn_extra_data: True}
+                        self.assertEqual(view.get_success_url(), reverse('test_site_foo_changelist'))
+
+    def test_get_success_url_add_another(self):
+        """
+        The success url should return the 'add' URL after clicking the
+        'add another' submit button.
+        """
+        for is_add in (True, False):
+            if is_add:
+                request = self.get_request(reverse('test_site_foo_add'))
+            else:
+                request = self.get_request(reverse('test_site_foo_change', args=[self.obj.pk]))
+            with self.subTest(add=is_add):
+                view = self.get_view(request, extra_context={'add': is_add})
+                with patch.object(view, 'get_extra_data') as extra_data_mock:
+                    extra_data_mock.return_value = {'add_another': True}
+                    self.assertEqual(view.get_success_url(), reverse('test_site_foo_add'))
+
+    def test_get_success_url_continue(self):
+        """
+        The success url should return the 'change' URL of the saved object after
+        clicking the 'continue' submit button.
+        """
+        for is_add in (True, False):
+            if is_add:
+                request = self.get_request(reverse('test_site_foo_add'))
+            else:
+                request = self.get_request(reverse('test_site_foo_change', args=[self.obj.pk]))
+            with self.subTest(add=is_add):
+                view = self.get_view(request, extra_context={'add': is_add})
+                with patch.object(view, 'get_extra_data') as extra_data_mock:
+                    extra_data_mock.return_value = {'continue': True}
+                    with patch.object(view, 'object', new=self.obj, create=True):
+                        self.assertEqual(view.get_success_url(), reverse('test_site_foo_change', args=[self.obj.pk]))
 
     def test_form_valid_add(self):
         """

@@ -271,12 +271,16 @@ class BaseEditView(BaseModelView, UpdateView):
           - 'continue' -> show the change form of the current object
           - 'add' -> return to the changelist (default)
         """
-        # TODO: check permissions - use get_change_url and get_changelist_url
         if extra_data := self.get_extra_data():
             if extra_data.get('add_another'):
-                # TODO: should return request.path if self.add and urlname('add') otherwise
-                return self.request.path
+                if self.add:
+                    # Already on the 'add' page.
+                    return self.request.path
+                else:
+                    return reverse(urlname('add', self.opts))
             elif extra_data.get('continue'):
+                # NOTE: with django-formset submit buttons, redirecting should not be needed if
+                # we are already on the change page?
                 return reverse(urlname('change', self.opts), args=[self.object.pk])
         return reverse(urlname('changelist', self.opts))
 
