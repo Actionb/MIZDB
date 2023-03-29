@@ -15,16 +15,6 @@ def dummy_view(request, *args, **kwargs):
 
 
 class URLConf:
-    patterns = (
-        [
-            path('band/<path:object_id>/change/', dummy_view, name="test_site_band_change"),
-            path('band/', dummy_view, name="test_site_band_changelist"),
-            path('musician/<path:object_id>/change/', dummy_view, name="test_site_musician_change"),
-            path('musician/', dummy_view, name="test_site_musician_changelist"),
-        ],
-        'test_site'
-    )
-
     urlpatterns = [
         path('band/<path:object_id>/change/', dummy_view, name="test_site_band_change"),
         path('band/', dummy_view, name="test_site_band_changelist"),
@@ -132,8 +122,12 @@ class TestSearchbarSearch(DataTestCase, ViewTestCase):
             f'<a href="/band/?id__in={self.beatles.pk}">Band</a>'
         )
 
-    def test_get_changelist_link_no_url(self):
-        view = self.get_view(self.get_request())
+    def test_get_changelist_link_no_permission(self):
+        """
+        get_changelist_link should just return a label if the user does not
+        have permissions to access the changelist.
+        """
+        view = self.get_view(self.get_request(user=self.noperms_user))
         self.assertEqual(view.get_changelist_link(Country.objects.all()), 'Country')
 
     def test_get_changelist_link_blank(self):
