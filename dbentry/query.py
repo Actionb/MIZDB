@@ -9,7 +9,7 @@ from typing import (
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import transaction
-from django.db.models import Count, Max, Min, Model, QuerySet
+from django.db.models import Count, Max, Min, Model, QuerySet, OuterRef, Exists, Q
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.fts.query import TextSearchQuerySetMixin
@@ -440,14 +440,29 @@ class AusgabeQuerySet(CNQuerySet):
             ordering[jahr_index] = 'jahrgang'
             ordering[jahrgang_index] = 'jahr'
 
-        # Find the best criteria to order with, which might be either:
-        # num, lnum, monat or e_datum
-        # Count the presence of the different criteria and sort them accordingly.
-        counted = self.aggregate(
-            e_datum__sum=Count('e_datum', distinct=True),
-            lnum__sum=Count('ausgabelnum', distinct=True),
-            monat__sum=Count('ausgabemonat', distinct=True),
-            num__sum=Count('ausgabenum', distinct=True),
+        clone = self.annotate(
+            num=Max('ausgabenum__num'),
+            monat=Max('ausgabemonat__monat__ordinal'),
+            lnum=Max('ausgabelnum__lnum'),
+            jahr=Min('ausgabejahr__jahr')
+        )
+        # Find the best (annotated) fields to order against.
+        # Sort the fields e_datum, lnum, monat and num by how often the objects
+        # of the queryset have values in those fields.
+        from dbentry.models import AusgabeLnum, AusgabeNum, AusgabeMonat
+        counted = (
+            self
+            .annotate(
+                has_lnum=Exists(AusgabeLnum.objects.filter(ausgabe=OuterRef("pk"))),
+                has_monat=Exists(AusgabeMonat.objects.filter(ausgabe=OuterRef("pk"))),
+                has_num=Exists(AusgabeNum.objects.filter(ausgabe=OuterRef("pk")))
+            )
+            .aggregate(
+                e_datum__sum=Count('e_datum'),
+                lnum__sum=Count('has_lnum', filter=Q(has_lnum=True)),
+                monat__sum=Count('has_monat', filter=Q(has_monat=True)),
+                num__sum=Count('has_num', filter=Q(has_num=True)),
+            )
         )
         default_criteria_ordering = [
             'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
@@ -464,11 +479,6 @@ class AusgabeQuerySet(CNQuerySet):
         result_ordering = [sum_name.split('__')[0] for sum_name, _sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
 
-        clone = self.annotate(
-            num=Max('ausgabenum__num'),
-            monat=Max('ausgabemonat__monat__ordinal'),
-            lnum=Max('ausgabelnum__lnum'),
-            jahr=Min('ausgabejahr__jahr')
-        ).order_by(*ordering)
+        clone = clone.order_by(*ordering)
         clone.chronologically_ordered = True
         return clone

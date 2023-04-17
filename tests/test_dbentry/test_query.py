@@ -477,10 +477,10 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         )
         self.assertEqual(queryset.chronological_order().query.order_by, expected)
 
-    def test_uses_distinct_when_counting_criteria(self):
+    def test_table_join_duplicates(self):
         """
-        Assert that duplicates created through table joins are not counted when
-        determining which criteria to use.
+        Assert that duplicates created through table joins are not counted
+        multiple times when determining which criteria to use.
         """
         # Four Ausgabe instances use 'lnum', thus it should be the leading
         # criteria.
@@ -491,8 +491,7 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         e = make(
             self.model, magazin=self.mag,
             # The joins would lead to both monat and num criteria being present
-            # nine times, thus winning out over lnum - unless we aggregate with
-            # distinct.
+            # nine times. lnum should still win out, though.
             ausgabemonat__monat__ordinal=[1, 2, 3], ausgabenum__num=[1, 2, 3]
         )
         ordering = (
@@ -559,6 +558,23 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         self.assertTrue(queryset.chronological_order)
         with self.assertNotRaises(Exception):
             queryset.update(beschreibung='abc')
+
+    def test_count_ordering_field_only_once_per_row(self):
+        """
+        Assert that rows with multiple values in any of the order fields are
+        only counted once.
+        """
+        a = make(self.model, magazin=self.mag, e_datum='2023-04-17')
+        b = make(
+            self.model, magazin=self.mag, e_datum='2023-04-16',
+            ausgabelnum__lnum=[1, 2, 3]
+        )
+        # Top ordering field should be e_datum, because both instances have it.
+        # It should not be lnum, although it has the highest 'count' in total
+        # (3 lnums vs 2 e_datums).
+        queryset = self.model.objects.filter(id__in=[a.pk, b.pk]).chronological_order()
+        ordering = queryset.query.order_by
+        self.assertGreater(ordering.index('lnum'), ordering.index('e_datum'), msg=ordering)
 
 
 class TestAusgabeIncrementJahrgang(DataTestCase):
