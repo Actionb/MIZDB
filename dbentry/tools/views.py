@@ -17,12 +17,14 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
 
-from dbentry import utils
 from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.tools.decorators import register_tool
 from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
+from dbentry.utils.html import get_obj_link, create_hyperlink
+from dbentry.utils.models import get_model_from_string, get_model_relations
+from dbentry.utils.url import get_changelist_url
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 
@@ -121,7 +123,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         if not kwargs.get('model_name'):
             raise TypeError("Model not provided.")
         # noinspection PyAttributeOutsideInit
-        self.model = utils.get_model_from_string(kwargs['model_name'], app_label='dbentry')
+        self.model = get_model_from_string(kwargs['model_name'], app_label='dbentry')
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle the request to find duplicates."""
@@ -213,19 +215,19 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
                     if len(v) > 100:
                         v = v[:100] + ' [...]'
                 values.append(v)
-            link = utils.get_obj_link(self.request, obj, namespace="admin", blank=True)
+            link = get_obj_link(self.request, obj, namespace="admin", blank=True)
             return obj, link, values
 
         # noinspection PyShadowingNames
         def get_cl_link(dupe_group: List[Tuple[Model, SafeString, list[str]]]) -> SafeString:
             """Provide a link to the changelist page for this group of duplicate items."""
-            cl_url = utils.get_changelist_url(
+            cl_url = get_changelist_url(
                 self.request,
                 self.model,
                 obj_list=[item[0] for item in dupe_group],
                 namespace='admin'
             )
-            return utils.create_hyperlink(
+            return create_hyperlink(
                 url=cl_url, content='Änderungsliste',
                 # 'class' cannot be a keyword argument, so wrap the element
                 # attribute arguments in a dictionary.
@@ -286,14 +288,14 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
             form = self.get_form()
             if form.is_valid():
                 model_name = form.cleaned_data['model_select']
-                model = utils.get_model_from_string(model_name)
+                model = get_model_from_string(model_name)
                 relations, queryset = self.get_queryset(model, form.cleaned_data['limit'])
                 # noinspection PyUnresolvedReferences
-                cl_url = utils.get_changelist_url(request, model, obj_list=queryset, namespace='admin')
+                cl_url = get_changelist_url(request, model, obj_list=queryset, namespace='admin')
                 context_kwargs = {
                     'form': form,
                     'items': self.build_items(relations, queryset),
-                    'changelist_link': utils.create_hyperlink(
+                    'changelist_link': create_hyperlink(
                         url=cl_url, content='Änderungsliste',
                         **{'target': '_blank', 'class': 'button'}
                     )
@@ -324,7 +326,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         # For each reverse relation, query for the 'unused' objects, and remove
         # all OTHER IDs (i.e. those of objects that exceed the limit) from the
         # set 'unused'.
-        for rel in utils.get_model_relations(model, forward=False):
+        for rel in get_model_relations(model, forward=False):
             if rel.model == rel.related_model:
                 # self relation
                 continue
@@ -373,7 +375,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 )
             items.append(
                 (
-                    utils.get_obj_link(self.request, obj, namespace="admin", blank=True),
+                    get_obj_link(self.request, obj, namespace="admin", blank=True),
                     ", ".join(sorted(under_limit))
                 )
             )
@@ -442,10 +444,10 @@ class SiteSearchView(views.generic.TemplateView):
                 continue
             # noinspection PyUnresolvedReferences
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
-            url = utils.get_changelist_url(self.request, model, namespace='admin')
+            url = get_changelist_url(self.request, model, namespace='admin')
             if url:
                 url += f"?q={q!s}"
-                results.append(utils.create_hyperlink(url, label, target="_blank"))
+                results.append(create_hyperlink(url, label, target="_blank"))
         return results
 
 

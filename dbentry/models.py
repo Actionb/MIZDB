@@ -14,7 +14,8 @@ from dbentry.fields import (
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
 from dbentry.query import AusgabeQuerySet
-from dbentry.utils import concat_limit, get_model_fields, get_model_relations
+from dbentry.utils.models import get_model_fields, get_model_relations
+from dbentry.utils.text import concat_limit
 
 
 class Person(ComputedNameModel):

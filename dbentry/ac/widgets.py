@@ -9,7 +9,8 @@ from django.db.models import Model
 from django.forms import Media, Widget
 from django.urls import reverse
 
-from dbentry.utils import get_model_from_string, snake_case_to_spaces
+from dbentry.utils.models import get_model_from_string
+from dbentry.utils.text import snake_case_to_spaces
 
 # Generic URL-name for the MIZWidgetMixin.
 GENERIC_URL_NAME = 'acgeneric'

@@ -22,8 +22,8 @@ from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.query import MIZQuerySet
 from dbentry.search.admin import MIZAdminSearchFormMixin
-from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
+from dbentry.utils.models import get_fields_and_lookups, get_model_relations
 
 FieldsetList = List[Tuple[Optional[str], dict]]
 BESTAND_MODEL_NAME = 'dbentry.Bestand'

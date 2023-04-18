@@ -6,8 +6,9 @@ from django.urls import reverse
 from django.views.generic import DeleteView as BaseDeleteView
 
 from dbentry.site.views.base import ModelViewMixin
-from dbentry.utils import get_obj_link, log_deletion
 from dbentry.utils import permission as perms
+from dbentry.utils.admin import log_deletion
+from dbentry.utils.html import get_obj_link
 
 
 class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):

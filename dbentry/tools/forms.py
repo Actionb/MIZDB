@@ -6,9 +6,10 @@ from django.contrib.admin import AdminSite
 from django.db.models import Model
 from django.db.models.constants import LOOKUP_SEP
 
-from dbentry import utils
 from dbentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm
 from dbentry.sites import miz_site
+from dbentry.utils import nfilter
+from dbentry.utils.models import get_reverse_field_path
 
 
 class DuplicateFieldsSelectForm(forms.Form):
@@ -67,7 +68,7 @@ def get_dupe_field_choices(model: Type[Model]) -> Tuple:
             target = getattr(field.related_model, 'name_field', '') or 'pk'
             reverse.append(
                 (
-                    utils.get_reverse_field_path(field, target),
+                    get_reverse_field_path(field, target),
                     field.related_model._meta.verbose_name
                 )
             )
@@ -113,7 +114,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         filters = self.get_model_filters()
         choices = [
             (model._meta.model_name, model._meta.verbose_name)
-            for model in utils.nfilter(filters, apps.get_models(self.app_label))
+            for model in nfilter(filters, apps.get_models(self.app_label))
         ]
         # Sort the choices by verbose_name.
         return sorted(choices, key=lambda tpl: tpl[1])

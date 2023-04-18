@@ -282,7 +282,7 @@ class TestAdminMixin(AdminTestCase):
         # Patch get_model_fields to restrict the check to search fields
         # declared in search_form_kwargs.
         get_model_fields_mock = mock.Mock(return_value=[])
-        with mock.patch('dbentry.search.admin.utils.get_model_fields', new=get_model_fields_mock):
+        with mock.patch('dbentry.search.admin.get_model_fields', new=get_model_fields_mock):
             with mock.patch.object(self.model_admin, 'search_form_kwargs'):
                 # A search field that doesn't exist:
                 self.model_admin.search_form_kwargs = {'fields': ['BeepBoop']}
@@ -304,7 +304,7 @@ class TestAdminMixin(AdminTestCase):
         # Patch get_model_fields to restrict the check to search fields
         # declared in search_form_kwargs.
         get_model_fields_mock = mock.Mock(return_value=[])
-        with mock.patch('dbentry.search.admin.utils.get_model_fields', new=get_model_fields_mock):
+        with mock.patch('dbentry.search.admin.get_model_fields', new=get_model_fields_mock):
             with mock.patch.object(self.model_admin, 'search_form_kwargs'):
                 # A valid search field with an invalid lookup:
                 self.model_admin.search_form_kwargs = {'fields': ['band_name__beep']}

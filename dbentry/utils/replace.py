@@ -3,7 +3,7 @@ from typing import List
 from django.db import transaction
 from django.db.models import Model, QuerySet
 
-from dbentry.utils import get_model_relations
+from dbentry.utils.models import get_model_relations
 
 
 def _replace(

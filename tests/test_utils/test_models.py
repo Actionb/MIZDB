@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
 from django.db import models
 
-from dbentry import utils
+from dbentry.utils import models as utils
 from tests.case import MIZTestCase
 
 

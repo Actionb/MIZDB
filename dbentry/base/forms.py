@@ -9,7 +9,7 @@ from django.db.models.query import QuerySet
 from django.forms import Form
 from django.utils.translation import gettext_lazy
 
-from dbentry.utils import snake_case_to_spaces
+from dbentry.utils.text import snake_case_to_spaces
 from dbentry.validators import DiscogsURLValidator
 
 # Default attrs for the TextArea form widget

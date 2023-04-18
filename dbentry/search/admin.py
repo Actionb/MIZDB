@@ -7,7 +7,7 @@ from django.db.models import Model
 from django.db.models.lookups import LessThanOrEqual, Range
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDict
 
-from dbentry import utils
+from dbentry.utils.models import get_model_fields, get_fields_and_lookups
 from dbentry.search import utils as search_utils
 from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
 
@@ -112,7 +112,7 @@ class AdminSearchFormMixin(object):
         # Allow lookups defined in advanced_search_form.
         # Extract the lookups from the field_path 'lookup':
         try:
-            _, lookups = utils.get_fields_and_lookups(self.model, lookup)  # type: ignore
+            _, lookups = get_fields_and_lookups(self.model, lookup)  # type: ignore
         except (exceptions.FieldDoesNotExist, exceptions.FieldError):
             return False
         # Remove all lookups from the field_path to end up with just a
@@ -203,7 +203,7 @@ class AdminSearchFormMixin(object):
         # Relation fields defined by the model should be in the search form:
         rel_fields = [
             field.name
-            for field in utils.get_model_fields(
+            for field in get_model_fields(
                 self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
             )
         ]
