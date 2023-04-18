@@ -98,9 +98,3 @@ class TestURLs(DataTestCase, RequestTestCase):
 
         request.user = self.noperms_user
         self.assertFalse(url.get_history_url(request, self.obj))
-
-    def test_create_hyperlink(self):
-        self.assertHTMLEqual(
-            url.create_hyperlink('/foo/bar/', 'Foobar', target="_blank"),
-            '<a href="/foo/bar/" target="_blank">Foobar</a>'
-        )

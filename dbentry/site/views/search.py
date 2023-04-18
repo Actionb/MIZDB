@@ -7,7 +7,8 @@ from django.views import View
 from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.site.registry import miz_site
 from dbentry.utils import create_hyperlink
-from dbentry.utils.url import get_changelist_url, get_obj_link
+from dbentry.utils.url import get_changelist_url
+from dbentry.utils.html import get_obj_link
 
 
 class SearchbarSearch(View):
