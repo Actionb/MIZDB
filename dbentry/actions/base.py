@@ -15,9 +15,8 @@ from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
 
 from dbentry.base.views import FixedSessionWizardView
-from dbentry.utils.url import get_change_url
 from dbentry.utils.html import create_hyperlink
-
+from dbentry.utils.url import get_change_url
 
 SafeTextOrStr = Union[str, SafeText]
 

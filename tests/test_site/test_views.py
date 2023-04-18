@@ -2,12 +2,11 @@ import json
 import re
 
 from django import forms
-from django.urls import path, reverse
 from django.test import override_settings
+from django.urls import path, reverse
 from django.views import View
 
 from dbentry.site.views.base import BaseEditView
-
 from tests.case import ViewTestCase, DataTestCase
 from tests.model_factory import make
 from .models import Foo
@@ -20,12 +19,10 @@ class ViewTestMixin:
 
 
 class DummySite:
-
     model_list = 'dummy_model_list'
 
 
 class FooView(BaseEditView):
-
     model = Foo
     form_class = forms.modelform_factory(Foo, fields=forms.ALL_FIELDS)
     site = DummySite()
@@ -46,7 +43,6 @@ class URLConf:
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestBaseEditView(DataTestCase, ViewTestCase):
-
     model = Foo
     view_class = FooView
 

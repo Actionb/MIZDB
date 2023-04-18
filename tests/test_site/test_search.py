@@ -1,9 +1,8 @@
 import json
 from unittest.mock import patch, Mock
 
-from django.conf import settings
 from django.test import override_settings
-from django.urls import include, path, reverse
+from django.urls import path, reverse
 
 from dbentry.site.views.search import SearchbarSearch
 from tests.case import DataTestCase, ViewTestCase

@@ -32,10 +32,10 @@ from dbentry.base.admin import (
 from dbentry.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
-from dbentry.utils.text import concat_limit
-from dbentry.utils.copyrelated import copy_related_set
 from dbentry.utils.admin import log_change
+from dbentry.utils.copyrelated import copy_related_set
 from dbentry.utils.html import get_obj_link
+from dbentry.utils.text import concat_limit
 
 
 # FIXME: deleting a related m2m object and then saving the parent form results

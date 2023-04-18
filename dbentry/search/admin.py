@@ -7,9 +7,9 @@ from django.db.models import Model
 from django.db.models.lookups import LessThanOrEqual, Range
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDict
 
-from dbentry.utils.models import get_model_fields, get_fields_and_lookups
 from dbentry.search import utils as search_utils
 from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
+from dbentry.utils.models import get_model_fields, get_fields_and_lookups
 
 
 class AdminSearchFormMixin(object):

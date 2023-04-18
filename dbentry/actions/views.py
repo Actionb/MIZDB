@@ -22,13 +22,11 @@ from dbentry.actions.forms import (
 )
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
+from dbentry.utils.admin import create_logentry, log_addition, log_change, log_deletion
+from dbentry.utils.html import get_changelist_link, link_list, get_obj_link
+from dbentry.utils.merge import merge_records
 from dbentry.utils.models import (
     get_model_from_string, get_model_relations, get_updatable_fields, is_protected
-)
-from dbentry.utils.merge import merge_records
-from dbentry.utils.html import get_changelist_link, link_list, get_obj_link
-from dbentry.utils.admin import (
-    create_logentry, log_addition, log_change, log_deletion
 )
 from dbentry.utils.replace import replace
 

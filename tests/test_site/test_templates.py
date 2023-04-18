@@ -1,14 +1,12 @@
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.template import engines, loader
-
-from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from tests.case import UserTestCase
 
 
 class RenderTestCase(UserTestCase):
-
     template_name = None
 
     def get_context(self):
@@ -27,7 +25,6 @@ class RenderTestCase(UserTestCase):
 
 
 class TestBase(RenderTestCase):
-
     template_name = "mizdb/base.html"
 
     def test_user_account_anonymous(self):
