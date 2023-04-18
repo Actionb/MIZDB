@@ -112,7 +112,7 @@ class TestGetObjectLink(AdminTestCase):
         """
         url = self.change_path.format(pk=self.obj.pk)
         self.assertEqual(
-            get_object_link(self.obj, self.super_user, self.admin_site.name),
+            get_object_link(self.get_request(), self.obj, self.admin_site.name),
             f'Band: <a href="{url}" target="_blank">Khruangbin</a>'
         )
 
@@ -122,7 +122,7 @@ class TestGetObjectLink(AdminTestCase):
         if no URL to the change page could be found.
         """
         self.assertEqual(
-            get_object_link(self.obj, self.noperms_user, self.admin_site.name),
+            get_object_link(self.get_request(user=self.noperms_user), self.obj, self.admin_site.name),
             'Band: Khruangbin'
         )
 

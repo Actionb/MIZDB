@@ -893,10 +893,6 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
                 related_set = getattr(to_replace, rel.get_accessor_name())
 
             for obj in related_set.all():
-                link = get_object_link(
-                    obj=obj,
-                    user=self.request.user,
-                    site_name=self.model_admin.admin_site.name,
-                )
+                link = get_object_link(self.request, obj, self.model_admin.admin_site.name)
                 objects_list.append((link,))
         return objects_list
