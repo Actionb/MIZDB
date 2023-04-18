@@ -23,10 +23,11 @@ from dbentry.actions.forms import (
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
 from dbentry.utils import (
-    get_changelist_link, get_model_from_string, get_model_relations, get_obj_link,
+    get_model_from_string, get_model_relations, get_obj_link,
     get_updatable_fields, is_protected,
-    link_list, merge_records
+    merge_records
 )
+from dbentry.utils.html import get_changelist_link, link_list
 from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )

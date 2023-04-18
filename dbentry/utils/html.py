@@ -1,7 +1,13 @@
+from typing import Union, Type, Optional, Iterable
+
+from django.contrib.auth.models import User
+from django.db.models import Model
+from django.http import HttpRequest
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
+from django.utils.safestring import SafeText
 
-from dbentry.utils.url import get_change_url
+from dbentry.utils.url import get_change_url, get_changelist_url
 
 
 def create_hyperlink(url, content, **attrs):
@@ -40,3 +46,58 @@ def get_obj_link(request, obj, namespace='', blank=False):
     if blank:
         return create_hyperlink(url, obj, target='_blank')
     return create_hyperlink(url, obj)
+
+
+def get_changelist_link(
+        model: Union[Model, Type[Model]],
+        user: User,
+        site_name: str = 'admin',
+        obj_list: Optional[Iterable[Model]] = None,
+        content: str = 'Liste',
+        blank: bool = False
+) -> SafeText:
+    """
+    Return a safe link to the changelist of ``model``.
+
+    If ``obj_list`` is given, the url to the changelist will include a query
+    parameter to filter to records in that list.
+
+    Args:
+        model (model class or instance): the model of the desired changelist
+        user (User): the user to create the link for
+        site_name (str): namespace of the site/app
+        obj_list (Iterable): an iterable of model instances. If given, the url
+          to the changelist will include a query parameter to filter to records
+          in that list.
+        content (str): the text of the link
+        blank (bool): if True, the link will have a target="_blank" attribute
+    """
+    url = get_changelist_url(
+        model, user, site_name=site_name, obj_list=obj_list
+    )
+    if blank:
+        return create_hyperlink(url, content, target='_blank')
+    return create_hyperlink(url, content)
+
+
+def link_list(
+        request: HttpRequest,
+        obj_list: Iterable[Model],
+        sep: str = ", ",
+        blank: bool = False
+) -> SafeText:
+    """
+    Return links to the change page of each object in ``obj_list``.
+
+    Args:
+        request (HttpRequest): the request that requested the list
+        obj_list (Iterable): an iterable of the model instances
+        sep (str): the string used to separate the links from each other
+        blank (bool): if True, the links will have a target="_blank" attribute
+    """
+    # TODO: move to utils.html
+    links = []
+    for obj in obj_list:
+        # noinspection PyUnresolvedReferences
+        links.append(get_obj_link(obj, request.user, blank=blank))
+    return format_html(sep.join(links))

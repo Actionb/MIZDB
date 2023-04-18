@@ -19,8 +19,9 @@ from dbentry.base.views import MIZAdminMixin
 from dbentry.tools.bulk.forms import BulkFormAusgabe
 from dbentry.tools.decorators import register_tool
 from dbentry.utils.admin import (
-    get_changelist_link, get_changelist_url, link_list, log_addition, log_change
+    get_changelist_url, log_addition, log_change
 )
+from dbentry.utils.html import get_changelist_link, link_list
 
 
 @register_tool(
