@@ -107,9 +107,10 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if created or updated:
                 # noinspection PyUnresolvedReferences
                 changelist_link = get_changelist_link(
+                    request,
                     _models.Ausgabe,
-                    request.user,
                     obj_list=[*created, *updated],
+                    namespace='admin',
                     blank=True
                 )
                 messages.success(

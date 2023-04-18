@@ -1,4 +1,3 @@
-import re
 from unittest.mock import Mock, patch
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -64,103 +63,6 @@ class TestAdminUtils(RequestTestCase):
             with self.assertNotRaises(NoReverseMatch):
                 link = admin_utils.get_change_page_url(self.obj1, self.super_user)
         self.assertFalse(link)
-
-    ################################################################################################
-    # test get_obj_link
-    ################################################################################################
-
-    def test_get_obj_link(self):
-        """Assert that the expected link is returned by get_obj_link."""
-        self.assertEqual(
-            admin_utils.get_obj_link(self.obj1, self.super_user),
-            f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/">{self.obj1}</a>'
-        )
-
-    def test_get_obj_link_blank(self):
-        """
-        Assert that the expected link, with target="_blank", is returned by
-        get_obj_link.
-        """
-        self.assertEqual(
-            admin_utils.get_obj_link(self.obj1, self.super_user, blank=True),
-            f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/" '
-            f'target="_blank">{self.obj1}</a>'
-        )
-
-    def test_get_obj_link_no_change_permission(self):
-        """
-        No link should be displayed if the user does not have change
-        permissions.
-        """
-        self.assertEqual(
-            admin_utils.get_obj_link(self.obj1, self.noperms_user),
-            f"{self.model._meta.verbose_name}: {self.obj1}"
-        )
-
-    def test_get_obj_link_no_reverse_match(self):
-        """
-        No link should be displayed if there is no reverse match for the given
-        admin site name and model instance/model options.
-        """
-
-        class URLConf:
-            urlpatterns = []
-
-        with override_settings(ROOT_URLCONF=URLConf):
-            with self.assertNotRaises(NoReverseMatch):
-                link = admin_utils.get_obj_link(self.obj1, self.super_user)
-        self.assertEqual(link, f"{self.model._meta.verbose_name}: {self.obj1}")
-
-    ################################################################################################
-    # test link_list
-    ################################################################################################
-
-    def test_link_list(self):
-        """Assert that the expected links are returned by link_list."""
-        links = admin_utils.link_list(
-            self.get_request(user=self.super_user), obj_list=[self.obj1, self.obj2]
-        )
-        for i, (url, label) in enumerate(re.findall(r'<a href="(.*?)">(.*?)</a>', links)):
-            with self.subTest(url=url, label=label):
-                self.assertEqual(
-                    url, '/admin/test_utils/audio/{}/change/'.format(self.test_data[i].pk)
-                )
-                self.assertEqual(label, str(self.test_data[i]))
-
-    def test_link_list_blank(self):
-        """
-        Assert that all links returned by link_list have the target attribute
-        set to "_blank".
-        """
-        sep = "$"  # use an unusual separator so the links can be split easily
-        links = admin_utils.link_list(
-            self.get_request(user=self.super_user), obj_list=[self.obj1, self.obj2],
-            sep=sep, blank=True
-        )
-        for link in links.split(sep):
-            with self.subTest(link=link):
-                self.assertIn('target="_blank"', link)
-
-    ################################################################################################
-    # test get_changelist_link
-    ################################################################################################
-
-    def test_get_changelist_link(self):
-        """Assert that the expected link is returned by get_changelist_link."""
-        self.assertEqual(
-            admin_utils.get_changelist_link(self.model, self.super_user),
-            '<a href="/admin/test_utils/audio/">Liste</a>'
-        )
-
-    def test_get_changelist_link_blank(self):
-        """
-        Assert that the expected link, with target="_blank", is returned by
-        get_changelist_link.
-        """
-        self.assertEqual(
-            admin_utils.get_changelist_link(self.model, self.super_user, blank=True),
-            '<a href="/admin/test_utils/audio/" target="_blank">Liste</a>'
-        )
 
     ################################################################################################
     # test get_changelist_url

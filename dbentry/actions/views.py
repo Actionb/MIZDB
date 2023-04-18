@@ -443,7 +443,7 @@ class MergeView(MIZAdminMixin, WizardConfirmationView):
                 message=format_html(
                     msg_template,
                     object_name=object_name,
-                    protected=link_list(self.request, e.protected_objects)
+                    protected=link_list(self.request, e.protected_objects, namespace='admin')
                 )
             )
         return None
@@ -470,11 +470,16 @@ def check_protected_artikel(view: ActionConfirmationView, **_kwargs: Any) -> boo
             level=messages.ERROR,
             message=format_html(
                 msg_template,
-                link_list(view.request, ausgaben_with_artikel),
-                get_changelist_link(
-                    model=_models.Ausgabe,
-                    user=view.request.user,
+                link_list(
+                    request=view.request,
                     obj_list=ausgaben_with_artikel,
+                    namespace='admin'
+                ),
+                get_changelist_link(
+                    request=view.request,
+                    model=_models.Ausgabe,
+                    obj_list=ausgaben_with_artikel,
+                    namespace='admin',
                     blank=True
                 )
             )
@@ -646,11 +651,17 @@ class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
                 level=messages.ERROR,
                 message=format_html(
                     msg_template,
-                    obj_links=link_list(self.request, protected_ausg, blank=True),
-                    cl_link=get_changelist_link(
-                        model=_models.Ausgabe,
-                        user=self.request.user,
+                    obj_links=link_list(
+                        request=self.request,
                         obj_list=protected_ausg,
+                        namespace="admin",
+                        blank=True
+                    ),
+                    cl_link=get_changelist_link(
+                        request=self.request,
+                        model=_models.Ausgabe,
+                        obj_list=protected_ausg,
+                        namespace='admin',
                         blank=True
                     )
                 )
