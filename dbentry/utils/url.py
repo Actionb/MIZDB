@@ -1,4 +1,4 @@
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 
 from dbentry.utils import permission as perms
 
@@ -36,7 +36,10 @@ def get_changelist_url(request, model, obj_list=None, namespace=''):
     opts = model._meta
     if not perms.has_view_permission(request.user, opts):
         return ''
-    url = reverse(urlname('changelist', opts, namespace))
+    try:
+        url = reverse(urlname('changelist', opts, namespace))
+    except NoReverseMatch:
+        return ''
 
     if obj_list:
         url = f'{url}?id__in={",".join(str(obj.pk) for obj in obj_list)}'
