@@ -12,11 +12,6 @@ class RenderTestCase(UserTestCase):
     def get_context(self):
         return {}
 
-    def render_code(self, template_code, context=None):
-        """Return rendered result of template with given context."""
-        template = engines["django"].from_string(template_code)
-        return template.render(context or {})
-
     def render(self, template, context=None, using=None):
         return loader.render_to_string(template, context or self.get_context(), using=using)
 
