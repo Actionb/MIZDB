@@ -6,18 +6,16 @@ from dbentry.utils import url
 register = template.Library()
 
 
-@register.simple_tag
-def urlname(name, opts=None, namespace=''):
+@register.filter
+def urlname(opts, name):
     """
-    Return the 'url name' for the given name/action.
-
-    If model options ``opts`` is given, prepend app_label and model_name to
-    the name:
+    Return the 'url name' for the given name/action and model options.
         {opts.app_label}_{opts.model_name}_{name}
-    If ``namespace`` is given, prepend the app namespace to the name:
-        {namespace}:{name}
+
+    Usage:
+        {% url opts|urlname:'add' %}
     """
-    return url.urlname(name, opts, namespace)
+    return url.urlname(name, opts)
 
 
 @register.simple_tag

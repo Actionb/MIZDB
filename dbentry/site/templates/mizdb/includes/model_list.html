@@ -1,4 +1,4 @@
-{% load mizdb admin_urls %}
+{% load mizdb %}
 
 {% for category, models in model_list %}
 <table class="table table-hover">
@@ -7,11 +7,11 @@
     {% for opts in models %}
         <tr>
         <th class="container-fluid" scope="row">
-            <a class="text-decoration-none" href="{% url opts|admin_urlname:'changelist' %}" target="_blank">{{ opts.verbose_name }}</a>
+            <a class="text-decoration-none" href="{% url opts|urlname:'changelist' %}" target="_blank">{{ opts.verbose_name }}</a>
         </th>
         {% has_perm user 'add' opts as has_add_perm %}
         {% if has_add_perm %}
-          <td><a href="{% url opts|admin_urlname:'add' %}" class="addlink" target="_blank">Hinzufügen</a></td>
+          <td><a href="{% url opts|urlname:'add' %}" class="addlink" target="_blank">Hinzufügen</a></td>
         {% else %}
           <td></td>
         {% endif %}
