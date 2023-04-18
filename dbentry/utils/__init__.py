@@ -7,6 +7,7 @@ from dbentry.utils.copyrelated import *  # NOQA
 from dbentry.utils.dates import *  # NOQA
 from dbentry.utils.debug import *  # NOQA
 from dbentry.utils.gnd import *  # NOQA
+from dbentry.utils.html import *  # NOQA
 from dbentry.utils.inspect import *  # NOQA
 from dbentry.utils.merge import *  # NOQA
 from dbentry.utils.models import *  # NOQA

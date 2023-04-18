@@ -7,6 +7,7 @@ from django.db.models import Model, QuerySet
 from django.db.models.options import Options
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
+from django.urls import NoReverseMatch
 from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
@@ -14,7 +15,9 @@ from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
 
 from dbentry.base.views import FixedSessionWizardView
-from dbentry.utils import create_hyperlink, get_change_page_url
+from dbentry.utils.url import get_change_url
+from dbentry.utils.html import create_hyperlink
+
 
 SafeTextOrStr = Union[str, SafeText]
 
@@ -25,9 +28,12 @@ def get_object_link(request: HttpRequest, obj: Model, namespace: str) -> SafeTex
     page of ``obj``.
     """
     model_name = capfirst(obj._meta.verbose_name)
-    url = get_change_page_url(obj, request.user, namespace)
+    try:
+        url = get_change_url(request, obj, namespace)
+    except NoReverseMatch:
+        url = ''
     if url:
-        link = create_hyperlink(url, obj, target='_blank')
+        link = create_hyperlink(url, str(obj), target='_blank')
     else:
         link = force_str(obj)
     return format_html('{model_name}: {object_link}', model_name=model_name, object_link=link)

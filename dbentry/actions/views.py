@@ -22,12 +22,11 @@ from dbentry.actions.forms import (
 )
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
-from dbentry.utils import (
-    get_model_from_string, get_model_relations, get_obj_link,
-    get_updatable_fields, is_protected,
-    merge_records
+from dbentry.utils.models import (
+    get_model_from_string, get_model_relations, get_updatable_fields, is_protected
 )
-from dbentry.utils.html import get_changelist_link, link_list
+from dbentry.utils.merge import merge_records
+from dbentry.utils.html import get_changelist_link, link_list, get_obj_link
 from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )
@@ -681,9 +680,7 @@ class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
                     level=messages.ERROR,
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
-                        get_obj_link(
-                            obj=magazin_instance, user=self.request.user, blank=True
-                        )
+                        get_obj_link(request=self.request, obj=magazin_instance, blank=True)
                     )
                 )
             else:
@@ -700,8 +697,8 @@ class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
         forms = []
         for form in formset:
             link = get_obj_link(
+                request=self.request,
                 obj=_models.Ausgabe.objects.get(pk=form['ausgabe_id'].initial),
-                user=self.request.user,
                 blank=True
             )
             forms.append((link, form))
@@ -810,7 +807,7 @@ class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.Template
                 media_updated = True
             context['formsets'].append(
                 (
-                    get_obj_link(obj=obj, user=self.request.user, blank=True),
+                    get_obj_link(request=self.request, obj=obj, blank=True),
                     wrapped_formset
                 )
             )

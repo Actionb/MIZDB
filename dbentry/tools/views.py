@@ -213,13 +213,17 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
                     if len(v) > 100:
                         v = v[:100] + ' [...]'
                 values.append(v)
-            return obj, utils.get_obj_link(obj, self.request.user, blank=True), values
+            link = utils.get_obj_link(self.request, obj, namespace="admin", blank=True)
+            return obj, link, values
 
         # noinspection PyShadowingNames
         def get_cl_link(dupe_group: List[Tuple[Model, SafeString, list[str]]]) -> SafeString:
             """Provide a link to the changelist page for this group of duplicate items."""
             cl_url = utils.get_changelist_url(
-                self.model, self.request.user, obj_list=[item[0] for item in dupe_group]
+                self.request,
+                self.model,
+                obj_list=[item[0] for item in dupe_group],
+                namespace='admin'
             )
             return utils.create_hyperlink(
                 url=cl_url, content='Änderungsliste',
@@ -285,7 +289,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 model = utils.get_model_from_string(model_name)
                 relations, queryset = self.get_queryset(model, form.cleaned_data['limit'])
                 # noinspection PyUnresolvedReferences
-                cl_url = utils.get_changelist_url(model, request.user, obj_list=queryset)
+                cl_url = utils.get_changelist_url(request, model, obj_list=queryset, namespace='admin')
                 context_kwargs = {
                     'form': form,
                     'items': self.build_items(relations, queryset),
@@ -369,7 +373,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 )
             items.append(
                 (
-                    utils.get_obj_link(obj, user=self.request.user, blank=True),
+                    utils.get_obj_link(self.request, obj, namespace="admin", blank=True),
                     ", ".join(sorted(under_limit))
                 )
             )
@@ -438,7 +442,7 @@ class SiteSearchView(views.generic.TemplateView):
                 continue
             # noinspection PyUnresolvedReferences
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
-            url = utils.get_changelist_url(model, self.request.user)
+            url = utils.get_changelist_url(self.request, model, namespace='admin')
             if url:
                 url += f"?q={q!s}"
                 results.append(utils.create_hyperlink(url, label, target="_blank"))

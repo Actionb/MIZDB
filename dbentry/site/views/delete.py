@@ -38,9 +38,8 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
             if not perms.has_delete_permission(self.request.user, opts):
                 perms_needed.add(opts.verbose_name)
             return get_obj_link(
+                self.request,
                 obj,
-                self.request.user,
-                site_name=self.url_namespace,
                 blank=True
             )
 

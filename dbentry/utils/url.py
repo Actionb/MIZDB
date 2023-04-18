@@ -3,9 +3,6 @@ from django.urls import reverse, NoReverseMatch
 from dbentry.utils import permission as perms
 
 
-# TODO: add utils.admin.get_changelist_link and utils.admin.link_list
-
-
 def urlname(name, opts=None, namespace=''):
     """
     Return the 'url name' for the given name/action.

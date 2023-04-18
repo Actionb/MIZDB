@@ -1,6 +1,5 @@
-from typing import Union, Type, Optional, Iterable
+from typing import Union, Type, Optional, Iterable, Any
 
-from django.contrib.auth.models import User
 from django.db.models import Model
 from django.http import HttpRequest
 from django.urls import NoReverseMatch
@@ -10,7 +9,7 @@ from django.utils.safestring import SafeText
 from dbentry.utils.url import get_change_url, get_changelist_url
 
 
-def create_hyperlink(url, content, **attrs):
+def create_hyperlink(url: str, content: str, **attrs: Any) -> SafeText:
     """
     Return a safe string of an anchor element with its href attribute set to
     the given url.
@@ -29,7 +28,7 @@ def create_hyperlink(url, content, **attrs):
     )
 
 
-def get_obj_link(request, obj, namespace='', blank=False):
+def get_obj_link(request: HttpRequest, obj: Model, namespace: str = '', blank: bool = False):
     """
     Return a safe link to the change page of the given model object.
 
@@ -44,8 +43,8 @@ def get_obj_link(request, obj, namespace='', blank=False):
     if not url:
         return format_html("{verbose_name}: {obj}", verbose_name=obj._meta.verbose_name, obj=obj)
     if blank:
-        return create_hyperlink(url, obj, target='_blank')
-    return create_hyperlink(url, obj)
+        return create_hyperlink(url, str(obj), target='_blank')
+    return create_hyperlink(url, str(obj))
 
 
 def get_changelist_link(
@@ -97,7 +96,6 @@ def link_list(
         namespace (str): namespace of the site/app
         blank (bool): if True, the links will have a target="_blank" attribute
     """
-    # TODO: move to utils.html
     links = []
     for obj in obj_list:
         links.append(get_obj_link(request, obj, namespace=namespace, blank=blank))

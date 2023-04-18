@@ -30,7 +30,7 @@ from dbentry.actions.views import (
 from dbentry.base.forms import MIZAdminForm
 from dbentry.base.views import MIZAdminMixin
 from dbentry.sites import miz_site
-from dbentry.utils import get_obj_link
+from dbentry.utils.html import get_obj_link
 from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
 from tests.model_factory import make
 from .models import Audio, Band, Genre
@@ -515,6 +515,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         response = self.post_response(
             self.changelist_path, data=request_data, user=user, follow=True
         )
+        request = response.wsgi_request
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/action_confirmation.html')
 
@@ -526,10 +527,10 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.assertIn('object_list', response.context)
         self.assertEqual(len(response.context['object_list']), 2)
         (obj1_link, obj1_values), (obj2_link, obj2_values) = response.context['object_list']
-        link = get_obj_link(self.obj1, user, miz_site.name, blank=True)
+        link = get_obj_link(request, self.obj1, miz_site.name, blank=True)
         self.assertEqual(obj1_link, f"Ausgabe: {link}")
         self.assertEqual(obj1_values, ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"])
-        link = get_obj_link(self.obj2, user, miz_site.name, blank=True)
+        link = get_obj_link(request, self.obj2, miz_site.name, blank=True)
         self.assertEqual(obj2_link, f"Ausgabe: {link}")
         self.assertEqual(obj2_values, ["Jahrgang: ---", "Jahr: 2001"])
 
