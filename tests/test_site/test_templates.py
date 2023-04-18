@@ -52,7 +52,7 @@ class TestBase(RenderTestCase):
         account = str(soup.select('#user-account')[0])
 
         welcome_message = (
-            '<li><span class="dropdown-item-text">Willkommen, <strong>Alice</strong>.</span></li>'
+            '<li><span class="dropdown-item-text">Willkommen, <strong>Alice</strong></span></li>'
             '<li><hr class="dropdown-divider"></li>'
         )
         pw_change = f'<li><a class="dropdown-item" href="{reverse("mizdb:password_change")}">Passwort ändern</a></li>'
