@@ -27,7 +27,7 @@ class SearchbarSearch(View):
                 data['results'].append({
                     'category': self.get_changelist_link(queryset),
                     'items': [
-                        get_obj_link(obj, self.request.user, blank=self.blank)
+                        get_obj_link(self.request, obj, blank=self.blank)
                         for obj in queryset
                     ]
                 })
@@ -53,7 +53,7 @@ class SearchbarSearch(View):
 
     def get_changelist_link(self, queryset):
         opts = queryset.query.get_meta()
-        url = get_changelist_url(queryset.query.model, self.request.user, obj_list=queryset)
+        url = get_changelist_url(self.request, queryset.query.model, obj_list=queryset)
         if queryset.count() > 1:
             label = f"{opts.verbose_name_plural} ({queryset.count()})"
         else:
