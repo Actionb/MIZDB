@@ -34,7 +34,7 @@ class TestBase(RenderTestCase):
         """Check the contents of the user account block for anonymous users."""
         soup = self.get_soup(self.template_name, {'user': AnonymousUser()})
         account = str(soup.select('#user-account')[0])
-        login_url = reverse("mizdb:login")
+        login_url = reverse("login")
         self.assertInHTML(f'<li><a class="dropdown-item" href="{login_url}">Anmelden</a></li>', account)
 
     def test_user_account_authenticated(self):
@@ -55,9 +55,9 @@ class TestBase(RenderTestCase):
             '<li><span class="dropdown-item-text">Willkommen, <strong>Alice</strong></span></li>'
             '<li><hr class="dropdown-divider"></li>'
         )
-        pw_change = f'<li><a class="dropdown-item" href="{reverse("mizdb:password_change")}">Passwort ändern</a></li>'
+        pw_change = f'<li><a class="dropdown-item" href="{reverse("password_change")}">Passwort ändern</a></li>'
         logout_form = (
-            f'<li><form id="logout-form" method="post" action="{reverse("mizdb:logout")}">'
+            f'<li><form id="logout-form" method="post" action="{reverse("logout")}">'
             f'<input name="csrfmiddlewaretoken" type="hidden" value="{csrf_token}">'
             '<button class="dropdown-item" type="submit">Abmelden</button>'
             '</form></li>'

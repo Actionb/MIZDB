@@ -7,12 +7,12 @@ from dbentry.site.views import BaseViewMixin
 
 class LoginView(FormViewMixin, auth_views.LoginView):
     template_name = "mizdb/auth/login.html"
-    success_url = next_page = reverse_lazy("mizdb:index")
+    success_url = next_page = reverse_lazy("index")
 
 
 class PasswordChangeView(FormViewMixin, BaseViewMixin, auth_views.PasswordChangeView):
     template_name = "mizdb/base_form.html"
-    success_url = reverse_lazy("mizdb:password_change_done")
+    success_url = reverse_lazy("password_change_done")
 
 
 class PasswordChangeDoneView(FormViewMixin, BaseViewMixin, auth_views.PasswordChangeDoneView):

@@ -6,8 +6,8 @@ from django.views import View
 
 from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.site.registry import miz_site
-from dbentry.utils import get_obj_link, create_hyperlink
-from dbentry.utils.url import get_changelist_url
+from dbentry.utils import create_hyperlink
+from dbentry.utils.url import get_changelist_url, get_obj_link
 
 
 class SearchbarSearch(View):
@@ -26,7 +26,7 @@ class SearchbarSearch(View):
                 data['results'].append({
                     'category': self.get_changelist_link(queryset),
                     'items': [
-                        get_obj_link(obj, self.request.user, site_name=settings.SITE_NAMESPACE, blank=self.blank)
+                        get_obj_link(obj, self.request.user, blank=self.blank)
                         for obj in queryset
                     ]
                 })

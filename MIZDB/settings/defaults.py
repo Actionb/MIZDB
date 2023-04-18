@@ -64,7 +64,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'MIZDB.urls'
 
-LOGIN_URL = 'mizdb:login'
+LOGIN_URL = 'login'
 
 TEMPLATES = [
     {

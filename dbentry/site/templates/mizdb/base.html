@@ -24,7 +24,7 @@
 <header class="navbar navbar-dark bg-primary">
 <div id="branding-user-links" class="container-fluid">
     {# TODO: the entire navbar should be one responsive item. Currently, items just wrap individually #}
-    {% block branding %}<a class="navbar-brand" href="{% url 'mizdb:index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
+    {% block branding %}<a class="navbar-brand" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
 
     {% block nav %}
         <button class="btn btn-primary border-dark p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
@@ -58,13 +58,13 @@
                             <li><span class="dropdown-item-text">Willkommen, <strong>{% firstof user.get_short_name user.get_username %}</strong></span></li>
                             <li><hr class="dropdown-divider"></li>
                             {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Seite</a></li>{% endif %}
-                            {% if user.has_usable_password %}<li><a class="dropdown-item" href="{% url 'mizdb:password_change' %}">Passwort ändern</a></li>{% endif %}
-                            <li><form id="logout-form" method="post" action="{% url 'mizdb:logout' %}">
+                            {% if user.has_usable_password %}<li><a class="dropdown-item" href="{% url 'password_change' %}">Passwort ändern</a></li>{% endif %}
+                            <li><form id="logout-form" method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
                                 <button class="dropdown-item" type="submit">Abmelden</button>
                             </form></li>
                         {% else %}
-                            <li><a class="dropdown-item" href="{% url 'mizdb:login' %}">Anmelden</a></li>
+                            <li><a class="dropdown-item" href="{% url 'login' %}">Anmelden</a></li>
                         {% endif %}
                     </ul>
                 </div>

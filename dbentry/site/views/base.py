@@ -110,10 +110,6 @@ class BaseViewMixin(ContextMixin):
     title = ""
     site = miz_site
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # self.url_namespace = settings.SITE_NAMESPACE
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update({

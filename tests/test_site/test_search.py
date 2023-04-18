@@ -27,7 +27,10 @@ class URLConf:
     )
 
     urlpatterns = [
-        path('', include(patterns, namespace=settings.SITE_NAMESPACE)),
+        path('band/<path:object_id>/change/', dummy_view, name="test_site_band_change"),
+        path('band/', dummy_view, name="test_site_band_changelist"),
+        path('musician/<path:object_id>/change/', dummy_view, name="test_site_musician_change"),
+        path('musician/', dummy_view, name="test_site_musician_changelist"),
         path('search/', SearchbarSearch.as_view(), name='search')
     ]
 
