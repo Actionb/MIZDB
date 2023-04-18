@@ -6,24 +6,24 @@ from dbentry.utils import permission as perms
 # TODO: add utils.admin.get_changelist_link and utils.admin.link_list
 
 
-def urlname(name, opts=None, current_app=None):
+def urlname(name, opts=None, namespace=''):
     """
     Return the 'url name' for the given name/action.
 
     If model options ``opts`` is given, prepend app_label and model_name to
     the name:
         {opts.app_label}_{opts.model_name}_{name}
-    If ``current_app`` is given, prepend the app namespace to the name:
-        {current_app}:{name}
+    If ``namespace`` is given, prepend the namespace to the name:
+        {namespace}:{name}
     """
     if opts:
         name = f"{opts.app_label}_{opts.model_name}_{name}"
-    if current_app:
-        return f"{current_app}:{name}"
+    if namespace:
+        return f"{namespace}:{name}"
     return name
 
 
-def get_changelist_url(request, model, obj_list=None, current_app=None):
+def get_changelist_url(request, model, obj_list=None, namespace=''):
     """
     Return the URL for the changelist view of the given model.
 
@@ -36,14 +36,14 @@ def get_changelist_url(request, model, obj_list=None, current_app=None):
     opts = model._meta
     if not perms.has_view_permission(request.user, opts):
         return ''
-    url = reverse(urlname('changelist', opts, current_app))
+    url = reverse(urlname('changelist', opts, namespace))
 
     if obj_list:
         url = f'{url}?id__in={",".join(str(obj.pk) for obj in obj_list)}'
     return url
 
 
-def get_add_url(request, model, current_app=None):
+def get_add_url(request, model, namespace=''):
     """
     Return the URL for the add view of the given model.
 
@@ -52,10 +52,10 @@ def get_add_url(request, model, current_app=None):
     opts = model._meta
     if not perms.has_add_permission(request.user, opts):
         return ''
-    return reverse(urlname('add', opts, current_app))
+    return reverse(urlname('add', opts, namespace))
 
 
-def get_change_url(request, obj, current_app=None):
+def get_change_url(request, obj, namespace=''):
     """
     Return the URL for the change view of the given model object.
 
@@ -64,10 +64,10 @@ def get_change_url(request, obj, current_app=None):
     opts = obj._meta
     if not perms.has_change_permission(request.user, opts):
         return ''
-    return reverse(urlname('change', opts, current_app), args=[obj.pk])
+    return reverse(urlname('change', opts, namespace), args=[obj.pk])
 
 
-def get_delete_url(request, obj, current_app=None):
+def get_delete_url(request, obj, namespace=''):
     """
     Return the URL for the delete view of the given model object.
 
@@ -76,10 +76,10 @@ def get_delete_url(request, obj, current_app=None):
     opts = obj._meta
     if not perms.has_delete_permission(request.user, opts):
         return ''
-    return reverse(urlname('delete', opts, current_app), args=[obj.pk])
+    return reverse(urlname('delete', opts, namespace), args=[obj.pk])
 
 
-def get_history_url(request, obj, current_app=None):
+def get_history_url(request, obj, namespace=''):
     """
     Return the URL for the history view of the given model object.
 
@@ -89,7 +89,7 @@ def get_history_url(request, obj, current_app=None):
     opts = obj._meta
     if not perms.has_view_permission(request.user, opts):
         return ''
-    return reverse(urlname('history', opts, current_app), args=[obj.pk])
+    return reverse(urlname('history', opts, namespace), args=[obj.pk])
 
 
 def create_hyperlink(url, content, **attrs):
@@ -111,7 +111,7 @@ def create_hyperlink(url, content, **attrs):
     )
 
 
-def get_obj_link(request, obj, current_app=None, blank=False):
+def get_obj_link(request, obj, namespace=None, blank=False):
     """
     Return a safe link to the change page of the given model object.
 
@@ -120,7 +120,7 @@ def get_obj_link(request, obj, current_app=None, blank=False):
     If ``blank`` is True, the link will include a target="_blank" attribute.
     """
     try:
-        url = get_change_url(request, obj, current_app)
+        url = get_change_url(request, obj, namespace)
     except NoReverseMatch:
         url = ""
     if not url:

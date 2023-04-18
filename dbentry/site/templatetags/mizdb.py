@@ -7,17 +7,17 @@ register = template.Library()
 
 
 @register.simple_tag
-def urlname(name, opts=None, current_app="mizdb"):
+def urlname(name, opts=None, namespace=''):
     """
     Return the 'url name' for the given name/action.
 
     If model options ``opts`` is given, prepend app_label and model_name to
     the name:
         {opts.app_label}_{opts.model_name}_{name}
-    If ``current_app`` is given, prepend the app namespace to the name:
-        {current_app}:{name}
+    If ``namespace`` is given, prepend the app namespace to the name:
+        {namespace}:{name}
     """
-    return url.urlname(name, opts, current_app)
+    return url.urlname(name, opts, namespace)
 
 
 @register.simple_tag
