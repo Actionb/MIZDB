@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Type, Union
+from typing import Dict, Iterable, List, Optional, Sequence, Type, Union
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import ModelAdmin, get_content_type_for_model
@@ -10,31 +10,10 @@ from django.db.models import Model
 from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest
 from django.urls import NoReverseMatch, reverse
-from django.utils.encoding import force_str
-from django.utils.html import format_html
-from django.utils.safestring import SafeText
 from django.utils.text import capfirst
 from django.utils.translation import override as translation_override
 
 from dbentry.utils.models import get_model_from_string
-
-
-def create_hyperlink(url: str, content: Any, **attrs: str) -> SafeText:
-    """
-    Return a 'safe' <a> element.
-
-    Args:
-        url (str): the url of the link
-        content: the text of the link
-        **attrs: other element attributes (e.g. style or target)
-    """
-    _attrs = list(attrs.items())
-    _attrs.insert(0, ('href', url))
-    return format_html(
-        '<a {attrs}>{content}</a>',
-        attrs=format_html(' '.join('{}="{}"'.format(k, v) for k, v in _attrs)),
-        content=content
-    )
 
 
 def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str:
@@ -57,36 +36,6 @@ def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str
     if not user.has_perm(perm):
         return ''
     return admin_url
-
-
-def get_obj_link(
-        obj: Model,
-        user: User,
-        site_name: str = 'admin',
-        blank: bool = False
-) -> SafeText:
-    """
-    Return a safe link to the change page of ``obj``.
-
-    If no change page exists or the user has no change permission, a simple
-    string representation of ``obj`` is returned.
-    If ``blank`` is True, the link will include a target="_blank" attribute,
-    which opens the linked page in a new tab or window.
-
-    Args:
-        obj (model instance): the object to create a change page link for
-        user (User): the user to create the link for
-        site_name (str): namespace of the site/app
-        blank (bool): if True, the link will have a target="_blank" attribute
-    """
-    admin_url = get_change_page_url(obj, user, site_name)
-    if not admin_url:
-        return format_html(
-            '%s: %s' % (capfirst(obj._meta.verbose_name), force_str(obj))
-        )
-    if blank:
-        return create_hyperlink(admin_url, obj, target='_blank')
-    return create_hyperlink(admin_url, obj)
 
 
 def get_changelist_url(
@@ -127,60 +76,6 @@ def get_changelist_url(
     if obj_list:
         url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))
     return url
-
-
-def get_changelist_link(
-        model: Union[Model, Type[Model]],
-        user: User,
-        site_name: str = 'admin',
-        obj_list: Optional[Iterable[Model]] = None,
-        content: str = 'Liste',
-        blank: bool = False
-) -> SafeText:
-    """
-    Return a safe link to the changelist of ``model``.
-
-    If ``obj_list`` is given, the url to the changelist will include a query
-    parameter to filter to records in that list.
-
-    Args:
-        model (model class or instance): the model of the desired changelist
-        user (User): the user to create the link for
-        site_name (str): namespace of the site/app
-        obj_list (Iterable): an iterable of model instances. If given, the url
-          to the changelist will include a query parameter to filter to records
-          in that list.
-        content (str): the text of the link
-        blank (bool): if True, the link will have a target="_blank" attribute
-    """
-    url = get_changelist_url(
-        model, user, site_name=site_name, obj_list=obj_list
-    )
-    if blank:
-        return create_hyperlink(url, content, target='_blank')
-    return create_hyperlink(url, content)
-
-
-def link_list(
-        request: HttpRequest,
-        obj_list: Iterable[Model],
-        sep: str = ", ",
-        blank: bool = False
-) -> SafeText:
-    """
-    Return links to the change page of each object in ``obj_list``.
-
-    Args:
-        request (HttpRequest): the request that requested the list
-        obj_list (Iterable): an iterable of the model instances
-        sep (str): the string used to separate the links from each other
-        blank (bool): if True, the links will have a target="_blank" attribute
-    """
-    links = []
-    for obj in obj_list:
-        # noinspection PyUnresolvedReferences
-        links.append(get_obj_link(obj, request.user, blank=blank))
-    return format_html(sep.join(links))
 
 
 def get_model_admin_for_model(
