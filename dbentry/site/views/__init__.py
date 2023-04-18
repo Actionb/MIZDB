@@ -1,6 +1,5 @@
-from .auth import LoginView, PasswordChangeView, PasswordChangeDoneView
-from .delete import DeleteView
+"""Views for the MIZDB site app."""
+
+# Import the modules to register the views:
 from .edit import *  # noqa
-from .history import HistoryView
 from .list import *  # noqa
-from .list import Index

@@ -41,7 +41,8 @@ class Registry:
             )
 
     def get_urls(self):
-        from dbentry.site.views import DeleteView, HistoryView
+        from dbentry.site.views.delete import DeleteView
+        from dbentry.site.views.history import HistoryView
         urlpatterns = []
         for model, view in self.changelists.items():
             opts = model._meta

@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from formset.views import FormViewMixin
 
-from dbentry.site.views import BaseViewMixin
+from dbentry.site.views.base import BaseViewMixin
 
 
 class LoginView(FormViewMixin, auth_views.LoginView):
