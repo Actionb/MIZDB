@@ -441,6 +441,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         # Do a full text search. Respect ordering specified on the changelist.
         return queryset.search(search_term, ranked=ORDER_VAR not in request.GET), False
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and formfield.widget:
+            # Hide the "view related" icon:
+            formfield.widget.can_view_related = False
+        return formfield
+
 
 class BaseInlineMixin(AutocompleteMixin):
     """
@@ -471,6 +478,13 @@ class BaseInlineMixin(AutocompleteMixin):
             verbose_opts = self.verbose_model._meta
             self.verbose_name = verbose_opts.verbose_name
             self.verbose_name_plural = verbose_opts.verbose_name_plural
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and formfield.widget:
+            # Hide the "view related" icon:
+            formfield.widget.can_view_related = False
+        return formfield
 
 
 class BaseTabularInline(BaseInlineMixin, admin.TabularInline):
