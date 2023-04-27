@@ -49,8 +49,8 @@ from dbentry.utils.admin import get_obj_link, log_change
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     form = _forms.BestandInlineForm
-    fields = ['signatur', 'lagerort', 'provenienz', 'anmerkungen']
-    readonly_fields = ['signatur']
+    fields = ['bestand_signatur', 'lagerort', 'provenienz', 'anmerkungen']
+    readonly_fields = ['bestand_signatur']
 
     # 'copylast' class allows inlines.js to copy the last selected bestand to a
     # new row.
@@ -60,6 +60,11 @@ class BestandInLine(BaseTabularInline):
     verbose_name = _models.Bestand._meta.verbose_name
     # noinspection PyUnresolvedReferences
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
+
+    def bestand_signatur(self, obj):
+        """Display the signatur of this Bestand object."""
+        return obj.signatur or ""
+    bestand_signatur.short_description = "Signatur"
 
     # TODO: enable tabular autocomplete for 'lagerort'
     #  (see ac.views.ACLagerort and ac.urls for details)
