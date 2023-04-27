@@ -20,6 +20,13 @@ LOGGING = {
             'formatter': 'default',
             'filters': ['not_autoreload'],
         },
+        'change_confirmation': {
+            'class': 'logging.FileHandler',
+            'level': 'INFO',
+            'filename': '/var/log/mizdb/change_confirmation.log',
+            'formatter': 'default',
+            'filters': ['not_autoreload'],
+        },
     },
     'formatters': {
         'default': {
@@ -36,6 +43,11 @@ LOGGING = {
     'loggers': {
         'dbentry.csrf': {
             'handlers': ['csrf'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'change_confirmation': {
+            'handlers': ['change_confirmation'],
             'level': 'INFO',
             'propagate': True,
         },

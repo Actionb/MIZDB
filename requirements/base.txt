@@ -30,3 +30,6 @@ PyYAML
 
 # Django LogEntry ModelAdmin
 django-admin-logs
+
+# string similarity
+levenshtein
