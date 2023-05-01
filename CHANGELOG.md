@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
+## [0.10] - 2023-05-01
+
 ### Changed
 
 - text search: accept string of comma-separated values as search term for ids
+- admin: require confirmation for drastic model object changes
 
 ### Added
 
