@@ -1,9 +1,12 @@
 from collections import OrderedDict
 from unittest.mock import DEFAULT, Mock, patch
+from urllib.parse import unquote
 
+from django.contrib.auth import get_permission_codename
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from django.urls import reverse
-from django.utils.http import unquote
 
 from dbentry import models as _models
 from dbentry.tools.views import (
@@ -423,7 +426,7 @@ class TestSiteSearchView(ViewTestCase):
     def test_get_result_list_no_perms(self):
         """
         Assert that get_result_list doesn't return changelist links for users
-        who have no permission to view those changelists.
+        who do not have permission to view those changelists.
         """
         view = self.get_view(request=self.get_request(user=self.noperms_user))
         results = view.get_result_list('Silva')
@@ -481,6 +484,32 @@ class TestSiteSearchView(ViewTestCase):
                 self.get_view(request).get(request)
                 self.assertFalse(get_result_list_mock.called)
 
+    def test_get_models_permission_restriction(self):
+        """
+        Assert that get_models does not include models that the user lacks
+        permission for.
+        """
+        app_label = 'test_tools'
+        model = Musiker
+        ct = ContentType.objects.get_for_model(model)
+
+        view = self.get_view(self.get_request(user=self.staff_user))
+        # staff_user does not have any permissions, so the model list should be
+        # empty:
+        self.assertFalse(list(view._get_models(app_label=app_label)))
+
+        # Add permissions for Musiker model.
+        for action in ('view', 'change'):
+            with self.subTest(action=action):
+                codename = get_permission_codename(action, model._meta)
+                perm = Permission.objects.get(codename=codename, content_type=ct)
+                self.staff_user.user_permissions.set([perm])
+
+                request = self.get_request(user=self.reload_user(self.staff_user))
+                view = self.get_view(request)
+                models = list(view._get_models(app_label=app_label))
+                self.assertEqual(models, [model])
+
 
 class TestMIZSiteSearch(ViewTestCase):
     view_class = MIZSiteSearch
@@ -508,3 +537,35 @@ class TestMIZSiteSearch(ViewTestCase):
         self.assertIn('Bands (1)', results[0])
         self.assertIn('Musiker (1)', results[1])
         self.assertIn('Veranstaltungen (1)', results[2])
+
+    def test_permissions(self):
+        """
+        Assert that site search does not include results for models that the
+        user lacks permission for.
+        """
+        app_label = 'dbentry'
+        model = _models.Musiker
+        ct = ContentType.objects.get_for_model(model)
+
+        q = 'Silva'
+        # staff_user does not have any permissions; the search should
+        # return empty.
+        response = self.get_response(reverse('site_search'), data={'q': q}, user=self.staff_user)
+        results = response.context['results']
+        # self.assertEqual(len(results), 0)
+
+        # Add permissions for the Musiker model.
+        # The results should include an entry for the Musiker instance - but
+        # not any for the Band or Veranstaltung instance.
+        for action in ('view', 'change'):
+            with self.subTest(action=action):
+                codename = get_permission_codename(action, model._meta)
+                permission = Permission.objects.get(codename=codename, content_type=ct)
+                self.staff_user.user_permissions.set([permission])
+                response = self.get_response(
+                    reverse('site_search'),
+                    data={'q': q},
+                    user=self.reload_user(self.staff_user)
+                )
+                results = response.context['results']
+                self.assertEqual(len(results), 1)

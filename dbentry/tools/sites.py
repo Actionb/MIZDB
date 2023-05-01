@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.core import checks
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
 
@@ -76,7 +77,7 @@ class IndexToolsSite(admin.AdminSite):
             result[url] = label
         return result
 
-    @never_cache
+    @method_decorator(never_cache)
     def index(self, request: HttpRequest, extra_context: Optional[dict] = None) -> HttpResponse:
         # Add the registered admintools to the index page.
         extra_context = extra_context or {}

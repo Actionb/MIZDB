@@ -89,9 +89,11 @@ class TextSearchQuerySetMixin(object):
         pk_name = model._meta.pk.name
 
         filters = Q()
-        if q.isnumeric():
-            # q is a number: include a filter for the primary key.
-            filters |= Q(**{pk_name: q})
+        # Check if q is an id number or a list of ids, and add filters
+        # accordingly.
+        if all(v.strip().isnumeric() for v in q.split(',')):
+            for v in q.split(','):
+                filters |= Q(**{pk_name: v.strip()})
 
         search_field = _get_search_vector_field(model)
         if search_field:

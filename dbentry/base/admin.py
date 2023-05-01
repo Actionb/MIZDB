@@ -1,16 +1,21 @@
+import logging
 from typing import Any, List, Optional, Tuple, Type
 
+import Levenshtein
 from django import forms
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.views.main import ORDER_VAR
 from django.contrib.auth import get_permission_codename
+from django.contrib.messages.storage import default_storage
 from django.core import checks, exceptions
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Model, QuerySet
 from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest, HttpResponse
+from django.template.response import TemplateResponse
 from django.urls import NoReverseMatch, reverse
+from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 
 from dbentry import models as _models
@@ -22,8 +27,9 @@ from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.query import MIZQuerySet
 from dbentry.search.admin import MIZAdminSearchFormMixin
-from dbentry.utils import get_fields_and_lookups, get_model_relations
-from dbentry.utils.admin import construct_change_message
+from dbentry.utils.admin import construct_change_message, get_obj_link
+from dbentry.utils.models import get_fields_and_lookups, get_model_relations
+from dbentry.utils.text import diffhtml
 
 FieldsetList = List[Tuple[Optional[str], dict]]
 BESTAND_MODEL_NAME = 'dbentry.Bestand'
@@ -68,12 +74,18 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         - ``index_category`` (str): the name of the 'category' this ModelAdmin
           should be listed under. A fake app is created for each category to
           group them on the index page.
+        - ``require_confirmation`` (bool): if true, changes to model objects
+          will require user confirmation if changes alter the object too much
+        - ``confirmation_threshold`` (float): the threshold for the
+          Levenshtein.ratio for which user confirmation for changes is required
     """
 
     changelist_link_labels: dict
     collapse_all: bool = False
     superuser_only: bool = False
     index_category: str = 'Sonstige'
+    require_confirmation = False
+    confirmation_threshold = 0.85
 
     # Add the merge_records action to all MIZModelAdmin classes.
     # Using miz_site.add_action to add that action to all model admin instances
@@ -329,6 +341,50 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
         return super().change_view(request, object_id, form_url, new_extra)
 
+    def _changeform_view(self, request, object_id, form_url, extra_context):
+        if request.method == 'POST' and self.require_confirmation:
+            logger = logging.getLogger("change_confirmation")
+            if '_change_confirmed' in request.POST:
+                logger.info(
+                    f"User '{request.user} ({request.user.pk})' confirmed changes to "
+                    f"{self.opts.object_name} id={object_id}"
+                )
+                # Restore the original form data.
+                request.POST = request.session.pop("confirmed_form_data", request.POST)
+            else:
+                initial = self.get_object(request, object_id)
+                before = str(initial)
+                response = super()._changeform_view(request, object_id, form_url, extra_context)
+                after = str(self.get_object(request, object_id))
+                ratio = Levenshtein.ratio(before, after)
+                if ratio < self.confirmation_threshold:
+                    # The object's name has changed significantly; require the
+                    # user to confirm the changes before saving.
+                    transaction.set_rollback(True)
+                    # Clear the "saved successfully" message:
+                    request._messages = default_storage(request)
+                    # Save the form data to be used after the confirmation:
+                    request.session["confirmed_form_data"] = request.POST
+                    distance = Levenshtein.distance(before, after)
+                    logger.info(
+                        f"User '{request.user} ({request.user.pk})' attempted change on "
+                        f"{self.opts.object_name} id={object_id} that requires confirmation. "
+                        f"Before: '{before}', After: '{after}', Distance: {distance}, Ratio: {ratio}"
+                    )
+                    context = {
+                        **self.admin_site.each_context(request),
+                        "title": "Änderungen bestätigen",
+                        "link": get_obj_link(initial, request.user, blank=True),
+                        "before": before,
+                        "after": after,
+                        "distance": distance,
+                        "ratio": f"{ratio:.0%}",
+                        "diff": mark_safe(diffhtml(before, after)),
+                    }
+                    return TemplateResponse(request, "admin/change_confirmation.html", context=context)
+                return response
+        return super()._changeform_view(request, object_id, form_url, extra_context)
+
     def construct_change_message(
             self,
             request: HttpRequest,
@@ -385,6 +441,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         # Do a full text search. Respect ordering specified on the changelist.
         return queryset.search(search_term, ranked=ORDER_VAR not in request.GET), False
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and formfield.widget:
+            # Hide the "view related" icon:
+            formfield.widget.can_view_related = False
+        return formfield
+
 
 class BaseInlineMixin(AutocompleteMixin):
     """
@@ -415,6 +478,13 @@ class BaseInlineMixin(AutocompleteMixin):
             verbose_opts = self.verbose_model._meta
             self.verbose_name = verbose_opts.verbose_name
             self.verbose_name_plural = verbose_opts.verbose_name_plural
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and formfield.widget:
+            # Hide the "view related" icon:
+            formfield.widget.can_view_related = False
+        return formfield
 
 
 class BaseTabularInline(BaseInlineMixin, admin.TabularInline):

@@ -764,8 +764,12 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             context = view.get_context_data()
             self.assertEqual(context['title'], 'Merge objects: step 1')
             self.assertEqual(context['cl'], changelist_mock)
-            label_element = '<label class="required" for="id_primary" style="width: 100%;">'
-            self.assertTrue(context['primary_label'].startswith(label_element))
+            label_element = (
+                '<label class="required" for="id_primary" style="width: 100%;">'
+                'Bitten wählen Sie den Datensatz, dem die verwandten Objekte der anderen Datensätze angehängt werden sollen: '
+                '</label>'
+            )
+            self.assertHTMLEqual(context['primary_label'], label_element)
             self.assertEqual(context['current_step'], '0')
             self.assertEqual(context['view_helptext'], view.view_helptext[step])
 

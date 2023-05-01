@@ -71,6 +71,7 @@ class Person(ComputedNameModel):
 
 
 class PersonURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Person', models.CASCADE, related_name='urls')
 
 
@@ -117,6 +118,7 @@ class MusikerAlias(BaseAliasModel):
 
 
 class MusikerURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Musiker', models.CASCADE, related_name='urls')
 
 
@@ -185,6 +187,7 @@ class BandAlias(BaseAliasModel):
 
 
 class BandURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Band', models.CASCADE, related_name='urls')
 
 
@@ -251,6 +254,7 @@ class Autor(ComputedNameModel):
 
 
 class AutorURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Autor', models.CASCADE, related_name='urls')
 
 
@@ -1100,6 +1104,7 @@ class Spielort(BaseModel):
 
 
 class SpielortURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Spielort', models.CASCADE, related_name='urls')
 
 
@@ -1192,6 +1197,7 @@ class VeranstaltungAlias(BaseAliasModel):
 
 
 class VeranstaltungURL(AbstractURLModel):
+    # TODO: field name is wrong
     brochure = models.ForeignKey('Veranstaltung', models.CASCADE, related_name='urls')
 
 

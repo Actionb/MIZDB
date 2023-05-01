@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Iterable, Optional, Sequence, Type, Union
 
 from django import views
 from django.contrib.admin import ModelAdmin, helpers

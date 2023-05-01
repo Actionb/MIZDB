@@ -1,6 +1,7 @@
 import contextlib
 import sys
 import warnings
+from urllib.parse import unquote
 
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
@@ -10,7 +11,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages import get_messages
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-from django.utils.http import unquote
 
 # Display all warnings:
 if not sys.warnoptions:
@@ -29,6 +29,26 @@ class MIZTestCase(TestCase):
             yield
         except exceptions as e:
             self.fail(self._formatMessage(msg, f"{e.__class__.__name__} raised."))
+
+    def assertOrderedDictEqual(self, first, second):
+        """
+        Assert that the ordered dictionaries are the same by comparing the
+        order of keys and the values of both dictionaries.
+        """
+        self.assertEqual(list(first.keys()), list(second.keys()))
+        first_iter = first.items().__iter__()
+        second_iter = second.items().__iter__()
+        i = 0
+        while True:
+            try:
+                first_k, first_v = next(first_iter)
+                second_k, second_v = next(second_iter)
+                with self.subTest(key=first_k, i=i):
+                    self.assertEqual(first_k, second_k)
+                    self.assertEqual(first_v, second_v)
+            except StopIteration:
+                break
+            i += 1
 
 
 class DataTestCase(MIZTestCase):

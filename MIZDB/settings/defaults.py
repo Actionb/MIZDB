@@ -35,6 +35,7 @@ DATABASES = {
 # Application definition
 
 INSTALLED_APPS = [
+    'jquery_351',
     'dbentry.apps.DbentryConfig',
     'dal',
     'dal_select2',
