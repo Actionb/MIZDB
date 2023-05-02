@@ -1,6 +1,7 @@
 from django import template
 from django.contrib.auth import get_permission_codename
 
+from dbentry.site.views import PAGE_VAR
 from dbentry.utils import url
 
 register = template.Library()
@@ -16,6 +17,11 @@ def urlname(opts, name):
         {% url opts|urlname:'add' %}
     """
     return url.urlname(name, opts)
+
+
+@register.simple_tag
+def paginator_url(cl, i):
+    return cl.get_query_string({PAGE_VAR: i})
 
 
 @register.simple_tag
