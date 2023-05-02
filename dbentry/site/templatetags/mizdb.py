@@ -1,7 +1,7 @@
 from django import template
 from django.contrib.auth import get_permission_codename
 
-from dbentry.site.views import PAGE_VAR
+from dbentry.site.views.base import PAGE_VAR
 from dbentry.utils import url
 
 register = template.Library()

@@ -21,6 +21,11 @@ class Band(models.Model):
     name = models.TextField()
     alias = models.TextField()
 
+    origin = models.ForeignKey(
+        'test_site.Country', on_delete=models.CASCADE, null=True, blank=True,
+        verbose_name="Origin Country"
+    )
+
     objects = TextSearchQuery.as_manager()
 
     name_field = 'name'

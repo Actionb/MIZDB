@@ -1,0 +1,25 @@
+{% extends "mizdb/base.html" %}
+
+{% block mainclass %}container-fluid{% endblock %}
+
+{% block content %}
+{% if result_rows %}
+{% include "mizdb/includes/pagination.html" %}
+<div class="results mb-3">
+<table id="result_list">
+<thead>
+<tr>{% for header in result_headers %}
+<th scope="col"{{ header.class_attrib }}>
+   <div class="text"><span>{{ header.text|capfirst }}</span></div>
+</th>{% endfor %}</tr>
+</thead>
+<tbody>
+{% for result_row in result_rows %}
+    <tr>{% for item in result_row %}<td>{{ item }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% include "mizdb/includes/pagination.html" %}
+{% endif %}
+{% endblock %}

@@ -5,11 +5,15 @@ from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import FieldDoesNotExist
+from django.db import models
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.utils.encoding import force_str
+from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
-from django.views.generic import UpdateView
+from django.views.generic import UpdateView, ListView
 from django.views.generic.base import ContextMixin
 from formset.views import IncompleteSelectResponseMixin, FormViewMixin
 from formset.widgets import DualSelector, Selectize
@@ -17,6 +21,15 @@ from formset.widgets import DualSelector, Selectize
 from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.site.registry import miz_site
 from dbentry.utils import permission as perms
+from dbentry.utils.html import create_hyperlink
+from dbentry.utils.permission import has_view_permission
+from dbentry.utils.url import get_change_url
+
+# Constants for the changelist views
+ALL_VAR = "all"
+ORDER_VAR = "o"
+PAGE_VAR = "p"
+SEARCH_VAR = "q"
 
 
 class AutocompleteMixin(IncompleteSelectResponseMixin, FormViewMixin):
@@ -286,3 +299,165 @@ class BaseEditView(BaseModelView, UpdateView):
             return self.form_invalid(form)
 
         return JsonResponse({'success_url': self.get_success_url()})
+
+
+class BaseListView(BaseViewMixin, ListView):
+    template_name = "mizdb/changelist.html"
+    list_display = ()
+    list_display_links = ()
+    select_related = ()
+    sortable_by = None
+    paginate_by = 100
+    empty_value_display = "-"
+    page_kwarg = PAGE_VAR
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lookup_opts = self.opts = self.model._meta
+        if self.list_display:
+            self.sortable_by = self.list_display
+        self.formset = None  # required by tag admin_list.result_hidden_fields
+
+    def _get_default_ordering(self):
+        # NOTE: not (yet?) used
+        ordering = []
+        if self.ordering:
+            ordering = self.ordering
+        elif self.opts.ordering:
+            ordering = self.opts.ordering
+        return ordering
+
+    def get_ordering_field(self, field_name):
+        """
+        Return the proper model field name corresponding to the given
+        field_name to use for ordering. field_name may either be the name of a
+        proper model field or the name of a method on the view with the
+        'admin_order_field' attribute.
+
+        Return None if no proper model field name can be matched.
+        """
+        # NOTE: not (yet?) used
+        try:
+            field = self.opts.get_field(field_name)
+            return field.name
+        except FieldDoesNotExist:
+            # See whether field_name is a name of a non-field
+            # that allows sorting.
+            if hasattr(self, field_name):
+                attr = getattr(self, field_name)
+                return getattr(attr, "order_field", None)
+
+    def get_query_string(self, new_params=None, remove=None):
+        if new_params is None:  # pragma: no cover
+            new_params = {}
+        if remove is None:
+            remove = []
+        p = dict(self.request.GET.items()).copy()
+        for r in remove:
+            for k in list(p):
+                if k.startswith(r):
+                    del p[k]
+        for k, v in new_params.items():
+            if v is None:
+                if k in p:
+                    del p[k]
+            else:
+                p[k] = v
+        return "?%s" % urlencode(sorted(p.items()))
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.select_related:
+            queryset = queryset.select_related(*self.select_related)
+        if annotations := self.get_changelist_annotations():
+            queryset = queryset.annotate(**annotations)
+        return queryset
+
+    def get_changelist_annotations(self):
+        return {}
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # call list on the pagination page range generator, because it will be
+        # consumed more than once:
+        ctx["page_range"] = list(ctx["paginator"].get_elided_page_range(ctx["page_obj"].number))
+        # some template tags require this view object:
+        ctx["cl"] = self
+        self.result_list = self.get_results(ctx["object_list"])
+        ctx["result_headers"] = self.get_result_headers()
+        ctx["result_rows"] = [self.get_result_row(r) for r in self.result_list]
+        return ctx
+
+    def get_empty_value_display(self):
+        """
+        Return the empty_value_display set on this view.
+        """
+        return mark_safe(self.empty_value_display)
+
+    def _lookup_field(self, name):
+        """
+        Get the model field or view callable for the given name, and return it
+        and an appropriate label.
+        """
+        attr = None
+        if hasattr(self, name):
+            attr = getattr(self, name)
+            if hasattr(attr, "short_description"):
+                label = attr.short_description
+            else:
+                label = name
+        else:
+            try:
+                attr = self.opts.get_field(name)
+                label = attr.verbose_name
+            except FieldDoesNotExist:
+                # This is not a view callable or a model field:
+                label = name
+        return attr, label.replace("_", " ").capitalize()
+
+    def get_result_headers(self):
+        """Return the headers for the result list table."""
+        # TODO: add sorting
+        headers = []
+        for name in self.list_display:
+            _attr, label = self._lookup_field(name)
+            headers.append({"text": label.replace("_", " ").capitalize()})
+        return headers
+
+    def get_result_row(self, result):
+        """Return the values to display in the row for the given result."""
+
+        def link_in_col(is_first, field_name):
+            if self.list_display_links is None:
+                return False
+            if is_first and not self.list_display_links:
+                return True
+            return field_name in self.list_display_links
+
+        result_items = []
+        first = True
+        for name in self.list_display:
+            attr, _label = self._lookup_field(name)
+            if callable(attr):
+                value = attr(result)
+            else:
+                # Assume that this is a model field.
+                if isinstance(attr, models.ForeignKey):
+                    value = getattr(result, attr.name)
+                    if value is not None:
+                        value = str(value)
+                else:
+                    value = getattr(result, attr.attname)
+            if not value:
+                value = self.get_empty_value_display()
+            if link_in_col(first, name) and has_view_permission(self.request.user, self.opts):
+                # TODO: add preserved filters to links
+                url = get_change_url(self.request, result)
+                value = create_hyperlink(url, value)
+            result_items.append(value)
+            first = False
+        return result_items
+
+    def get_results(self, object_list):
+        # TODO: enable filtering/searching
+        return object_list
