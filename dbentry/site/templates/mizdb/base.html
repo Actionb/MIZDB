@@ -98,8 +98,27 @@
         {% block content %}{{ content }}{% endblock %}
     </div>
     <!-- END Content -->
+    <a href="#" style="display: none;" type="button" class="btn btn-primary position-fixed start-50 bottom-0 mb-1" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen">
+        <img src="{% static 'mizdb/img/totop.svg' %}"><span>nach oben</span>
+    </a>
 </main>
 {% block extrascript %}
+{{ block.super }}
+<script>
+// Script for the scroll back to top button:
+let btn = document.getElementById("btn-back-to-top");
+
+// When the user scrolls down 20px from the top of the document, show the button
+window.onscroll = function() {scrollFunction()};
+
+function scrollFunction() {
+  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    btn.style.display = "inline-block";
+  } else {
+    btn.style.display = "none";
+  }
+}
+</script>
 {% endblock extrascript %}
 </body>
 </html>
