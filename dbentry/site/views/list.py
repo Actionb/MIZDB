@@ -21,7 +21,6 @@ class Index(BaseViewMixin, TemplateView):
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
 class ArtikelList(BaseListView):
     model = _models.Artikel
-    title = "Artikelliste"
     list_display = [
         'schlagzeile', 'zusammenfassung_string', 'seite_string', 'schlagwort_string',
         'ausgabe_name', 'artikel_magazin', 'kuenstler_string'

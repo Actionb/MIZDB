@@ -1,12 +1,14 @@
 {% extends "mizdb/base.html" %}
 {% load mizdb static %}
 
+{% block title %}{{ opts.verbose_name_plural }} Übersicht | MIZDB {% endblock %}
+
 {% block mainclass %}container-fluid ps-5 pe-5{% endblock %}
 
 {% block content_title %}
 <div class="d-flex align-items-center">
-{% if title %}<h1 class="text-primary">{{ title }}</h1>{% endif %}
-<a href="{% url opts|urlname:'add' %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+    <h1 class="text-primary">{{ opts.verbose_name_plural }}</h1>
+    <a href="{% url opts|urlname:'add' %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
 </div>
 {% endblock %}
 
