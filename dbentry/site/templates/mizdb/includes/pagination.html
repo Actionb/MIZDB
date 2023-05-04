@@ -15,5 +15,5 @@
       {% endfor %}
   </ul>
 {% endif %}
-<p class="ps-2">{% if result_count and result_count != total_count %}{{ result_count }} Ergebnisse {% endif %}(<a href="?all=">{{ total_count }} insgesamt</a>)</p>
+<p class="ps-2">{% if result_count and result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
 </nav>
