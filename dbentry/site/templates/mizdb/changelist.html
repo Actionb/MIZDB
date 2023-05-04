@@ -6,15 +6,15 @@
 {% block content %}
 
 {% block search_form %}
-<div id="changelist-search-container" class="mb-3">
-<form method="get" class="p-2 bg-primary bg-opacity-10">
+<div id="changelist-search-container" class="mb-3 bg-primary bg-opacity-10">
+<form method="get" class="p-2">
     <div class="row g-1">
     <div class="col">
-        <input id="searchInput" class="form-control" type="search" placeholder="{{ opts.verbose_name_plural }} durchsuchen..." name="q">
+        <input id="searchInput" class="form-control" type="search" placeholder="{{ opts.verbose_name_plural }} durchsuchen..." name="q" value="{{ search_term }}">
     </div>
     <div class="col">
         <button class="btn btn-primary my-2 my-sm-0" type="submit">
-            <img src="{% static 'mizdb/img/search.svg' %}"><span>Suche</span>
+            <span>Suchen</span>
         </button>
         <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advSearchForm" title="Erweiterte Suchoptionen anzeigen">
             <img src="{% static 'mizdb/img/sliders.svg' %}">

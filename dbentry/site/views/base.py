@@ -368,6 +368,8 @@ class BaseListView(ModelViewMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        if q := self.request.GET.get(SEARCH_VAR):
+            queryset = self.get_search_results(queryset, q)
         if self.select_related:
             queryset = queryset.select_related(*self.select_related)
         if annotations := self.get_changelist_annotations():
@@ -379,17 +381,20 @@ class BaseListView(ModelViewMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # call list on the pagination page range generator, because it will be
-        # consumed more than once:
-        # TODO: what if there is no pagination to display?
-        ctx["page_range"] = list(ctx["paginator"].get_elided_page_range(ctx["page_obj"].number))
-        # some template tags require this view object:
-        ctx["cl"] = self
-        self.result_list = self.get_results(ctx["object_list"])
-        ctx["result_headers"] = self.get_result_headers()
-        ctx["result_rows"] = [self.get_result_row(r) for r in self.result_list]
-        ctx["result_count"] = self.object_list.count()
-        ctx["total_count"] = self.model.objects.count()
+        paginator = ctx["paginator"]
+        ctx.update({
+            # some template tags require this view object:
+            "cl": self,
+            # call list on the pagination page range generator, because it will
+            # be consumed more than once:
+            "page_range": list(paginator.get_elided_page_range(ctx["page_obj"].number)),
+            "pagination_required": paginator.count > 100,
+            "result_rows": [self.get_result_row(r) for r in ctx["object_list"]],
+            "result_headers": self.get_result_headers(),
+            "result_count": self.object_list.count(),
+            "total_count": self.model.objects.count(),
+            "search_term": self.request.GET.get(SEARCH_VAR, ''),
+        })
         return ctx
 
     def get_empty_value_display(self):
@@ -462,6 +467,5 @@ class BaseListView(ModelViewMixin, ListView):
             first = False
         return result_items
 
-    def get_results(self, object_list):
-        # TODO: enable filtering/searching
-        return object_list
+    def get_search_results(self, queryset, search_term):
+        return queryset.search(search_term, ranked=ORDER_VAR not in self.request.GET)
