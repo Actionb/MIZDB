@@ -90,10 +90,10 @@
 </aside>
 {% endblock nav-sidebar %}
 
-<main id="main" class="{% block mainclass %}container-lg{% endblock %}">
+<main id="main" class="p-1 {% block mainclass %}container-lg{% endblock %}">
     {% block messages %}{# TODO: add message block #}{% endblock messages %}
     <!-- Content -->
-    {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+    {% block content_title %}{% if title %}<h1 class="text-primary">{{ title }}</h1>{% endif %}{% endblock %}
     <div id="content" class="py-3">
         {% block content %}{{ content }}{% endblock %}
     </div>
