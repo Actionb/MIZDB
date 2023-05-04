@@ -1,5 +1,5 @@
 {% load mizdb %}
-<nav aria-label="Search results pages">
+<nav aria-label="Search results pages" class="d-flex align-items-center">
   <ul class="pagination">
       {% for i in page_range %}
       {% if i == page_obj.number %}
@@ -13,4 +13,5 @@
       {% endif %}
       {% endfor %}
   </ul>
+  <p class="ps-2">{{ result_count }} {{ opts.verbose_name_plural }}</p>
 </nav>

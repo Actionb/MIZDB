@@ -302,7 +302,7 @@ class BaseEditView(BaseModelView, UpdateView):
         return JsonResponse({'success_url': self.get_success_url()})
 
 
-class BaseListView(BaseViewMixin, ListView):
+class BaseListView(ModelViewMixin, ListView):
     template_name = "mizdb/changelist.html"
     list_display = ()
     list_display_links = ()
@@ -381,12 +381,15 @@ class BaseListView(BaseViewMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         # call list on the pagination page range generator, because it will be
         # consumed more than once:
+        # TODO: what if there is no pagination to display?
         ctx["page_range"] = list(ctx["paginator"].get_elided_page_range(ctx["page_obj"].number))
         # some template tags require this view object:
         ctx["cl"] = self
         self.result_list = self.get_results(ctx["object_list"])
         ctx["result_headers"] = self.get_result_headers()
         ctx["result_rows"] = [self.get_result_row(r) for r in self.result_list]
+        ctx["result_count"] = self.object_list.count()
+        ctx["total_count"] = self.model.objects.count()
         return ctx
 
     def get_empty_value_display(self):
