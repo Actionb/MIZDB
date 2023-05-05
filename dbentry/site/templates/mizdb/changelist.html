@@ -26,9 +26,11 @@
     <div class="row">
         <div class="col">
             <button class="btn btn-primary" type="submit"><span>Suchen</span></button>
+            {% if has_adv_search_form %}
             <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advSearchForm" title="Erweiterte Suchoptionen anzeigen" aria-expanded="false">
                 <span class="nav-text">Erweiterte Suchoptionen anzeigen </span><img src="{% static 'mizdb/img/sliders.svg' %}">
             </button>
+            {% endif %}
         </div>
     </div>
 </form>
