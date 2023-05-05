@@ -14,3 +14,7 @@
         display:none
     }
 }
+
+.col-form-control {
+    max-width: 800px;
+}

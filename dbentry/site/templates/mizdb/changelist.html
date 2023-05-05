@@ -10,24 +10,27 @@
 {% block content %}
 
 {% block search_form %}
-<div id="changelist-search-container" class="mb-3 bg-primary bg-opacity-10">
+<div id="changelist-search-container" class="mb-3 pt-3 border bg-primary bg-opacity-10">
 <form method="get" class="p-2">
-    <div class="row g-1">
-    <div class="col">
-        <input id="searchInput" class="form-control" type="search" placeholder="{{ opts.verbose_name_plural }} durchsuchen..." name="q" value="{{ search_term }}">
+    <div class="border-bottom mb-3">
+        <div class="row mb-3">
+            <label for="searchInput" class="col-form-label col-lg-1">Textsuche:</label>
+            <div class="col-lg-11">
+                <input id="searchInput" class="form-control col-form-control" type="search" placeholder="{{ opts.verbose_name_plural }} durchsuchen..." name="q" value="{{ search_term }}" autofocus>
+            </div>
+        </div>
+        <div class="collapse" id="advSearchForm">
+            {% block advanced_search_form %}{% endblock %}
+        </div>
     </div>
-    <div class="col">
-        <button class="btn btn-primary my-2 my-sm-0" type="submit">
-            <span>Suchen</span>
-        </button>
-        <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advSearchForm" title="Erweiterte Suchoptionen anzeigen">
-            <img src="{% static 'mizdb/img/sliders.svg' %}">
-        </button>
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary" type="submit"><span>Suchen</span></button>
+            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advSearchForm" title="Erweiterte Suchoptionen anzeigen" aria-expanded="false">
+                <span class="nav-text">Erweiterte Suchoptionen anzeigen </span><img src="{% static 'mizdb/img/sliders.svg' %}">
+            </button>
+        </div>
     </div>
-</div>
-<div class="collapse" id="advSearchForm">
-    {% block advanced_search_form %}{% endblock %}
-</div>
 </form>
 </div>
 {% endblock %}
