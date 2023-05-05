@@ -12,10 +12,9 @@ from dbentry.search import utils as search_utils
 from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
 
 
-class AdminSearchFormMixin(object):
+class SearchFormMixin(object):
     """
-    A mixin for ModelAdmin classes that adds more search options to its
-    changelist.
+    A mixin for model list views that adds a search form to the context.
 
     Attributes:
         - ``search_form_kwargs`` (dict): the keyword arguments for
@@ -23,9 +22,11 @@ class AdminSearchFormMixin(object):
           These are *not* the arguments for form initialization!
     """
 
-    change_list_template = 'admin/change_list.html'
-
     search_form_kwargs: dict = None  # type: ignore[assignment]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.search_form_kwargs = self.search_form_kwargs or {}
 
     def has_search_form(self) -> bool:
         """
@@ -35,9 +36,7 @@ class AdminSearchFormMixin(object):
         A search form class would be empty if the instance's
         ``search_form_kwargs`` did not specify any fields.
         """
-        if isinstance(self.search_form_kwargs, dict):
-            return bool(self.search_form_kwargs.get('fields'))
-        return False
+        return bool(self.search_form_kwargs.get('fields'))
 
     def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         """
@@ -46,15 +45,71 @@ class AdminSearchFormMixin(object):
         The form class is created by the searchform_factory, using the
         ModelAdmin's 'search_form_kwargs' and the provided keyword arguments.
         """
-        factory_kwargs = self.search_form_kwargs or {}
-        factory_kwargs.update(kwargs)
-        return searchform_factory(model=self.model, **factory_kwargs)  # type: ignore[attr-defined]
+        factory_kwargs = {'model': self.model, **self.search_form_kwargs, **kwargs}  # type: ignore[attr-defined]
+        return searchform_factory(**factory_kwargs)
 
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
         form_class = self.get_search_form_class()
         self.search_form = form_class(**form_kwargs)
         return self.search_form
+
+    def get_context_data(self, **kwargs: Any) -> dict:
+        ctx = super().get_context_data(**kwargs)  # type: ignore[misc]
+        ctx["advanced_search_form"] = self.get_search_form(data=self.request.GET)  # type: ignore[attr-defined]
+        ctx["has_search_form"] = self.has_search_form()
+        # TODO: should the form media be added?
+        return ctx
+
+    def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
+        errors = super().check(**kwargs)  # type: ignore[misc]
+        errors.extend(self._check_search_form_fields(**kwargs))
+        return errors
+
+    def _check_search_form_fields(self, **kwargs: Any) -> List[checks.CheckMessage]:
+        """Check the fields given in self.search_form_kwargs."""
+        if not self.has_search_form():
+            return []
+        errors = []
+        # Relation fields defined by the model should be in the search form:
+        rel_fields = [
+            field.name
+            for field in utils.get_model_fields(
+                self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
+            )
+        ]
+        for field_path in self.search_form_kwargs.get('fields', []):
+            msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
+            try:
+                search_utils.get_dbfield_from_path(
+                    self.model, field_path  # type: ignore[attr-defined]
+                )
+            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
+                errors.append(checks.Info(msg % e.args[0], obj=self))
+            else:
+                try:
+                    rel_fields.remove(field_path.split('__')[0])
+                except ValueError:
+                    # The first part of field_path is not in the rel_fields.
+                    pass
+        if rel_fields:
+            errors.append(
+                checks.Info(
+                    "Changelist search form is missing fields for relations:"
+                    "\n\t%s" % rel_fields,
+                    obj=self
+                )
+            )
+        return errors
+
+
+class AdminSearchFormMixin(SearchFormMixin):
+    """
+    A mixin for ModelAdmin classes that adds more search options to its
+    changelist.
+    """
+
+    change_list_template = 'admin/change_list.html'
 
     def changelist_view(
             self,
@@ -189,47 +244,6 @@ class AdminSearchFormMixin(object):
         parsed_url[4] = post_url_query.urlencode()
         post_url = urlunparse(parsed_url)
         return HttpResponseRedirect(post_url)
-
-    def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
-        errors = super().check(**kwargs)  # type: ignore[misc]
-        errors.extend(self._check_search_form_fields(**kwargs))
-        return errors
-
-    def _check_search_form_fields(self, **kwargs: Any) -> List[checks.CheckMessage]:
-        """Check the fields given in self.search_form_kwargs."""
-        if not self.has_search_form():
-            return []
-        errors = []
-        # Relation fields defined by the model should be in the search form:
-        rel_fields = [
-            field.name
-            for field in utils.get_model_fields(
-                self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
-            )
-        ]
-        for field_path in self.search_form_kwargs.get('fields', []):
-            msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
-            try:
-                search_utils.get_dbfield_from_path(
-                    self.model, field_path  # type: ignore[attr-defined]
-                )
-            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
-                errors.append(checks.Info(msg % e.args[0], obj=self))
-            else:
-                try:
-                    rel_fields.remove(field_path.split('__')[0])
-                except ValueError:
-                    # The first part of field_path is not in the rel_fields.
-                    pass
-        if rel_fields:
-            errors.append(
-                checks.Info(
-                    "Changelist search form is missing fields for relations:"
-                    "\n\t%s" % rel_fields,
-                    obj=self
-                )
-            )
-        return errors
 
 
 class MIZAdminSearchFormMixin(AdminSearchFormMixin):

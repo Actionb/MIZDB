@@ -30,7 +30,7 @@ from dbentry.base.admin import (
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
 from dbentry.changelist import AusgabeChangeList, BestandChangeList
-from dbentry.search.admin import MIZAdminSearchFormMixin
+from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change

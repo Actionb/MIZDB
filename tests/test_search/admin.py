@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 
-from dbentry.search.admin import (
+from dbentry.search.mixins import (
     AdminSearchFormMixin, ChangelistSearchFormMixin,
     MIZAdminSearchFormMixin
 )

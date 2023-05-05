@@ -26,7 +26,7 @@ from dbentry.base.models import ComputedNameModel
 from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.query import MIZQuerySet
-from dbentry.search.admin import MIZAdminSearchFormMixin
+from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.utils.admin import construct_change_message, get_obj_link
 from dbentry.utils.models import get_fields_and_lookups, get_model_relations
 from dbentry.utils.text import diffhtml
