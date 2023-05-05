@@ -14,9 +14,3 @@
         display:none
     }
 }
-
-#btn-back-to-top {
-    position: sticky;
-    bottom: 5%;
-    left: 94%;
-}

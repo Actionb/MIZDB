@@ -1,7 +1,8 @@
 {% load mizdb %}
-<nav aria-label="Search results pages" class="d-flex align-items-center">
+<div class="pagination-container">
 {% if pagination_required %}
-  <ul class="pagination">
+<nav aria-label="Search results pages" class="d-flex align-items-center">
+  <ul class="pagination mb-0">
       {% for i in page_range %}
       {% if i == page_obj.number %}
         {% with is_current=True %}
@@ -14,6 +15,6 @@
       {% endif %}
       {% endfor %}
   </ul>
-{% endif %}
-<p class="ps-2">{% if result_count and result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
 </nav>
+{% endif %}
+</div>
