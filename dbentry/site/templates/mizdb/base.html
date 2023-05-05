@@ -94,7 +94,7 @@
     {% block messages %}{# TODO: add message block #}{% endblock messages %}
     <!-- Content -->
     {% block content_title %}{% if title %}<h1 class="text-primary">{{ title }}</h1>{% endif %}{% endblock %}
-    <div id="content" class="py-3">
+    <div id="content" class="py-3 border-bottom border-top">
         {% block content %}{{ content }}{% endblock %}
     </div>
     <!-- END Content -->
