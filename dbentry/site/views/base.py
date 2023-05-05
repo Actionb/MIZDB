@@ -457,6 +457,9 @@ class BaseListView(ModelViewMixin, ListView):
                         value = str(value)
                 else:
                     value = getattr(result, attr.attname)
+                if getattr(attr, 'flatchoices', None):
+                    # Use the human-readable part of the choice:
+                    value = dict(attr.flatchoices).get(value, '')
             if not value:
                 value = self.get_empty_value_display()
             if link_in_col(first, name) and has_view_permission(self.request.user, self.opts):
