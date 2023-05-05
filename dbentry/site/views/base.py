@@ -242,6 +242,8 @@ class BaseModelView(PermissionRequiredMixin, ModelViewMixin, AutocompleteMixin, 
 class BaseEditView(BaseModelView, UpdateView):
     """Base class for 'add' or 'change' views."""
 
+    template_name = "mizdb/change_form.html"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add = self.extra_context['add'] is True

@@ -17,4 +17,3 @@ __all__ = [
 class ArtikelView(BaseEditView):
     form_class = ArtikelForm
     model = _models.Artikel
-    template_name = "mizdb/change_form.html"
