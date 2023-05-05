@@ -39,10 +39,10 @@
     <a href="{% url opts|urlname:'add' %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
 </div>
 <div class="results mb-3">
-<table id="result_list" class="table table-light table-hover">
+<table id="result_list" class="table table-hover">
 <thead>
 <tr class="table-primary">{% for header in result_headers %}
-<th scope="col"{{ header.class_attrib }}>
+<th scope="col"{{ header.class_attrib }} class="position-sticky top-0">
    <div class="text"><span>{{ header.text|capfirst }}</span></div>
 </th>{% endfor %}</tr>
 </thead>
