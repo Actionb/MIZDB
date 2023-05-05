@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 from typing import Iterable, Tuple, Union
 
 from nameparser import HumanName
@@ -43,3 +44,19 @@ def parse_name(full_name: Union[str, HumanName]) -> Tuple[str, str]:
     else:
         hn = full_name
     return " ".join([hn.first, hn.middle]).strip(), hn.last
+
+
+def diffhtml(a, b):
+    """Return an HTML diff of the two strings a and b."""
+    s = SequenceMatcher(None, a, b)
+    result = ""
+    for tag, i1, i2, j1, j2 in s.get_opcodes():
+        if tag == "delete":
+            result += f"<del>{a[i1:i2]}</del>"
+        elif tag == "insert":
+            result += f"<ins>{b[j1:j2]}</ins>"
+        elif tag == "replace":
+            result += f"<del>{a[i1:i2]}</del><ins>{b[j1:j2]}</ins>"
+        else:
+            result += a[i1:i2]
+    return result
