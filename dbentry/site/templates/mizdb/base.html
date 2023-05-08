@@ -9,12 +9,14 @@
     {% endblock style %}
     {% block script %}
         <script src="{% static 'mizdb/js/search.js' %}"></script>
+        <script src="{% static 'mizdb/js/theme-switch.js' %}"></script>
     {% endblock script %}
     {% block extrastyle %}{% endblock extrastyle %}
     {% block extrahead %}{% endblock extrahead %}
     {% block bootstrap %}
         <script src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
         <link href="{% static 'bootstrap/css/flatly/bootstrap.css' %}" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.2.3/dist/flatly/bootstrap.min.css" rel="stylesheet" id="theme">
     {% endblock bootstrap %}
 </head>
 <body class="{% block bodyclass %}{% endblock %}">
@@ -41,6 +43,21 @@
 
     {% block user-links %}
         <div id="user-links" class="d-flex gap-2">
+            <div class="dropdown">
+                <button type="button" class="btn btn-primary border-dark p-2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Theme">
+                    <span class="nav-text">Theme</span>
+                </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a href="#" rel="cyborg" class="change-style-menu-item dropdown-item">Cyborg (Default)</a></li>
+                <li><a href="#" rel="cerulean" class="change-style-menu-item dropdown-item">Cerulean</a></li>
+                <li><a href="#" rel="cosmo" class="change-style-menu-item dropdown-item">Cosmo</a></li>
+                <li><a href="#" rel="flatly" class="change-style-menu-item dropdown-item">Flatly</a></li>
+                <li><a href="#" rel="journal" class="change-style-menu-item dropdown-item">Journal</a></li>
+                <li><a href="#" rel="readable" class="change-style-menu-item dropdown-item">Readable</a></li>
+                <li><a href="#" rel="slate" class="change-style-menu-item dropdown-item">Slate</a></li>
+                <li><a href="#" rel="spacelab" class="change-style-menu-item dropdown-item">Spacelab</a></li>
+              </ul>
+            </div>
             {% if wiki_url %}
                 <a class="btn btn-primary border-dark p-2" href="{{ wiki_url }}" target="_blank" title="Hilfe">
                     <img src="{% static 'mizdb/img/help-circle-white.svg' %}" alt="Hilfe" role="img">
