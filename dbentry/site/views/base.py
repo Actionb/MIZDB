@@ -15,10 +15,13 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.views.generic import UpdateView, ListView
 from django.views.generic.base import ContextMixin
+from formset.renderers.bootstrap import FormRenderer
 from formset.views import IncompleteSelectResponseMixin, FormViewMixin
 from formset.widgets import DualSelector, Selectize
 
 from dbentry.fts.query import TextSearchQuerySetMixin
+from dbentry.search.forms import SearchForm
+from dbentry.search.mixins import SearchFormMixin
 from dbentry.site.registry import miz_site
 from dbentry.utils import permission as perms
 from dbentry.utils.html import create_hyperlink
@@ -319,7 +322,7 @@ class BaseListView(ModelViewMixin, ListView):
         self.lookup_opts = self.opts = self.model._meta
         if self.list_display:
             self.sortable_by = self.list_display
-        self.formset = None  # required by tag admin_list.result_hidden_fields
+        self.formset = None  # required by tag admin_list.result_hidden_fields  # TODO: is this still needed?
 
     def _get_default_ordering(self):
         # NOTE: not (yet?) used
@@ -474,3 +477,25 @@ class BaseListView(ModelViewMixin, ListView):
 
     def get_search_results(self, queryset, search_term):
         return queryset.search(search_term, ranked=ORDER_VAR not in self.request.GET)
+
+
+class ChangelistSearchForm(SearchForm):
+    default_renderer = FormRenderer(
+        label_css_classes=("col-lg-1", "col-form-label"),
+        control_css_classes=("col-lg-10", "col-xl-9", "col-xxl-8"),
+        field_css_classes={'*': 'row mb-3'},
+        form_css_classes=("ps-2",),
+    )
+
+
+class SearchableListView(SearchFormMixin, AutocompleteMixin, BaseListView):
+    """A BaseListView with a search form."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.form_class = self.get_search_form_class()  # django-formset requires this
+
+    def get_search_form_class(self, **kwargs):
+        if 'form' not in kwargs:
+            kwargs['form'] = ChangelistSearchForm
+        return super().get_search_form_class(**kwargs)
