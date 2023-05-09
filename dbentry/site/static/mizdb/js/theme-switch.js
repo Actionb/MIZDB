@@ -19,6 +19,13 @@ addEventListener("DOMContentLoaded", (event) => {
     const dropdown = document.getElementById("theme-dropdown");
     const link = document.getElementById("user_theme");
     // Load additional themes from the bootswatch API and add them to the theme dropdown.
+    /* FIXME: some of the themes import fonts hosted by google, resulting
+        in issues with cross-origin request restrictions, see:
+        https://github.com/jrief/django-formset/pull/44
+        https://github.com/thomaspark/bootswatch/issues/573
+        https://stackoverflow.com/questions/34772357/bootstrap-css-without-google-fonts-2-bootswatch
+    */
+    // TODO: self-host the fonts and recompile the themes
     if (dropdown && link) {
         fetch("https://bootswatch.com/api/5.json")
             .then((response) => response.json())
