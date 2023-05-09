@@ -1,7 +1,12 @@
 {% extends "mizdb/base.html" %}
-{% load mizdb static %}
+{% load mizdb static formsetify %}
 
 {% block title %}{{ opts.verbose_name_plural }} Übersicht | MIZDB {% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script type="module" src="{% static 'formset/js/django-formset.js' %}"></script>
+{% endblock extrahead %}
 
 {% block mainclass %}container-fluid ps-5 pe-5{% endblock %}
 
@@ -11,29 +16,31 @@
 
 {% block search_form %}
 <div id="changelist-search-container" class="mb-3 pt-3 border bg-primary bg-opacity-10">
-<form method="get" class="p-2">
+<django-formset endpoint="{{ request.path }}" csrf-token="{{ csrf_token }}" method="get">
     <div class="border-bottom mb-3">
-        <div class="row mb-3">
+        <div class="row mb-3 ps-2">
             <label for="searchInput" class="col-form-label col-lg-1">Textsuche:</label>
-            <div class="col-lg-11">
+            <div class="col-lg-10 col-xl-9 col-xxl-8">
                 <input id="searchInput" class="form-control col-form-control" type="search" placeholder="{{ opts.verbose_name_plural }} durchsuchen..." name="q" value="{{ search_term }}" autofocus>
             </div>
         </div>
         <div class="collapse" id="advSearchForm">
-            {% block advanced_search_form %}{% endblock %}
+            {% block advanced_search_form %}
+              {% render_form advanced_search_form %}
+            {% endblock %}
         </div>
     </div>
-    <div class="row">
+    <div class="row ps-2 pb-2">
         <div class="col">
             <button class="btn btn-primary" type="submit"><span>Suchen</span></button>
-            {% if has_adv_search_form %}
+            {% if has_search_form %}
             <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advSearchForm" title="Erweiterte Suchoptionen anzeigen" aria-expanded="false">
                 <span class="nav-text">Erweiterte Suchoptionen anzeigen </span><img src="{% static 'mizdb/img/sliders.svg' %}">
             </button>
             {% endif %}
         </div>
     </div>
-</form>
+</django-formset>
 </div>
 {% endblock %}
 

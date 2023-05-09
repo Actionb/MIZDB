@@ -3,10 +3,11 @@ Changelist views for the MIZDB models.
 """
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.views.generic import TemplateView
+from formset.widgets import Selectize
 
 from dbentry import models as _models
 from dbentry.site.registry import register_changelist, ModelType
-from dbentry.site.views.base import BaseViewMixin, BaseListView
+from dbentry.site.views.base import BaseViewMixin, SearchableListView
 from dbentry.utils.text import concat_limit
 
 
@@ -16,15 +17,22 @@ class Index(BaseViewMixin, TemplateView):
 
 
 # @formatter:off
-
-
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
-class ArtikelList(BaseListView):
+class ArtikelList(SearchableListView):
     model = _models.Artikel
     list_display = [
         'schlagzeile', 'zusammenfassung_string', 'seite_string', 'schlagwort_string',
         'ausgabe_name', 'artikel_magazin', 'kuenstler_string'
     ]
+    search_form_kwargs = {
+        'fields': [
+            'ausgabe__magazin', 'ausgabe'
+        ],
+        'widgets': {
+            'ausgabe__magazin': Selectize(search_lookup="magazin_name__icontains"),
+            'ausgabe': Selectize(search_lookup="ausgabe___name__icontains")
+        },
+    }
 
     def get_changelist_annotations(self):
         return {
