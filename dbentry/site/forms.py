@@ -8,7 +8,7 @@ from dbentry import models as _models
 
 class ArtikelForm(forms.ModelForm):
     default_renderer = FormRenderer(
-        label_css_classes=("col-sm-3",),
+        label_css_classes=("col-sm-3", "col-form-label"),
         control_css_classes=("col-sm-9",),
         field_css_classes={'*': 'row mb-3'},
     )
