@@ -3,7 +3,7 @@ Changelist views for the MIZDB models.
 """
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.views.generic import TemplateView
-from formset.widgets import Selectize
+from formset.widgets import Selectize, SelectizeMultiple
 
 from dbentry import models as _models
 from dbentry.site.registry import register_changelist, ModelType
@@ -16,7 +16,6 @@ class Index(BaseViewMixin, TemplateView):
     template_name = "mizdb/index.html"
 
 
-# @formatter:off
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
 class ArtikelList(SearchableListView):
     model = _models.Artikel
@@ -26,11 +25,26 @@ class ArtikelList(SearchableListView):
     ]
     search_form_kwargs = {
         'fields': [
-            'ausgabe__magazin', 'ausgabe'
+            'ausgabe__magazin', 'ausgabe', 'autor', 'musiker', 'band',
+            'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
+            'seite__range'
         ],
         'widgets': {
-            'ausgabe__magazin': Selectize(search_lookup="magazin_name__icontains"),
-            'ausgabe': Selectize(search_lookup="ausgabe___name__icontains")
+            'ausgabe__magazin': Selectize(search_lookup="magazin_name__icontains", placeholder=''),
+            'ausgabe': Selectize(
+                search_lookup="ausgabe___name__icontains",
+                filter_by={'ausgabe__magazin': 'magazin_id'},
+                placeholder='Bitte zuerst ein Magazin auswählen',
+            ),
+            'autor': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
+            'musiker': SelectizeMultiple(search_lookup='kuenstler_name__icontains', placeholder=''),
+            'band': SelectizeMultiple(search_lookup="band_name__icontains", placeholder=''),
+            'schlagwort': SelectizeMultiple(search_lookup='schlagwort__icontains', placeholder=''),
+            'genre': SelectizeMultiple(search_lookup='genre__icontains', placeholder=''),
+            'ort': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
+            'spielort': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
+            'veranstaltung': SelectizeMultiple(search_lookup='name__icontains', placeholder=''),
+            'person': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
         },
     }
 
@@ -47,6 +61,7 @@ class ArtikelList(SearchableListView):
             )
         }
 
+    # @formatter:off
     def seite_string(self, obj):
         return f"{obj.seite}{obj.seitenumfang}"
     seite_string.short_description = "Seite"
@@ -77,3 +92,4 @@ class ArtikelList(SearchableListView):
     def kuenstler_string(self, obj: _models.Artikel) -> str:
         return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    # @formatter:on
