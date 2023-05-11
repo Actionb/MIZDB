@@ -311,7 +311,7 @@ class BaseListView(ModelViewMixin, ListView):
     template_name = "mizdb/changelist.html"
     list_display = ()
     list_display_links = ()
-    select_related = ()
+    list_select_related = ()
     sortable_by = None
     paginate_by = 100
     empty_value_display = "-"
@@ -375,8 +375,8 @@ class BaseListView(ModelViewMixin, ListView):
         queryset = super().get_queryset()
         if q := self.request.GET.get(SEARCH_VAR):
             queryset = self.get_search_results(queryset, q)
-        if self.select_related:
-            queryset = queryset.select_related(*self.select_related)
+        if self.list_select_related:
+            queryset = queryset.select_related(*self.list_select_related)
         if annotations := self.get_changelist_annotations():
             queryset = queryset.annotate(**annotations)
         return queryset
