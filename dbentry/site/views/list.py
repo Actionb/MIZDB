@@ -19,6 +19,7 @@ class Index(BaseViewMixin, TemplateView):
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
 class ArtikelList(SearchableListView):
     model = _models.Artikel
+    list_select_related = ['ausgabe', 'ausgabe__magazin']
     list_display = [
         'schlagzeile', 'zusammenfassung_string', 'seite_string', 'schlagwort_string',
         'ausgabe_name', 'artikel_magazin', 'kuenstler_string'
