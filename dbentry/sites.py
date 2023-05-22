@@ -3,6 +3,7 @@ from typing import Any, List, Optional, OrderedDict as OrderedDictType
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
 from dbentry import utils
@@ -99,7 +100,7 @@ class MIZAdminSite(IndexToolsSite):
             app_list.append(new_fake_app)
         return app_list
 
-    @never_cache
+    @method_decorator(never_cache)
     def index(self, request: HttpRequest, extra_context: Optional[dict] = None) -> HttpResponse:
         response = super().index(request, extra_context)
         # Replace the original app_list with the one containing the grouping.

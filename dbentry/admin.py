@@ -30,17 +30,27 @@ from dbentry.base.admin import (
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
 from dbentry.changelist import AusgabeChangeList, BestandChangeList
-from dbentry.search.admin import MIZAdminSearchFormMixin
+from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
 
 
+# FIXME: deleting a related m2m object and then saving the parent form results
+#  in a form error since the select for that relation still references the
+#  deleted object (via the id)
+# 1. create artikel
+# 2. add band
+# 3. save artikel
+# 4. delete band
+# 5. save artikel -> errors
+
+
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     form = _forms.BestandInlineForm
-    fields = ['signatur', 'lagerort', 'provenienz', 'anmerkungen']
-    readonly_fields = ['signatur']
+    fields = ['bestand_signatur', 'lagerort', 'provenienz', 'anmerkungen']
+    readonly_fields = ['bestand_signatur']
 
     # 'copylast' class allows inlines.js to copy the last selected bestand to a
     # new row.
@@ -50,6 +60,11 @@ class BestandInLine(BaseTabularInline):
     verbose_name = _models.Bestand._meta.verbose_name
     # noinspection PyUnresolvedReferences
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
+
+    def bestand_signatur(self, obj):
+        """Display the signatur of this Bestand object."""
+        return obj.signatur or ""
+    bestand_signatur.short_description = "Signatur"
 
     # TODO: enable tabular autocomplete for 'lagerort'
     #  (see ac.views.ACLagerort and ac.urls for details)
@@ -181,6 +196,8 @@ class AusgabenAdmin(MIZModelAdmin):
     ]
     ordering = ['magazin__magazin_name', '_name']
     list_select_related = ['magazin']
+    require_confirmation = True
+    confirmation_threshold = 0.8
 
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -375,6 +392,7 @@ class AutorAdmin(MIZModelAdmin):
     list_select_related = ['person']
     search_form_kwargs = {'fields': ['magazin', 'person']}
     ordering = ['_name']
+    require_confirmation = True
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -519,6 +537,7 @@ class BandAdmin(MIZModelAdmin):
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
     save_on_top = True
     ordering = ['band_name']
+    require_confirmation = True
 
     search_form_kwargs = {
         'fields': ['musiker', 'genre', 'orte__land', 'orte'],
@@ -809,6 +828,7 @@ class GenreAdmin(MIZModelAdmin):
     # search bar. Note that the fields declared here do not matter, as the
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
+    require_confirmation = True
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -853,6 +873,7 @@ class MagazinAdmin(MIZModelAdmin):
     inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
     list_display = ['magazin_name', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
     ordering = ['magazin_name']
+    require_confirmation = True
 
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
@@ -931,6 +952,7 @@ class MusikerAdmin(MIZModelAdmin):
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
     ordering = ['kuenstler_name']
+    require_confirmation = True
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -969,6 +991,7 @@ class PersonAdmin(MIZModelAdmin):
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
     form = _forms.PersonForm
+    require_confirmation = True
 
     fieldsets = [
         (None, {
@@ -1029,6 +1052,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     # search bar. Note that the fields declared here do not matter, as the
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
+    require_confirmation = True
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1053,6 +1077,7 @@ class SpielortAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['ort', 'ort__land']}
     ordering = ['name', 'ort']
     list_select_related = ['ort']
+    require_confirmation = True
 
 
 @admin.register(_models.Technik, site=miz_site)
@@ -1102,6 +1127,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band'],
     }
+    require_confirmation = True
 
     def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1250,6 +1276,7 @@ class OrtAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['land', 'bland']}  # FIXME: forward land to bland
     ordering = ['land', 'bland', 'stadt']
     list_select_related = ['land', 'bland']
+    require_confirmation = True
 
     def formfield_for_foreignkey(
             self, db_field: ModelField, request: HttpRequest, **kwargs: Any
@@ -1270,6 +1297,7 @@ class BestandAdmin(MIZModelAdmin):
     list_select_related = ['lagerort', 'provenienz__geber']
     search_form_kwargs = {'fields': ['lagerort', 'provenienz', 'signatur']}
     superuser_only = True
+    require_confirmation = True
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[BestandChangeList]:
         return BestandChangeList
@@ -1394,11 +1422,13 @@ class DateiAdmin(MIZModelAdmin):
 class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
     ordering = ['instrument']
+    require_confirmation = True
 
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
     ordering = ['herausgeber']
+    require_confirmation = True
 
 
 class BaseBrochureAdmin(MIZModelAdmin):
@@ -1634,6 +1664,7 @@ class FotoAdmin(MIZModelAdmin):
 @admin.register(_models.Plattenfirma, site=miz_site)
 class PlattenfirmaAdmin(MIZModelAdmin):
     search_fields = ['__ANY__']
+    require_confirmation = True
 
 
 @admin.register(
@@ -1644,6 +1675,7 @@ class PlattenfirmaAdmin(MIZModelAdmin):
 class HiddenFromIndex(MIZModelAdmin):
     search_fields = ['__ANY__']
     superuser_only = True
+    require_confirmation = True
 
 
 class AuthAdminMixin(object):

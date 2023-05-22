@@ -1,6 +1,7 @@
 import contextlib
 import sys
 import warnings
+from urllib.parse import unquote
 
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
@@ -10,7 +11,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages import get_messages
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-from django.utils.http import unquote
 
 # Display all warnings:
 if not sys.warnoptions:

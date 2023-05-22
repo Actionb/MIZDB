@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.postgres.aggregates import ArrayAgg
 
 from dbentry.base.admin import MIZModelAdmin
-from .models import Audio, Band, Musiker, MusikerAudioM2M, Veranstaltung
+from .models import Audio, Band, Musiker, MusikerAudioM2M, Veranstaltung, Person
 
 admin_site = admin.AdminSite(name='test_base')
 
@@ -42,3 +42,8 @@ class BandAdmin(MIZModelAdmin):
 @admin.register(Veranstaltung, site=admin_site)
 class VeranstaltungAdmin(MIZModelAdmin):
     pass
+
+
+@admin.register(Person, site=admin_site)
+class PersonAdmin(MIZModelAdmin):
+    require_confirmation = True

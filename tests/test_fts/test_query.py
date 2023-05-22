@@ -208,6 +208,26 @@ class TestFullTextSearch(DataTestCase):
             with self.subTest(name=name):
                 self.assertIn(obj, _models.Autor.objects.search(name))
 
+    def test_search_id(self):
+        """Assert that instances can be found using their id."""
+        q = str(self.obj1.pk)
+        self.assertQuerysetEqual(self.queryset.search(q), [self.obj1])
+
+        # A comma-separated list of ids should be allowed:
+        q = f"{self.obj1.pk},{self.obj2.pk}"
+        self.assertQuerysetEqual(self.queryset.search(q), [self.obj1, self.obj2])
+
+        # Whitespaces should not influence the search and should be stripped:
+        q = f"{self.obj1.pk}  ,     {self.obj2.pk} "
+        self.assertQuerysetEqual(self.queryset.search(q), [self.obj1, self.obj2])
+
+    def test_search_id_not_all_numerical_values(self):
+        """
+        Assert that an id search is only attempted if all values in the search
+        term are numeric.
+        """
+        self.assertFalse(self.queryset.search(f"{self.obj1.pk},Ärzte"))
+
 
 class TestTextSearchQuerySetMixin(TestCase):
 

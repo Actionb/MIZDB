@@ -1,6 +1,8 @@
+from importlib import import_module
 from unittest import mock
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -12,7 +14,7 @@ from dbentry.base.admin import AutocompleteMixin
 from dbentry.changelist import MIZChangeList
 from tests.case import AdminTestCase
 from tests.model_factory import make
-from .admin import AudioAdmin, BandAdmin, admin_site
+from .admin import AudioAdmin, BandAdmin, admin_site, PersonAdmin
 from .models import Audio, Band, Bestand, Person, Veranstaltung
 
 
@@ -397,6 +399,56 @@ class MIZModelAdminTest(AdminTestCase):
             search_mock.assert_not_called()
             self.model_admin.get_search_results(request, qs, search_term='q')
             search_mock.assert_called()
+
+
+@override_settings(ROOT_URLCONF='tests.test_base.urls')
+class ChangeConfirmationTest(AdminTestCase):
+    admin_site = admin_site
+    model_admin_class = PersonAdmin
+    model = Person
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(Person, vorname="Alice", nachname="Testman")
+        super().setUpTestData()
+
+    def test_confirmation_required(self):
+        """Changes that are drastic enough should require confirmation."""
+        response = self.post_response(
+            self.change_path.format(pk=self.obj.pk),
+            data={'vorname': 'Bob', 'nachname': 'Testman', '_continue': ""},
+            follow=True
+        )
+        self.assertTemplateUsed(response, "admin/change_confirmation.html")
+        self.assertNotEqual(
+            self.obj.vorname, "Bob",
+            msg="The object should not be changed without confirmation."
+        )
+
+    def test_confirmation_not_required(self):
+        """Changes that are minor enough should not require confirmation."""
+        response = self.post_response(
+            self.change_path.format(pk=self.obj.pk),
+            data={'vorname': 'Alicia', 'nachname': 'Testman', '_continue': ""},
+            follow=True
+        )
+        self.assertTemplateUsed(response, "admin/change_form.html")
+        self.obj.refresh_from_db()
+        self.assertEqual(self.obj.vorname, "Alicia")
+
+    def test_change_confirmed(self):
+        form_data = {'vorname': 'Bob', 'nachname': 'Testman', '_continue': ""}
+        session = self.client.session
+        session["confirmed_form_data"] = form_data
+        session.save()
+        response = self.client.post(
+            self.change_path.format(pk=self.obj.pk),
+            data={'_change_confirmed': 'True', **form_data},
+            follow=True
+        )
+        self.assertTemplateUsed(response, "admin/change_form.html")
+        self.obj.refresh_from_db()
+        self.assertEqual(self.obj.vorname, "Bob")
 
 
 @override_settings(ROOT_URLCONF='tests.test_base.urls')

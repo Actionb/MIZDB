@@ -1,12 +1,12 @@
 from collections import OrderedDict
 from unittest.mock import DEFAULT, Mock, patch
+from urllib.parse import unquote
 
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from django.urls import reverse
-from django.utils.http import unquote
 
 from dbentry import models as _models
 from dbentry.tools.views import (

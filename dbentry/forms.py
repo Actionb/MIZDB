@@ -119,7 +119,7 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
         are limited to {'is_buchband': True} (see the model field).
         """
         is_buchband = self.cleaned_data.get('is_buchband', False)
-        if not is_buchband and self.instance.buch_set.exists():
+        if not is_buchband and self.instance.pk and self.instance.buch_set.exists():
             raise ValidationError(
                 "Nicht abwählbar für Buchband mit existierenden Aufsätzen.",
                 code='invalid'
