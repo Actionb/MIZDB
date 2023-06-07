@@ -42,7 +42,7 @@ def _migrate():
             zusammenfassung=actual.zusammenfassung,
             ausgabe=actual.ausgabe,
             anmerkungen=(
-                f"{actual.beschreibung}\n----{actual.bemerkungen}" if actual.bemerkungen
+                f"{actual.beschreibung}\n----\n{actual.bemerkungen}" if actual.bemerkungen
                 else actual.beschreibung
             ),
             _brochure_ptr=bb
