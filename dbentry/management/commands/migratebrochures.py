@@ -1,6 +1,31 @@
 from django.apps import apps
-from django.db import transaction
 from django.core.management.base import BaseCommand
+from django.db import transaction
+
+
+def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+
+
+    Credit: https://stackoverflow.com/a/34325723/9313033
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled = int(length * iteration // total)
+    bar = fill * filled + '-' * (length - filled)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
+    # Print New Line on Complete
+    if iteration == total:
+        print()
 
 
 @transaction.atomic
@@ -22,7 +47,10 @@ def _migrate():
     katalog_type = MediaType.objects.get_or_create(typ='Katalog')[0]
     type_mapping = {Brochure: brochure_type, Kalender: kalender_type, Katalog: katalog_type}
 
-    for bb in BaseBrochure.objects.all():
+    brochures = list(BaseBrochure.objects.all())
+    count = len(brochures)
+    print(f"Beginne Migration von {count} Objekten...")
+    for i, bb in enumerate(brochures):
         actual = bb.resolve_child()
         p = PrintMedia.objects.create(
             titel=actual.titel,
@@ -52,11 +80,24 @@ def _migrate():
             related = getattr(actual, m2m_field.name).all()
             if related.exists():
                 getattr(p, m2m_field.name).set(related)
+        print_progress(i + 1, count, prefix='Fortschritt:')
+    print("Fertig!")
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        print()
         PrintMedia = apps.get_model('dbentry', 'PrintMedia')
+        existing = PrintMedia.objects.filter(_brochure_ptr__isnull=False)
+        if existing.exists():
+            msg = (
+                f"Es existieren {existing.count()} PrintMedia Objekte, die von BaseBrochure "
+                "Objekten abstammen. Diese werden nun gelöscht.  Fortfahren? [j/N]: "
+            )
+            if input(msg) not in ("j", "J", "y", "Y"):
+                print("Abgebrochen.")
+                return
+        print("Lösche vorhandene PrintMedia Objekte...")
         PrintMedia.objects.filter(_brochure_ptr__isnull=False).delete()
         _migrate()
