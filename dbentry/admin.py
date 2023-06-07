@@ -1811,7 +1811,8 @@ class PrintMediaAdmin(MIZModelAdmin):
         (None, {'fields': ['titel', 'typ', 'zusammenfassung']}),
         ('Beilage von Ausgabe', {
             'fields': ['ausgabe__magazin', 'ausgabe'],
-            'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
+            'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.',
+            'classes': ['collapse', 'collapsed']
         }),
         ('Anmerkungen', {'fields': ['anmerkungen'], 'classes': ['collapse', 'collapsed']})
     ]
