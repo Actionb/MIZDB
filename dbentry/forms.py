@@ -262,3 +262,13 @@ class PersonForm(forms.ModelForm):
         dnb_url = "http://d-nb.info/gnd/" + gnd_id
         self.cleaned_data['dnb_url'] = dnb_url
         return self.cleaned_data
+
+
+class PrintMediaForm(AusgabeMagazinFieldForm):
+    class Meta:
+        widgets = {
+            'ausgabe': make_widget(
+                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True
+            ),
+            'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})
+        }
