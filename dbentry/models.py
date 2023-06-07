@@ -1402,6 +1402,7 @@ class Bestand(BaseModel):
     foto = models.ForeignKey('Foto', models.CASCADE, blank=True, null=True)
     memorabilien = models.ForeignKey('Memorabilien', models.CASCADE, blank=True, null=True)
     plakat = models.ForeignKey('Plakat', models.CASCADE, blank=True, null=True)
+    printmedia = models.ForeignKey('PrintMedia', models.CASCADE, blank=True, null=True)
     technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
@@ -1669,3 +1670,51 @@ class Foto(BaseModel):
         ordering = ['titel']
         verbose_name = 'Foto'
         verbose_name_plural = 'Fotos'
+
+
+class PrintMediaType(BaseModel):
+    typ = models.CharField(max_length=50)
+
+
+class PrintMediaYear(AbstractJahrModel):
+    PrintMedia = models.ForeignKey('PrintMedia', models.CASCADE, related_name='jahre')
+
+
+class PrintMediaURL(AbstractURLModel):
+    PrintMedia = models.ForeignKey('PrintMedia', models.CASCADE, related_name='urls')
+
+
+class PrintMedia(BaseModel):
+
+    titel = models.TextField(max_length=200)
+    typ = models.ForeignKey('PrintMediaType', models.PROTECT, related_name='printmedia')
+    zusammenfassung = models.TextField(blank=True)
+    anmerkungen = models.TextField(blank=True, help_text='Weitere Anmerkungen')
+
+    ausgabe = models.ForeignKey(
+        'ausgabe', models.SET_NULL, related_name='printmedia',
+        verbose_name='Ausgabe', blank=True, null=True
+    )
+
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', SIMPLE),
+            WeightedColumn('zusammenfassung', 'B', STEMMING),
+            WeightedColumn('anmerkungen', 'D', SIMPLE)
+        ]
+    )
+
+    name_field = 'titel'
+
+    def __str__(self) -> str:
+        return str(self.titel)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Druckerzeugnis"
+        verbose_name_plural = "Druckerzeugnisse"
+        ordering = ['titel']
