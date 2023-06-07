@@ -1675,6 +1675,8 @@ class Foto(BaseModel):
 class PrintMediaType(BaseModel):
     typ = models.CharField(max_length=50)
 
+    create_field = 'typ'
+
 
 class PrintMediaYear(AbstractJahrModel):
     PrintMedia = models.ForeignKey('PrintMedia', models.CASCADE, related_name='jahre')
