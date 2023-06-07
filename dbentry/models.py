@@ -1673,13 +1673,17 @@ class Foto(BaseModel):
 
 
 class PrintMediaType(BaseModel):
-    typ = models.CharField(max_length=50)
+    typ = models.CharField(max_length=50, unique=True)
+
+    _fts = SearchVectorField(columns=[WeightedColumn('typ', 'A', SIMPLE)])
 
     create_field = 'typ'
+    name_field = 'typ'
 
     class Meta:
         verbose_name = 'Druckerzeugnistyp'
         verbose_name_plural = 'Druckerzeugnistypen'
+        ordering = ['typ']
 
 
 class PrintMediaYear(AbstractJahrModel):
