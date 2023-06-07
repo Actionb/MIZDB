@@ -130,7 +130,7 @@ class TestBestandChangelist(AdminTestCase):
         for field_path in (
                 'audio', 'ausgabe', 'brochure', 'buch', 'dokument', 'foto',
                 'memorabilien', 'plakat', 'technik', 'video',
-                'lagerort', 'provenienz__geber'
+                'lagerort', 'provenienz__geber', 'printmedia'
         ):
             # Note that a path like provenienz__geber will be represented by a
             # nested dict in query.select_related: {'provenienz': {'geber': {}}}

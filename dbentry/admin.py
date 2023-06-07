@@ -1294,7 +1294,7 @@ class BestandAdmin(MIZModelAdmin):
         'memorabilien', 'plakat', 'technik', 'video'
     ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
-    list_select_related = ['lagerort', 'provenienz__geber']
+    list_select_related = ['lagerort', 'provenienz__geber', 'printmedia']
     search_form_kwargs = {'fields': ['lagerort', 'provenienz', 'signatur']}
     superuser_only = True
     require_confirmation = True
