@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 
-def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
+def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', end="\r"):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -22,12 +22,13 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=10
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filled = int(length * iteration // total)
     bar = fill * filled + '-' * (length - filled)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=end)
     # Print New Line on Complete
     if iteration == total:
         print()
 
 
+# noinspection PyPep8Naming
 @transaction.atomic
 def _migrate():
     """Migrate all (Base)Brochure objects to the PrintMedia model."""
@@ -88,6 +89,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         print()
+        # noinspection PyPep8Naming
         PrintMedia = apps.get_model('dbentry', 'PrintMedia')
         existing = PrintMedia.objects.filter(_brochure_ptr__isnull=False)
         if existing.exists():
