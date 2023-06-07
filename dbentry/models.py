@@ -1707,6 +1707,9 @@ class PrintMedia(BaseModel):
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
 
+    # TODO: remove the field once the Brochure models have been deleted
+    _brochure_ptr = models.ForeignKey('BaseBrochure', models.SET_NULL, blank=True, null=True, editable=False)
+
     _fts = SearchVectorField(
         columns=[
             WeightedColumn('titel', 'A', SIMPLE),
