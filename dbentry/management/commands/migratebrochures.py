@@ -2,30 +2,7 @@ from django.apps import apps
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-
-def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', end="\r"):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-
-
-    Credit: https://stackoverflow.com/a/34325723/9313033
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filled = int(length * iteration // total)
-    bar = fill * filled + '-' * (length - filled)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=end)
-    # Print New Line on Complete
-    if iteration == total:
-        print()
+from dbentry.utils.progress import print_progress
 
 
 # noinspection PyPep8Naming
