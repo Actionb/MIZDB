@@ -18,21 +18,27 @@ def _migrate():
     Katalog = apps.get_model('dbentry', 'Katalog')
     Bestand = apps.get_model('dbentry', 'Bestand')
 
-    # Get or create the base media types:
+    # Get or create media types:
     MediaType = apps.get_model('dbentry', 'PrintMediaType')
-    brochure_type = MediaType.objects.get_or_create(typ='Broschüre')[0]
-    kalender_type = MediaType.objects.get_or_create(typ='Programmheft')[0]
-    katalog_type = MediaType.objects.get_or_create(typ='Katalog')[0]
-    type_mapping = {Brochure: brochure_type, Kalender: kalender_type, Katalog: katalog_type}
+    type_mapping = {
+        Brochure: MediaType.objects.get_or_create(typ='Broschüre')[0],
+        Kalender: MediaType.objects.get_or_create(typ='Programmheft')[0]
+    }
+    for art in Katalog.Types:
+        type_mapping[art.value] = MediaType.objects.get_or_create(typ=f"Katalog ({art.label})")[0]
 
     brochures = list(BaseBrochure.objects.all())
     count = len(brochures)
     print(f"Beginne Migration von {count} Objekten...")
     for i, bb in enumerate(brochures):
         actual = bb.resolve_child()
+        if isinstance(actual, Katalog):
+            typ = type_mapping[actual.art]
+        else:
+            typ = type_mapping[actual._meta.model]
         p = PrintMedia.objects.create(
             titel=actual.titel,
-            typ=type_mapping[actual._meta.model],
+            typ=typ,
             zusammenfassung=actual.zusammenfassung,
             ausgabe=actual.ausgabe,
             anmerkungen=(
