@@ -1557,7 +1557,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.spielort.through
         verbose_model = _models.Spielort
-        tabular_autocomplete = ['veranstaltung']
+        tabular_autocomplete = ['spielort']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
