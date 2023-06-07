@@ -75,7 +75,7 @@ class Command(BaseCommand):
         # noinspection PyPep8Naming
         PrintMedia = apps.get_model('dbentry', 'PrintMedia')
         existing = PrintMedia.objects.filter(_brochure_ptr__isnull=False)
-        if existing.exists():
+        if existing.exists():  # pragma: no cover
             msg = (
                 f"Es existieren {existing.count()} PrintMedia Objekte, die von BaseBrochure "
                 "Objekten abstammen. Diese werden nun gelöscht.  Fortfahren? [j/N]: "
