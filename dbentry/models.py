@@ -1677,6 +1677,10 @@ class PrintMediaType(BaseModel):
 
     create_field = 'typ'
 
+    class Meta:
+        verbose_name = 'Druckerzeugnistyp'
+        verbose_name_plural = 'Druckerzeugnistypen'
+
 
 class PrintMediaYear(AbstractJahrModel):
     PrintMedia = models.ForeignKey('PrintMedia', models.CASCADE, related_name='jahre')
