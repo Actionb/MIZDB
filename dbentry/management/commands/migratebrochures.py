@@ -39,7 +39,11 @@ def _migrate():
     }
     count = BaseBrochure.objects.count()
     log_entries = []
-    for i, obj in enumerate(chain(Brochure.objects.all(), Kalender.objects.all(), Katalog.objects.all())):
+
+    for i, obj in enumerate(chain(*(
+            m.objects.prefetch_related("jahre", "urls")
+            for m in (Brochure, Kalender, Katalog)
+    ))):
         if isinstance(obj, Katalog):
             typ = type_mapping[obj.art]
         else:
@@ -55,14 +59,14 @@ def _migrate():
             titel=obj.titel,
             typ=typ,
             zusammenfassung=obj.zusammenfassung,
-            ausgabe=obj.ausgabe,
+            ausgabe_id=obj.ausgabe_id,
             anmerkungen=anmerkungen,
-            _brochure_ptr=obj.basebrochure_ptr
+            _brochure_ptr_id=obj.basebrochure_ptr_id
         )
 
         # Reverse related:
-        p.jahre.set((PrintMediaYear(jahr=j) for j in obj.jahre.values_list('jahr', flat=True)), bulk=False)
-        p.urls.set((PrintMediaURL(url=url) for url in obj.urls.values_list('url', flat=True)), bulk=False)
+        p.jahre.set((PrintMediaYear(jahr=j.jahr) for j in obj.jahre.all()), bulk=False)
+        p.urls.set((PrintMediaURL(url=u.url) for u in obj.urls.all()), bulk=False)
         for bestand in obj.bestand_set.all():
             new_bestand = Bestand.objects.create(
                 lagerort=bestand.lagerort,
