@@ -88,11 +88,11 @@ def _migrate():
         # Reverse related:
         p.jahre.set((PrintMediaYear(jahr=j.jahr) for j in obj.jahre.all()), bulk=False)
         p.urls.set((PrintMediaURL(url=u.url) for u in obj.urls.all()), bulk=False)
-        for bestand in obj.bestand_set.all():
+        for bestand in obj.bestand_set.values('lagerort_id', 'anmerkungen', 'provenienz_id'):
             new_bestand = Bestand.objects.create(
-                lagerort=bestand.lagerort,
-                anmerkungen=bestand.anmerkungen,
-                provenienz=bestand.provenienz,
+                lagerort_id=bestand["lagerort_id"],
+                anmerkungen=bestand["anmerkungen"],
+                provenienz_id=bestand["provenienz_id"],
                 printmedia=p,
             )
             # for e in LogEntry.objects.filter(object_id=bestand.pk, content_type=contenttypes[Bestand]):
