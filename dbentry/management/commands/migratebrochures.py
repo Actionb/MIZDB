@@ -81,8 +81,9 @@ class Command(BaseCommand):
         existing = PrintMedia.objects.filter(_brochure_ptr__isnull=False)
         if existing.exists():  # pragma: no cover
             msg = (
-                f"Es existieren {existing.count()} PrintMedia Objekte, die von BaseBrochure "
-                "Objekten abstammen. Diese werden nun gelöscht.  Fortfahren? [j/N]: "
+                f"Es existieren {existing.count()} PrintMedia Objekte, die von BaseBrochure Objekten abstammen. \n"
+                "Diese werden nun gelöscht und anschließend durch die Migration wieder neu erstellt. \n"
+                "Fortfahren? [j/N]: "
             )
             if input(msg) not in ("j", "J", "y", "Y"):
                 print("Abgebrochen.")
