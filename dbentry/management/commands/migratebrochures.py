@@ -1,3 +1,5 @@
+from itertools import chain
+
 from django.apps import apps
 from django.core.checks import Tags
 from django.core.management.base import BaseCommand
@@ -29,34 +31,32 @@ def _migrate():
     for art in Katalog.Types:
         type_mapping[art.value] = MediaType.objects.get_or_create(typ=f"Katalog ({art.label})")[0]
 
-    brochures = list(BaseBrochure.objects.all())
-    count = len(brochures)
-    for i, bb in enumerate(brochures):
-        actual = bb.resolve_child()
-        if isinstance(actual, Katalog):
-            typ = type_mapping[actual.art]
+    count = BaseBrochure.objects.count()
+    for i, obj in enumerate(chain(Brochure.objects.all(), Kalender.objects.all(), Katalog.objects.all())):
+        if isinstance(obj, Katalog):
+            typ = type_mapping[obj.art]
         else:
-            typ = type_mapping[actual._meta.model]
-        if actual.beschreibung and actual.bemerkungen:
-            anmerkungen = f"{actual.beschreibung}\n----\nBemerkungen: {actual.bemerkungen}"
-        elif actual.bemerkungen:
-            anmerkungen = f"Bemerkungen: {actual.bemerkungen}"
+            typ = type_mapping[obj._meta.model]
+        if obj.beschreibung and obj.bemerkungen:
+            anmerkungen = f"{obj.beschreibung}\n----\nBemerkungen: {obj.bemerkungen}"
+        elif obj.bemerkungen:
+            anmerkungen = f"Bemerkungen: {obj.bemerkungen}"
         else:
-            anmerkungen = actual.beschreibung
+            anmerkungen = obj.beschreibung
 
         p = PrintMedia.objects.create(
-            titel=actual.titel,
+            titel=obj.titel,
             typ=typ,
-            zusammenfassung=actual.zusammenfassung,
-            ausgabe=actual.ausgabe,
+            zusammenfassung=obj.zusammenfassung,
+            ausgabe=obj.ausgabe,
             anmerkungen=anmerkungen,
-            _brochure_ptr=bb
+            _brochure_ptr=obj.basebrochure_ptr
         )
 
         # Reverse related:
-        p.jahre.set((PrintMediaYear(jahr=j) for j in actual.jahre.values_list('jahr', flat=True)), bulk=False)
-        p.urls.set((PrintMediaURL(url=url) for url in actual.urls.values_list('url', flat=True)), bulk=False)
-        for bestand in actual.bestand_set.all():
+        p.jahre.set((PrintMediaYear(jahr=j) for j in obj.jahre.values_list('jahr', flat=True)), bulk=False)
+        p.urls.set((PrintMediaURL(url=url) for url in obj.urls.values_list('url', flat=True)), bulk=False)
+        for bestand in obj.bestand_set.all():
             Bestand.objects.create(
                 lagerort=bestand.lagerort,
                 anmerkungen=bestand.anmerkungen,
@@ -65,8 +65,8 @@ def _migrate():
             )
 
         # Many-to-many:
-        for m2m_field in actual._meta.many_to_many:
-            related = getattr(actual, m2m_field.name).all()
+        for m2m_field in obj._meta.many_to_many:
+            related = getattr(obj, m2m_field.name).all()
             if related.exists():
                 getattr(p, m2m_field.name).set(related)
         print_progress(i + 1, count, prefix='Fortschritt:', suffix=f"{i + 1}/{count}")
