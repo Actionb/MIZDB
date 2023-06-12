@@ -36,15 +36,19 @@ def _migrate():
             typ = type_mapping[actual.art]
         else:
             typ = type_mapping[actual._meta.model]
+        if actual.beschreibung and actual.bemerkungen:
+            anmerkungen = f"{actual.beschreibung}\n----\nBemerkungen: {actual.bemerkungen}"
+        elif actual.bemerkungen:
+            anmerkungen = f"Bemerkungen: {actual.bemerkungen}"
+        else:
+            anmerkungen = actual.beschreibung
+
         p = PrintMedia.objects.create(
             titel=actual.titel,
             typ=typ,
             zusammenfassung=actual.zusammenfassung,
             ausgabe=actual.ausgabe,
-            anmerkungen=(
-                f"{actual.beschreibung}\n----\n{actual.bemerkungen}" if actual.bemerkungen
-                else actual.beschreibung
-            ),
+            anmerkungen=anmerkungen,
             _brochure_ptr=bb
         )
 

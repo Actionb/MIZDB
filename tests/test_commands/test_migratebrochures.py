@@ -40,7 +40,8 @@ class TestCommand(TestCase):
             _models.Kalender,
             titel="Testkalender",
             spielort=[cls.spielort1, cls.spielort2],
-            veranstaltung=[cls.veranstaltung1, cls.veranstaltung2]
+            veranstaltung=[cls.veranstaltung1, cls.veranstaltung2],
+            bemerkungen="Kalender Bemerkungen"
         )
         # Bestand:
         cls.provenienz = make(
@@ -54,7 +55,6 @@ class TestCommand(TestCase):
             provenienz=cls.provenienz,
             anmerkungen="good quality",
             brochure=cls.brochure.basebrochure_ptr
-
         )
         cls.bestand2 = make(_models.Bestand, lagerort__ort="Dachboden", brochure=cls.brochure.basebrochure_ptr)
 
@@ -77,7 +77,7 @@ class TestCommand(TestCase):
         pmedia = _models.PrintMedia.objects.get(_brochure_ptr=self.brochure.pk)
         self.assertEqual(pmedia.titel, "Testbroschüre")
         self.assertEqual(pmedia.zusammenfassung, "Testbroschüre Zusammenfassung")
-        self.assertEqual(pmedia.anmerkungen, "Testbroschüre Beschreibung\n----\nTestbroschüre Bemerkungen")
+        self.assertEqual(pmedia.anmerkungen, "Testbroschüre Beschreibung\n----\nBemerkungen: Testbroschüre Bemerkungen")
         self.assertEqual(pmedia.ausgabe, self.ausgabe)
         self.assertIn("Testbroschüre Genre 1", pmedia.genre.values_list('genre', flat=True))
         self.assertIn("Testbroschüre Genre 2", pmedia.genre.values_list('genre', flat=True))
@@ -99,6 +99,7 @@ class TestCommand(TestCase):
         self.assertIn(self.spielort2, pmedia.spielort.all())
         self.assertIn(self.veranstaltung1, pmedia.veranstaltung.all())
         self.assertIn(self.veranstaltung2, pmedia.veranstaltung.all())
+        self.assertEqual(pmedia.anmerkungen, "Bemerkungen: Kalender Bemerkungen")
 
     def test_migrate_katalog(self):
         """Assert that the Katalog object was migrated as expected."""
@@ -107,3 +108,4 @@ class TestCommand(TestCase):
         self.run_command()
         pmedia = _models.PrintMedia.objects.get(_brochure_ptr=self.katalog.pk)
         self.assertEqual(pmedia.typ.typ, "Katalog (Tonträger)")
+        self.assertEqual(pmedia.anmerkungen, "Testkatalog Beschreibung")
