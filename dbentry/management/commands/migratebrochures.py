@@ -1,6 +1,8 @@
 from itertools import chain
 
 from django.apps import apps
+from django.contrib.admin.models import LogEntry
+from django.contrib.contenttypes.models import ContentType
 from django.core.checks import Tags
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -31,7 +33,12 @@ def _migrate():
     for art in Katalog.Types:
         type_mapping[art.value] = MediaType.objects.get_or_create(typ=f"Katalog ({art.label})")[0]
 
+    contenttypes = {
+        m: ContentType.objects.get_for_model(m)
+        for m in (PrintMedia, Brochure, Kalender, Katalog, Bestand)
+    }
     count = BaseBrochure.objects.count()
+    log_entries = []
     for i, obj in enumerate(chain(Brochure.objects.all(), Kalender.objects.all(), Katalog.objects.all())):
         if isinstance(obj, Katalog):
             typ = type_mapping[obj.art]
@@ -57,19 +64,45 @@ def _migrate():
         p.jahre.set((PrintMediaYear(jahr=j) for j in obj.jahre.values_list('jahr', flat=True)), bulk=False)
         p.urls.set((PrintMediaURL(url=url) for url in obj.urls.values_list('url', flat=True)), bulk=False)
         for bestand in obj.bestand_set.all():
-            Bestand.objects.create(
+            new_bestand = Bestand.objects.create(
                 lagerort=bestand.lagerort,
                 anmerkungen=bestand.anmerkungen,
                 provenienz=bestand.provenienz,
                 printmedia=p,
             )
+            for e in LogEntry.objects.filter(object_id=bestand.pk, content_type=contenttypes[Bestand]):
+                new = LogEntry(
+                    action_time=e.action_time,
+                    user=e.user,
+                    content_type=contenttypes[Bestand],
+                    object_id=new_bestand.pk,
+                    object_repr=e.object_repr,
+                    action_flag=e.action_flag,
+                    change_message=e.change_message,
+                )
+                log_entries.append(new)
 
         # Many-to-many:
         for m2m_field in obj._meta.many_to_many:
             related = getattr(obj, m2m_field.name).all()
             if related.exists():
                 getattr(p, m2m_field.name).set(related)
+
+        for e in LogEntry.objects.filter(object_id=obj.pk, content_type=contenttypes[obj._meta.model]):
+            new = LogEntry(
+                action_time=e.action_time,
+                user=e.user,
+                content_type=contenttypes[PrintMedia],
+                object_id=p.pk,
+                object_repr=e.object_repr,
+                action_flag=e.action_flag,
+                change_message=e.change_message,
+            )
+            log_entries.append(new)
         print_progress(i + 1, count, prefix='Fortschritt:', suffix=f"{i + 1}/{count}")
+    if log_entries:
+        print("Erstelle LogEntry Objekte...")
+        LogEntry.objects.bulk_create(log_entries)
 
 
 class Command(BaseCommand):
