@@ -77,6 +77,7 @@ class SearchFormMixin(object):
             for field in utils.get_model_fields(
                 self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
             )
+            if not field.name.startswith('_')
         ]
         for field_path in self.search_form_kwargs.get('fields', []):
             msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
