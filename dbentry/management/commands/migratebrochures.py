@@ -31,7 +31,6 @@ def _migrate():
 
     brochures = list(BaseBrochure.objects.all())
     count = len(brochures)
-    print(f"Beginne Migration von {count} Objekten...")
     for i, bb in enumerate(brochures):
         actual = bb.resolve_child()
         if isinstance(actual, Katalog):
@@ -70,17 +69,14 @@ def _migrate():
             related = getattr(actual, m2m_field.name).all()
             if related.exists():
                 getattr(p, m2m_field.name).set(related)
-        print_progress(i + 1, count, prefix='Fortschritt:')
-    print("Fertig!")
+        print_progress(i + 1, count, prefix='Fortschritt:', suffix=f"{i + 1}/{count}")
 
 
 class Command(BaseCommand):
-
     help = "Migrate the data of all (Base)Brochure objects to PrintMedia."
     requires_system_checks = [Tags.database, Tags.models]
     requires_migrations_checks = True
 
-    # noinspection PyPep8Naming
     def handle(self, *args, **options):
         """Perform the data migration."""
         try:
@@ -112,3 +108,4 @@ class Command(BaseCommand):
                 PrintMedia.objects.filter(_brochure_ptr__isnull=False).delete()
             self.stdout.write("Beginne Migration...")
             _migrate()
+        self.stdout.write(self.style.SUCCESS("Fertig!"))

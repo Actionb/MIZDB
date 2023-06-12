@@ -3,8 +3,8 @@ from unittest import mock
 
 from django.test import TestCase
 
-from dbentry.management.commands.migratebrochures import Command
 from dbentry import models as _models
+from dbentry.management.commands.migratebrochures import Command
 from tests.model_factory import make
 
 
