@@ -95,17 +95,17 @@ def _migrate():
                 provenienz=bestand.provenienz,
                 printmedia=p,
             )
-            for e in LogEntry.objects.filter(object_id=bestand.pk, content_type=contenttypes[Bestand]):
-                new = LogEntry(
-                    action_time=e.action_time,
-                    user=e.user,
-                    content_type=contenttypes[Bestand],
-                    object_id=new_bestand.pk,
-                    object_repr=e.object_repr,
-                    action_flag=e.action_flag,
-                    change_message=e.change_message,
-                )
-                log_entries.append(new)
+            # for e in LogEntry.objects.filter(object_id=bestand.pk, content_type=contenttypes[Bestand]):
+            #     new = LogEntry(
+            #         action_time=e.action_time,
+            #         user=e.user,
+            #         content_type=contenttypes[Bestand],
+            #         object_id=new_bestand.pk,
+            #         object_repr=e.object_repr,
+            #         action_flag=e.action_flag,
+            #         change_message=e.change_message,
+            #     )
+            #     log_entries.append(new)
 
         # Many-to-many:
         for m2m_field in obj._meta.many_to_many:
@@ -113,17 +113,17 @@ def _migrate():
             if related.exists():
                 getattr(p, m2m_field.name).set(related)
 
-        for e in LogEntry.objects.filter(object_id=obj.pk, content_type=contenttypes[obj._meta.model]):
-            new = LogEntry(
-                action_time=e.action_time,
-                user=e.user,
-                content_type=contenttypes[PrintMedia],
-                object_id=p.pk,
-                object_repr=e.object_repr,
-                action_flag=e.action_flag,
-                change_message=e.change_message,
-            )
-            log_entries.append(new)
+        # for e in LogEntry.objects.filter(object_id=obj.pk, content_type=contenttypes[obj._meta.model]):
+        #     new = LogEntry(
+        #         action_time=e.action_time,
+        #         user=e.user,
+        #         content_type=contenttypes[PrintMedia],
+        #         object_id=p.pk,
+        #         object_repr=e.object_repr,
+        #         action_flag=e.action_flag,
+        #         change_message=e.change_message,
+        #     )
+        #     log_entries.append(new)
         print_progress(i + 1, count, prefix='Fortschritt:', suffix=f"{i + 1}/{count}")
     if log_entries:
         print("Erstelle LogEntry Objekte...")
