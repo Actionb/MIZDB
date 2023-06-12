@@ -1,3 +1,4 @@
+import time
 from itertools import chain
 
 from django.apps import apps
@@ -144,5 +145,8 @@ class Command(BaseCommand):
                 self.stdout.write("Lösche vorhandene PrintMedia Objekte...")
                 PrintMedia.objects.filter(_brochure_ptr__isnull=False).delete()
             self.stdout.write("Beginne Migration...")
+            start = time.time()
             _migrate()
+            end = time.time()
+            self.stdout.write(f"Time: {end - start}")
         self.stdout.write(self.style.SUCCESS("Fertig!"))
