@@ -1,6 +1,8 @@
 from django.apps import apps
+from django.core.checks import Tags
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.utils import ProgrammingError
 
 from dbentry.utils.progress import print_progress
 
@@ -74,10 +76,27 @@ def _migrate():
 
 class Command(BaseCommand):
 
+    help = "Migrate the data of all (Base)Brochure objects to PrintMedia."
+    requires_system_checks = [Tags.database, Tags.models]
+    requires_migrations_checks = True
+
+    # noinspection PyPep8Naming
     def handle(self, *args, **options):
-        print()
+        """Perform the data migration."""
+        try:
+            apps.get_model('dbentry', 'BaseBrochure')
+        except LookupError:  # pragma: no cover
+            self.stdout.write(self.style.ERROR("Abgebrochen: BaseBrochure model existiert nicht."))
+            return
+
         # noinspection PyPep8Naming
         PrintMedia = apps.get_model('dbentry', 'PrintMedia')
+        try:
+            PrintMedia.objects.exists()
+        except ProgrammingError:  # pragma: no cover
+            self.stdout.write(self.style.ERROR("PrintMedia Tabelle existiert nicht."))
+            return
+
         existing = PrintMedia.objects.filter(_brochure_ptr__isnull=False)
         if existing.exists():  # pragma: no cover
             msg = (
