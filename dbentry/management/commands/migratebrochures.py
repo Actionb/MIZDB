@@ -1,4 +1,3 @@
-import time
 from itertools import chain
 
 from django.apps import apps
@@ -58,9 +57,9 @@ def _migrate():
         m: ContentType.objects.get_for_model(m)
         for m in (PrintMedia, Brochure, Kalender, Katalog, Bestand)
     }
-    count = BaseBrochure.objects.count()
-    log_entries = []
-
+    total = BaseBrochure.objects.count()
+    new_pmedia, new_bestand = {}, {}  # map 'original object' ids to new object ids
+    print("Beginne Migration...")
     for i, obj in enumerate(chain(*(
             m.objects.prefetch_related("jahre", "urls")
             for m in (Brochure, Kalender, Katalog)
@@ -84,28 +83,19 @@ def _migrate():
             anmerkungen=anmerkungen,
             _brochure_ptr_id=obj.basebrochure_ptr_id
         )
+        new_pmedia[str(obj.pk)] = p
 
         # Reverse related:
         p.jahre.set((PrintMediaYear(jahr=j.jahr) for j in obj.jahre.all()), bulk=False)
         p.urls.set((PrintMediaURL(url=u.url) for u in obj.urls.all()), bulk=False)
-        for bestand in obj.bestand_set.values('lagerort_id', 'anmerkungen', 'provenienz_id'):
-            new_bestand = Bestand.objects.create(
+        for bestand in obj.bestand_set.values("pk", 'lagerort_id', 'anmerkungen', 'provenienz_id'):
+            new = Bestand.objects.create(
                 lagerort_id=bestand["lagerort_id"],
                 anmerkungen=bestand["anmerkungen"],
                 provenienz_id=bestand["provenienz_id"],
                 printmedia=p,
             )
-            # for e in LogEntry.objects.filter(object_id=bestand.pk, content_type=contenttypes[Bestand]):
-            #     new = LogEntry(
-            #         action_time=e.action_time,
-            #         user=e.user,
-            #         content_type=contenttypes[Bestand],
-            #         object_id=new_bestand.pk,
-            #         object_repr=e.object_repr,
-            #         action_flag=e.action_flag,
-            #         change_message=e.change_message,
-            #     )
-            #     log_entries.append(new)
+            new_bestand[str(bestand["pk"])] = new
 
         # Many-to-many:
         for m2m_field in obj._meta.many_to_many:
@@ -113,21 +103,50 @@ def _migrate():
             if related.exists():
                 getattr(p, m2m_field.name).set(related)
 
-        # for e in LogEntry.objects.filter(object_id=obj.pk, content_type=contenttypes[obj._meta.model]):
-        #     new = LogEntry(
-        #         action_time=e.action_time,
-        #         user=e.user,
-        #         content_type=contenttypes[PrintMedia],
-        #         object_id=p.pk,
-        #         object_repr=e.object_repr,
-        #         action_flag=e.action_flag,
-        #         change_message=e.change_message,
-        #     )
-        #     log_entries.append(new)
-        print_progress(i + 1, count, prefix='Fortschritt:', suffix=f"{i + 1}/{count}")
-    if log_entries:
-        print("Erstelle LogEntry Objekte...")
-        LogEntry.objects.bulk_create(log_entries)
+        print_progress(i + 1, total, prefix="PrintMedia erstellt:", suffix=f"{i + 1}/{total}")
+    if new_pmedia or new_bestand:
+        print("Erstelle Admin Logs:")
+        new_logentries = []
+        fields = (
+            "action_time", "user_id", "content_type_id", "object_id",
+            "object_repr", "action_flag", "change_message"
+        )
+        bestand_qs = (
+            LogEntry.objects
+            .filter(object_id__in=new_bestand or (), content_type=contenttypes[Bestand])
+            .values(*fields)
+        )
+        brochure_qs = (
+            LogEntry.objects
+            .filter(
+                object_id__in=new_pmedia or (),
+                content_type__in=[ct for m, ct in contenttypes.items() if m != Bestand]
+            )
+            .values(*fields)
+        )
+        total = len(brochure_qs) + len(bestand_qs)
+        i = 0
+        for e in chain(bestand_qs, brochure_qs):
+            if e["content_type_id"] == contenttypes[Bestand].pk:
+                new_obj = new_bestand[e["object_id"]]
+            else:
+                new_obj = new_pmedia[e["object_id"]]
+
+            new_logentries.append(
+                LogEntry(
+                    action_time=e["action_time"],
+                    user_id=e["user_id"],
+                    content_type_id=contenttypes[new_obj._meta.model].pk,
+                    object_id=new_obj.pk,
+                    object_repr=e["object_repr"],
+                    action_flag=e["action_flag"],
+                    change_message=e["change_message"],
+                )
+            )
+            i += 1
+            print_progress(i, total, prefix="Admin Logs erstellt:", suffix=f"{i + 1}/{total}")
+        if new_logentries:
+            LogEntry.objects.bulk_create(new_logentries)
 
 
 class Command(BaseCommand):
@@ -164,9 +183,5 @@ class Command(BaseCommand):
                     return
                 self.stdout.write("Lösche vorhandene PrintMedia Objekte...")
                 PrintMedia.objects.filter(_brochure_ptr__isnull=False).delete()
-            self.stdout.write("Beginne Migration...")
-            start = time.time()
             _migrate()
-            end = time.time()
-            self.stdout.write(f"Time: {end - start}")
         self.stdout.write(self.style.SUCCESS("Fertig!"))
