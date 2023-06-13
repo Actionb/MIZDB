@@ -1431,6 +1431,7 @@ class HerausgeberAdmin(MIZModelAdmin):
     require_confirmation = True
 
 
+# TODO: hide Brochure models once PrintMedia was properly adopted
 class BaseBrochureAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
