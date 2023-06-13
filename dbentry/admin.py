@@ -1804,24 +1804,18 @@ class PrintMediaAdmin(MIZModelAdmin):
         tabular_autocomplete = ['veranstaltung']
 
     actions = [_actions.merge_records, _actions.change_bestand]
-    form = _forms.BrochureForm
+    # form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     list_display = ['titel', 'typ', 'zusammenfassung', 'jahr_string']
     fieldsets = [
         (None, {'fields': ['titel', 'typ', 'zusammenfassung']}),
-        ('Beilage von Ausgabe', {
-            'fields': ['ausgabe__magazin', 'ausgabe'],
-            'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.',
-            'classes': ['collapse', 'collapsed']
-        }),
         ('Anmerkungen', {'fields': ['anmerkungen'], 'classes': ['collapse', 'collapsed']})
     ]
     search_form_kwargs = {
-        'fields': ['typ', 'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort', 'spielort', 'veranstaltung', 'jahre__jahr__range'],
-        'forwards': {'ausgabe': 'ausgabe__magazin'},
+        'fields': ['typ', 'genre', 'schlagwort', 'spielort', 'veranstaltung', 'jahre__jahr__range'],
         'labels': {'jahre__jahr__range': 'Jahr'},
-        'tabular': ['ausgabe', 'spielort', 'veranstaltung']
+        'tabular': ['spielort', 'veranstaltung']
     }
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
@@ -1843,4 +1837,3 @@ class PrintMediaAdmin(MIZModelAdmin):
         return obj.jahr_string  # added by annotations  # noqa
     jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
     jahr_string.admin_order_field = 'jahr_min'  # type: ignore[attr-defined]  # noqa
-

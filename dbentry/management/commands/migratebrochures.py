@@ -61,7 +61,7 @@ def _migrate():
     new_pmedia, new_bestand = {}, {}  # map 'original object' ids to new object ids
     print("Beginne Migration...")
     for i, obj in enumerate(chain(*(
-            m.objects.prefetch_related("jahre", "urls")
+            m.objects.prefetch_related("jahre", "urls").select_related("ausgabe", "ausgabe__magazin")
             for m in (Brochure, Kalender, Katalog)
     ))):
         if isinstance(obj, Katalog):
@@ -74,12 +74,15 @@ def _migrate():
             anmerkungen = f"Bemerkungen: {obj.bemerkungen}"
         else:
             anmerkungen = obj.beschreibung
+        if obj.ausgabe:
+            if anmerkungen:
+                anmerkungen += "\n----\n"
+            anmerkungen += f"Beilage von Ausgabe: {obj.ausgabe.magazin.magazin_name} {obj.ausgabe}"
 
         p = PrintMedia.objects.create(
             titel=obj.titel,
             typ=typ,
             zusammenfassung=obj.zusammenfassung,
-            ausgabe_id=obj.ausgabe_id,
             anmerkungen=anmerkungen,
             _brochure_ptr_id=obj.basebrochure_ptr_id
         )

@@ -1701,12 +1701,6 @@ class PrintMedia(BaseModel):
     zusammenfassung = models.TextField(blank=True)
     anmerkungen = models.TextField(blank=True, help_text='Weitere Anmerkungen')
 
-    # TODO: keep this field if it isn't used?
-    ausgabe = models.ForeignKey(
-        'ausgabe', models.SET_NULL, related_name='printmedia',
-        verbose_name='Ausgabe', blank=True, null=True
-    )
-
     genre = models.ManyToManyField('Genre')
     schlagwort = models.ManyToManyField('Schlagwort')
     spielort = models.ManyToManyField('Spielort')

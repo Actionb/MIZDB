@@ -12,7 +12,12 @@ class TestCommand(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.ausgabe = make(_models.Ausgabe)
+        cls.ausgabe = make(
+            _models.Ausgabe,
+            beschreibung="2023-06",
+            sonderausgabe=True,
+            magazin__magazin_name="Testmagazin"
+        )
         # Brochure:
         cls.brochure = make(
             _models.Brochure,
@@ -20,7 +25,6 @@ class TestCommand(TestCase):
             zusammenfassung="Testbroschüre Zusammenfassung",
             beschreibung="Testbroschüre Beschreibung",
             bemerkungen="Testbroschüre Bemerkungen",
-            ausgabe=cls.ausgabe,
             genre__genre=["Testbroschüre Genre 1", "Testbroschüre Genre 2"],
             schlagwort__schlagwort=["Testbroschüre Schlagwort 1", "Testbroschüre Schlagwort 2"]
         )
@@ -78,7 +82,6 @@ class TestCommand(TestCase):
         self.assertEqual(pmedia.titel, "Testbroschüre")
         self.assertEqual(pmedia.zusammenfassung, "Testbroschüre Zusammenfassung")
         self.assertEqual(pmedia.anmerkungen, "Testbroschüre Beschreibung\n----\nBemerkungen: Testbroschüre Bemerkungen")
-        self.assertEqual(pmedia.ausgabe, self.ausgabe)
         self.assertIn("Testbroschüre Genre 1", pmedia.genre.values_list('genre', flat=True))
         self.assertIn("Testbroschüre Genre 2", pmedia.genre.values_list('genre', flat=True))
         self.assertIn("Testbroschüre Schlagwort 1", pmedia.schlagwort.values_list('schlagwort', flat=True))
@@ -109,3 +112,16 @@ class TestCommand(TestCase):
         pmedia = _models.PrintMedia.objects.get(_brochure_ptr=self.katalog.pk)
         self.assertEqual(pmedia.typ.typ, "Katalog (Tonträger)")
         self.assertEqual(pmedia.anmerkungen, "Testkatalog Beschreibung")
+
+    def test_ausgabe_mentioned_in_anmerkungen(self):
+        """
+        Assert that the Ausgabe of the source Brochure is mentioned in the
+        field 'anmerkungen'.
+        """
+        brochure_with_ausgabe = make(_models.Brochure, ausgabe=self.ausgabe)
+        self.brochure.delete()
+        self.kalender.delete()
+        self.katalog.delete()
+        self.run_command()
+        pmedia = _models.PrintMedia.objects.get(_brochure_ptr=brochure_with_ausgabe.pk)
+        self.assertIn("Beilage von Ausgabe: Testmagazin 2023-06", pmedia.anmerkungen)
