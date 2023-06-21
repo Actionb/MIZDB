@@ -483,7 +483,7 @@ class ChangelistSearchForm(SearchForm):
     default_renderer = FormRenderer(
         label_css_classes=("col-lg-1", "col-form-label"),
         control_css_classes=("col-lg-10", "col-xl-9", "col-xxl-8"),
-        field_css_classes={'*': 'row mb-3'},
+        field_css_classes={'*': 'row mb-2'},
         form_css_classes=("ps-2",),
     )
 
