@@ -5,6 +5,7 @@
 
 {% block extrahead %}
   {{ block.super }}
+  {{ advanced_search_form.media }}
   <script type="module" src="{% static 'formset/js/django-formset.js' %}"></script>
 {% endblock extrahead %}
 
