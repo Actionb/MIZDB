@@ -28,6 +28,11 @@ class TestRangeWidget(TestCase):
         self.assertIn('widgets', kwargs)
         self.assertEqual(kwargs['widgets'], [widget] * 2)
 
+    def test_init_adds_form_control_class(self):
+        """Assert that the css class 'form-control' is added to the widget attrs."""
+        widget = RangeWidget(forms.TextInput(), attrs={'class': 'beep boop'})
+        self.assertEqual(widget.attrs['class'], 'beep boop form-control')
+
 
 class TestRangeFormField(TestCase):
 

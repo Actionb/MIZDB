@@ -28,6 +28,9 @@ class RangeWidget(forms.MultiWidget):
     template_name = 'rangewidget.html'
 
     def __init__(self, widget: forms.Widget, attrs: Optional[dict] = None) -> None:
+        attrs = {} if attrs is None else attrs.copy()
+        # Add bootstrap form control class:
+        attrs['class'] = (attrs.get('class', '') + ' form-control').strip()
         super().__init__(widgets=[widget] * 2, attrs=attrs)
 
     def decompress(self, value: Optional[str]) -> Union[List[str], List[None]]:
