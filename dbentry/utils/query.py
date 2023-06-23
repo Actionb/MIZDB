@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import models
 from django.db.models import Value, Func, Expression
@@ -46,12 +48,12 @@ def array_to_string(*arrays: Expression, sep: str = ", ", null: str = "-") -> Fu
     )
 
 
-def limit(string_expr: Expression | Combinable, length: int = LENGTH_LIMIT) -> Func:
+def limit(string_expr: Union[Expression, Combinable], length: int = LENGTH_LIMIT) -> Func:
     """Shorten the result of the string expression to length `limit`."""
     return Func(string_expr, Value(length), function="left", output_field=models.CharField())
 
 
-def concatenate(*expr: Expression | Combinable, sep: str = ", ") -> Func:
+def concatenate(*expr: Union[Expression, Combinable], sep: str = ", ") -> Func:
     """Concatenate the expressions `expr`, separated by `sep`."""
     return Func(Value(sep), *expr, function="concat_ws")
 
