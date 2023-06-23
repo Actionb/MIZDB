@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
 - add overview (changelist view) queryset annotations and optimizations to models
 
+### Changed
+- dbentry admin changelists now use overview annotations
+- dal autocomplete tabular views now use the overview annotations
+
 ## [0.10.1] - 2023-06-07
+
+### Fixed
 
 - fix incorrect tabular_autocomplete parameter for KalenderAdmin.SpielortInline  
 

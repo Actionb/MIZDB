@@ -34,6 +34,10 @@ class Band(models.Model):
     def __str__(self):
         return self.band_name
 
+    @classmethod
+    def overview(cls, queryset):
+        return queryset
+
 
 class Genre(models.Model):
     genre = models.CharField('Genre', max_length=100, unique=True)

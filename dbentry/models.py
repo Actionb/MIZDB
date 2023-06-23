@@ -124,7 +124,8 @@ class Musiker(BaseModel):
         return {
             'band_list': string_list('band__band_name'),
             'genre_list': string_list('genre__genre'),
-            'orte_list': string_list('orte___name', sep="; ")
+            'orte_list': string_list('orte___name', sep="; "),
+            'alias_list': string_list('musikeralias__alias')
         }
 
 
