@@ -140,9 +140,9 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj = self.get_annotated_model_obj(self.obj1)
         self.assertEqual(self.model_admin.schlagwort_string(obj), 'Schlagwort1, Schlagwort2')
 
-    def test_kuenstler_string(self):
+    def test_kuenstler_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Testband, Alice Tester')
+        self.assertEqual(self.model_admin.kuenstler_list(obj), 'Testband, Alice Tester')
 
 
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -165,9 +165,9 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
         super().setUpTestData()
 
-    def test_kuenstler_string(self):
+    def test_kuenstler_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Testband, Alice Tester')
+        self.assertEqual(self.model_admin.kuenstler_list(obj), 'Testband, Alice Tester')
 
     def test_action_change_bestand(self):
         """Assert that the 'change_bestand' page can be navigated to from the changelist."""
@@ -239,14 +239,14 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_get_queryset_contains_annotations(self):
         """Assert that the queryset returned by get_queryset contains the expected annotations."""
         annotations = self.model_admin.get_queryset(self.get_request()).query.annotations
-        self.assertIn('jahr_string', annotations)
-        self.assertIsInstance(annotations['jahr_string'], Func)
-        self.assertIn('num_string', annotations)
-        self.assertIsInstance(annotations['num_string'], Func)
-        self.assertIn('lnum_string', annotations)
-        self.assertIsInstance(annotations['lnum_string'], Func)
-        self.assertIn('monat_string', annotations)
-        self.assertIsInstance(annotations['monat_string'], Subquery)
+        self.assertIn('jahr_list', annotations)
+        self.assertIsInstance(annotations['jahr_list'], Func)
+        self.assertIn('num_list', annotations)
+        self.assertIsInstance(annotations['num_list'], Func)
+        self.assertIn('lnum_list', annotations)
+        self.assertIsInstance(annotations['lnum_list'], Func)
+        self.assertIn('monat_list', annotations)
+        self.assertIsInstance(annotations['monat_list'], Subquery)
         self.assertIn('anz_artikel', annotations)
         self.assertIsInstance(annotations['anz_artikel'], Count)
 
@@ -262,21 +262,21 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         _models.Artikel.objects.all().delete()
         self.assertEqual(self.model_admin.anz_artikel(self.get_annotated_model_obj(self.obj1)), 0)
 
-    def test_jahr_string(self):
+    def test_jahr_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.jahr_string(obj), '2020, 2021, 2022')
+        self.assertEqual(self.model_admin.jahr_list(obj), '2020, 2021, 2022')
 
-    def test_num_string(self):
+    def test_num_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.num_string(obj), '10, 11, 12')
+        self.assertEqual(self.model_admin.num_list(obj), '10, 11, 12')
 
-    def test_lnum_string(self):
+    def test_lnum_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.lnum_string(obj), '10, 11, 12')
+        self.assertEqual(self.model_admin.lnum_list(obj), '10, 11, 12')
 
-    def test_monat_string(self):
+    def test_monat_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.monat_string(obj), 'Jan, Feb')
+        self.assertEqual(self.model_admin.monat_list(obj), 'Jan, Feb')
 
     def test_change_status_unbearbeitet(self):
         self.model_admin.change_status_unbearbeitet(self.get_request(), self.queryset)
@@ -689,17 +689,17 @@ class TestBaseBrochureAdmin(AdminTestCase):
     def test_get_queryset_contains_annotations(self):
         """Assert that the queryset returned by get_queryset contains the expected annotations."""
         annotations = self.model_admin.get_queryset(self.get_request()).query.annotations
-        self.assertIn('jahr_string', annotations)
-        self.assertIsInstance(annotations['jahr_string'], Func)
+        self.assertIn('jahr_list', annotations)
+        self.assertIsInstance(annotations['jahr_list'], Func)
 
-    def test_jahr_string(self):
+    def test_jahr_list(self):
         obj = (
             self.queryset
             .filter(pk=self.obj1.pk)
             .annotate(**self.model.get_overview_annotations())
             .get()
         )
-        self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
+        self.assertEqual(self.model_admin.jahr_list(obj), '2001, 2002')
 
 
 class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -768,8 +768,8 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertIsInstance(annotations['schlagwort_list'], Func)
         self.assertIn('genre_list', annotations)
         self.assertIsInstance(annotations['genre_list'], Func)
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
     def test_autoren_string(self):
         obj = self.get_annotated_model_obj(self.obj1)
@@ -786,9 +786,9 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj = self.get_annotated_model_obj(self.obj1)
         self.assertEqual(self.model_admin.genre_string(obj), 'Testgenre1, Testgenre2')
 
-    def test_kuenstler_string(self):
+    def test_kuenstler_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
+        self.assertEqual(self.model_admin.kuenstler_list(obj), 'Led Zeppelin, Robert Plant')
 
     def test_action_change_bestand(self):
         """Assert that the 'change_bestand' page can be navigated to from the changelist."""
@@ -1396,12 +1396,12 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_get_queryset_contains_annotations(self):
         """Assert that the queryset returned by get_queryset contains the expected annotations."""
         annotations = self.model_admin.get_queryset(self.get_request()).query.annotations
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
-    def test_kuenstler_string(self):
+    def test_kuenstler_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
+        self.assertEqual(self.model_admin.kuenstler_list(obj), 'Led Zeppelin, Robert Plant')
 
     def test_datum_localized(self):
         self.obj1.refresh_from_db()
@@ -1440,12 +1440,12 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_get_queryset_contains_annotations(self):
         """Assert that the queryset returned by get_queryset contains the expected annotations."""
         annotations = self.model_admin.get_queryset(self.get_request()).query.annotations
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
-    def test_kuenstler_string(self):
+    def test_kuenstler_list(self):
         obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
+        self.assertEqual(self.model_admin.kuenstler_list(obj), 'Led Zeppelin, Robert Plant')
 
     def test_action_change_bestand(self):
         """Assert that the 'change_bestand' page can be navigated to from the changelist."""
@@ -1492,7 +1492,7 @@ class TestChangelistAnnotations(AdminTestCase):
             'action': 'change_status_inbearbeitung',
         }
         # Order against one of the annotated fields:
-        query_string = f"?o={self.model_admin.list_display.index('num_string') + 1}"
+        query_string = f"?o={self.model_admin.list_display.index('num_list') + 1}"
         self.client.post(self.changelist_path + query_string, data=request_data)
         self.obj.refresh_from_db()
         self.assertEqual(self.obj.status, _models.Ausgabe.Status.INBEARBEITUNG)
@@ -1503,11 +1503,11 @@ class TestChangelistAnnotations(AdminTestCase):
         query_string = (
             # Need to apply some filters or the result list will be empty.
             "?ausgabejahr__jahr_0=2022&"
-            f"o={self.model_admin.list_display.index('num_string') + 1}"
+            f"o={self.model_admin.list_display.index('num_list') + 1}"
         )
         response = self.client.get(self.changelist_path + query_string)
         result_list = response.context_data['cl'].result_list
-        self.assertIn('num_string', result_list.query.order_by)
+        self.assertIn('num_list', result_list.query.order_by)
         self.assertQuerysetEqual([other, self.obj], result_list)
 
 

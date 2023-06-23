@@ -462,10 +462,10 @@ class Ausgabe(ComputedNameModel):
             .values('x')
         )
         return {
-            'jahr_string': string_list('ausgabejahr__jahr'),
-            'num_string': string_list('ausgabenum__num'),
-            'lnum_string': string_list('ausgabelnum__lnum'),
-            'monat_string': Subquery(subquery),
+            'jahr_list': string_list('ausgabejahr__jahr'),
+            'num_list': string_list('ausgabenum__num'),
+            'lnum_list': string_list('ausgabelnum__lnum'),
+            'monat_list': Subquery(subquery),
             'anz_artikel': Count('artikel', distinct=True)
         }
 
@@ -834,7 +834,7 @@ class Artikel(BaseModel):
     def get_overview_annotations() -> dict:
         return {
             'schlagwort_list': string_list('schlagwort__schlagwort'),
-            'kuenstler_string': limit(
+            'kuenstler_list': limit(
                 array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name'))
             )
         }
@@ -902,7 +902,7 @@ class Buch(BaseModel):
             'autor_list': string_list('autor___name'),
             'schlagwort_list': string_list('schlagwort__schlagwort'),
             'genre_list': string_list('genre__genre'),
-            'kuenstler_string': limit(
+            'kuenstler_list': limit(
                 array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name'))
             ),
         }
@@ -1018,7 +1018,7 @@ class Audio(BaseModel):
     @staticmethod
     def get_overview_annotations() -> dict:
         return {
-            'kuenstler_string': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
+            'kuenstler_list': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
         }
 
 
@@ -1301,7 +1301,7 @@ class Veranstaltung(BaseModel):
     @staticmethod
     def get_overview_annotations() -> dict:
         return {
-            'kuenstler_string': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
+            'kuenstler_list': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
         }
 
 
@@ -1397,7 +1397,7 @@ class Video(BaseModel):
     @staticmethod
     def get_overview_annotations() -> dict:
         return {
-            'kuenstler_string': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
+            'kuenstler_list': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
         }
 
 
@@ -1689,7 +1689,7 @@ class BaseBrochure(BaseModel):
 
     @staticmethod
     def get_overview_annotations() -> dict:
-        return {'jahr_string': string_list('jahre__jahr')}
+        return {'jahr_list': string_list('jahre__jahr')}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']

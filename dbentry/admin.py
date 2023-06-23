@@ -121,7 +121,7 @@ class AudioAdmin(MIZModelAdmin):
     form = _forms.AudioForm
     index_category = 'Archivgut'
     save_on_top = True
-    list_display = ['titel', 'jahr', 'medium', 'kuenstler_string']
+    list_display = ['titel', 'jahr', 'medium', 'kuenstler_list']
     list_select_related = ['medium']
     ordering = ['titel', 'jahr', 'medium']
 
@@ -151,9 +151,9 @@ class AudioAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def kuenstler_string(self, obj: _models.Audio) -> str:
-        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations  # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    def kuenstler_list(self, obj: _models.Audio) -> str:
+        return obj.kuenstler_list or self.get_empty_value_display()  # added by annotations  # noqa
+    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Ausgabe, site=miz_site)
@@ -193,7 +193,7 @@ class AusgabenAdmin(MIZModelAdmin):
         'beschreibung', 'bemerkungen'
     ]
     list_display = (
-        'ausgabe_name', 'num_string', 'lnum_string', 'monat_string', 'jahr_string',
+        'ausgabe_name', 'num_list', 'lnum_list', 'monat_list', 'jahr_list',
         'jahrgang', 'magazin_name', 'e_datum', 'anz_artikel', 'status'
     )
     search_form_kwargs = {
@@ -237,24 +237,24 @@ class AusgabenAdmin(MIZModelAdmin):
     anz_artikel.short_description = 'Anz. Artikel'  # type: ignore[attr-defined]  # noqa
     anz_artikel.admin_order_field = 'anz_artikel'  # type: ignore[attr-defined]  # noqa
 
-    def jahr_string(self, obj: _models.Ausgabe) -> str:
-        return obj.jahr_string  # added by annotations  # noqa
-    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
-    jahr_string.admin_order_field = 'jahr_string'  # type: ignore[attr-defined]  # noqa
+    def jahr_list(self, obj: _models.Ausgabe) -> str:
+        return obj.jahr_list  # added by annotations  # noqa
+    jahr_list.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
+    jahr_list.admin_order_field = 'jahr_list'  # type: ignore[attr-defined]  # noqa
 
-    def num_string(self, obj: _models.Ausgabe) -> str:
-        return obj.num_string  # added by annotations  # noqa
-    num_string.short_description = 'Nummer'  # type: ignore[attr-defined]  # noqa
-    num_string.admin_order_field = 'num_string'  # type: ignore[attr-defined]  # noqa
+    def num_list(self, obj: _models.Ausgabe) -> str:
+        return obj.num_list  # added by annotations  # noqa
+    num_list.short_description = 'Nummer'  # type: ignore[attr-defined]  # noqa
+    num_list.admin_order_field = 'num_list'  # type: ignore[attr-defined]  # noqa
 
-    def lnum_string(self, obj: _models.Ausgabe) -> str:
-        return obj.lnum_string  # added by annotations  # noqa
-    lnum_string.short_description = 'lfd. Nummer'  # type: ignore[attr-defined]  # noqa
-    lnum_string.admin_order_field = 'lnum_string'  # type: ignore[attr-defined]  # noqa
+    def lnum_list(self, obj: _models.Ausgabe) -> str:
+        return obj.lnum_list  # added by annotations  # noqa
+    lnum_list.short_description = 'lfd. Nummer'  # type: ignore[attr-defined]  # noqa
+    lnum_list.admin_order_field = 'lnum_list'  # type: ignore[attr-defined]  # noqa
 
-    def monat_string(self, obj: _models.Ausgabe) -> str:
-        return obj.monat_string  # added by annotations  # noqa
-    monat_string.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
+    def monat_list(self, obj: _models.Ausgabe) -> str:
+        return obj.monat_list  # added by annotations  # noqa
+    monat_list.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
 
     def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
         """Update the ``status`` of the Ausgabe instances in ``queryset``."""
@@ -408,7 +408,7 @@ class ArtikelAdmin(MIZModelAdmin):
     ]
     list_display = [
         'schlagzeile', 'zusammenfassung_string', 'seite', 'schlagwort_string',
-        'ausgabe_name', 'artikel_magazin', 'kuenstler_string'
+        'ausgabe_name', 'artikel_magazin', 'kuenstler_list'
     ]
     search_form_kwargs = {
         'fields': [
@@ -442,9 +442,9 @@ class ArtikelAdmin(MIZModelAdmin):
     schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
     schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
-    def kuenstler_string(self, obj: _models.Artikel) -> str:
-        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations  # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    def kuenstler_list(self, obj: _models.Artikel) -> str:
+        return obj.kuenstler_list or self.get_empty_value_display()  # added by annotations  # noqa
+    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Band, site=miz_site)
@@ -668,7 +668,7 @@ class BuchAdmin(MIZModelAdmin):
         PersonInLine, HerausgeberInLine, VerlagInLine, BestandInLine
     ]
     list_display = [
-        'titel', 'seitenumfang', 'autoren_string', 'kuenstler_string',
+        'titel', 'seitenumfang', 'autoren_string', 'kuenstler_list',
         'schlagwort_string', 'genre_string'
     ]
     search_form_kwargs = {
@@ -685,26 +685,22 @@ class BuchAdmin(MIZModelAdmin):
 
     def autoren_string(self, obj: _models.Buch) -> str:
         return obj.autor_list or self.get_empty_value_display()  # added by annotations  # noqa
-
     autoren_string.short_description = 'Autoren'  # type: ignore[attr-defined]  # noqa
     autoren_string.admin_order_field = 'autor_list'  # type: ignore[attr-defined]  # noqa
 
     def schlagwort_string(self, obj: _models.Buch) -> str:
         return obj.schlagwort_list or self.get_empty_value_display()  # added by annotations  # noqa
-
     schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
     schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
     def genre_string(self, obj: _models.Buch) -> str:
         return obj.genre_list or self.get_empty_value_display()  # added by annotations  # noqa
-
     genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
     genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
-    def kuenstler_string(self, obj: _models.Buch) -> str:
-        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations  # noqa
-
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    def kuenstler_list(self, obj: _models.Buch) -> str:
+        return obj.kuenstler_list or self.get_empty_value_display()  # added by annotations  # noqa
+    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Dokument, site=miz_site)
@@ -734,7 +730,6 @@ class GenreAdmin(MIZModelAdmin):
 
     def alias_string(self, obj: _models.Genre) -> str:
         return obj.alias_list or self.get_empty_value_display()  # added by annotations  # noqa
-
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
     def _get_changelist_link_relations(self) -> list:
@@ -983,7 +978,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlInLine,
         GenreInLine, PersonInLine
     ]
-    list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
+    list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_list']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
     tabular_autocomplete = ['spielort']
@@ -996,9 +991,9 @@ class VeranstaltungAdmin(MIZModelAdmin):
     }
     require_confirmation = True
 
-    def kuenstler_string(self, obj: _models.Veranstaltung) -> str:
-        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    def kuenstler_list(self, obj: _models.Veranstaltung) -> str:
+        return obj.kuenstler_list or self.get_empty_value_display()  # added by annotations # noqa
+    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
     def datum_localized(self, obj: _models.Veranstaltung) -> str:
         return obj.datum.localize()
@@ -1065,7 +1060,7 @@ class VideoAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     collapse_all = True
     save_on_top = True
-    list_display = ['titel', 'medium', 'kuenstler_string']
+    list_display = ['titel', 'medium', 'kuenstler_list']
     ordering = ['titel']
     list_select_related = ['medium']
 
@@ -1095,9 +1090,9 @@ class VideoAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
 
-    def kuenstler_string(self, obj: _models.Video) -> str:
-        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    def kuenstler_list(self, obj: _models.Video) -> str:
+        return obj.kuenstler_list or self.get_empty_value_display()  # added by annotations # noqa
+    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Bundesland, site=miz_site)
@@ -1290,7 +1285,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
-    list_display = ['titel', 'zusammenfassung', 'jahr_string']
+    list_display = ['titel', 'zusammenfassung', 'jahr_list']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
         'forwards': {'ausgabe': 'ausgabe__magazin'},
@@ -1332,10 +1327,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
             'titel', 'jahr_min', 'zusammenfassung'
         )
 
-    def jahr_string(self, obj: _models.BaseBrochure) -> str:
-        return obj.jahr_string  # added by annotations  # noqa
-    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
-    jahr_string.admin_order_field = 'jahr_min'  # type: ignore[attr-defined]  # noqa
+    def jahr_list(self, obj: _models.BaseBrochure) -> str:
+        return obj.jahr_list  # added by annotations  # noqa
+    jahr_list.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
+    jahr_list.admin_order_field = 'jahr_min'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Brochure, site=miz_site)
@@ -1365,7 +1360,7 @@ class BrochureAdmin(BaseBrochureAdmin):
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
-    list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
+    list_display = ['titel', 'zusammenfassung', 'art', 'jahr_list']
 
     def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
         """

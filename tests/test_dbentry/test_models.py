@@ -491,14 +491,14 @@ class TestModelAusgabe(MIZTestCase):
     def test_get_overview_annotations(self):
         """Check the annotations for this changelist."""
         annotations = self.model.get_overview_annotations()
-        self.assertIn('jahr_string', annotations)
-        self.assertIsInstance(annotations['jahr_string'], Func)
-        self.assertIn('num_string', annotations)
-        self.assertIsInstance(annotations['num_string'], Func)
-        self.assertIn('lnum_string', annotations)
-        self.assertIsInstance(annotations['lnum_string'], Func)
-        self.assertIn('monat_string', annotations)
-        self.assertIsInstance(annotations['monat_string'], Subquery)
+        self.assertIn('jahr_list', annotations)
+        self.assertIsInstance(annotations['jahr_list'], Func)
+        self.assertIn('num_list', annotations)
+        self.assertIsInstance(annotations['num_list'], Func)
+        self.assertIn('lnum_list', annotations)
+        self.assertIsInstance(annotations['lnum_list'], Func)
+        self.assertIn('monat_list', annotations)
+        self.assertIsInstance(annotations['monat_list'], Subquery)
         self.assertIn('anz_artikel', annotations)
         self.assertIsInstance(annotations['anz_artikel'], Count)
 
@@ -807,8 +807,8 @@ class TestModelArtikel(MIZTestCase):
         annotations = self.model.get_overview_annotations()
         self.assertIn('schlagwort_list', annotations)
         self.assertIsInstance(annotations['schlagwort_list'], Func)
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
 
 class TestModelBuch(MIZTestCase):
@@ -845,8 +845,8 @@ class TestModelBuch(MIZTestCase):
         self.assertIsInstance(annotations['schlagwort_list'], Func)
         self.assertIn('genre_list', annotations)
         self.assertIsInstance(annotations['genre_list'], Func)
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
 
 class TestModelHerausgeber(MIZTestCase):
@@ -927,8 +927,8 @@ class TestModelAudio(MIZTestCase):
 
     def test_get_overview_annotations(self):
         annotations = self.model.get_overview_annotations()
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
 
 class TestModelPlakat(MIZTestCase):
@@ -1151,8 +1151,8 @@ class TestModelVeranstaltung(MIZTestCase):
 
     def test_get_overview_annotations(self):
         annotations = self.model.get_overview_annotations()
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
 
 class TestModelVeranstaltungAlias(MIZTestCase):
@@ -1212,8 +1212,8 @@ class TestModelVideo(MIZTestCase):
 
     def test_get_overview_annotations(self):
         annotations = self.model.get_overview_annotations()
-        self.assertIn('kuenstler_string', annotations)
-        self.assertIsInstance(annotations['kuenstler_string'], Func)
+        self.assertIn('kuenstler_list', annotations)
+        self.assertIsInstance(annotations['kuenstler_list'], Func)
 
 
 class TestModelProvenienz(MIZTestCase):
@@ -1423,8 +1423,8 @@ class TestModelBaseBrochure(MIZTestCase):
 
     def test_get_overview_annotations(self):
         annotations = self.model.get_overview_annotations()
-        self.assertIn('jahr_string', annotations)
-        self.assertIsInstance(annotations['jahr_string'], Func)
+        self.assertIn('jahr_list', annotations)
+        self.assertIsInstance(annotations['jahr_list'], Func)
 
 
 class TestModelBrochure(MIZTestCase):
