@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.postgres.aggregates import ArrayAgg
 
 from dbentry.base.admin import MIZModelAdmin
 from .models import Audio, Band, Musiker, MusikerAudioM2M, Veranstaltung, Person
@@ -13,6 +12,7 @@ class AudioAdmin(MIZModelAdmin):
         model = MusikerAudioM2M
 
     inlines = [MusikerInline]
+    fields = ["titel", "tracks", "beschreibung"]
 
 
 @admin.register(Musiker, site=admin_site)
@@ -24,13 +24,6 @@ class MusikerAdmin(MIZModelAdmin):
 class BandAdmin(MIZModelAdmin):
     list_display = ['band_name', 'alias_string']
     actions = None  # don't include action checkbox in the list_display
-
-    def get_changelist_annotations(self):
-        return {
-            'alias_list': ArrayAgg(
-                'bandalias__alias', distinct=True, ordering='bandalias__alias'
-            ),
-        }
 
     def alias_string(self, obj) -> str:
         return ", ".join(obj.alias_list) or self.get_empty_value_display()

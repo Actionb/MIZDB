@@ -16,7 +16,6 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.widgets import EXTRA_DATA_KEY
-from dbentry.admin import AusgabenAdmin
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
@@ -208,9 +207,7 @@ class ACAusgabe(ACTabular):
     model = _models.Ausgabe
 
     def get_queryset(self) -> AusgabeQuerySet:
-        queryset = super().get_queryset()
-        model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
+        return super().get_queryset().overview().chronological_order()
 
     def get_group_headers(self) -> list:
         return ['Nummer', 'lfd.Nummer', 'Jahr']

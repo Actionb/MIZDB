@@ -1,3 +1,4 @@
+from django.db.models import Func, Subquery, Count, Exists
 from django.utils.translation import override as translation_override
 
 from dbentry import m2m as _m2m
@@ -49,6 +50,15 @@ class TestModelPerson(MIZTestCase):
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
 
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('is_musiker', annotations)
+        self.assertIsInstance(annotations['is_musiker'], Exists)
+        self.assertIn('is_autor', annotations)
+        self.assertIsInstance(annotations['is_autor'], Exists)
+        self.assertIn('orte_list', annotations)
+        self.assertIsInstance(annotations['orte_list'], Func)
+
 
 class TestModelMusiker(MIZTestCase):
     model = _models.Musiker
@@ -78,6 +88,15 @@ class TestModelMusiker(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('band_list', annotations)
+        self.assertIsInstance(annotations['band_list'], Func)
+        self.assertIn('genre_list', annotations)
+        self.assertIsInstance(annotations['genre_list'], Func)
+        self.assertIn('orte_list', annotations)
+        self.assertIsInstance(annotations['orte_list'], Func)
 
 
 class TestModelMusikerAlias(MIZTestCase):
@@ -114,6 +133,11 @@ class TestModelGenre(MIZTestCase):
         self.assertEqual(columns['genre']['name'], 'genre')
         self.assertEqual(columns['genre']['weight'], 'A')
         self.assertEqual(columns['genre']['language'], SIMPLE)
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('alias_list', annotations)
+        self.assertIsInstance(annotations['alias_list'], Func)
 
 
 class TestModelGenreAlias(MIZTestCase):
@@ -162,6 +186,17 @@ class TestModelBand(MIZTestCase):
     def test_related_search_vectors(self):
         """Check the configs for related search vectors."""
         self.assertIn(('bandalias___fts', SIMPLE), self.model.related_search_vectors)
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('genre_list', annotations)
+        self.assertIsInstance(annotations['genre_list'], Func)
+        self.assertIn('musiker_list', annotations)
+        self.assertIsInstance(annotations['musiker_list'], Func)
+        self.assertIn('alias_list', annotations)
+        self.assertIsInstance(annotations['alias_list'], Func)
+        self.assertIn('orte_list', annotations)
+        self.assertIsInstance(annotations['orte_list'], Func)
 
 
 class TestModelBandAlias(MIZTestCase):
@@ -231,6 +266,11 @@ class TestModelAutor(MIZTestCase):
     def test_related_search_vectors(self):
         """Check the configs for related search vectors."""
         self.assertIn(('person___fts', SIMPLE), self.model.related_search_vectors)
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('magazin_list', annotations)
+        self.assertIsInstance(annotations['magazin_list'], Func)
 
 
 class TestModelAusgabe(MIZTestCase):
@@ -448,6 +488,20 @@ class TestModelAusgabe(MIZTestCase):
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
 
+    def test_get_overview_annotations(self):
+        """Check the annotations for this changelist."""
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('jahr_string', annotations)
+        self.assertIsInstance(annotations['jahr_string'], Func)
+        self.assertIn('num_string', annotations)
+        self.assertIsInstance(annotations['num_string'], Func)
+        self.assertIn('lnum_string', annotations)
+        self.assertIsInstance(annotations['lnum_string'], Func)
+        self.assertIn('monat_string', annotations)
+        self.assertIsInstance(annotations['monat_string'], Subquery)
+        self.assertIn('anz_artikel', annotations)
+        self.assertIsInstance(annotations['anz_artikel'], Count)
+
 
 class TestModelAusgabeJahr(MIZTestCase):
     model = _models.AusgabeJahr
@@ -551,6 +605,13 @@ class TestModelMagazin(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('orte_list', annotations)
+        self.assertIsInstance(annotations['orte_list'], Func)
+        self.assertIn('anz_ausgaben', annotations)
+        self.assertIsInstance(annotations['anz_ausgaben'], Count)
 
 
 class TestModelVerlag(MIZTestCase):
@@ -681,6 +742,11 @@ class TestModelSchlagwort(MIZTestCase):
         """Check the configs for related search vectors."""
         self.assertIn(('schlagwortalias___fts', SIMPLE), self.model.related_search_vectors)
 
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('alias_list', annotations)
+        self.assertIsInstance(annotations['alias_list'], Func)
+
 
 class TestModelSchlagwortAlias(MIZTestCase):
     model = _models.SchlagwortAlias
@@ -737,6 +803,13 @@ class TestModelArtikel(MIZTestCase):
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
 
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('schlagwort_list', annotations)
+        self.assertIsInstance(annotations['schlagwort_list'], Func)
+        self.assertIn('kuenstler_string', annotations)
+        self.assertIsInstance(annotations['kuenstler_string'], Func)
+
 
 class TestModelBuch(MIZTestCase):
     model = _models.Buch
@@ -763,6 +836,17 @@ class TestModelBuch(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('autor_list', annotations)
+        self.assertIsInstance(annotations['autor_list'], Func)
+        self.assertIn('schlagwort_list', annotations)
+        self.assertIsInstance(annotations['schlagwort_list'], Func)
+        self.assertIn('genre_list', annotations)
+        self.assertIsInstance(annotations['genre_list'], Func)
+        self.assertIn('kuenstler_string', annotations)
+        self.assertIsInstance(annotations['kuenstler_string'], Func)
 
 
 class TestModelHerausgeber(MIZTestCase):
@@ -841,6 +925,11 @@ class TestModelAudio(MIZTestCase):
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
 
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('kuenstler_string', annotations)
+        self.assertIsInstance(annotations['kuenstler_string'], Func)
+
 
 class TestModelPlakat(MIZTestCase):
     model = _models.Plakat
@@ -868,6 +957,11 @@ class TestModelPlakat(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('veranstaltung_list', annotations)
+        self.assertIsInstance(annotations['veranstaltung_list'], Func)
 
 
 class TestModelBildreihe(MIZTestCase):
@@ -1055,6 +1149,11 @@ class TestModelVeranstaltung(MIZTestCase):
         self.assertIn(('spielort___fts', SIMPLE), self.model.related_search_vectors)
         self.assertIn(('spielort__ort___fts', SIMPLE), self.model.related_search_vectors)
 
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('kuenstler_string', annotations)
+        self.assertIsInstance(annotations['kuenstler_string'], Func)
+
 
 class TestModelVeranstaltungAlias(MIZTestCase):
     model = _models.VeranstaltungAlias
@@ -1110,6 +1209,11 @@ class TestModelVideo(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('kuenstler_string', annotations)
+        self.assertIsInstance(annotations['kuenstler_string'], Func)
 
 
 class TestModelProvenienz(MIZTestCase):
@@ -1317,6 +1421,11 @@ class TestModelBaseBrochure(MIZTestCase):
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
 
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('jahr_string', annotations)
+        self.assertIsInstance(annotations['jahr_string'], Func)
+
 
 class TestModelBrochure(MIZTestCase):
     model = _models.Brochure
@@ -1407,6 +1516,11 @@ class TestModelFoto(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+    def test_get_overview_annotations(self):
+        annotations = self.model.get_overview_annotations()
+        self.assertIn('schlagwort_list', annotations)
+        self.assertIsInstance(annotations['schlagwort_list'], Func)
 
 
 class TestM2mAudioMusiker(MIZTestCase):

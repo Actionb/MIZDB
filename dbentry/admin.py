@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, List, Optional, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
@@ -8,10 +8,9 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField,
+    Count, Field as ModelField, IntegerField, ManyToManyField,
     Model, Min, OuterRef, QuerySet, Subquery, Value
 )
 from django.db.models.functions import Coalesce
@@ -152,18 +151,8 @@ class AudioAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
     def kuenstler_string(self, obj: _models.Audio) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -242,43 +231,6 @@ class AusgabenAdmin(MIZModelAdmin):
         return obj.magazin.magazin_name
     magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
     magazin_name.admin_order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
-
-    def get_changelist_annotations(self) -> dict:
-        # Can't use ArrayAgg directly to get a list of distinct monat__abk
-        # values as we are ordering by monat__ordinal: using distinct AND
-        # ordering requires that the ordering expressions are present in the
-        # argument list to ArrayAgg.
-        # Use a subquery instead:
-        subquery = (
-            self.model.objects.order_by().filter(id=OuterRef('id'))
-            .annotate(
-                x=Func(
-                    ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
-                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                    output_field=CharField()
-                )
-            )
-            .values('x')
-        )
-        return {
-            'jahr_string': Func(
-                ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-            'num_string': Func(
-                ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-            'lnum_string': Func(
-                ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-            'monat_string': Subquery(subquery),
-            'anz_artikel': Count('artikel', distinct=True)
-        }
 
     def anz_artikel(self, obj: _models.Ausgabe) -> int:
         return obj.anz_artikel  # added by annotations  # noqa
@@ -394,20 +346,14 @@ class AutorAdmin(MIZModelAdmin):
     ordering = ['_name']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'magazin_list': ArrayAgg(
-                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'
-            )
-        }
-
     def autor_name(self, obj: _models.Autor) -> str:
         return obj._name
     autor_name.short_description = 'Autor'  # type: ignore[attr-defined]  # noqa
     autor_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
 
     def magazin_string(self, obj: _models.Autor) -> str:
-        return concat_limit(obj.magazin_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.magazin_list or self.get_empty_value_display()  # added by annotations  # noqa
+
     magazin_string.short_description = 'Magazin(e)'  # type: ignore[attr-defined]  # noqa
     magazin_string.admin_order_field = 'magazin_list'  # type: ignore[attr-defined]  # noqa
 
@@ -474,19 +420,6 @@ class ArtikelAdmin(MIZModelAdmin):
         'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
-            ),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
     def ausgabe_name(self, obj: _models.Artikel) -> str:
         return obj.ausgabe._name
     ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
@@ -505,12 +438,12 @@ class ArtikelAdmin(MIZModelAdmin):
     artikel_magazin.admin_order_field = 'ausgabe__magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
     def schlagwort_string(self, obj: _models.Artikel) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.schlagwort_list or self.get_empty_value_display()  # added by annotations  # noqa
     schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
     schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
     def kuenstler_string(self, obj: _models.Artikel) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations  # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -545,35 +478,23 @@ class BandAdmin(MIZModelAdmin):
         'tabular': ['musiker']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'alias_list': ArrayAgg(
-                'bandalias__alias', distinct=True, ordering='bandalias__alias'
-            ),
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
-        }
-
     def genre_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.genre_list or self.get_empty_value_display()  # added by annotations  # noqa
     genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
     genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
     def musiker_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.musiker_list or self.get_empty_value_display()  # added by annotations  # noqa
     musiker_string.short_description = 'Mitglieder'  # type: ignore[attr-defined]  # noqa
     musiker_string.admin_order_field = 'musiker_list'  # type: ignore[attr-defined]  # noqa
 
     def alias_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.alias_list or self.get_empty_value_display()  # added by annotations  # noqa
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
     alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.orte_list or self.get_empty_value_display()  # added by annotations  # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -634,19 +555,13 @@ class PlakatAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'veranstaltung_list':
-                ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
-        }
-
     def datum_localized(self, obj: _models.Plakat) -> str:
         return obj.datum.localize()
     datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
     datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
     def veranstaltung_string(self, obj: _models.Plakat) -> str:
-        return concat_limit(obj.veranstaltung_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.veranstaltung_list or self.get_empty_value_display()  # added by annotations  # noqa
     veranstaltung_string.short_description = 'Veranstaltungen'  # type: ignore[attr-defined]  # noqa
     veranstaltung_string.admin_order_field = 'veranstaltung_list'  # type: ignore[attr-defined]  # noqa
 
@@ -768,40 +683,27 @@ class BuchAdmin(MIZModelAdmin):
         'help_texts': {'autor': None}
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
-            'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
-            ),
-            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
     def autoren_string(self, obj: _models.Buch) -> str:
-        return concat_limit(obj.autor_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.autor_list or self.get_empty_value_display()  # added by annotations  # noqa
+
     autoren_string.short_description = 'Autoren'  # type: ignore[attr-defined]  # noqa
     autoren_string.admin_order_field = 'autor_list'  # type: ignore[attr-defined]  # noqa
 
     def schlagwort_string(self, obj: _models.Buch) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.schlagwort_list or self.get_empty_value_display()  # added by annotations  # noqa
+
     schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
     schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
     def genre_string(self, obj: _models.Buch) -> str:
-        return concat_limit(obj.genre_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.genre_list or self.get_empty_value_display()  # added by annotations  # noqa
+
     genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
     genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
     def kuenstler_string(self, obj: _models.Buch) -> str:
-        #  band_list and musiker_list added by annotations
-        # noinspection PyUnresolvedReferences
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
+        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations  # noqa
+
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -830,13 +732,9 @@ class GenreAdmin(MIZModelAdmin):
     search_fields = ['__ANY__']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
-        }
-
     def alias_string(self, obj: _models.Genre) -> str:
-        return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.alias_list or self.get_empty_value_display()  # added by annotations  # noqa
+
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
     def _get_changelist_link_relations(self) -> list:
@@ -879,20 +777,14 @@ class MagazinAdmin(MIZModelAdmin):
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
-            'anz_ausgaben': Count('ausgabe', distinct=True)
-        }
-
     def anz_ausgaben(self, obj: _models.Magazin) -> int:
         return obj.anz_ausgaben  # added by annotations  # noqa
-
     anz_ausgaben.short_description = 'Anz. Ausgaben'  # type: ignore[attr-defined]  # noqa
     anz_ausgaben.admin_order_field = 'anz_ausgaben'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Magazin) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display() # added by annotations  # noqa
+        return obj.orte_list or self.get_empty_value_display()  # added by annotations  # noqa
+
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -954,25 +846,18 @@ class MusikerAdmin(MIZModelAdmin):
     ordering = ['kuenstler_name']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
-            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
-        }
-
     def band_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.band_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.band_list or self.get_empty_value_display()  # added by annotations # noqa
     band_string.short_description = 'Bands'  # type: ignore[attr-defined]  # noqa
     band_string.admin_order_field = 'band_list'  # type: ignore[attr-defined]  # noqa
 
     def genre_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.genre_list or self.get_empty_value_display()  # added by annotations # noqa
     genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
     genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.orte_list or self.get_empty_value_display()  # added by annotations # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -1008,19 +893,6 @@ class PersonAdmin(MIZModelAdmin):
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def get_changelist_annotations(self) -> dict:
-        return {
-            'is_musiker': Exists(
-                _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))
-            ),
-            'is_autor': Exists(
-                _models.Autor.objects.only('id').filter(person_id=OuterRef('id'))
-            ),
-            'orte_list': ArrayAgg(
-                'orte___name', distinct=True, ordering='orte___name'
-            )
-        }
-
     def is_musiker(self, obj: _models.Person) -> bool:
         return obj.is_musiker  # added by annotations # noqa
     is_musiker.short_description = 'Ist Musiker'  # type: ignore[attr-defined]  # noqa
@@ -1032,7 +904,7 @@ class PersonAdmin(MIZModelAdmin):
     is_autor.boolean = True  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Person) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.orte_list or self.get_empty_value_display()  # added by annotations # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -1054,13 +926,8 @@ class SchlagwortAdmin(MIZModelAdmin):
     search_fields = ['__ANY__']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
-        }
-
     def alias_string(self, obj: _models.Schlagwort) -> str:
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.alias_list or self.get_empty_value_display()  # added by annotations # noqa
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
     alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
 
@@ -1129,18 +996,8 @@ class VeranstaltungAdmin(MIZModelAdmin):
     }
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
     def kuenstler_string(self, obj: _models.Veranstaltung) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
     def datum_localized(self, obj: _models.Veranstaltung) -> str:
@@ -1238,18 +1095,8 @@ class VideoAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
     def kuenstler_string(self, obj: _models.Video) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return obj.kuenstler_string or self.get_empty_value_display()  # added by annotations # noqa
     kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
@@ -1485,15 +1332,6 @@ class BaseBrochureAdmin(MIZModelAdmin):
             'titel', 'jahr_min', 'zusammenfassung'
         )
 
-    def get_changelist_annotations(self) -> dict:
-        return {
-            'jahr_string': Func(
-                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-        }
-
     def jahr_string(self, obj: _models.BaseBrochure) -> str:
         return obj.jahr_string  # added by annotations  # noqa
     jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
@@ -1636,12 +1474,6 @@ class FotoAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'schlagwort_list':
-                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
-        }
-
     def foto_id(self, obj: _models.Foto) -> str:
         """Return the id of the object, padded with zeros."""
         if not obj.pk:
@@ -1656,7 +1488,7 @@ class FotoAdmin(MIZModelAdmin):
     datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
     def schlagwort_list(self, obj: _models.Foto) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return obj.schlagwort_list or self.get_empty_value_display()  # added by annotations  # noqa
     schlagwort_list.short_description = 'Schlagworte'  # type: ignore[attr-defined]  # noqa
     schlagwort_list.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 

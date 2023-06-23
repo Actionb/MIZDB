@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- add overview (changelist view) queryset annotations and optimizations to models
+
+## [0.10.1] - 2023-06-07
+
+- fix incorrect tabular_autocomplete parameter for KalenderAdmin.SpielortInline  
+
 ## [0.10] - 2023-05-01
 
 ### Changed
