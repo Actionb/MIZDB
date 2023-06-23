@@ -5,7 +5,6 @@ from django import views
 from django.apps import apps
 from django.contrib.admin.utils import get_fields_from_path
 from django.contrib.auth import get_permission_codename
-from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import (
     Count, F, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet,
     Window
@@ -23,6 +22,7 @@ from dbentry.tools.decorators import register_tool
 from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
+from dbentry.utils.query import string_list
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 
@@ -183,7 +183,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
                 select_related.append(path)
             else:
                 # A many_to_many or many_to_one relation.
-                annotations[path] = StringAgg(path, ', ', distinct=True, ordering=path)
+                annotations[path] = string_list(path)
             display_fields.append(path)
 
         # noinspection PyUnresolvedReferences
