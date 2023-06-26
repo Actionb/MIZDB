@@ -575,16 +575,8 @@ class TestACAusgabe(ACViewTestCase):
 
     def test_get_queryset_add_annotations(self):
         """Assert that the ModelAdmin annotations are added to the queryset."""
-
-        class DummyAdmin:
-
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def get_changelist_annotations(self):
-                return {'foo': Count('*')}
-
-        with patch('dbentry.ac.views.AusgabenAdmin', new=DummyAdmin):
+        with patch.object(self.model, "get_overview_annotations") as m:
+            m.return_value = {'foo': Count('*')}
             view = self.get_view(self.get_request())
             queryset = view.get_queryset()
             self.assertIn('foo', queryset.query.annotations)

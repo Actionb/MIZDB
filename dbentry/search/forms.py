@@ -310,7 +310,6 @@ class SearchFormFactory:
             range_lookup: the lookup class whose lookup_name is used for range
               lookups
         """
-        # FIXME: fields argument should not be optional
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback):

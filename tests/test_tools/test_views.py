@@ -216,8 +216,8 @@ class TestDuplicateObjectsView(ViewTestCase):
 
         self.assertEqual(len(items[1][0]), 2, msg="Should contain the two duplicate objects.")
         dupe1, dupe2 = items[1][0]
-        self.assertEqual(dupe1, (self.dupe_3, get_link(self.dupe_3), ['Zulu', '', '', '']))
-        self.assertEqual(dupe2, (self.dupe_4, get_link(self.dupe_4), ['Zulu', '', '', '']))
+        self.assertEqual(dupe1, (self.dupe_3, get_link(self.dupe_3), ['Zulu', '', '', '-']))
+        self.assertEqual(dupe2, (self.dupe_4, get_link(self.dupe_4), ['Zulu', '', '', '-']))
 
     def test_setup_exception(self):
         """Assert that setup() raises a TypeError when 'model_name' kwarg is missing."""
