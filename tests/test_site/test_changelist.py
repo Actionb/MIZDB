@@ -177,6 +177,7 @@ class TestBaseListView(ChangelistTestCase):
         The change page links in a row should contain the changelist request
         parameters.
         """
+        # NOTE: why? what's the benefit of this?
         request = self.get_request(data={'p': ['1']})
         view = self.get_view(request)
         obj = self.get_annotated_model_obj(self.obj)
