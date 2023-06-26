@@ -1,13 +1,11 @@
-from importlib import import_module
 from unittest import mock
 from unittest.mock import patch
 
-from django.conf import settings
+from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import checks
-from django.db.models import Count
 from django.test import RequestFactory, TestCase, override_settings
 
 from dbentry.base.admin import AutocompleteMixin
@@ -141,13 +139,18 @@ class MIZModelAdminTest(AdminTestCase):
             )
 
     def test_get_queryset(self):
-        """Assert that annotations are added to the model admin queryset."""
-        request = self.get_request()
-        with mock.patch.object(self.model_admin, 'get_changelist_annotations') as m:
-            m.return_value = {}
-            self.assertFalse(self.model_admin.get_queryset(request).query.annotations)
-            m.return_value = {'c': Count('pk')}
-            self.assertIn('c', self.model_admin.get_queryset(request).query.annotations)
+        """Assert that get_queryset calls the queryset's overview method."""
+        mock_overview = mock.Mock()
+        with mock.patch.object(admin.ModelAdmin, "get_queryset") as super_mock:
+            for mock_queryset in [mock.Mock(spec_set=True), mock.Mock(overview=mock_overview)]:
+                super_mock.return_value = mock_queryset
+                has_overview = hasattr(mock_queryset, "overview")
+                with self.subTest(has_overview_attr=has_overview):
+                    self.model_admin.get_queryset(self.get_request())
+                    if has_overview:
+                        mock_overview.assert_called()
+                    else:
+                        mock_overview.assert_not_called()
 
     def test_get_changelist(self):
         """MIZModelAdmin should use MIZChangelist."""

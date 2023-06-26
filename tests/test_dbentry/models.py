@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 
 
 class Genre(models.Model):
@@ -19,6 +20,10 @@ class Band(models.Model):
 
     def __str__(self):
         return self.band_name
+
+    @staticmethod
+    def get_overview_annotations():
+        return {"annotated": F("band_name")}
 
     class Meta:
         verbose_name = 'Band'

@@ -16,7 +16,6 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.widgets import EXTRA_DATA_KEY
-from dbentry.admin import AusgabenAdmin
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
@@ -140,6 +139,10 @@ class ACTabular(ACBase):
     presentation of the data.
     """
 
+    def get_queryset(self):
+        # Apply overview annotations and optimizations:
+        return super().get_queryset().overview()
+
     def get_extra_data(self, result: Model) -> list:
         """Return the additional data to be displayed for the given result."""
         return []  # pragma: no cover
@@ -208,16 +211,14 @@ class ACAusgabe(ACTabular):
     model = _models.Ausgabe
 
     def get_queryset(self) -> AusgabeQuerySet:
-        queryset = super().get_queryset()
-        model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
+        return super().get_queryset().chronological_order()
 
     def get_group_headers(self) -> list:
         return ['Nummer', 'lfd.Nummer', 'Jahr']
 
     def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]
+        return [result.num_list, result.lnum_list, result.jahr_list]
 
 
 class ACAutor(ACBase):
@@ -266,7 +267,7 @@ class ACBand(ACTabular):
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
-        return [", ".join(str(alias) for alias in result.bandalias_set.all())]
+        return [result.alias_list]
 
 
 class ACBuchband(ACBase):
@@ -290,6 +291,7 @@ class ACLagerort(ACTabular):
 
     def get_extra_data(self, result: _models.Lagerort) -> list:
         # noinspection PyUnresolvedReferences
+        # NOTE: the model does not provide overview annotations
         return [result.ort, result.raum]  # pragma: no cover
 
 
@@ -311,7 +313,7 @@ class ACMusiker(ACTabular):
 
     def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
-        return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
+        return [result.alias_list]
 
 
 class ACPerson(ACBase):

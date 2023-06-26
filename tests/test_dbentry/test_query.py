@@ -1,7 +1,7 @@
 import datetime
 import random
 from itertools import chain
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.db import models
@@ -135,6 +135,15 @@ class TestMIZQuerySet(DataTestCase):
         with self.assertRaises(FieldError) as cm:
             self.queryset.values_dict('thisaintnofield', flatten=True)
             self.assertIn('Choices are', cm.exception.args[0])
+
+    def test_add_changelist_annotations(self):
+        queryset = self.queryset.add_changelist_annotations()
+        self.assertIn("annotated", queryset.query.annotations)
+
+    def test_overview(self):
+        """Assert that overview calls the model's overview class method."""
+        with patch.object(self.model, "overview", new=Mock(return_value="model.overview called"), create=True):
+            self.assertEqual(self.queryset.overview(), "model.overview called")
 
 
 class CNQuerySetModel(models.Model):
