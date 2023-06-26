@@ -21,8 +21,8 @@ class ArtikelList(SearchableListView):
     model = _models.Artikel
     list_select_related = ['ausgabe', 'ausgabe__magazin']
     list_display = [
-        'schlagzeile', 'zusammenfassung_string', 'seite_string', 'schlagwort_string',
-        'ausgabe_name', 'artikel_magazin', 'kuenstler_string'
+        'schlagzeile', 'zusammenfassung_list', 'seite_umfang', 'schlagwort_list',
+        'ausgabe_name', 'artikel_magazin', 'kuenstler_list'
     ]
     search_form_kwargs = {
         'fields': [
@@ -49,48 +49,35 @@ class ArtikelList(SearchableListView):
         },
     }
 
-    def get_changelist_annotations(self):
-        return {
-            'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
-            ),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
     # @formatter:off
-    def seite_string(self, obj):
+    def seite_umfang(self, obj):
         return f"{obj.seite}{obj.seitenumfang}"
-    seite_string.short_description = "Seite"
-    seite_string.order_field = "seite"
+    seite_umfang.short_description = "Seite"
+    seite_umfang.order_field = "seite"
 
     def ausgabe_name(self, obj: _models.Artikel) -> str:
         return obj.ausgabe._name
     ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
     ausgabe_name.order_field = 'ausgabe___name'  # type: ignore[attr-defined]  # noqa
 
-    def zusammenfassung_string(self, obj: _models.Artikel) -> str:
+    def zusammenfassung_list(self, obj: _models.Artikel) -> str:
         if not obj.zusammenfassung:
             return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
-    zusammenfassung_string.short_description = 'Zusammenfassung'  # type: ignore[attr-defined]  # noqa
-    zusammenfassung_string.order_field = 'zusammenfassung'  # type: ignore[attr-defined]  # noqa
+    zusammenfassung_list.short_description = 'Zusammenfassung'  # type: ignore[attr-defined]  # noqa
+    zusammenfassung_list.order_field = 'zusammenfassung'  # type: ignore[attr-defined]  # noqa
 
     def artikel_magazin(self, obj: _models.Artikel) -> str:
         return obj.ausgabe.magazin.magazin_name
     artikel_magazin.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
     artikel_magazin.order_field = 'ausgabe__magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
-    def schlagwort_string(self, obj: _models.Artikel) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()  # noqa
-    schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
-    schlagwort_string.order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
+    def schlagwort_list(self, obj: _models.Artikel) -> str:
+        return obj.schlagwort_list or self.get_empty_value_display()  # noqa
+    schlagwort_list.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
+    schlagwort_list.order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
-    def kuenstler_string(self, obj: _models.Artikel) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    def kuenstler_list(self, obj: _models.Artikel) -> str:
+        return obj.kuenstler_list or self.get_empty_value_display()  # noqa
+    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
     # @formatter:on
