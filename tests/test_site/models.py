@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import QuerySet
 
 from dbentry.query import TextSearchQuerySetMixin
+from dbentry.utils.query import string_list
 
 
 class TextSearchQuery(TextSearchQuerySetMixin, QuerySet):
@@ -11,6 +12,9 @@ class TextSearchQuery(TextSearchQuerySetMixin, QuerySet):
         vector = SearchVector('name', 'alias')
         query = SearchQuery(q)
         return self.annotate(search=vector).filter(search=query)
+
+    def overview(self):
+        return self.annotate(**self.model.get_overview_annotations()).select_related(*self.model.select_related)
 
 
 class Foo(models.Model):
@@ -29,6 +33,11 @@ class Band(models.Model):
     objects = TextSearchQuery.as_manager()
 
     name_field = 'name'
+    select_related = ['origin']
+
+    @staticmethod
+    def get_overview_annotations():
+        return {"members_list": string_list('musician__name')}
 
     def __str__(self):
         return self.name

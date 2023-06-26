@@ -31,27 +31,16 @@ class ChangelistTestCase(DataTestCase, ViewTestCase):
 
     def get_annotated_model_obj(self, obj):
         """Apply the view's changelist annotations to the given object."""
-        return (
-            self.queryset
-            .filter(pk=obj.pk)
-            .annotate(**self.get_view().get_changelist_annotations())
-            .get()
-        )
+        return self.queryset.overview().filter(pk=obj.pk).get()
 
 
 class BandListView(BaseListView):
     model = Band
 
     list_display = ['name', 'alias', 'members', 'origin', 'unsortable']
-    select_related = ['origin']
-
-    def get_changelist_annotations(self):
-        return {
-            "members_list": ArrayAgg('musician__name', distinct=True, ordering='musician__name')
-        }
 
     def members(self, obj):
-        return ", ".join(m for m in obj.members_list if m)
+        return obj.members_list
     members.short_description = 'Members'
     members.order_field = 'members_list'
 
@@ -219,7 +208,7 @@ class TestBaseListView(ChangelistTestCase):
     def test_get_context_data(self):
         """Assert that get_context_data adds the expected items."""
         view = self.get_view(self.get_request())
-        view.object_list = Band.objects.annotate(**view.get_changelist_annotations()).order_by('id')
+        view.object_list = view.get_queryset().order_by('id')
         context = view.get_context_data()
         for context_item in ["page_range", "cl", "result_headers", "result_rows"]:
             with self.subTest(context_item=context_item):
