@@ -5,7 +5,7 @@ from django.test import override_settings
 from django.urls import reverse, path
 from django.views import View
 
-from dbentry.site.views import BaseListView
+from dbentry.site.views.base import BaseListView
 from tests.case import ViewTestCase, DataTestCase
 from tests.model_factory import make
 from tests.test_site.models import Band, Musician, Country
