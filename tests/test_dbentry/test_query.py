@@ -136,14 +136,11 @@ class TestMIZQuerySet(DataTestCase):
             self.queryset.values_dict('thisaintnofield', flatten=True)
             self.assertIn('Choices are', cm.exception.args[0])
 
-    def test_add_changelist_annotations(self):
-        queryset = self.queryset.add_changelist_annotations()
-        self.assertIn("annotated", queryset.query.annotations)
-
     def test_overview(self):
         """Assert that overview calls the model's overview class method."""
-        with patch.object(self.model, "overview", new=Mock(return_value="model.overview called"), create=True):
-            self.assertEqual(self.queryset.overview(), "model.overview called")
+        with patch.object(self.model, "overview", create=True) as overview_mock:
+            self.queryset.overview("foo", "bar")
+            overview_mock.assert_called_with(self.queryset, "foo", "bar")
 
 
 class CNQuerySetModel(models.Model):

@@ -103,7 +103,7 @@ class Audio(BaseModel):
 
     @staticmethod
     def get_overview_annotations():
-        return {"annotated": F("titel")}
+        return {"foo": F("titel"), "bar": F("titel")}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Audio'

@@ -128,15 +128,9 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
             result[pk] = item_dict
         return result
 
-    def add_changelist_annotations(self):
-        """Add annotations expected by changelist views."""
-        if annotations := self.model.get_overview_annotations():
-            return self.annotate(**annotations)
-        return self
-
-    def overview(self) -> 'MIZQuerySet':
+    def overview(self, *annotations) -> 'MIZQuerySet':
         """Return a queryset that provides a comprehensive overview of the objects."""
-        return self.model.overview(self)
+        return self.model.overview(self, *annotations)
 
 
 class CNQuerySet(MIZQuerySet):
