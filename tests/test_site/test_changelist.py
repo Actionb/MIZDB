@@ -109,6 +109,12 @@ class TestBaseListView(ChangelistTestCase):
             ]
         )
 
+    def test_get_result_headers_no_list_display(self):
+        view = self.get_view(self.get_request(), list_display_links=None)
+        with patch.object(view, "list_display", new=[]):
+            with patch.object(self.model._meta, "verbose_name", new="Foo Bar"):
+                self.assertEqual(view.get_result_headers(), [{"text": "Foo Bar"}])
+
     def test_get_result_row(self):
         """Assert that get_result_row returns the expected list of values."""
         view = self.get_view(self.get_request())
@@ -193,6 +199,17 @@ class TestBaseListView(ChangelistTestCase):
         view = self.get_view(request)
         obj = self.get_annotated_model_obj(self.obj)
         self.assertIn('p=1', view.get_result_row(obj)[0])
+
+    def test_get_result_row_no_list_display(self):
+        """
+        The result row should be the __str__ representation of the result if no
+        list_display items are set.
+        """
+        view = self.get_view(self.get_request(), list_display_links=None)
+        with patch.object(view, "list_display", new=[]):
+            with patch.object(self.model, "__str__") as str_mock:
+                str_mock.return_value = "Foo Bar"
+                self.assertEqual(view.get_result_row(self.obj), ["Foo Bar"])
 
     def test_get_query_string_add_params(self):
         """Assert that get_query_string adds query string parameters."""

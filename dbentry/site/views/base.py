@@ -433,9 +433,12 @@ class BaseListView(ModelViewMixin, ListView):
         """Return the headers for the result list table."""
         # TODO: add header links for sorting like in the django admin changelist
         headers = []
-        for name in self.list_display:
-            _attr, label = self._lookup_field(name)
-            headers.append({"text": label.replace("_", " ").capitalize()})
+        for name in self.list_display or ["__str__"]:
+            if name == "__str__":
+                headers.append({"text": self.model._meta.verbose_name})
+            else:
+                _attr, label = self._lookup_field(name)
+                headers.append({"text": label.replace("_", " ").capitalize()})
         return headers
 
     def get_result_row(self, result):
@@ -450,21 +453,24 @@ class BaseListView(ModelViewMixin, ListView):
 
         result_items = []
         first = True
-        for name in self.list_display:
-            attr, _label = self._lookup_field(name)
-            if callable(attr):
-                value = attr(result)
+        for name in self.list_display or ["__str__"]:
+            if name == "__str__":
+                value = str(result)
             else:
-                # Assume that this is a model field.
-                if isinstance(attr, models.ForeignKey):
-                    value = getattr(result, attr.name)
-                    if value is not None:
-                        value = str(value)
+                attr, _label = self._lookup_field(name)
+                if callable(attr):
+                    value = attr(result)
                 else:
-                    value = getattr(result, attr.attname)
-                if getattr(attr, 'flatchoices', None):
-                    # Use the human-readable part of the choice:
-                    value = dict(attr.flatchoices).get(value, '')
+                    # Assume that this is a model field.
+                    if isinstance(attr, models.ForeignKey):
+                        value = getattr(result, attr.name)
+                        if value is not None:
+                            value = str(value)
+                    else:
+                        value = getattr(result, attr.attname)
+                    if getattr(attr, 'flatchoices', None):
+                        # Use the human-readable part of the choice:
+                        value = dict(attr.flatchoices).get(value, '')
             if not value:
                 value = self.get_empty_value_display()
             if link_in_col(first, name) and has_view_permission(self.request.user, self.opts):
