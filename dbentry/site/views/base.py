@@ -308,6 +308,12 @@ class BaseEditView(BaseModelView, UpdateView):
 
 
 class BaseListView(ModelViewMixin, ListView):
+    """
+    Base view for displaying a list of model objects ("changelist").
+
+    Set attribute `list_display` to control which fields are displayed on the
+    changelist.
+    """
     template_name = "mizdb/changelist.html"
     list_display = ()
     list_display_links = ()
@@ -337,7 +343,7 @@ class BaseListView(ModelViewMixin, ListView):
         Return the proper model field name corresponding to the given
         field_name to use for ordering. field_name may either be the name of a
         proper model field or the name of a method on the view with the
-        'admin_order_field' attribute.
+        'order_field' attribute.
 
         Return None if no proper model field name can be matched.
         """
