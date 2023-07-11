@@ -1,4 +1,30 @@
-"""Changelist views for the MIZDB models."""
+"""
+Changelist views for the MIZDB models.
+
+Declare a changelist view like this:
+
+    @register_changelist(MyModel)
+    class MyModelListView(BaseListView):
+        model = MyModel
+
+You can specify the columns to display in the list via the `list_display`
+attribute:
+
+    @register_changelist(MyModel)
+    class MyModelListView(BaseListView):
+        model = MyModel
+        list_display = ["name", "field_2"]
+
+
+Use SearchableListView to add a search form to the changelist:
+
+    @register_changelist(MyModel)
+    class MyModelListView(SearchableListView):
+        model = MyModel
+        search_form_kwargs = {
+            "fields": ["name", "field_2"]
+        }
+"""
 from django.views.generic import TemplateView
 
 from dbentry import models as _models

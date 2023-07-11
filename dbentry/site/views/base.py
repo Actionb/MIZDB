@@ -409,8 +409,12 @@ class ChangelistSearchForm(SearchForm):
     )
 
 
-class SearchableListView(SearchFormMixin, AutocompleteMixin, BaseListView):
-    """A BaseListView with a search form."""
+class SearchableListView(SearchFormMixin, FormViewMixin, BaseListView):
+    """
+    A BaseListView with a search form.
+
+    Configure the search form via the attribute `search_form_kwargs`.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
