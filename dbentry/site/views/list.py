@@ -8,6 +8,9 @@ from dbentry.site.views.base import BaseViewMixin, SearchableListView
 from dbentry.utils.text import concat_limit
 
 
+# TODO: use 'display' decorator to add attributes to the view methods for list_display
+# https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#the-display-decorator
+
 def get_widget(model, can_add=False, can_edit=False, **kwargs):
     """Return a mizdb-tomselect autocomplete widget for the search form."""
     return make_widget(model, can_add=can_add, can_edit=can_edit, **kwargs)
@@ -84,3 +87,73 @@ class ArtikelList(SearchableListView):
         return obj.kuenstler_list or self.get_empty_value_display()  # noqa
     kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
     # @formatter:on
+
+
+@register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
+class GenreList(SearchableListView):
+    model = _models.Genre
+
+#
+# @register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
+# class AusgabenAdmin(SearchableListView):
+#
+#     # ordering = ['magazin__magazin_name', '_name']
+#     # list_select_related = ['magazin']
+#     list_display = (
+#         'ausgabe_name', 'num_list', 'lnum_list', 'monat_list', 'jahr_list',
+#         'jahrgang', 'magazin_name', 'e_datum', 'anz_artikel', 'status'
+#     )
+#     search_form_kwargs = {
+#         'fields': [
+#             'magazin', 'status', 'ausgabejahr__jahr__range', 'ausgabenum__num__range',
+#             'ausgabelnum__lnum__range', 'ausgabemonat__monat__ordinal__range',
+#             'jahrgang', 'sonderausgabe', 'audio', 'video'
+#         ],
+#         'labels': {
+#             'ausgabejahr__jahr__range': 'Jahr',
+#             'ausgabenum__num__range': 'Nummer',
+#             'ausgabelnum__lnum__range': 'Lfd. Nummer',
+#             'ausgabemonat__monat__ordinal__range': 'Monatsnummer',
+#             'audio': 'Audio (Beilagen)',
+#             'video': 'Video (Beilagen)'
+#         }
+#     }
+#
+#     # def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[AusgabeChangeList]:
+#     #     return AusgabeChangeList
+#
+#     # @formatter:off
+#     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
+#         return obj._name
+#     ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
+#     ausgabe_name.order_field = '_name'  # type: ignore[attr-defined]  # noqa
+#
+#     def magazin_name(self, obj: _models.Ausgabe) -> str:
+#         return obj.magazin.magazin_name
+#     magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
+#     magazin_name.order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
+#
+#     def anz_artikel(self, obj: _models.Ausgabe) -> int:
+#         return obj.anz_artikel  # added by annotations  # noqa
+#     anz_artikel.short_description = 'Anz. Artikel'  # type: ignore[attr-defined]  # noqa
+#     anz_artikel.order_field = 'anz_artikel'  # type: ignore[attr-defined]  # noqa
+#
+#     def jahr_list(self, obj: _models.Ausgabe) -> str:
+#         return obj.jahr_list  # added by annotations  # noqa
+#     jahr_list.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
+#     jahr_list.order_field = 'jahr_list'  # type: ignore[attr-defined]  # noqa
+#
+#     def num_list(self, obj: _models.Ausgabe) -> str:
+#         return obj.num_list  # added by annotations  # noqa
+#     num_list.short_description = 'Nummer'  # type: ignore[attr-defined]  # noqa
+#     num_list.order_field = 'num_list'  # type: ignore[attr-defined]  # noqa
+#
+#     def lnum_list(self, obj: _models.Ausgabe) -> str:
+#         return obj.lnum_list  # added by annotations  # noqa
+#     lnum_list.short_description = 'lfd. Nummer'  # type: ignore[attr-defined]  # noqa
+#     lnum_list.order_field = 'lnum_list'  # type: ignore[attr-defined]  # noqa
+#
+#     def monat_list(self, obj: _models.Ausgabe) -> str:
+#         return obj.monat_list  # added by annotations  # noqa
+#     monat_list.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
+#     # @formatter:on
