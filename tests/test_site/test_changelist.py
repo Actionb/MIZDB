@@ -75,6 +75,10 @@ class TestBaseListView(ChangelistTestCase):
         cls.robert = make(Musician, name="Robert Plant", band=cls.obj)
 
     def test_lookup_field(self):
+        """
+        Assert that _lookup_field returns the expected model field or view
+        method with the expected label.
+        """
         view = self.get_view(self.get_request())
         test_data = [
             # name, (expected attr and label)
@@ -88,6 +92,10 @@ class TestBaseListView(ChangelistTestCase):
                 self.assertEqual(view._lookup_field(name), expected)
 
     def test_get_result_headers(self):
+        """
+        Assert that get_result_headers returns the expected list of table
+        header labels.
+        """
         headers = self.get_view(self.get_request()).get_result_headers()
         self.assertEqual(
             headers,
@@ -101,6 +109,7 @@ class TestBaseListView(ChangelistTestCase):
         )
 
     def test_get_result_row(self):
+        """Assert that get_result_row returns the expected list of values."""
         view = self.get_view(self.get_request())
         obj = self.get_annotated_model_obj(self.obj)
         expected = [
@@ -113,14 +122,16 @@ class TestBaseListView(ChangelistTestCase):
         self.assertEqual(view.get_result_row(obj), expected)
 
     def test_get_result_row_no_value(self):
+        """Assert that get_result_row replaces empty values."""
         obj = self.model.objects.create(name="Black Sabbath")  # make would add an alias
         obj = self.get_annotated_model_obj(obj)
         view = self.get_view(self.get_request())
+        view.empty_value_display = "//"
         expected = [
             f'<a href="{self.change_path.format(pk=obj.pk)}">Black Sabbath</a>',
-            '-',
-            '-',
-            '-',
+            '//',
+            '-',  # values is from a dbentry.utils.query.string_list annotation which sets empty value as '-'
+            '//',
             "This field cannot be sorted against."
         ]
         self.assertEqual(view.get_result_row(obj), expected)
@@ -173,6 +184,7 @@ class TestBaseListView(ChangelistTestCase):
         self.assertIn('p=1', view.get_result_row(obj)[0])
 
     def test_get_query_string_add_params(self):
+        """Assert that get_query_string adds query string parameters."""
         request = self.get_request(data={'o': ['1']})
         view = self.get_view(request)
         self.assertEqual(
@@ -181,6 +193,7 @@ class TestBaseListView(ChangelistTestCase):
         )
 
     def test_get_query_string_remove_params(self):
+        """Assert that get_query_string removes query string parameters."""
         request = self.get_request(data={'o': ['1'], 'p': ['2'], 'q': ["Beep"]})
         view = self.get_view(request)
         self.assertEqual(
@@ -189,6 +202,10 @@ class TestBaseListView(ChangelistTestCase):
         )
 
     def test_get_ordering_field(self):
+        """
+        Assert that get_ordering_field resolves the given field name to either
+        a model field name or an order_field as defined on a view method.
+        """
         test_data = [("name", "name"), ("members", "members_list"), ("foo", None)]
         view = self.get_view(self.get_request())
         for name, expected in test_data:
