@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
-from django.template import engines, loader
+from django.template import loader
 from django.test import override_settings
 from django.urls import reverse
 
@@ -8,7 +8,6 @@ from tests.case import UserTestCase
 
 
 class RenderTestCase(UserTestCase):
-
     template_name = None
 
     def get_context(self):
@@ -23,7 +22,6 @@ class RenderTestCase(UserTestCase):
 
 @override_settings(ROOT_URLCONF='tests.test_site.urls')
 class TestBase(RenderTestCase):
-
     template_name = "mizdb/base.html"
 
     def test_user_account_anonymous(self):

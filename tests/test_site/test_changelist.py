@@ -1,7 +1,6 @@
 from unittest.mock import patch
 from urllib.parse import unquote
 
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.test import override_settings
 from django.urls import reverse, path
 from django.views import View
@@ -13,7 +12,6 @@ from tests.test_site.models import Band, Musician, Country
 
 
 class ChangelistTestCase(DataTestCase, ViewTestCase):
-
     changelist_path = ''
     change_path = ''
     add_path = ''
@@ -42,11 +40,13 @@ class BandListView(BaseListView):
 
     def members(self, obj):
         return obj.members_list
+
     members.short_description = 'Members'
     members.order_field = 'members_list'
 
     def unsortable(self, obj):
         return "This field cannot be sorted against."
+
     unsortable.short_description = "Ignore"
 
     def some_method(self, obj):
