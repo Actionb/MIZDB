@@ -1,25 +1,21 @@
 """
 Base views for the other views of the site app.
 """
-from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse
 from django.urls import reverse, NoReverseMatch
-from django.utils.encoding import force_str
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.views.generic import UpdateView, ListView
 from django.views.generic.base import ContextMixin
 from formset.renderers.bootstrap import FormRenderer
-from formset.views import IncompleteSelectResponseMixin, FormViewMixin
-from formset.widgets import DualSelector, Selectize
+from formset.views import FormViewMixin
 
-from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.search.forms import SearchForm
 from dbentry.search.mixins import SearchFormMixin
 from dbentry.site.registry import miz_site
@@ -33,91 +29,6 @@ ALL_VAR = "all"
 ORDER_VAR = "o"
 PAGE_VAR = "p"
 SEARCH_VAR = "q"
-
-
-class AutocompleteMixin(IncompleteSelectResponseMixin, FormViewMixin):
-    """
-    Endpoint for the autocomplete/incomplete requests of django-formset.
-
-    If a request is made against a model that can provide text search, the
-    autocomplete results will be from such a text search query.
-
-    A model counts as able to 'provide text search' if it inherits from
-    dbentry.fts.query.TextSearchQuerySetMixin.
-    """
-
-    def get(self, request, **kwargs):
-        if request.accepts('application/json') and 'field' in request.GET:
-            try:
-                self.get_field(request.GET['field'])
-            except KeyError:
-                return HttpResponseBadRequest(f"No such field: {request.GET['field']}")
-
-            if self.can_do_text_search(request):
-                return self._fetch_text_search_options(request)
-        return super().get(request, **kwargs)
-
-    def can_do_text_search(self, request):
-        """
-        Return whether a full text search should be attempted.
-
-        Return True if there is a search term and the queryset supports text
-        search.
-        """
-        return (
-                request.GET.get('search')
-                and isinstance(self.get_autocomplete_queryset(request), TextSearchQuerySetMixin)
-        )
-
-    def get_autocomplete_queryset(self, request):
-        """Return the queryset of the targeted autocomplete field."""
-        field = self.get_field(request.GET['field'])
-        assert isinstance(field.widget, (Selectize, DualSelector))
-        return field.widget.choices.queryset
-
-    def _fetch_text_search_options(self, request):
-        field = self.get_field(request.GET['field'])
-        widget = field.widget
-        queryset = self.get_autocomplete_queryset(request)
-
-        data = {'total_count': queryset.count()}
-
-        try:
-            offset = int(request.GET.get('offset'))
-        except TypeError:
-            offset = 0
-
-        if widget.filter_by and any(k.startswith('filter-') for k in request.GET.keys()):
-            filters = {key: request.GET.getlist(f'filter-{key}') for key in widget.filter_by.keys()}
-            data['filters'] = filters
-            queryset = queryset.filter(widget.build_filter_query(filters))
-
-        if search := request.GET.get('search'):
-            data['search'] = search
-            queryset = queryset.search(unquote(search))
-            incomplete = None  # incomplete state unknown
-        else:
-            incomplete = queryset.count() - offset > widget.max_prefetch_choices
-
-        limited_qs = queryset[offset:offset + widget.max_prefetch_choices]
-        to_field_name = field.to_field_name if field.to_field_name else 'pk'
-        if widget.group_field_name:
-            options = [{
-                'id': getattr(item, to_field_name),
-                'label': str(item),
-                'optgroup': force_str(getattr(item, widget.group_field_name)),
-            } for item in limited_qs]
-        else:
-            options = [{
-                'id': getattr(item, to_field_name),
-                'label': str(item),
-            } for item in limited_qs]
-        data.update(
-            count=len(options),
-            incomplete=incomplete,
-            options=options,
-        )
-        return JsonResponse(data)
 
 
 class BaseViewMixin(ContextMixin):
@@ -156,7 +67,7 @@ class ModelViewMixin(BaseViewMixin):
         return ctx
 
 
-class BaseModelView(PermissionRequiredMixin, ModelViewMixin, AutocompleteMixin, UpdateView):
+class BaseModelView(PermissionRequiredMixin, ModelViewMixin, FormViewMixin, UpdateView):
     inlines: list['InlineModel'] = ()
 
     def has_permission(self):
