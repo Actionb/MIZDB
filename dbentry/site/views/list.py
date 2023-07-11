@@ -36,9 +36,9 @@ from dbentry.utils.text import concat_limit
 
 # TODO: rework dbentry.search.forms.SearchFormFactory.formfield_for_dbfield to use
 #  the mizdb-tomselect make_widget factory
-
+# TODO: add 'actions'
 # TODO: use 'display' decorator to add attributes to the view methods for list_display
-# https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#the-display-decorator
+#   https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#the-display-decorator
 
 def get_widget(model, can_add=False, can_edit=False, **kwargs):
     """Return a mizdb-tomselect autocomplete widget for the search form."""
