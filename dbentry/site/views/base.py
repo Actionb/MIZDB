@@ -318,9 +318,9 @@ class BaseListView(ModelViewMixin, ListView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.lookup_opts = self.opts = self.model._meta
+        self.lookup_opts = self.opts = self.model._meta  # TODO: probably not needed anymore?
         if self.list_display:
-            self.sortable_by = self.list_display
+            self.sortable_by = self.list_display  # TODO: what does this do? Is sortable_by needed at all?
         self.formset = None  # required by tag admin_list.result_hidden_fields  # TODO: is this still needed?
 
     def _get_default_ordering(self):
@@ -425,7 +425,7 @@ class BaseListView(ModelViewMixin, ListView):
 
     def get_result_headers(self):
         """Return the headers for the result list table."""
-        # TODO: add sorting
+        # TODO: add header links for sorting like in the django admin changelist
         headers = []
         for name in self.list_display:
             _attr, label = self._lookup_field(name)

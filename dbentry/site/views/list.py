@@ -21,7 +21,7 @@ class Index(BaseViewMixin, TemplateView):
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
 class ArtikelList(SearchableListView):
     model = _models.Artikel
-    list_select_related = ['ausgabe', 'ausgabe__magazin']
+    list_select_related = ['ausgabe', 'ausgabe__magazin']  # TODO: remove: select_related should be covered by overview()
     list_display = [
         'schlagzeile', 'zusammenfassung_list', 'seite_umfang', 'schlagwort_list',
         'ausgabe_name', 'artikel_magazin', 'kuenstler_list'
