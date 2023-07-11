@@ -1,14 +1,16 @@
-"""
-Changelist views for the MIZDB models.
-"""
-from django.contrib.postgres.aggregates import ArrayAgg
+"""Changelist views for the MIZDB models."""
 from django.views.generic import TemplateView
-from formset.widgets import Selectize, SelectizeMultiple
 
 from dbentry import models as _models
+from dbentry.autocomplete.widgets import make_widget
 from dbentry.site.registry import register_changelist, ModelType
 from dbentry.site.views.base import BaseViewMixin, SearchableListView
 from dbentry.utils.text import concat_limit
+
+
+def get_widget(model, can_add=False, can_edit=False, **kwargs):
+    """Return a mizdb-tomselect autocomplete widget for the search form."""
+    return make_widget(model, can_add=can_add, can_edit=can_edit, **kwargs)
 
 
 class Index(BaseViewMixin, TemplateView):
@@ -31,21 +33,22 @@ class ArtikelList(SearchableListView):
             'seite__range'
         ],
         'widgets': {
-            'ausgabe__magazin': Selectize(search_lookup="magazin_name__icontains", placeholder=''),
-            'ausgabe': Selectize(
-                search_lookup="ausgabe___name__icontains",
-                filter_by={'ausgabe__magazin': 'magazin_id'},
-                placeholder='Bitte zuerst ein Magazin auswählen',
+            'ausgabe__magazin': get_widget(_models.Magazin, url="autocomplete_magazin"),
+            'ausgabe': get_widget(
+                _models.Ausgabe,
+                url="autocomplete_ausgabe",
+                tabular=True,
+                attrs={"data-placeholder": 'Bitte zuerst ein Magazin auswählen'},
             ),
-            'autor': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
-            'musiker': SelectizeMultiple(search_lookup='kuenstler_name__icontains', placeholder=''),
-            'band': SelectizeMultiple(search_lookup="band_name__icontains", placeholder=''),
-            'schlagwort': SelectizeMultiple(search_lookup='schlagwort__icontains', placeholder=''),
-            'genre': SelectizeMultiple(search_lookup='genre__icontains', placeholder=''),
-            'ort': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
-            'spielort': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
-            'veranstaltung': SelectizeMultiple(search_lookup='name__icontains', placeholder=''),
-            'person': SelectizeMultiple(search_lookup='_name__icontains', placeholder=''),
+            'autor': get_widget(_models.Autor),
+            'musiker': get_widget(_models.Musiker, tabular=True),
+            'band': get_widget(_models.Band, tabular=True),
+            'schlagwort': get_widget(_models.Schlagwort),
+            'genre': get_widget(_models.Genre),
+            'ort': get_widget(_models.Ort),
+            'spielort': get_widget(_models.Spielort, tabular=True),
+            'veranstaltung': get_widget(_models.Veranstaltung, tabular=True),
+            'person': get_widget(_models.Person),
         },
     }
 
