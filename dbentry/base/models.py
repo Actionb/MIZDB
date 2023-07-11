@@ -94,17 +94,23 @@ class BaseModel(models.Model):
         return {}
 
     @classmethod
-    def overview(cls, queryset):
+    def overview(cls, queryset, *annotations):
         """
         Add annotations and optimizations useful for an overview over objects
         of this model to the given queryset.
+
+        If `annotations` is given, only apply matching annotations.
         """
         if select_related := cls.select_related:
             queryset = queryset.select_related(*select_related)
         if prefetch_related := cls.prefetch_related:
             queryset = queryset.prefetch_related(*prefetch_related)
-        if annotations := cls.get_overview_annotations():
-            queryset = queryset.annotate(**annotations)
+        if all_annotations := cls.get_overview_annotations():
+            if annotations:
+                _annotations = {k: v for k, v in all_annotations.items() if k in annotations}
+            else:
+                _annotations = all_annotations
+            queryset = queryset.annotate(**_annotations)
         return queryset
 
     class Meta:

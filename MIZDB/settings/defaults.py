@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'django_admin_logs',
     'dbentry.site',
-    'formset'
+    'formset',
+    'mizdb_tomselect'
 ]
 
 MIDDLEWARE = [
