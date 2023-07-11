@@ -5,13 +5,15 @@
     <thead><tr class="table-primary"><th scope="row" colspan="2">{{ category }}</th></tr></thead>
     <tbody>
     {% for opts in models %}
+        {% url opts|urlname:'changelist' as changelist_url %}
         <tr>
         <th class="container-fluid" scope="row">
-            <a class="text-decoration-none" href="{% url opts|urlname:'changelist' %}" target="_blank">{{ opts.verbose_name }}</a>
+            <a class="text-decoration-none" href="{{ changelist_url }}" target="_blank">{{ opts.verbose_name }}</a>
         </th>
         {% has_perm user 'add' opts as has_add_perm %}
-        {% if has_add_perm %}
-          <td><a href="{% url opts|urlname:'add' %}" class="addlink" target="_blank">Hinzufügen</a></td>
+        {% url opts|urlname:'add' as add_url %}
+        {% if has_add_perm and add_url %}
+          <td><a href="{{ add_url }}" class="addlink" target="_blank">Hinzufügen</a></td>
         {% else %}
           <td></td>
         {% endif %}

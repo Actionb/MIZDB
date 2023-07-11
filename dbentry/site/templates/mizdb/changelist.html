@@ -45,10 +45,11 @@
 </div>
 {% endblock %}
 
+{% url opts|urlname:'add' as add_url %}
 <div class="d-flex align-items-center mb-3">
     {% include "mizdb/includes/pagination.html" %}
     <p class="ps-2 mb-0">{% if result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
-    <a href="{% url opts|urlname:'add' %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+    <a href="{{ add_url }}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
 </div>
 {% if result_rows %}
 <div class="results mb-3">
@@ -71,7 +72,7 @@
 <div class="d-flex align-items-center">
     {% include "mizdb/includes/pagination.html" %}
     <p class="ps-2 mb-0">{% if result_count and result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
-    <a href="{% url opts|urlname:'add' %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+    <a href="{{ add_url }}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
 </div>
 {% endif %}
 {% endblock %}
