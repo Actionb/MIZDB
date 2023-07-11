@@ -83,8 +83,11 @@ class TestBaseModel(MIZTestCase):
         Assert that overview() adds the declared annotations to the overview
         queryset.
         """
-        queryset = self.model.overview(self.model.objects.all())
-        self.assertIn("annotated", queryset.query.annotations)
+        for fields in ([], ["foo"], ["foo", "bar"]):
+            expected = fields or ["foo", "bar"]
+            queryset = self.model.overview(self.model.objects.all(), *fields)
+            with self.subTest(fields=fields):
+                self.assertCountEqual(queryset.query.annotations.keys(), expected)
 
 
 class TestBaseM2MModel(MIZTestCase):

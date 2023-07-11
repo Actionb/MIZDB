@@ -36,3 +36,6 @@ django-admin-logs
 
 # string similarity
 levenshtein
+
+# TomSelect autocomplete
+mizdb_tomselect

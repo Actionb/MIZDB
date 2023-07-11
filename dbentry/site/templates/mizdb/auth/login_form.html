@@ -17,6 +17,6 @@
 
 <django-formset endpoint="{{ request.path }}" force-submission csrf-token="{{ csrf_token }}">
   {% render_form form "bootstrap" field_classes="mb-3" %}
-  <button type="button" class="btn btn-primary" click="submit -> proceed">{% translate 'Log in' %}</button>
+  <button type="button" class="btn btn-primary" df-click="submit -> proceed">{% translate 'Log in' %}</button>
 </django-formset>
 </div>

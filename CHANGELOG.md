@@ -5,6 +5,7 @@
 ### Added
 
 - add overview (changelist view) queryset annotations and optimizations to models
+- add mizdb-tomselect widgets and views
 
 ### Changed
 - dbentry admin changelists now use overview annotations
