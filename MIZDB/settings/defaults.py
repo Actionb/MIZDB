@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'formtools',
     'django.contrib.postgres',
-    'django_admin_logs'
+    'django_admin_logs',
+    'mizdb_tomselect'
 ]
 
 MIDDLEWARE = [

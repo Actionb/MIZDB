@@ -28,6 +28,7 @@ ALWAYS_INSTALLED_APPS = [
 TEST_APPS = [
     "tests",
     "tests.test_actions",
+    "tests.test_ac",
     "tests.test_autocomplete",
     "tests.test_base",
     "tests.test_commands",
