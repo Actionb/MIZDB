@@ -9,6 +9,7 @@ from dbentry.site.views.base import ModelViewMixin
 from dbentry.utils import permission as perms
 from dbentry.utils.admin import log_deletion
 from dbentry.utils.html import get_obj_link
+from dbentry.utils.url import urlname
 
 
 class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
@@ -60,7 +61,7 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
     def get_success_url(self):
         if not perms.has_view_permission(self.request.user, self.opts):
             return reverse("index")
-        return reverse(url.urlname('changelist', self.opts))
+        return reverse(urlname('changelist', self.opts))
 
     def form_valid(self, form):
         # NOTE: we're only logging the deletion of the main object.
