@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.http import JsonResponse, HttpResponseBadRequest
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.utils.encoding import force_str
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -469,8 +469,12 @@ class BaseListView(ModelViewMixin, ListView):
                 value = self.get_empty_value_display()
             if link_in_col(first, name) and has_view_permission(self.request.user, self.opts):
                 # TODO: add preserved filters to links
-                url = get_change_url(self.request, result)
-                value = create_hyperlink(url, value)
+                try:
+                    url = get_change_url(self.request, result)
+                except NoReverseMatch:
+                    pass
+                else:
+                    value = create_hyperlink(url, value)
             result_items.append(value)
             first = False
         return result_items

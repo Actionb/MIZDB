@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from urllib.parse import unquote
 
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -171,6 +172,16 @@ class TestBaseListView(ChangelistTestCase):
         view = self.get_view(request, list_display_links=["name"])
         obj = self.get_annotated_model_obj(self.obj)
         self.assertNotIn('<a href="', view.get_result_row(obj)[0])
+
+    def test_get_result_row_link_no_change_view(self):
+        """No link should be displayed if the change view does not exist."""
+        view = self.get_view(self.get_request(), list_display_links=["name"])
+        obj = self.get_annotated_model_obj(self.obj)
+        urlpatterns = URLConf.urlpatterns.copy()
+        urlpatterns.pop(1)
+        with patch.object(URLConf, "urlpatterns", new=urlpatterns):
+            with override_settings(ROOT_URLCONF=URLConf):
+                self.assertNotIn('<a href="', view.get_result_row(obj)[0])
 
     def test_get_result_row_link_contains_preserved_filters(self):
         """
