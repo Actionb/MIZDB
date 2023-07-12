@@ -43,7 +43,7 @@ class SearchFormMixin(object):
         Create a form class that will facilitate changelist searches.
 
         The form class is created by the searchform_factory, using the
-        ModelAdmin's 'search_form_kwargs' and the provided keyword arguments.
+        view's 'search_form_kwargs' and the provided keyword arguments.
         """
         factory_kwargs = {'model': self.model, **self.search_form_kwargs, **kwargs}  # type: ignore[attr-defined]
         return searchform_factory(**factory_kwargs)
