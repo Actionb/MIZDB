@@ -288,9 +288,8 @@ class BaseListView(ModelViewMixin, ListView):
         return "?%s" % urlencode(sorted(p.items()))
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        if q := self.request.GET.get(SEARCH_VAR):
-            queryset = self.get_search_results(queryset, q)
+        queryset = self.get_search_results(super().get_queryset())
+        queryset = self.order_queryset(queryset)
         if not hasattr(queryset, "overview"):
             return queryset
         return queryset.overview()
@@ -396,11 +395,16 @@ class BaseListView(ModelViewMixin, ListView):
             first = False
         return result_items
 
-    def get_search_results(self, queryset, search_term):
-        return queryset.search(search_term, ranked=ORDER_VAR not in self.request.GET)
+    def get_search_results(self, queryset):
+        if search_term := self.request.GET.get(SEARCH_VAR):
+            return queryset.search(search_term, ranked=ORDER_VAR not in self.request.GET)
+        return queryset
+
+    def order_queryset(self, queryset):
+        return queryset
 
 
-class ChangelistSearchForm(SearchForm):
+class ChangelistSearchForm(SearchForm):  # TODO: should maybe not live in VIEWS.base?
     default_renderer = FormRenderer(
         label_css_classes=("col-lg-1", "col-form-label"),
         control_css_classes=("col-lg-10", "col-xl-9", "col-xxl-8"),
