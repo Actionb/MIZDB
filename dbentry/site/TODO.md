@@ -3,15 +3,10 @@
 Code that should not be coupled to admin stuff:
 
 - site search page
-
-- queryset annotations for changelists (also need those annotations for non-admin ListViews)
-
-- dbentry.ac.views.ACAusgabe relies on admin annotations (see above)
-
+- 
 - some dbentry.utils.admin functions are not specific to admin (link functions, LogEntry functions)
 
 - dbentry.search.form
-  - SearchForm relies on admin static files such as form.css
   - SearchFormFactory mentions ModelAdmin.lookup_allowed
   
 - admin actions generally
@@ -35,12 +30,7 @@ Code that should not be coupled to admin stuff:
     - collapse.js (outside of admin: should be done by bootstrap anyway)
   - css
     - base_custom requires admin/css/base.css
-  - many forms (and other Media using stuff) use admin static files 
-  
-- admin site stuff:
-  - need something similar for non-admin anyway, so maybe use mixins
-  - this includes tools.decorators.register_tool
-  - login, log out and password change are handled by admin.AdminSite
+  - many forms (and other Media using stuff) use admin static files
 
 
 ## Important stuff that would need to replicated from Django admin
