@@ -115,7 +115,7 @@ class SearchForm(forms.Form):
     range_upper_bound = django_lookups.LessThanOrEqual
 
     @property
-    def media(self) -> forms.Media:
+    def media(self) -> forms.Media:  # TODO: only the admin needs the admin stuff
         css = {
             'all': ('admin/css/forms.css', 'admin/css/search_form.css')
         }

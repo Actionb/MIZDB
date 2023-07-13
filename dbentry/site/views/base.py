@@ -269,7 +269,7 @@ class BaseListView(ModelViewMixin, ListView):
                 attr = getattr(self, field_name)
                 return getattr(attr, "order_field", None)
 
-    def get_query_string(self, new_params=None, remove=None):
+    def get_query_string(self, new_params=None, remove=None):  # TODO: is this even used in this view?
         if new_params is None:  # pragma: no cover
             new_params = {}
         if remove is None:
