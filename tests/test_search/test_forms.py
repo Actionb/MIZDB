@@ -313,7 +313,7 @@ class TestSearchForm(TestCase):
         expected = [
             'admin/js/vendor/jquery/jquery.min.js',
             'admin/js/jquery.init.js',
-            'admin/js/remove_empty_fields.js',
+            'search/js/remove_empty_fields.js',
             'admin/js/collapse.js'
         ]
         for js in expected:

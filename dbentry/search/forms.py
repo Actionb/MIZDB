@@ -123,7 +123,7 @@ class SearchForm(forms.Form):
         js = [
             'admin/js/vendor/jquery/jquery%s.js' % extra,
             'admin/js/jquery.init.js',
-            'admin/js/remove_empty_fields.js',
+            'search/js/remove_empty_fields.js',
             'admin/js/collapse.js'
         ]
         return super().media + forms.Media(css=css, js=js)

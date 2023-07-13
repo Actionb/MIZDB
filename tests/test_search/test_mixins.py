@@ -148,7 +148,7 @@ class TestAdminMixin(AdminTestCase):
         response = self.client.get(path=self.changelist_path)
         self.assertIn('media', response.context)
         media = response.context['media']
-        self.assertIn('admin/js/remove_empty_fields.js', media._js)
+        self.assertIn('search/js/remove_empty_fields.js', media._js)
         self.assertIn('admin/js/collapse.js', media._js)
         self.assertIn('all', media._css)
         self.assertIn('admin/css/forms.css', media._css['all'])
