@@ -61,7 +61,7 @@ class ArtikelList(SearchableListView):
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'autor', 'musiker', 'band',
             'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
-            # 'seite__range'  # FIXME: MultiValueFields bug out django-formset
+            'seite__range'
         ],
         'widgets': {
             'ausgabe__magazin': get_widget(_models.Magazin, url="autocomplete_magazin"),
