@@ -8,7 +8,7 @@ from django.test import TestCase
 
 from dbentry import models as _models
 from dbentry.fields import PartialDate, PartialDateFormField
-from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory
+from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory, MIZAdminSearchForm
 from tests.model_factory import make
 from .models import Artikel, Ausgabe, Genre, InheritedPKModel, Magazin
 
@@ -310,21 +310,7 @@ class TestSearchForm(TestCase):
 
     def test_media_js(self):
         media = self.factory(self.model)().media
-        expected = [
-            'admin/js/vendor/jquery/jquery.min.js',
-            'admin/js/jquery.init.js',
-            'search/js/remove_empty_fields.js',
-            'admin/js/collapse.js'
-        ]
-        for js in expected:
-            with self.subTest(js=js):
-                self.assertIn(js, media._js)
-
-    def test_media_css(self):
-        media = self.factory(self.model)().media
-        for css in ('admin/css/forms.css', 'admin/css/search_form.css'):
-            with self.subTest(css=css):
-                self.assertIn(css, media._css['all'])
+        self.assertIn('search/js/remove_empty_fields.js', media._js)
 
     def test_get_filters_params_invalid_form(self):
         """Assert that get_filters_params returns early if the form is invalid."""
@@ -473,3 +459,29 @@ class TestSearchForm(TestCase):
         form = form_class()
         form.cleaned_data = {'id__in': '1,2'}
         self.assertEqual(form.clean_id__in(), '1,2')
+
+
+class TestMIZAdminSearchForm(TestCase):
+    model = Artikel
+
+    def setUp(self):
+        super().setUp()
+        self.factory = SearchFormFactory()
+
+    def test_media_js(self):
+        media = self.factory(self.model, form=MIZAdminSearchForm)().media
+        expected = [
+            'admin/js/vendor/jquery/jquery.min.js',
+            'admin/js/jquery.init.js',
+            'search/js/remove_empty_fields.js',
+            'admin/js/collapse.js'
+        ]
+        for js in expected:
+            with self.subTest(js=js):
+                self.assertIn(js, media._js)
+
+    def test_media_css(self):
+        media = self.factory(self.model, form=MIZAdminSearchForm)().media
+        for css in ('admin/css/forms.css', 'admin/css/search_form.css'):
+            with self.subTest(css=css):
+                self.assertIn(css, media._css['all'])

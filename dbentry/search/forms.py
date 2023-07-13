@@ -115,18 +115,8 @@ class SearchForm(forms.Form):
     range_upper_bound = django_lookups.LessThanOrEqual
 
     @property
-    def media(self) -> forms.Media:  # TODO: only the admin needs the admin stuff
-        css = {
-            'all': ('admin/css/forms.css', 'admin/css/search_form.css')
-        }
-        extra = '' if settings.DEBUG else '.min'
-        js = [
-            'admin/js/vendor/jquery/jquery%s.js' % extra,
-            'admin/js/jquery.init.js',
-            'search/js/remove_empty_fields.js',
-            'admin/js/collapse.js'
-        ]
-        return super().media + forms.Media(css=css, js=js)
+    def media(self) -> forms.Media:
+        return super().media + forms.Media(js=['search/js/remove_empty_fields.js'])
 
     def get_filters_params(self) -> dict:
         """
@@ -202,7 +192,20 @@ class SearchForm(forms.Form):
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     """A search form that includes django media and supports fieldsets."""
-    pass
+
+    @property
+    def media(self) -> forms.Media:
+        css = {
+            'all': ('admin/css/forms.css', 'admin/css/search_form.css')
+        }
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'admin/js/vendor/jquery/jquery%s.js' % extra,
+            'admin/js/jquery.init.js',
+            'search/js/remove_empty_fields.js',
+            'admin/js/collapse.js'
+        ]
+        return super().media + forms.Media(css=css, js=js)
 
 
 class SearchFormFactory:
