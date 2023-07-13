@@ -410,4 +410,23 @@ class SearchableListView(SearchFormMixin, BaseListView):
 
     Configure the search form via the attribute `search_form_kwargs`.
     """
-    pass
+
+    def get_search_results(self, queryset):
+        queryset = super().get_search_results(queryset)
+        search_form = self.get_search_form(data=self.request.GET)
+        if search_form.is_valid():
+            filter_params = self.get_filters(search_form)
+            print(f"search_form is valid: {filter_params}")
+            queryset = queryset.filter(**self.get_filters(search_form))
+        return queryset
+
+    def get_filters(self, search_form):
+        filters = {}
+        for key, value in search_form.get_filters_params().items():
+            if key.endswith("__in"):
+                value = value.split(",")
+            elif key.endswith("__isnull"):
+                value = value.lower() not in ("", "false", "0")
+            filters[key] = value
+        return filters
+
