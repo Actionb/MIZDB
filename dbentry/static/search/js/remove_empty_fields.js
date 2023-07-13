@@ -2,7 +2,7 @@
 // Author: Bill Erickson
 // URL: http://www.billerickson.net/code/hide-empty-fields-get-form/
 document.addEventListener("DOMContentLoaded", () => {
-	const form = document.querySelector("#changelist-search")
+	const form = document.querySelector(".search-form")
 	const inputs = form.querySelectorAll("input,select,button,textarea")
 	form.addEventListener("submit", (e) => {
 		inputs.forEach((elem) => {
