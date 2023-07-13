@@ -470,13 +470,7 @@ class TestMIZAdminSearchForm(TestCase):
 
     def test_media_js(self):
         media = self.factory(self.model, form=MIZAdminSearchForm)().media
-        expected = [
-            'admin/js/vendor/jquery/jquery.min.js',
-            'admin/js/jquery.init.js',
-            'search/js/remove_empty_fields.js',
-            'admin/js/collapse.js'
-        ]
-        for js in expected:
+        for js in ['search/js/remove_empty_fields.js', 'admin/js/collapse.js']:
             with self.subTest(js=js):
                 self.assertIn(js, media._js)
 

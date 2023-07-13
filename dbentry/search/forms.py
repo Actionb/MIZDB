@@ -195,16 +195,8 @@ class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
 
     @property
     def media(self) -> forms.Media:
-        css = {
-            'all': ('admin/css/forms.css', 'admin/css/search_form.css')
-        }
-        extra = '' if settings.DEBUG else '.min'
-        js = [
-            'admin/js/vendor/jquery/jquery%s.js' % extra,
-            'admin/js/jquery.init.js',
-            'search/js/remove_empty_fields.js',
-            'admin/js/collapse.js'
-        ]
+        css = {'all': ('admin/css/forms.css', 'admin/css/search_form.css')}
+        js = ['search/js/remove_empty_fields.js', 'admin/js/collapse.js']
         return super().media + forms.Media(css=css, js=js)
 
 
