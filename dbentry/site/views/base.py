@@ -404,27 +404,10 @@ class BaseListView(ModelViewMixin, ListView):
         return queryset
 
 
-class ChangelistSearchForm(SearchForm):  # TODO: should maybe not live in VIEWS.base?
-    default_renderer = FormRenderer(
-        label_css_classes=("col-lg-1", "col-form-label"),
-        control_css_classes=("col-lg-10", "col-xl-9", "col-xxl-8"),
-        field_css_classes={'*': 'row mb-2'},
-        form_css_classes=("ps-2",),
-    )
-
-
-class SearchableListView(SearchFormMixin, FormViewMixin, BaseListView):
+class SearchableListView(SearchFormMixin, BaseListView):
     """
     A BaseListView with a search form.
 
     Configure the search form via the attribute `search_form_kwargs`.
     """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.form_class = self.get_search_form_class()  # django-formset requires this
-
-    def get_search_form_class(self, **kwargs):
-        if 'form' not in kwargs:
-            kwargs['form'] = ChangelistSearchForm
-        return super().get_search_form_class(**kwargs)
+    pass

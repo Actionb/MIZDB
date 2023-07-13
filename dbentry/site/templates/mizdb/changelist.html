@@ -1,5 +1,5 @@
 {% extends "mizdb/base.html" %}
-{% load mizdb static formsetify %}
+{% load mizdb static %}
 
 {% block title %}{{ opts.verbose_name_plural }} Übersicht | MIZDB {% endblock %}
 
@@ -17,7 +17,7 @@
 
 {% block search_form %}
 <div id="changelist-search-container" class="mb-3 pt-3 border bg-primary bg-opacity-10">
-<django-formset endpoint="{{ request.path }}" csrf-token="{{ csrf_token }}" method="get">
+<form method="get" class="search-form">
     <div class="border-bottom mb-3">
         <div class="row mb-3 ps-2">
             <label for="searchInput" class="col-form-label col-lg-1">Textsuche:</label>
@@ -27,7 +27,7 @@
         </div>
         <div class="collapse" id="advSearchForm">
             {% block advanced_search_form %}
-              {% render_form advanced_search_form %}
+                {{ advanced_search_form }}
             {% endblock %}
         </div>
     </div>
@@ -41,7 +41,7 @@
             {% endif %}
         </div>
     </div>
-</django-formset>
+</form>
 </div>
 {% endblock %}
 
