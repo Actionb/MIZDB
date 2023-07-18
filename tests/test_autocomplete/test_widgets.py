@@ -1,4 +1,4 @@
-from mizdb_tomselect.widgets import MIZSelect, MIZSelectTabular
+from mizdb_tomselect.widgets import MIZSelect, MIZSelectTabular, MIZSelectTabularMultiple, MIZSelectMultiple
 
 from dbentry.autocomplete.widgets import make_widget
 from tests.case import MIZTestCase
@@ -13,6 +13,12 @@ class TestMakeWidget(MIZTestCase):
 
     def test_make_widget_tabular(self):
         self.assertIsInstance(make_widget(self.model, tabular=True), MIZSelectTabular)
+
+    def test_make_widget_select_multiple(self):
+        self.assertIsInstance(make_widget(self.model, tabular=False, multiple=True), MIZSelectMultiple)
+
+    def test_make_widget_tabular_select_multiple(self):
+        self.assertIsInstance(make_widget(self.model, tabular=True, multiple=True), MIZSelectTabularMultiple)
 
     def test_make_widget_takes_widget_class(self):
         """make_widget should return a widget of the passed in widget_class."""

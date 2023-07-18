@@ -1,4 +1,4 @@
-from mizdb_tomselect.widgets import MIZSelect, MIZSelectTabular
+from mizdb_tomselect.widgets import MIZSelect, MIZSelectTabular, MIZSelectTabularMultiple, MIZSelectMultiple
 
 from dbentry import models as _models
 
@@ -21,13 +21,23 @@ DEFAULTS = {
 }
 
 
-def make_widget(model, tabular=False, namespace="admin", can_add=True, can_list=True, can_edit=True, **kwargs):
+def make_widget(
+    model,
+    tabular=False,
+    multiple=False,
+    namespace="admin",
+    can_add=True,
+    can_list=True,
+    can_edit=True,
+    **kwargs,
+):
     """
     Factory function that creates MIZSelect autocomplete widgets.
 
     Args:
         model: the model class that provides the choices
         tabular (bool): if True, use MIZSelectTabular as the default widget
+        multiple (bool): if True, use a select multiple variant of the widget
         namespace (str): URL namespace for the 'add' and 'changelist' link URLs
         can_add (bool): if True, add an 'add' button
         can_list (bool): if True, add a 'changelist' button
@@ -38,10 +48,14 @@ def make_widget(model, tabular=False, namespace="admin", can_add=True, can_list=
     if "widget_class" in kwargs:
         widget_class = kwargs.pop("widget_class")
     else:
-        if tabular:
-            widget_class = MIZSelectTabular
-        else:
+        if not tabular and not multiple:
             widget_class = MIZSelect
+        elif tabular and not multiple:
+            widget_class = MIZSelectTabular
+        elif tabular and multiple:
+            widget_class = MIZSelectTabularMultiple
+        else:
+            widget_class = MIZSelectMultiple
 
     widget_opts = {"model": model, "attrs": {}, **DEFAULTS.get((model, widget_class), {}), **kwargs}
     if "create_field" not in widget_opts and getattr(model, "create_field", None):
