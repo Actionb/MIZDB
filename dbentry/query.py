@@ -163,6 +163,7 @@ class CNQuerySet(MIZQuerySet):
         if '_changed_flag' not in kwargs:
             kwargs['_changed_flag'] = True
         return super().update(**kwargs)
+    # TODO: use a decorator to add attributes to the function
     update.alters_data = True  # type: ignore[attr-defined]
 
     def values(self, *fields: str, **expressions: Any) -> MIZQuerySet:
@@ -191,6 +192,7 @@ class CNQuerySet(MIZQuerySet):
                     self.order_by().filter(pk=pk).update(
                         _name=new_name, _changed_flag=False
                     )
+    # TODO: use a decorator to add attributes to the function
     _update_names.alters_data = True  # type: ignore[attr-defined]
 
 

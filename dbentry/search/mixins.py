@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Callable
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
@@ -9,7 +9,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDi
 
 from dbentry import utils
 from dbentry.search import utils as search_utils
-from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
+from dbentry.search.forms import MIZAdminSearchForm, SearchForm, SearchFormFactory, DALSearchFormFactory
 
 
 class SearchFormMixin(object):
@@ -20,13 +20,16 @@ class SearchFormMixin(object):
         - ``search_form_kwargs`` (dict): the keyword arguments for
           searchform_factory to create a search form class with.
           These are *not* the arguments for form initialization!
+        - ``searchform_factory`` (callable): the factory function to create
+          search forms with
     """
 
-    search_form_kwargs: dict = None  # type: ignore[assignment]
+    search_form_kwargs: dict
+    searchform_factory: Callable = SearchFormFactory()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.search_form_kwargs = self.search_form_kwargs or {}
+        self.search_form_kwargs = getattr(self, 'search_form_kwargs', None) or {}
 
     def has_search_form(self) -> bool:
         """
@@ -46,7 +49,7 @@ class SearchFormMixin(object):
         ModelAdmin's 'search_form_kwargs' and the provided keyword arguments.
         """
         factory_kwargs = {'model': self.model, **self.search_form_kwargs, **kwargs}  # type: ignore[attr-defined]
-        return searchform_factory(**factory_kwargs)
+        return self.searchform_factory(**factory_kwargs)
 
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
@@ -177,7 +180,7 @@ class AdminSearchFormMixin(SearchFormMixin):
         # All lookups that the formfield was registered with should be allowed
         # by default.
         allowed = self.search_form.lookups.get(field_path, [])
-        if Range.lookup_name in allowed:
+        if Range.lookup_name in allowed:  # pragma: no cover
             # Also allow lte lookups, if the form uses any range lookups.
             # (lte is the lookup used when a RangeField has an end value but no
             # start value).
@@ -249,6 +252,8 @@ class AdminSearchFormMixin(SearchFormMixin):
 
 class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     """Default mixin for MIZAdmin admin models adding more search options."""
+
+    searchform_factory = DALSearchFormFactory()
 
     def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         # Set the default form class for searchform_factory, unless a class is

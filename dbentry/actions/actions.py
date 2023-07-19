@@ -71,5 +71,6 @@ def summarize(
             response.write(f'<p>{k}: {v}</p>')
         response.write('<hr style="break-after:page;">')
     return response
+# TODO: use a decorator to add attributes to the function
 summarize.short_description = 'textuelle Zusammenfassung'  # type: ignore  # noqa
 summarize.allowed_permissions = ('view',)  # type: ignore  # noqa

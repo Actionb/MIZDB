@@ -39,8 +39,7 @@ class TestSearchFormMixin(ViewTestCase):
                 view = self.get_view(search_form_kwargs=search_form_kwargs)
                 self.assertEqual(view.has_search_form(), expected)
 
-    @mock.patch('dbentry.search.mixins.searchform_factory')
-    def test_get_search_form_class(self, factory_mock):
+    def test_get_search_form_class(self):
         """
         Assert that the searchform_factory is called with the expected kwargs.
         (search_form_kwargs declared on the view + the passed in kwargs)
@@ -48,16 +47,18 @@ class TestSearchFormMixin(ViewTestCase):
         search_form_kwargs = {'fields': ['datum'], 'labels': {'datum': 'Not datum'}}
         labels_override = {'datum': 'Das Datum!'}
         view = self.get_view(search_form_kwargs=search_form_kwargs)
-        view.get_search_form_class(labels=labels_override)
-        factory_mock.assert_called_with(model=self.view_class.model, fields=['datum'], labels=labels_override)
+        with mock.patch.object(view, "searchform_factory") as factory_mock:
+            view.get_search_form_class(labels=labels_override)
+            factory_mock.assert_called_with(model=self.view_class.model, fields=['datum'], labels=labels_override)
 
-    @mock.patch('dbentry.search.mixins.searchform_factory')
-    def test_get_search_form(self, factory_mock):
+    def test_get_search_form(self):
         """Assert that the form class is instantiated with the provided kwargs."""
-        form_class_mock = mock.Mock()
-        factory_mock.return_value = form_class_mock
-        self.get_view().get_search_form(beep='boop')
-        form_class_mock.assert_called_with(beep='boop')
+        view = self.get_view()
+        with mock.patch.object(view, "searchform_factory") as factory_mock:
+            form_class_mock = mock.Mock()
+            factory_mock.return_value = form_class_mock
+            view.get_search_form(beep='boop')
+            form_class_mock.assert_called_with(beep='boop')
 
     def test_get_context_data(self):
         """Assert that the item 'advanced_search_form' is added to the context."""
@@ -353,8 +354,7 @@ class TestMIZAdminSearchFormMixin(TestCase):
         def has_search_form(self):
             return True
 
-    @mock.patch('dbentry.search.mixins.searchform_factory')
-    def test_get_search_form_class_custom_form_class(self, factory_mock):
+    def test_get_search_form_class_custom_form_class(self):
         """
         Assert that get_search_form_class calls the factory with the 
         expected 'form' kwarg.
@@ -363,8 +363,9 @@ class TestMIZAdminSearchFormMixin(TestCase):
         #   1. from get_search_form_class arguments
         #   2. from ModelAdmin search_form_kwargs attribute
         #   3. factory default argument
+        factory_mock = mock.Mock()
         view = self.Dummy()
-        with mock.patch.object(view, 'search_form_kwargs', {}):
+        with mock.patch.multiple(view, searchform_kwargs={}, searchform_factory=factory_mock, create=True):
             # Default:
             view.get_search_form_class()
             args, kwargs = factory_mock.call_args
