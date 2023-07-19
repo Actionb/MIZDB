@@ -10,11 +10,12 @@ def func0():
     pass
 
 
+#@formatter:off
 def func1():
     pass
-# TODO: use a decorator to add attributes to the function
 func1.short_description = 'Foo'  # noqa
 func1.allowed_permissions = 'Bar'
+# @formatter:on
 
 
 class TestAddClsAttrsDecorator(TestCase):

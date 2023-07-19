@@ -13,7 +13,7 @@ from django.db.models import Count, Max, Min, Model, QuerySet, OuterRef, Exists,
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.fts.query import TextSearchQuerySetMixin
-from dbentry.utils import leapdays
+from dbentry.utils import leapdays, add_attrs
 
 
 class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
@@ -157,14 +157,13 @@ class CNQuerySet(MIZQuerySet):
             self._update_names()
         return super().only(*fields)
 
+    @add_attrs(alters_data=True)
     def update(self, **kwargs: Any) -> int:
         # Assume that a name update will be required after this update.
         # If _changed_flag is not already part of the update, add it.
         if '_changed_flag' not in kwargs:
             kwargs['_changed_flag'] = True
         return super().update(**kwargs)
-    # TODO: use a decorator to add attributes to the function
-    update.alters_data = True  # type: ignore[attr-defined]
 
     def values(self, *fields: str, **expressions: Any) -> MIZQuerySet:
         if '_name' in fields:
@@ -176,6 +175,7 @@ class CNQuerySet(MIZQuerySet):
             self._update_names()
         return super().values_list(*fields, **kwargs)
 
+    @add_attrs(alters_data=True)
     def _update_names(self) -> None:
         """Update the names of rows where _changed_flag is True."""
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
@@ -192,8 +192,6 @@ class CNQuerySet(MIZQuerySet):
                     self.order_by().filter(pk=pk).update(
                         _name=new_name, _changed_flag=False
                     )
-    # TODO: use a decorator to add attributes to the function
-    _update_names.alters_data = True  # type: ignore[attr-defined]
 
 
 def build_date(

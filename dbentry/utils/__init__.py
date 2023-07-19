@@ -22,3 +22,14 @@ def nfilter(filters: Iterable[Callable], iterable: Iterable) -> Iterator:
         return all(f(item) for f in filters)
 
     return filter(filter_func, iterable)
+
+
+def add_attrs(**kwargs):
+    """Add the given kwargs to the decorated object's attributes."""
+
+    def inner(obj):
+        for k, v in kwargs.items():
+            setattr(obj, k, v)
+        return obj
+
+    return inner
