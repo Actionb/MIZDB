@@ -342,7 +342,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             "Fehler beim Erstellen der LogEntry Objekte: \nValueError: This is a test exception."
         )
 
-    def test_movetobrochure_permissions(self):
+    def test_has_moveto_brochure_permission(self):
         """Assert that the moveto_brochure action requires certain permissions."""
         msg_template = (
             "Action 'moveto_brochure' should not be available to "
