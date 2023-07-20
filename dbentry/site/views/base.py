@@ -241,13 +241,13 @@ class BaseListView(ModelViewMixin, ListView):
         self.formset = None  # required by tag admin_list.result_hidden_fields  # TODO: is this still needed?
 
     def _get_default_ordering(self):
-        # NOTE: not (yet?) used
-        ordering = []
+        """Return a list of the default ordering fields."""
         if self.ordering:
-            ordering = self.ordering
+            return self.ordering
         elif self.opts.ordering:
-            ordering = self.opts.ordering
-        return ordering
+            return self.opts.ordering
+        else:
+            return ['id']
 
     def get_ordering_field(self, field_name):
         """
@@ -289,10 +289,9 @@ class BaseListView(ModelViewMixin, ListView):
 
     def get_queryset(self):
         queryset = self.get_search_results(super().get_queryset())
-        queryset = self.order_queryset(queryset)
-        if not hasattr(queryset, "overview"):
-            return queryset
-        return queryset.overview()
+        if hasattr(queryset, "overview"):
+            queryset = queryset.overview()
+        return self.order_queryset(queryset)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -402,7 +401,7 @@ class BaseListView(ModelViewMixin, ListView):
         return queryset
 
     def order_queryset(self, queryset):
-        return queryset
+        return queryset.order_by(*self._get_default_ordering())
 
 
 class SearchableListView(SearchFormMixin, BaseListView):
