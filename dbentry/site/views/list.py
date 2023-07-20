@@ -25,6 +25,7 @@ Use SearchableListView to add a search form to the changelist:
             "fields": ["name", "field_2"]
         }
 """
+from django.contrib.admin import display
 from django.views.generic import TemplateView
 
 from dbentry import models as _models
@@ -37,8 +38,6 @@ from dbentry.utils.text import concat_limit
 # TODO: rework dbentry.search.forms.SearchFormFactory.formfield_for_dbfield to use
 #  the mizdb-tomselect make_widget factory
 # TODO: add 'actions'
-# TODO: use 'display' decorator to add attributes to the view methods for list_display
-#   https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#the-display-decorator
 
 def get_widget(model, can_add=False, can_edit=False, **kwargs):
     """Return a mizdb-tomselect autocomplete widget for the search form."""
@@ -74,38 +73,34 @@ class ArtikelList(SearchableListView):
         },
     }
 
-    # @formatter:off
+    @display(description="Seite", ordering="seite")
     def seite_umfang(self, obj):
         return f"{obj.seite}{obj.seitenumfang}"
-    seite_umfang.short_description = "Seite"
-    seite_umfang.order_field = "seite"
 
+    @display(description="Ausgabe", ordering="ausgabe___name")
     def ausgabe_name(self, obj: _models.Artikel) -> str:
         return obj.ausgabe._name
-    ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
-    ausgabe_name.order_field = 'ausgabe___name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Zusammenfassung", ordering="zusammenfassung")
     def zusammenfassung_list(self, obj: _models.Artikel) -> str:
         if not obj.zusammenfassung:
             return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
-    zusammenfassung_list.short_description = 'Zusammenfassung'  # type: ignore[attr-defined]  # noqa
-    zusammenfassung_list.order_field = 'zusammenfassung'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Magazin", ordering="ausgabe__magazin__magazin_name")
     def artikel_magazin(self, obj: _models.Artikel) -> str:
         return obj.ausgabe.magazin.magazin_name
-    artikel_magazin.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
-    artikel_magazin.order_field = 'ausgabe__magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Schlagwörter", ordering="schlagwort_list")
     def schlagwort_list(self, obj: _models.Artikel) -> str:
-        return obj.schlagwort_list or self.get_empty_value_display()  # noqa
-    schlagwort_list.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
-    schlagwort_list.order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.schlagwort_list or self.get_empty_value_display()
 
     def kuenstler_list(self, obj: _models.Artikel) -> str:
-        return obj.kuenstler_list or self.get_empty_value_display()  # noqa
-    kuenstler_list.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
-    # @formatter:on
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
@@ -135,45 +130,43 @@ class AusgabenList(SearchableListView):
             'audio': 'Audio (Beilagen)',
             'video': 'Video (Beilagen)'
         },
-        'widgets': {
-            'magazin': get_widget(_models.Magazin, url="autocomplete_magazin"),
-            'audio': get_widget(_models.Audio),
-            'video': get_widget(_models.Video)
-        },
+        'widgets': {'magazin': get_widget(_models.Magazin, url="autocomplete_magazin")},
     }
 
-    # @formatter:off
+    @display(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
         return obj._name
-    ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
-    ausgabe_name.order_field = '_name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Magazin", ordering="magazin__magazin_name")
     def magazin_name(self, obj: _models.Ausgabe) -> str:
         return obj.magazin.magazin_name
-    magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
-    magazin_name.order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Anz. Artikel", ordering="anz_artikel")
     def anz_artikel(self, obj: _models.Ausgabe) -> int:
-        return obj.anz_artikel  # added by annotations  # noqa
-    anz_artikel.short_description = 'Anz. Artikel'  # type: ignore[attr-defined]  # noqa
-    anz_artikel.order_field = 'anz_artikel'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.anz_artikel
 
+    @display(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.Ausgabe) -> str:
-        return obj.jahr_list  # added by annotations  # noqa
-    jahr_list.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
-    jahr_list.order_field = 'jahr_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
 
+    @display(description="Nummer", ordering="num_list")
     def num_list(self, obj: _models.Ausgabe) -> str:
-        return obj.num_list  # added by annotations  # noqa
-    num_list.short_description = 'Nummer'  # type: ignore[attr-defined]  # noqa
-    num_list.order_field = 'num_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.num_list
 
+    @display(description="lfd. Nummer", ordering="lnum_list")
     def lnum_list(self, obj: _models.Ausgabe) -> str:
-        return obj.lnum_list  # added by annotations  # noqa
-    lnum_list.short_description = 'lfd. Nummer'  # type: ignore[attr-defined]  # noqa
-    lnum_list.order_field = 'lnum_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.lnum_list
 
+    @display(description="Monate")
     def monat_list(self, obj: _models.Ausgabe) -> str:
-        return obj.monat_list  # added by annotations  # noqa
-    monat_list.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
-    # @formatter:on
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.monat_list
