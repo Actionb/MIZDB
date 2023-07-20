@@ -71,15 +71,6 @@ class ArtikelList(SearchableListView):
                 tabular=True,
                 attrs={"data-placeholder": 'Bitte zuerst ein Magazin auswählen'},
             ),
-            'autor': get_widget(_models.Autor, multiple=True),
-            'musiker': get_widget(_models.Musiker, tabular=True, multiple=True),
-            'band__in': get_widget(_models.Band, tabular=True, multiple=True),
-            'schlagwort': get_widget(_models.Schlagwort, multiple=True),
-            'genre': get_widget(_models.Genre, multiple=True),
-            'ort': get_widget(_models.Ort, multiple=True),
-            'spielort': get_widget(_models.Spielort, tabular=True, multiple=True),
-            'veranstaltung': get_widget(_models.Veranstaltung, tabular=True, multiple=True),
-            'person': get_widget(_models.Person, multiple=True),
         },
     }
 

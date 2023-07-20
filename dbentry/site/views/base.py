@@ -16,7 +16,7 @@ from django.views.generic.base import ContextMixin
 from formset.renderers.bootstrap import FormRenderer
 from formset.views import FormViewMixin
 
-from dbentry.search.forms import SearchForm
+from dbentry.search.forms import SearchForm, MIZSelectSearchFormFactory
 from dbentry.search.mixins import SearchFormMixin
 from dbentry.site.registry import miz_site
 from dbentry.utils import permission as perms
@@ -411,12 +411,13 @@ class SearchableListView(SearchFormMixin, BaseListView):
     Configure the search form via the attribute `search_form_kwargs`.
     """
 
+    searchform_factory = MIZSelectSearchFormFactory()
+
     def get_search_results(self, queryset):
         queryset = super().get_search_results(queryset)
         search_form = self.get_search_form(data=self.request.GET)
         if search_form.is_valid():
             filter_params = self.get_filters(search_form)
-            print(f"search_form is valid: {filter_params}")
             queryset = queryset.filter(**self.get_filters(search_form))
         return queryset
 
