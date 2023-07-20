@@ -224,6 +224,12 @@ class BaseListView(ModelViewMixin, ListView):
 
     Set attribute `list_display` to control which fields are displayed on the
     changelist.
+
+    Additional attributes:
+        - expensive_ordering (bool): if True, only apply ordering on filtered
+          querysets
+        - prioritize_search_ordering (bool): if True, do not override the
+          ordering set by queryset.search()
     """
     template_name = "mizdb/changelist.html"
     list_display = ()
@@ -233,21 +239,15 @@ class BaseListView(ModelViewMixin, ListView):
     empty_value_display = "-"
     page_kwarg = PAGE_VAR
 
+    expensive_ordering = False  # TODO: just override order_queryset in views that use this?
+    prioritize_search_ordering = True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lookup_opts = self.opts = self.model._meta  # TODO: probably not needed anymore?
         if self.list_display:
             self.sortable_by = self.list_display  # TODO: what does this do? Is sortable_by needed at all?
         self.formset = None  # required by tag admin_list.result_hidden_fields  # TODO: is this still needed?
-
-    def _get_default_ordering(self):
-        """Return a list of the default ordering fields."""
-        if self.ordering:
-            return self.ordering
-        elif self.opts.ordering:
-            return self.opts.ordering
-        else:
-            return ['id']
 
     def get_ordering_field(self, field_name):
         """
@@ -292,6 +292,41 @@ class BaseListView(ModelViewMixin, ListView):
         if hasattr(queryset, "overview"):
             queryset = queryset.overview()
         return self.order_queryset(queryset)
+
+    @property
+    def search_term(self):
+        return self.request.GET.get(SEARCH_VAR, "")
+
+    def get_search_results(self, queryset):
+        if self.search_term:
+            return queryset.search(self.search_term, ranked=ORDER_VAR not in self.request.GET)
+        return queryset
+
+    def _get_default_ordering(self):
+        if self.ordering is not None:
+            return self.ordering
+        elif self.opts.ordering:
+            return self.opts.ordering
+        else:
+            return []
+
+    def get_ordering_fields(self, queryset):
+        """Return the list of ordering fields for the results queryset."""
+        # TODO: add order params from request query string
+        if self.prioritize_search_ordering and self.search_term:
+            # queryset.search has applied its own ordering, do not override:
+            return queryset.query.order_by
+        else:
+            ordering = [*self._get_default_ordering()]
+            ordering.extend(queryset.query.order_by)
+            ordering.append("id")
+            return ordering
+
+    def order_queryset(self, queryset):
+        if self.expensive_ordering and not queryset.query.where:
+            # Do not apply expensive ordering on an unfiltered queryset
+            return queryset.order_by('id')
+        return queryset.order_by(*self.get_ordering_fields(queryset))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -394,14 +429,6 @@ class BaseListView(ModelViewMixin, ListView):
             result_items.append(value)
             first = False
         return result_items
-
-    def get_search_results(self, queryset):
-        if search_term := self.request.GET.get(SEARCH_VAR):
-            return queryset.search(search_term, ranked=ORDER_VAR not in self.request.GET)
-        return queryset
-
-    def order_queryset(self, queryset):
-        return queryset.order_by(*self._get_default_ordering())
 
 
 class SearchableListView(SearchFormMixin, BaseListView):

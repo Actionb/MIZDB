@@ -52,6 +52,8 @@ class Index(BaseViewMixin, TemplateView):
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
 class ArtikelList(SearchableListView):
     model = _models.Artikel
+    expensive_ordering = True
+    prioritize_search_ordering = False
     list_display = [
         'schlagzeile', 'zusammenfassung_list', 'seite_umfang', 'schlagwort_list',
         'ausgabe_name', 'artikel_magazin', 'kuenstler_list'
@@ -112,7 +114,8 @@ class GenreList(SearchableListView):
 @register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
 class AusgabenList(SearchableListView):
     model = _models.Ausgabe
-
+    prioritize_search_ordering = True
+    ordering = ['magazin__magazin_name', '_name']
     list_display = (
         'ausgabe_name', 'num_list', 'lnum_list', 'monat_list', 'jahr_list',
         'jahrgang', 'magazin_name', 'e_datum', 'anz_artikel', 'status'

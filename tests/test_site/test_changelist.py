@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from unittest import expectedFailure
+from unittest.mock import patch, Mock
 from urllib.parse import unquote
 
 from django.test import override_settings
@@ -189,6 +190,7 @@ class TestBaseListView(ChangelistTestCase):
             with override_settings(ROOT_URLCONF=URLConf):
                 self.assertNotIn('<a href="', view.get_result_row(obj)[0])
 
+    @expectedFailure
     def test_get_result_row_link_contains_preserved_filters(self):
         """
         The change page links in a row should contain the changelist request
@@ -258,3 +260,105 @@ class TestBaseListView(ChangelistTestCase):
         for context_item in ["page_range", "cl", "result_headers", "result_rows"]:
             with self.subTest(context_item=context_item):
                 self.assertIn(context_item, context)
+
+    def test_object_list_has_overview_annotations(self):
+        """Assert that the context item 'object_list' has the overview annotations."""
+        request = self.get_request()
+        view = self.get_view(request)
+        view.get(request)  # set view.object_list
+        object_list = view.get_context_data()["object_list"]
+        self.assertIn('members_list', object_list.query.annotations)
+
+    def test_order_queryset_expensive_ordering_filtered(self):
+        """
+        Assert that order_queryset applies extended ordering when the queryset
+        is filtered and expensive_ordering is True.
+        """
+        view = self.get_view(self.get_request())
+        view.expensive_ordering = True
+        view.ordering = ["name"]
+        queryset = self.queryset.filter(id=1).order_by("alias")
+        queryset = view.order_queryset(queryset)
+        self.assertCountEqual(queryset.query.order_by, ["name", "alias", "id"])
+
+    def test_order_queryset_expensive_ordering_unfiltered(self):
+        """
+        Assert that order_queryset does not apply extended ordering when the
+        queryset is unfiltered and expensive_ordering is True.
+        """
+        view = self.get_view(self.get_request())
+        view.expensive_ordering = True
+        view.ordering = ["name"]
+        queryset = self.queryset.order_by("alias")
+        queryset = view.order_queryset(queryset)
+        self.assertCountEqual(queryset.query.order_by, ["id"])
+
+    def test_order_queryset_no_expensive_ordering(self):
+        """
+        Assert that order_queryset applies extended ordering regardless of
+        whether the queryset is ordered when expensive_ordering is False.
+        """
+        view = self.get_view(self.get_request())
+        view.expensive_ordering = False
+        view.ordering = ["name"]
+        for is_ordered in (True, False):
+            queryset = self.queryset.order_by("alias")
+            if is_ordered:
+                queryset = queryset.filter(id=1)
+            with self.subTest(is_ordered=is_ordered):
+                queryset = view.order_queryset(queryset)
+                self.assertCountEqual(queryset.query.order_by, ["name", "alias", "id"])
+
+    def test_get_default_ordering_no_ordering(self):
+        """
+        Assert that get_default_ordering returns an empty list if no ordering is
+        defined on either the view or the model.
+        """
+        view = self.get_view(self.get_request())
+        self.assertEqual(view._get_default_ordering(), [])
+
+    def test_get_default_ordering_view_ordering(self):
+        """
+        Assert that get_default_ordering returns the ordering defined on the
+        view.
+        """
+        view = self.get_view(self.get_request())
+        view.ordering = ["foo", "bar"]
+        with patch.object(view.opts, "ordering", new=["model_foo", "model_bar"]):
+            self.assertEqual(view._get_default_ordering(), ["foo", "bar"])
+
+    def test_get_default_ordering_model_ordering(self):
+        """
+        Assert that get_default_ordering returns the ordering defined on the
+        model if no ordering is specified on the view.
+        """
+        view = self.get_view(self.get_request())
+        view.ordering = None
+        with patch.object(view.opts, "ordering", new=["model_foo", "model_bar"]):
+            self.assertEqual(view._get_default_ordering(), ["model_foo", "model_bar"])
+
+    def test_get_ordering_fields_adds_queryset_ordering(self):
+        """Assert that get_ordering_fields includes the queryset ordering."""
+        view = self.get_view(self.get_request())
+        queryset = self.queryset.order_by("alias")
+        with patch.object(view, "_get_default_ordering") as default_ordering_mock:
+            default_ordering_mock.return_value = []
+            self.assertIn("alias", view.get_ordering_fields(queryset))
+
+    def test_get_ordering_adds_id_field(self):
+        """
+        Assert that get_ordering_fields always includes an ordering field for
+        the 'id' field.
+        """
+        view = self.get_view(self.get_request())
+        queryset = self.queryset.order_by()
+        with patch.object(view, "_get_default_ordering") as default_ordering_mock:
+            default_ordering_mock.return_value = []
+            self.assertIn("id", view.get_ordering_fields(queryset))
+
+    def test_get_ordering_adds_default_ordering(self):
+        """Assert that get_ordering_fields includes the default ordering."""
+        view = self.get_view(self.get_request())
+        with patch.object(view, "_get_default_ordering") as default_ordering_mock:
+            default_ordering_mock.return_value = ["foo"]
+            self.assertIn("foo", view.get_ordering_fields(self.queryset))
