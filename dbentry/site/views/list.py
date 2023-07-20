@@ -97,6 +97,7 @@ class ArtikelList(SearchableListView):
         # (added by annotations)
         return obj.schlagwort_list or self.get_empty_value_display()
 
+    @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Artikel) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
