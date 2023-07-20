@@ -38,16 +38,16 @@ class BandListView(BaseListView):
 
     list_display = ['name', 'alias', 'members', 'origin', 'unsortable']
 
+    #@formatter:off
     def members(self, obj):
         return obj.members_list
-
-    members.short_description = 'Members'
-    members.order_field = 'members_list'
+    members.description = 'Members'
+    members.ordering = 'members_list'
 
     def unsortable(self, obj):
         return "This field cannot be sorted against."
-
-    unsortable.short_description = "Ignore"
+    unsortable.description = "Ignore"
+    #@formatter:on
 
     def some_method(self, obj):
         pass

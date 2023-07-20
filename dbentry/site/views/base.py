@@ -258,7 +258,7 @@ class BaseListView(ModelViewMixin, ListView):
 
         Return None if no proper model field name can be matched.
         """
-        # NOTE: not (yet?) used
+        # NOTE: not used since custom ordering on a changelist is not yet implemented
         try:
             field = self.opts.get_field(field_name)
             return field.name
@@ -267,7 +267,7 @@ class BaseListView(ModelViewMixin, ListView):
             # that allows sorting.
             if hasattr(self, field_name):
                 attr = getattr(self, field_name)
-                return getattr(attr, "order_field", None)
+                return getattr(attr, "ordering", None)
 
     def get_query_string(self, new_params=None, remove=None):  # TODO: is this even used in this view?
         if new_params is None:  # pragma: no cover
@@ -326,8 +326,8 @@ class BaseListView(ModelViewMixin, ListView):
         attr = None
         if hasattr(self, name):
             attr = getattr(self, name)
-            if hasattr(attr, "short_description"):
-                label = attr.short_description
+            if hasattr(attr, "description"):
+                label = attr.description
             else:
                 label = name
         else:

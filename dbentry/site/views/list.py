@@ -25,13 +25,13 @@ Use SearchableListView to add a search form to the changelist:
             "fields": ["name", "field_2"]
         }
 """
-from django.contrib.admin import display
 from django.views.generic import TemplateView
 
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
 from dbentry.site.registry import register_changelist, ModelType
 from dbentry.site.views.base import BaseViewMixin, SearchableListView
+from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
 
 
@@ -73,25 +73,25 @@ class ArtikelList(SearchableListView):
         },
     }
 
-    @display(description="Seite", ordering="seite")
+    @add_attrs(description="Seite", ordering="seite")
     def seite_umfang(self, obj):
         return f"{obj.seite}{obj.seitenumfang}"
 
-    @display(description="Ausgabe", ordering="ausgabe___name")
+    @add_attrs(description="Ausgabe", ordering="ausgabe___name")
     def ausgabe_name(self, obj: _models.Artikel) -> str:
         return obj.ausgabe._name
 
-    @display(description="Zusammenfassung", ordering="zusammenfassung")
+    @add_attrs(description="Zusammenfassung", ordering="zusammenfassung")
     def zusammenfassung_list(self, obj: _models.Artikel) -> str:
         if not obj.zusammenfassung:
             return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
 
-    @display(description="Magazin", ordering="ausgabe__magazin__magazin_name")
+    @add_attrs(description="Magazin", ordering="ausgabe__magazin__magazin_name")
     def artikel_magazin(self, obj: _models.Artikel) -> str:
         return obj.ausgabe.magazin.magazin_name
 
-    @display(description="Schlagwörter", ordering="schlagwort_list")
+    @add_attrs(description="Schlagwörter", ordering="schlagwort_list")
     def schlagwort_list(self, obj: _models.Artikel) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
@@ -133,39 +133,39 @@ class AusgabenList(SearchableListView):
         'widgets': {'magazin': get_widget(_models.Magazin, url="autocomplete_magazin")},
     }
 
-    @display(description="Ausgabe", ordering="_name")
+    @add_attrs(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
         return obj._name
 
-    @display(description="Magazin", ordering="magazin__magazin_name")
+    @add_attrs(description="Magazin", ordering="magazin__magazin_name")
     def magazin_name(self, obj: _models.Ausgabe) -> str:
         return obj.magazin.magazin_name
 
-    @display(description="Anz. Artikel", ordering="anz_artikel")
+    @add_attrs(description="Anz. Artikel", ordering="anz_artikel")
     def anz_artikel(self, obj: _models.Ausgabe) -> int:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.anz_artikel
 
-    @display(description="Jahre", ordering="jahr_list")
+    @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.Ausgabe) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.jahr_list
 
-    @display(description="Nummer", ordering="num_list")
+    @add_attrs(description="Nummer", ordering="num_list")
     def num_list(self, obj: _models.Ausgabe) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.num_list
 
-    @display(description="lfd. Nummer", ordering="lnum_list")
+    @add_attrs(description="lfd. Nummer", ordering="lnum_list")
     def lnum_list(self, obj: _models.Ausgabe) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.lnum_list
 
-    @display(description="Monate")
+    @add_attrs(description="Monate")
     def monat_list(self, obj: _models.Ausgabe) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
