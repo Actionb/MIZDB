@@ -23,7 +23,7 @@ class Foo(models.Model):
 
 class Band(models.Model):
     name = models.TextField()
-    alias = models.TextField()
+    alias = models.TextField(verbose_name="Band Alias")
 
     origin = models.ForeignKey(
         'test_site.Country', on_delete=models.CASCADE, null=True, blank=True,

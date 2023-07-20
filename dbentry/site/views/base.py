@@ -323,20 +323,21 @@ class BaseListView(ModelViewMixin, ListView):
         Get the model field or view callable for the given name, and return it
         and an appropriate label.
         """
-        attr = None
-        if hasattr(self, name):
-            attr = getattr(self, name)
-            if hasattr(attr, "description"):
-                label = attr.description
-            else:
-                label = name
+        attr = getattr(self, name, None)
+        if attr is not None and hasattr(attr, "description"):
+            # This is a view (display) callable with a description attribute.
+            return attr, attr.description
+        try:
+            attr = self.opts.get_field(name)
+        except FieldDoesNotExist:
+            # This is not a model field either!
+            label = name
         else:
-            try:
-                attr = self.opts.get_field(name)
-                label = attr.verbose_name
-            except FieldDoesNotExist:
-                # This is not a view callable or a model field:
-                label = name
+            if attr.verbose_name[0].isupper():
+                # This is probably a verbose name set by the user and not just
+                # the default which starts with a lower letter.
+                return attr, attr.verbose_name
+            label = name
         return attr, label.replace("_", " ").capitalize()
 
     def get_result_headers(self):
@@ -348,7 +349,7 @@ class BaseListView(ModelViewMixin, ListView):
                 headers.append({"text": self.model._meta.verbose_name})
             else:
                 _attr, label = self._lookup_field(name)
-                headers.append({"text": label.replace("_", " ").capitalize()})
+                headers.append({"text": label})
         return headers
 
     def get_result_row(self, result):

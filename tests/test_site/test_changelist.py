@@ -46,7 +46,7 @@ class BandListView(BaseListView):
 
     def unsortable(self, obj):
         return "This field cannot be sorted against."
-    unsortable.description = "Ignore"
+    unsortable.description = "Ignore This"
     #@formatter:on
 
     def some_method(self, obj):
@@ -83,8 +83,8 @@ class TestBaseListView(ChangelistTestCase):
         view = self.get_view(self.get_request())
         test_data = [
             # name, (expected attr and label)
-            ("alias", (self.model._meta.get_field("alias"), "Alias")),  # model field
-            ("unsortable", (view.unsortable, "Ignore")),  # method with a description
+            ("alias", (self.model._meta.get_field("alias"), "Band Alias")),  # model field
+            ("unsortable", (view.unsortable, "Ignore This")),  # method with a description
             ("some_method", (view.some_method, "Some method")),  # method without a description
             ("foo_bar", (None, "Foo bar")),  # can't resolve name
         ]
@@ -102,10 +102,10 @@ class TestBaseListView(ChangelistTestCase):
             headers,
             [
                 {"text": "Name"},
-                {"text": "Alias"},
+                {"text": "Band Alias"},
                 {"text": "Members"},
-                {"text": "Origin country"},
-                {"text": "Ignore"}
+                {"text": "Origin Country"},
+                {"text": "Ignore This"}
             ]
         )
 
