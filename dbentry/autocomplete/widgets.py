@@ -10,7 +10,7 @@ DEFAULTS = {
     (_models.Ausgabe, MIZSelectTabular): {
         "url": "autocomplete_ausgabe",
         "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
-        "filter_by": ("ausgabe__magazin", "magazin_id"),
+        "filter_by": ("ausgabe__magazin", "magazin_id"),  # TODO: remove - very confusing to have this here
     },
     (_models.Autor, MIZSelect): {"url": "autocomplete_autor", "create_field": "__any__"},
     (_models.Band, MIZSelectTabular): {"extra_columns": {"alias_list": "Aliase"}},

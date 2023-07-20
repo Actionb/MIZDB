@@ -36,8 +36,6 @@ from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
 
 
-# TODO: rework dbentry.search.forms.SearchFormFactory.formfield_for_dbfield to use
-#  the mizdb-tomselect make_widget factory
 # TODO: add 'actions'
 
 
@@ -517,7 +515,7 @@ class BuchList(SearchableListView):
 
 
 @register_changelist(_models.Dokument, category=ModelType.ARCHIVGUT)
-class DokumentList(SearchableListView):
+class DokumentList(SearchableListView):  # TODO: remove -- model not used
     model = _models.Dokument
     ordering = ["titel"]
 
@@ -560,7 +558,7 @@ class MagazinList(SearchableListView):
 
 
 @register_changelist(_models.Memorabilien, category=ModelType.ARCHIVGUT)
-class MemorabilienList(SearchableListView):
+class MemorabilienList(SearchableListView):  # TODO: remove -- model not used
     model = _models.Memorabilien
     ordering = ["titel"]
 
@@ -643,7 +641,7 @@ class SpielortList(SearchableListView):
 
 
 @register_changelist(_models.Technik, category=ModelType.ARCHIVGUT)
-class TechnikList(SearchableListView):
+class TechnikList(SearchableListView):  # TODO: remove -- model not used
     model = _models.Technik
     ordering = ["titel"]
 
@@ -729,7 +727,7 @@ class OrtList(SearchableListView):
 
 
 @register_changelist(_models.Bestand, category=ModelType.SONSTIGE)
-class BestandList(SearchableListView):
+class BestandList(SearchableListView):  # TODO: remove -- model not used by normal users
     model = _models.Bestand
     list_display = ["signatur", "bestand_class", "bestand_link", "lagerort", "provenienz"]
     search_form_kwargs = {"fields": ["lagerort", "provenienz", "signatur"]}
@@ -750,7 +748,7 @@ class BestandList(SearchableListView):
 
 
 @register_changelist(_models.Datei, category=ModelType.ARCHIVGUT)
-class DateiList(SearchableListView):
+class DateiList(SearchableListView):  # TODO: remove -- model not used
     model = _models.Datei
     ordering = ["titel"]
 
