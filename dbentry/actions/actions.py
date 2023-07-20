@@ -8,6 +8,7 @@ from django.views import View
 from dbentry.actions.views import (
     BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
+from dbentry.utils import add_attrs
 from dbentry.utils.summarize import get_summaries
 
 
@@ -59,6 +60,7 @@ def replace(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -
 
 
 # noinspection PyUnusedLocal
+@add_attrs(short_description="textuelle Zusammenfassung", allowed_permissions=("view",))
 def summarize(
         model_admin: ModelAdmin,
         request: HttpRequest,
@@ -71,5 +73,3 @@ def summarize(
             response.write(f'<p>{k}: {v}</p>')
         response.write('<hr style="break-after:page;">')
     return response
-summarize.short_description = 'textuelle Zusammenfassung'  # type: ignore  # noqa
-summarize.allowed_permissions = ('view',)  # type: ignore  # noqa

@@ -10,6 +10,7 @@
 ### Changed
 - dbentry admin changelists now use overview annotations
 - dal autocomplete tabular views now use the overview annotations
+- refactored search form factory and view mixins to allow using different widget factories
 
 ## [0.10.1] - 2023-06-07
 
