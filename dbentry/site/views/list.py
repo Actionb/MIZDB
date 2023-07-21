@@ -556,7 +556,10 @@ class OrtList(SearchableListView):
     ordering = ["land", "bland", "stadt"]
     list_display = ["stadt", "bland", "land"]
     list_display_links = ["stadt", "bland", "land"]
-    search_form_kwargs = {"fields": ["land", "bland"], "forward": {"bland": "land"}}
+    search_form_kwargs = {
+        "fields": ["land", "bland"],
+        "filter_by": {"bland": ("land", "land_id")},
+    }
 
 
 @register_changelist(_models.Person, category=ModelType.STAMMDATEN)
@@ -640,7 +643,7 @@ class VeranstaltungList(SearchableListView):
     list_display = ["name", "datum_localized", "spielort", "kuenstler_list"]
     search_form_kwargs = {
         "fields": ["musiker", "band", "schlagwort", "genre", "person", "spielort", "reihe", "datum__range"],
-        "tabular": ["musiker", "band"],
+        "tabular": ["musiker", "band", "spielort"],
     }
 
     @add_attrs(description="Datum", ordering="datum")
@@ -659,4 +662,8 @@ class VerlagList(SearchableListView):
     model = _models.Verlag
     ordering = ["verlag_name", "sitz"]
     list_display = ["verlag_name", "sitz"]
-    search_form_kwargs = {"fields": ["sitz", "sitz__land", "sitz__bland"], "labels": {"sitz": "Sitz"}}
+    search_form_kwargs = {
+        "fields": ["sitz", "sitz__land", "sitz__bland"],
+        "labels": {"sitz": "Sitz"},
+        "filter_by": {"sitz__bland": ("sitz__land", "land_id")},
+    }
