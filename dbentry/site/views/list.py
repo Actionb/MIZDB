@@ -78,15 +78,7 @@ class ArtikelList(SearchableListView):
             "person",
             "seite__range",
         ],
-        "widgets": {
-            "ausgabe__magazin": get_widget(_models.Magazin, url="autocomplete_magazin"),
-            "ausgabe": get_widget(
-                _models.Ausgabe,
-                url="autocomplete_ausgabe",
-                tabular=True,
-                attrs={"data-placeholder": "Bitte zuerst ein Magazin auswählen"},
-            ),
-        },
+        "tabular": ["ausgabe", "musiker", "band", "spielort", "veranstaltung"],
     }
 
     @add_attrs(description="Zusammenfassung", ordering="zusammenfassung")
@@ -236,7 +228,7 @@ class AudioList(SearchableListView):
 
 
 @register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
-class AusgabeList(SearchableListView):   # TODO: duplicate of AusgabenList above!
+class AusgabeList(SearchableListView):  # TODO: duplicate of AusgabenList above!
     model = _models.Ausgabe
     ordering = ["magazin__magazin_name", "_name"]
     list_display = (
@@ -329,65 +321,6 @@ class AutorList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.magazin_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
-class ArtikelList(SearchableListView):  # TODO: duplicate!
-    model = _models.Artikel
-    ordering = ["ausgabe__magazin__magazin_name", "ausgabe___name", "seite", "schlagzeile"]
-    list_display = [
-        "schlagzeile",
-        "zusammenfassung_string",
-        "seite",
-        "schlagwort_string",
-        "ausgabe_name",
-        "artikel_magazin",
-        "kuenstler_list",
-    ]
-    search_form_kwargs = {
-        "fields": [
-            "ausgabe__magazin",
-            "ausgabe",
-            "autor",
-            "musiker",
-            "band",
-            "schlagwort",
-            "genre",
-            "ort",
-            "spielort",
-            "veranstaltung",
-            "person",
-            "seite__range",
-        ],
-        "tabular": ["ausgabe", "musiker", "band", "spielort", "veranstaltung"],
-        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
-    }
-
-    @add_attrs(description="Zusammenfassung", ordering="zusammenfassung")
-    def zusammenfassung_string(self, obj: _models.Artikel):
-        if not obj.zusammenfassung:
-            return self.get_empty_value_display()
-        return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
-
-    @add_attrs(description="Schlagwörter", ordering="schlagwort_list")
-    def schlagwort_string(self, obj: _models.Artikel):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.schlagwort_list or self.get_empty_value_display()
-
-    @add_attrs(description="Ausgabe", ordering="ausgabe___name")
-    def ausgabe_name(self, obj: _models.Artikel):
-        return obj.ausgabe._name
-
-    @add_attrs(description="Magazin", ordering="ausgabe__magazin__magazin_name")
-    def artikel_magazin(self, obj: _models.Artikel):
-        return obj.ausgabe.magazin.magazin_name
-
-    @add_attrs(description="Künstler")
-    def kuenstler_list(self, obj: _models.Artikel):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @register_changelist(_models.Band, category=ModelType.STAMMDATEN)
