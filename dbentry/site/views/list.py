@@ -514,12 +514,6 @@ class BuchList(SearchableListView):
         return obj.genre_list or self.get_empty_value_display()
 
 
-@register_changelist(_models.Dokument, category=ModelType.ARCHIVGUT)
-class DokumentList(SearchableListView):  # TODO: remove -- model not used
-    model = _models.Dokument
-    ordering = ["titel"]
-
-
 @register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
 class GenreList(SearchableListView):  # TODO: duplicate!
     model = _models.Genre
@@ -555,12 +549,6 @@ class MagazinList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.anz_ausgaben
-
-
-@register_changelist(_models.Memorabilien, category=ModelType.ARCHIVGUT)
-class MemorabilienList(SearchableListView):  # TODO: remove -- model not used
-    model = _models.Memorabilien
-    ordering = ["titel"]
 
 
 @register_changelist(_models.Musiker, category=ModelType.STAMMDATEN)
@@ -638,12 +626,6 @@ class SpielortList(SearchableListView):
     ordering = ["name", "ort"]
     list_display = ["name", "ort"]
     search_form_kwargs = {"fields": ["ort", "ort__land"]}
-
-
-@register_changelist(_models.Technik, category=ModelType.ARCHIVGUT)
-class TechnikList(SearchableListView):  # TODO: remove -- model not used
-    model = _models.Technik
-    ordering = ["titel"]
 
 
 @register_changelist(_models.Veranstaltung, category=ModelType.SONSTIGE)
@@ -724,33 +706,6 @@ class OrtList(SearchableListView):
     list_display = ["stadt", "bland", "land"]
     list_display_links = ["stadt", "bland", "land"]
     search_form_kwargs = {"fields": ["land", "bland"], "forward": {"bland": "land"}}
-
-
-@register_changelist(_models.Bestand, category=ModelType.SONSTIGE)
-class BestandList(SearchableListView):  # TODO: remove -- model not used by normal users
-    model = _models.Bestand
-    list_display = ["signatur", "bestand_class", "bestand_link", "lagerort", "provenienz"]
-    search_form_kwargs = {"fields": ["lagerort", "provenienz", "signatur"]}
-
-    @add_attrs(description="Art")
-    def bestand_class(self, obj: _models.Bestand):
-        try:
-            return self._cache[obj.pk]["bestand_class"]
-        except KeyError:
-            return ""
-
-    @add_attrs(description="Links")
-    def bestand_link(self, obj: _models.Bestand):
-        try:
-            return self._cache[obj.pk]["bestand_link"]
-        except KeyError:
-            return ""
-
-
-@register_changelist(_models.Datei, category=ModelType.ARCHIVGUT)
-class DateiList(SearchableListView):  # TODO: remove -- model not used
-    model = _models.Datei
-    ordering = ["titel"]
 
 
 @register_changelist(_models.Instrument, category=ModelType.SONSTIGE)
