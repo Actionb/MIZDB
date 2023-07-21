@@ -39,11 +39,6 @@ from dbentry.utils.text import concat_limit
 # TODO: add 'actions'
 
 
-def get_widget(model, can_add=False, can_edit=False, **kwargs):
-    """Return a mizdb-tomselect autocomplete widget for the search form."""
-    return make_widget(model, can_add=can_add, can_edit=can_edit, **kwargs)
-
-
 class Index(BaseViewMixin, TemplateView):
     title = "Index"
     template_name = "mizdb/index.html"
