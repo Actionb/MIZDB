@@ -291,8 +291,6 @@ class BaseListView(ModelViewMixin, ListView):
 
     def get_queryset(self):
         queryset = self.get_search_results(super().get_queryset())
-        if hasattr(queryset, "overview"):
-            queryset = queryset.overview()
         return self.order_queryset(queryset)
 
     @property
@@ -340,7 +338,7 @@ class BaseListView(ModelViewMixin, ListView):
             # be consumed more than once:
             "page_range": list(paginator.get_elided_page_range(ctx["page_obj"].number)),
             "pagination_required": paginator.count > 100,
-            "result_rows": [self.get_result_row(r) for r in ctx["object_list"]],
+            "result_rows": self.get_result_rows(ctx["object_list"]),
             "result_headers": self.get_result_headers(),
             "result_count": self.object_list.count(),
             "total_count": self.model.objects.count(),
@@ -387,6 +385,16 @@ class BaseListView(ModelViewMixin, ListView):
                 _attr, label = self._lookup_field(name)
                 headers.append({"text": label})
         return headers
+
+    def add_list_display_annotations(self, queryset):
+        """Add annotations for list_display items to the given queryset."""
+        if hasattr(queryset, "overview"):
+            return queryset.overview()
+        return queryset
+
+    def get_result_rows(self, object_list):
+        """Return the result rows for the given object list."""
+        return [self.get_result_row(r) for r in self.add_list_display_annotations(object_list)]
 
     def get_result_row(self, result):
         """Return the values to display in the row for the given result."""
