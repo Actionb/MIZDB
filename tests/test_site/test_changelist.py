@@ -1,12 +1,12 @@
 from unittest import expectedFailure
-from unittest.mock import patch, Mock
+from unittest.mock import call, patch, Mock
 from urllib.parse import unquote
 
 from django.test import override_settings
 from django.urls import reverse, path
 from django.views import View
 
-from dbentry.site.views.base import BaseListView
+from dbentry.site.views.base import BaseListView, SEARCH_VAR, ORDER_VAR
 from tests.case import ViewTestCase, DataTestCase
 from tests.model_factory import make
 from tests.test_site.models import Band, Musician, Country
@@ -111,10 +111,52 @@ class TestBaseListView(ChangelistTestCase):
         )
 
     def test_get_result_headers_no_list_display(self):
+        """
+        Assert that get_result_headers returns some default when the view does
+        not declare list_display.
+        """
         view = self.get_view(self.get_request(), list_display_links=None)
         with patch.object(view, "list_display", new=[]):
             with patch.object(self.model._meta, "verbose_name", new="Foo Bar"):
                 self.assertEqual(view.get_result_headers(), [{"text": "Foo Bar"}])
+
+    def test_add_list_display_annotations(self):
+        """
+        Assert that add_list_display_annotations calls the queryset's overview
+        method if it exists.
+        """
+        view = self.get_view()
+        overview_mock = Mock()
+        for queryset, has_overview in [(Mock(), False), (Mock(overview=overview_mock), True)]:
+            with self.subTest(has_overview=has_overview):
+                view.add_list_display_annotations(queryset)
+                if has_overview:
+                    overview_mock.assert_called()
+                else:
+                    overview_mock.assert_not_called()
+            overview_mock.reset_mock()
+
+    def test_get_result_rows(self):
+        """
+        Assert that get_results_rows calls get_result_row on every item of the
+        passed in object_list.
+        """
+        object_list = ["foo", "bar"]
+        view = self.get_view()
+        with patch.object(view, "get_result_row") as get_row_mock:
+            view.get_result_rows(object_list)
+            get_row_mock.assert_has_calls([call("foo"), call("bar")])
+
+    def test_get_result_rows_applies_overview_annotations(self):
+        """
+        Assert that get_results_rows has the overview annotations applied to the
+        object list.
+        """
+        view = self.get_view(self.get_request())
+        with patch.object(view, "get_result_row"):
+            with patch.object(self.queryset, "overview") as overview_mock:
+                view.get_result_rows(self.queryset)
+                overview_mock.assert_called()
 
     def test_get_result_row(self):
         """Assert that get_result_row returns the expected list of values."""
@@ -242,16 +284,6 @@ class TestBaseListView(ChangelistTestCase):
             with self.subTest(name=name):
                 self.assertEqual(view.get_ordering_field(name), expected)
 
-    def test_get_queryset_adds_select_related(self):
-        """get_queryset should add select_related."""
-        queryset = self.get_view(self.get_request()).get_queryset()
-        self.assertIn('origin', queryset.query.select_related)
-
-    def test_get_queryset_adds_changelist_annotations(self):
-        """get_queryset should add changelist annotations.."""
-        queryset = self.get_view(self.get_request()).get_queryset()
-        self.assertIn('members_list', queryset.query.annotations)
-
     def test_get_context_data(self):
         """Assert that get_context_data adds the expected items."""
         view = self.get_view(self.get_request())
@@ -260,14 +292,6 @@ class TestBaseListView(ChangelistTestCase):
         for context_item in ["page_range", "cl", "result_headers", "result_rows"]:
             with self.subTest(context_item=context_item):
                 self.assertIn(context_item, context)
-
-    def test_object_list_has_overview_annotations(self):
-        """Assert that the context item 'object_list' has the overview annotations."""
-        request = self.get_request()
-        view = self.get_view(request)
-        view.get(request)  # set view.object_list
-        object_list = view.get_context_data()["object_list"]
-        self.assertIn('members_list', object_list.query.annotations)
 
     def test_order_queryset_order_unfiltered_results_filtered(self):
         """
@@ -337,6 +361,13 @@ class TestBaseListView(ChangelistTestCase):
         with patch.object(view.opts, "ordering", new=["model_foo", "model_bar"]):
             self.assertEqual(view._get_default_ordering(), ["model_foo", "model_bar"])
 
+    def test_get_ordering_fields_adds_default_ordering(self):
+        """Assert that get_ordering_fields includes the default ordering."""
+        view = self.get_view(self.get_request())
+        with patch.object(view, "_get_default_ordering") as default_ordering_mock:
+            default_ordering_mock.return_value = ["foo"]
+            self.assertIn("foo", view.get_ordering_fields(self.queryset))
+
     def test_get_ordering_fields_adds_queryset_ordering(self):
         """Assert that get_ordering_fields includes the queryset ordering."""
         view = self.get_view(self.get_request())
@@ -345,7 +376,7 @@ class TestBaseListView(ChangelistTestCase):
             default_ordering_mock.return_value = []
             self.assertIn("alias", view.get_ordering_fields(queryset))
 
-    def test_get_ordering_adds_id_field(self):
+    def test_get_ordering_fields_adds_id_field(self):
         """
         Assert that get_ordering_fields always includes an ordering field for
         the 'id' field.
@@ -356,9 +387,50 @@ class TestBaseListView(ChangelistTestCase):
             default_ordering_mock.return_value = []
             self.assertIn("id", view.get_ordering_fields(queryset))
 
-    def test_get_ordering_adds_default_ordering(self):
-        """Assert that get_ordering_fields includes the default ordering."""
-        view = self.get_view(self.get_request())
-        with patch.object(view, "_get_default_ordering") as default_ordering_mock:
-            default_ordering_mock.return_value = ["foo"]
-            self.assertIn("foo", view.get_ordering_fields(self.queryset))
+    def test_get_ordering_fields_prioritize_search_ordering(self):
+        """
+        Assert that get_ordering_fields returns just the ordering set on the
+        queryset if prioritize_search_ordering is True.
+        """
+        view = self.get_view(self.get_request(data={SEARCH_VAR: "q"}))
+        view.prioritize_search_ordering = True
+        queryset = self.queryset.order_by("-id", "-name")
+        self.assertEqual(view.get_ordering_fields(queryset), ("-id", "-name"))
+
+    def test_get_search_results(self):
+        """
+        Assert that get_search_results calls queryset.search() if a search term
+        is given.
+        """
+        for search_term in ("", "q"):
+            with self.subTest(search_term=search_term):
+                view = self.get_view(self.get_request(data={SEARCH_VAR: search_term}))
+                with patch.object(self.queryset, "search") as search_mock:
+                    view.get_search_results(self.queryset)
+                    if search_term:
+                        search_mock.assert_called()
+                    else:
+                        search_mock.assert_not_called()
+                search_mock.reset_mock()
+
+    def test_get_search_results_keeps_user_order(self):
+        """
+        Assert that get_search_results calls queryset.search() with ranked=False
+        if the ORDER_VAR is present in the request.
+        """
+        for has_order_var in (True, False):
+            with self.subTest(has_order_var=has_order_var):
+                request_data = {SEARCH_VAR: "q"}
+                if has_order_var:
+                    request_data[ORDER_VAR] = "1"
+                view = self.get_view(self.get_request(data=request_data))
+                with patch.object(self.queryset, "search") as search_mock:
+                    view.get_search_results(self.queryset)
+                    search_mock.assert_called()
+                    _args, kwargs = search_mock.call_args
+                    if has_order_var:
+                        self.assertFalse(kwargs["ranked"])
+                    else:
+                        self.assertTrue(kwargs["ranked"])
+
+

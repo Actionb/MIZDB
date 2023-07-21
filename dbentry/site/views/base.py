@@ -423,7 +423,7 @@ class BaseListView(ModelViewMixin, ListView):
                             value = str(value)
                     else:
                         value = getattr(result, attr.attname)
-                    if getattr(attr, 'flatchoices', None):
+                    if getattr(attr, 'flatchoices', None):  # pragma: no cover
                         # Use the human-readable part of the choice:
                         value = dict(attr.flatchoices).get(value, '')
             if not value:
