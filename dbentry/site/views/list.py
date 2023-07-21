@@ -118,9 +118,8 @@ class GenreList(SearchableListView):
 
 
 @register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
-class AusgabenList(SearchableListView):
+class AusgabeList(SearchableListView):
     model = _models.Ausgabe
-    prioritize_search_ordering = True
     ordering = ["magazin__magazin_name", "_name"]
     list_display = (
         "ausgabe_name",
@@ -155,28 +154,11 @@ class AusgabenList(SearchableListView):
             "audio": "Audio (Beilagen)",
             "video": "Video (Beilagen)",
         },
-        "widgets": {"magazin": get_widget(_models.Magazin, url="autocomplete_magazin")},
     }
 
     @add_attrs(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
         return obj._name
-
-    @add_attrs(description="Magazin", ordering="magazin__magazin_name")
-    def magazin_name(self, obj: _models.Ausgabe) -> str:
-        return obj.magazin.magazin_name
-
-    @add_attrs(description="Anz. Artikel", ordering="anz_artikel")
-    def anz_artikel(self, obj: _models.Ausgabe) -> int:
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.anz_artikel
-
-    @add_attrs(description="Jahre", ordering="jahr_list")
-    def jahr_list(self, obj: _models.Ausgabe) -> str:
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.jahr_list
 
     @add_attrs(description="Nummer", ordering="num_list")
     def num_list(self, obj: _models.Ausgabe) -> str:
@@ -195,6 +177,22 @@ class AusgabenList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.monat_list
+
+    @add_attrs(description="Jahre", ordering="jahr_list")
+    def jahr_list(self, obj: _models.Ausgabe) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
+
+    @add_attrs(description="Magazin", ordering="magazin__magazin_name")
+    def magazin_name(self, obj: _models.Ausgabe) -> str:
+        return obj.magazin.magazin_name
+
+    @add_attrs(description="Anz. Artikel", ordering="anz_artikel")
+    def anz_artikel(self, obj: _models.Ausgabe) -> int:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.anz_artikel
 
 
 @register_changelist(_models.Audio, category=ModelType.ARCHIVGUT)
@@ -225,84 +223,6 @@ class AudioList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.kuenstler_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
-class AusgabeList(SearchableListView):  # TODO: duplicate of AusgabenList above!
-    model = _models.Ausgabe
-    ordering = ["magazin__magazin_name", "_name"]
-    list_display = (
-        "ausgabe_name",
-        "num_list",
-        "lnum_list",
-        "monat_list",
-        "jahr_list",
-        "jahrgang",
-        "magazin_name",
-        "e_datum",
-        "anz_artikel",
-        "status",
-    )
-    search_form_kwargs = {
-        "fields": [
-            "magazin",
-            "status",
-            "ausgabejahr__jahr__range",
-            "ausgabenum__num__range",
-            "ausgabelnum__lnum__range",
-            "ausgabemonat__monat__ordinal__range",
-            "jahrgang",
-            "sonderausgabe",
-            "audio",
-            "video",
-        ],
-        "labels": {
-            "ausgabejahr__jahr__range": "Jahr",
-            "ausgabenum__num__range": "Nummer",
-            "ausgabelnum__lnum__range": "Lfd. Nummer",
-            "ausgabemonat__monat__ordinal__range": "Monatsnummer",
-            "audio": "Audio (Beilagen)",
-            "video": "Video (Beilagen)",
-        },
-    }
-
-    @add_attrs(description="Ausgabe", ordering="_name")
-    def ausgabe_name(self, obj: _models.Ausgabe):
-        return obj._name
-
-    @add_attrs(description="Nummer", ordering="num_list")
-    def num_list(self, obj: _models.Ausgabe):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.num_list
-
-    @add_attrs(description="lfd. Nummer", ordering="lnum_list")
-    def lnum_list(self, obj: _models.Ausgabe):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.lnum_list
-
-    @add_attrs(description="Monate")
-    def monat_list(self, obj: _models.Ausgabe):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.monat_list
-
-    @add_attrs(description="Jahre", ordering="jahr_list")
-    def jahr_list(self, obj: _models.Ausgabe):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.jahr_list
-
-    @add_attrs(description="Magazin", ordering="magazin__magazin_name")
-    def magazin_name(self, obj: _models.Ausgabe):
-        return obj.magazin.magazin_name
-
-    @add_attrs(description="Anz. Artikel", ordering="anz_artikel")
-    def anz_artikel(self, obj: _models.Ausgabe) -> int:
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.anz_artikel
 
 
 @register_changelist(_models.Autor, category=ModelType.STAMMDATEN)
