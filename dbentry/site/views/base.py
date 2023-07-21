@@ -263,8 +263,9 @@ class BaseListView(ModelViewMixin, ListView):
                 attr = getattr(self, field_name)
                 return getattr(attr, "ordering", None)
 
-    def get_query_string(self, new_params=None, remove=None):  # TODO: is this even used in this view?
-        if new_params is None:  # pragma: no cover
+    def get_query_string(self, new_params=None, remove=None):
+        # Used by template tag paginator_url
+        if new_params is None:
             new_params = {}
         if remove is None:
             remove = []

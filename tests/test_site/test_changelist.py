@@ -263,9 +263,18 @@ class TestBaseListView(ChangelistTestCase):
 
     def test_get_query_string_remove_params(self):
         """Assert that get_query_string removes query string parameters."""
-        request = self.get_request(data={"o": ["1"], "p": ["2"], "q": ["Beep"]})
+        request = self.get_request(data={"o": ["1"], "q": ["Beep"]})
         view = self.get_view(request)
-        self.assertEqual(view.get_query_string(new_params={"p": None}, remove=["o"]), "?q=Beep")
+        self.assertEqual(view.get_query_string(remove=["o"]), "?q=Beep")
+
+    def test_get_query_string_remove_params_empty_value(self):
+        """
+        Assert that get_query_string removes query string parameters if their
+        value is set to an 'empty' value.
+        """
+        request = self.get_request(data={"o": ["1"], "q": ["Beep"]})
+        view = self.get_view(request)
+        self.assertEqual(view.get_query_string(new_params={"o": None}), "?q=Beep")
 
     def test_get_ordering_field(self):
         """

@@ -21,7 +21,7 @@ def urlname(opts, name):
 
 @register.simple_tag
 def paginator_url(cl, i):
-    return cl.get_query_string({PAGE_VAR: i})
+    return cl.get_query_string(new_params={PAGE_VAR: i})
 
 
 @register.simple_tag
