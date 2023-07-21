@@ -11,9 +11,11 @@ DEFAULTS = {
         "url": "autocomplete_ausgabe",
         "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
         "filter_by": ("ausgabe__magazin", "magazin_id"),
+        "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
     },
     (_models.Autor, MIZSelect): {"url": "autocomplete_autor", "create_field": "__any__"},
     (_models.Band, MIZSelectTabular): {"extra_columns": {"alias_list": "Aliase"}},
+    (_models.Magazin, MIZSelect): {"url": "autocomplete_magazin"},
     (_models.Musiker, MIZSelectTabular): {"extra_columns": {"alias_list": "Aliase"}},
     (_models.Person, MIZSelect): {"url": "autocomplete_person", "create_field": "__any__"},
     (_models.Spielort, MIZSelectTabular): {"extra_columns": {"ort___name": "Ort"}},
@@ -64,6 +66,8 @@ def make_widget(
     # Add a placeholder when filtering by the another field:
     if "filter_by" in widget_opts and "placeholder" not in widget_opts["attrs"]:
         field_name, _lookup = widget_opts["filter_by"]
+        # TODO: placeholder should target the field of the lookup (filter_by[1])
+        #  instead of the field path (filter_by[0])?
         field_name = " ".join(b.capitalize() for b in field_name.split("_") if b)  # "foo__bar" -> "Foo Bar"
         widget_opts["attrs"]["placeholder"] = f"Bitte zuerst {field_name} auswählen."
 
