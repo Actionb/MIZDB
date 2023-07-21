@@ -64,6 +64,8 @@ def make_widget(
     # Add a placeholder when filtering by the another field:
     if "filter_by" in widget_opts and "placeholder" not in widget_opts["attrs"]:
         field_name, _lookup = widget_opts["filter_by"]
+        # TODO: placeholder should target the field of the lookup (filter_by[1])
+        #  instead of the field path (filter_by[0])?
         field_name = " ".join(b.capitalize() for b in field_name.split("_") if b)  # "foo__bar" -> "Foo Bar"
         widget_opts["attrs"]["placeholder"] = f"Bitte zuerst {field_name} auswählen."
 
