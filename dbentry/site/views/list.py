@@ -52,11 +52,11 @@ class Index(BaseViewMixin, TemplateView):
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
 class ArtikelList(SearchableListView):
     model = _models.Artikel
-    expensive_ordering = True
+    order_unfiltered_results = False
     prioritize_search_ordering = False
     list_display = [
         "schlagzeile",
-        "zusammenfassung_list",
+        "zusammenfassung_short",
         "seite_umfang",
         "schlagwort_list",
         "ausgabe_name",
@@ -89,29 +89,29 @@ class ArtikelList(SearchableListView):
         },
     }
 
-    @add_attrs(description="Seite", ordering="seite")
-    def seite_umfang(self, obj):
-        return f"{obj.seite}{obj.seitenumfang}"
-
-    @add_attrs(description="Ausgabe", ordering="ausgabe___name")
-    def ausgabe_name(self, obj: _models.Artikel) -> str:
-        return obj.ausgabe._name
-
     @add_attrs(description="Zusammenfassung", ordering="zusammenfassung")
-    def zusammenfassung_list(self, obj: _models.Artikel) -> str:
+    def zusammenfassung_short(self, obj: _models.Artikel) -> str:
         if not obj.zusammenfassung:
             return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
 
-    @add_attrs(description="Magazin", ordering="ausgabe__magazin__magazin_name")
-    def artikel_magazin(self, obj: _models.Artikel) -> str:
-        return obj.ausgabe.magazin.magazin_name
+    @add_attrs(description="Seite", ordering="seite")
+    def seite_umfang(self, obj):
+        return f"{obj.seite}{obj.seitenumfang}"
 
     @add_attrs(description="Schlagwörter", ordering="schlagwort_list")
     def schlagwort_list(self, obj: _models.Artikel) -> str:
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.schlagwort_list or self.get_empty_value_display()
+
+    @add_attrs(description="Ausgabe", ordering="ausgabe___name")
+    def ausgabe_name(self, obj: _models.Artikel) -> str:
+        return obj.ausgabe._name
+
+    @add_attrs(description="Magazin", ordering="ausgabe__magazin__magazin_name")
+    def artikel_magazin(self, obj: _models.Artikel) -> str:
+        return obj.ausgabe.magazin.magazin_name
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Artikel) -> str:
