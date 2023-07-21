@@ -13,10 +13,9 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.views.generic import UpdateView, ListView
 from django.views.generic.base import ContextMixin
-from formset.renderers.bootstrap import FormRenderer
 from formset.views import FormViewMixin
 
-from dbentry.search.forms import SearchForm, MIZSelectSearchFormFactory
+from dbentry.search.forms import MIZSelectSearchFormFactory
 from dbentry.search.mixins import SearchFormMixin
 from dbentry.site.registry import miz_site
 from dbentry.utils import permission as perms
@@ -39,11 +38,7 @@ class BaseViewMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'title': self.title,
-            'wiki_url': settings.WIKI_URL,
-            'model_list': self.site.model_list,
-        })
+        ctx.update({"title": self.title, "wiki_url": settings.WIKI_URL, "model_list": self.site.model_list})
         return ctx
 
 
@@ -60,15 +55,12 @@ class ModelViewMixin(BaseViewMixin):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'model': self.model,
-            'opts': self.model._meta,
-        })
+        ctx.update({"model": self.model, "opts": self.model._meta})
         return ctx
 
 
 class BaseModelView(PermissionRequiredMixin, ModelViewMixin, FormViewMixin, UpdateView):
-    inlines: list['InlineModel'] = ()
+    inlines: list["InlineModel"] = ()
 
     def has_permission(self):
         return perms.has_view_permission(self.request.user, self.opts)
@@ -160,21 +152,20 @@ class BaseEditView(BaseModelView, UpdateView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.add = self.extra_context['add'] is True
+        self.add = self.extra_context["add"] is True
 
     def get_permission_required(self):
-        action = 'add' if self.add else 'change'
+        action = "add" if self.add else "change"
         return [perms.get_perm(action, self.opts)]
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-
-        title_suffix = 'hinzufügen' if self.add else 'ändern'
-        ctx['title'] = f"{capfirst(self.opts.verbose_name)} {title_suffix}"
+        title_suffix = "hinzufügen" if self.add else "ändern"
+        ctx["title"] = f"{capfirst(self.opts.verbose_name)} {title_suffix}"
         return ctx
 
     def get_object(self, queryset=None):
-        if self.extra_context['add'] is False:
+        if self.extra_context["add"] is False:
             return super().get_object(queryset)
 
     def get_success_url(self):
@@ -188,17 +179,17 @@ class BaseEditView(BaseModelView, UpdateView):
           - 'add' -> return to the changelist (default)
         """
         if extra_data := self.get_extra_data():
-            if extra_data.get('add_another'):
+            if extra_data.get("add_another"):
                 if self.add:
                     # Already on the 'add' page.
                     return self.request.path
                 else:
-                    return reverse(urlname('add', self.opts))
-            elif extra_data.get('continue'):
+                    return reverse(urlname("add", self.opts))
+            elif extra_data.get("continue"):
                 # NOTE: with django-formset submit buttons, redirecting should not be needed if
                 # we are already on the change page?
-                return reverse(urlname('change', self.opts), args=[self.object.pk])
-        return reverse(urlname('changelist', self.opts))
+                return reverse(urlname("change", self.opts), args=[self.object.pk])
+        return reverse(urlname("changelist", self.opts))
 
     def form_valid(self, form):
         # Do not save the form instance until the formsets have been validated.
@@ -215,7 +206,7 @@ class BaseEditView(BaseModelView, UpdateView):
             # TODO: don't we need to add the formset errors to the context?
             return self.form_invalid(form)
 
-        return JsonResponse({'success_url': self.get_success_url()})
+        return JsonResponse({"success_url": self.get_success_url()})
 
 
 class BaseListView(ModelViewMixin, ListView):
@@ -233,6 +224,7 @@ class BaseListView(ModelViewMixin, ListView):
         - prioritize_search_ordering (bool): if True, do not override the
           ordering set by queryset.search()
     """
+
     template_name = "mizdb/changelist.html"
     list_display = ()
     list_display_links = ()
@@ -325,25 +317,27 @@ class BaseListView(ModelViewMixin, ListView):
     def order_queryset(self, queryset):
         if not (queryset.query.has_filters() or self.order_unfiltered_results):
             # Do not apply (expensive) ordering on an unfiltered queryset.
-            return queryset.order_by('id')
+            return queryset.order_by("id")
         return queryset.order_by(*self.get_ordering_fields(queryset))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         paginator = ctx["paginator"]
-        ctx.update({
-            # some template tags require this view object:
-            "cl": self,
-            # call list on the pagination page range generator, because it will
-            # be consumed more than once:
-            "page_range": list(paginator.get_elided_page_range(ctx["page_obj"].number)),
-            "pagination_required": paginator.count > 100,
-            "result_rows": self.get_result_rows(ctx["object_list"]),
-            "result_headers": self.get_result_headers(),
-            "result_count": self.object_list.count(),
-            "total_count": self.model.objects.count(),
-            "search_term": self.request.GET.get(SEARCH_VAR, ''),
-        })
+        ctx.update(
+            {
+                # some template tags require this view object:
+                "cl": self,
+                # call list on the pagination page range generator, because it will
+                # be consumed more than once:
+                "page_range": list(paginator.get_elided_page_range(ctx["page_obj"].number)),
+                "pagination_required": paginator.count > 100,
+                "result_rows": self.get_result_rows(ctx["object_list"]),
+                "result_headers": self.get_result_headers(),
+                "result_count": self.object_list.count(),
+                "total_count": self.model.objects.count(),
+                "search_term": self.request.GET.get(SEARCH_VAR, ""),
+            }
+        )
         return ctx
 
     def get_empty_value_display(self):
@@ -423,9 +417,9 @@ class BaseListView(ModelViewMixin, ListView):
                             value = str(value)
                     else:
                         value = getattr(result, attr.attname)
-                    if getattr(attr, 'flatchoices', None):  # pragma: no cover
+                    if getattr(attr, "flatchoices", None):  # pragma: no cover
                         # Use the human-readable part of the choice:
-                        value = dict(attr.flatchoices).get(value, '')
+                        value = dict(attr.flatchoices).get(value, "")
             if not value:
                 value = self.get_empty_value_display()
             if link_in_col(first, name) and has_view_permission(self.request.user, self.opts):
@@ -467,4 +461,3 @@ class SearchableListView(SearchFormMixin, BaseListView):
                 value = value.lower() not in ("", "false", "0")
             filters[key] = value
         return filters
-

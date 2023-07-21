@@ -13,9 +13,9 @@ from tests.test_site.models import Band, Musician, Country
 
 
 class ChangelistTestCase(DataTestCase, ViewTestCase):
-    changelist_path = ''
-    change_path = ''
-    add_path = ''
+    changelist_path = ""
+    change_path = ""
+    add_path = ""
 
     @classmethod
     def setUpTestData(cls):
@@ -23,11 +23,11 @@ class ChangelistTestCase(DataTestCase, ViewTestCase):
         opts = cls.model._meta
         url_name = f"{opts.app_label}_{opts.model_name}"
         if not cls.changelist_path:
-            cls.changelist_path = reverse(url_name + '_changelist')
+            cls.changelist_path = reverse(url_name + "_changelist")
         if not cls.change_path:
-            cls.change_path = unquote(reverse(url_name + '_change', args=['{pk}']))
+            cls.change_path = unquote(reverse(url_name + "_change", args=["{pk}"]))
         if not cls.add_path:
-            cls.add_path = reverse(url_name + '_add')
+            cls.add_path = reverse(url_name + "_add")
 
     def get_annotated_model_obj(self, obj):
         """Apply the view's changelist annotations to the given object."""
@@ -37,29 +37,29 @@ class ChangelistTestCase(DataTestCase, ViewTestCase):
 class BandListView(BaseListView):
     model = Band
 
-    list_display = ['name', 'alias', 'members', 'origin', 'unsortable']
+    list_display = ["name", "alias", "members", "origin", "unsortable"]
 
-    #@formatter:off
+    # @formatter:off
     def members(self, obj):
         return obj.members_list
-    members.description = 'Members'
-    members.ordering = 'members_list'
+    members.description = "Members"
+    members.ordering = "members_list"
 
     def unsortable(self, obj):
         return "This field cannot be sorted against."
     unsortable.description = "Ignore This"
-    #@formatter:on
+    # @formatter:on
 
     def some_method(self, obj):
         pass
 
 
 class URLConf:
-    app_name = 'test_site'
+    app_name = "test_site"
     urlpatterns = [
-        path('add/', View.as_view(), name='test_site_band_add'),
-        path('<path:object_id>/change/', View.as_view(), name='test_site_band_change'),
-        path('', BandListView.as_view(), name='test_site_band_changelist'),
+        path("add/", View.as_view(), name="test_site_band_add"),
+        path("<path:object_id>/change/", View.as_view(), name="test_site_band_change"),
+        path("", BandListView.as_view(), name="test_site_band_changelist"),
     ]
 
 
@@ -106,8 +106,8 @@ class TestBaseListView(ChangelistTestCase):
                 {"text": "Band Alias"},
                 {"text": "Members"},
                 {"text": "Origin Country"},
-                {"text": "Ignore This"}
-            ]
+                {"text": "Ignore This"},
+            ],
         )
 
     def test_get_result_headers_no_list_display(self):
@@ -164,10 +164,10 @@ class TestBaseListView(ChangelistTestCase):
         obj = self.get_annotated_model_obj(self.obj)
         expected = [
             f'<a href="{self.change_path.format(pk=self.obj.pk)}">Led Zeppelin</a>',
-            'Zepp',
-            'Jimmy Page, Robert Plant',
+            "Zepp",
+            "Jimmy Page, Robert Plant",
             "United Kingdom",
-            "This field cannot be sorted against."
+            "This field cannot be sorted against.",
         ]
         self.assertEqual(view.get_result_row(obj), expected)
 
@@ -179,23 +179,23 @@ class TestBaseListView(ChangelistTestCase):
         view.empty_value_display = "//"
         expected = [
             f'<a href="{self.change_path.format(pk=obj.pk)}">Black Sabbath</a>',
-            '//',
-            '-',  # values is from a dbentry.utils.query.string_list annotation which sets empty value as '-'
-            '//',
-            "This field cannot be sorted against."
+            "//",
+            "-",  # values is from a dbentry.utils.query.string_list annotation which sets empty value as '-'
+            "//",
+            "This field cannot be sorted against.",
         ]
         self.assertEqual(view.get_result_row(obj), expected)
 
     def test_get_get_result_row_link(self):
         """Assert that links to the object are added correctly."""
-        view = self.get_view(self.get_request(), list_display_links=['name', 'alias'])
+        view = self.get_view(self.get_request(), list_display_links=["name", "alias"])
         obj = self.get_annotated_model_obj(self.obj)
         expected = [
             f'<a href="{self.change_path.format(pk=self.obj.pk)}">Led Zeppelin</a>',
             f'<a href="{self.change_path.format(pk=self.obj.pk)}">Zepp</a>',
-            'Jimmy Page, Robert Plant',
-            'United Kingdom',
-            'This field cannot be sorted against.'
+            "Jimmy Page, Robert Plant",
+            "United Kingdom",
+            "This field cannot be sorted against.",
         ]
         self.assertEqual(view.get_result_row(obj), expected)
 
@@ -207,11 +207,11 @@ class TestBaseListView(ChangelistTestCase):
         view = self.get_view(self.get_request(), list_display_links=None)
         obj = self.get_annotated_model_obj(self.obj)
         expected = [
-            'Led Zeppelin',
-            'Zepp',
-            'Jimmy Page, Robert Plant',
-            'United Kingdom',
-            'This field cannot be sorted against.'
+            "Led Zeppelin",
+            "Zepp",
+            "Jimmy Page, Robert Plant",
+            "United Kingdom",
+            "This field cannot be sorted against.",
         ]
         self.assertEqual(view.get_result_row(obj), expected)
 
@@ -239,10 +239,10 @@ class TestBaseListView(ChangelistTestCase):
         parameters.
         """
         # NOTE: why? what's the benefit of this?
-        request = self.get_request(data={'p': ['1']})
+        request = self.get_request(data={"p": ["1"]})
         view = self.get_view(request)
         obj = self.get_annotated_model_obj(self.obj)
-        self.assertIn('p=1', view.get_result_row(obj)[0])
+        self.assertIn("p=1", view.get_result_row(obj)[0])
 
     def test_get_result_row_no_list_display(self):
         """
@@ -257,21 +257,15 @@ class TestBaseListView(ChangelistTestCase):
 
     def test_get_query_string_add_params(self):
         """Assert that get_query_string adds query string parameters."""
-        request = self.get_request(data={'o': ['1']})
+        request = self.get_request(data={"o": ["1"]})
         view = self.get_view(request)
-        self.assertEqual(
-            view.get_query_string(new_params={'p': '2'}),
-            "?o=1&p=2"
-        )
+        self.assertEqual(view.get_query_string(new_params={"p": "2"}), "?o=1&p=2")
 
     def test_get_query_string_remove_params(self):
         """Assert that get_query_string removes query string parameters."""
-        request = self.get_request(data={'o': ['1'], 'p': ['2'], 'q': ["Beep"]})
+        request = self.get_request(data={"o": ["1"], "p": ["2"], "q": ["Beep"]})
         view = self.get_view(request)
-        self.assertEqual(
-            view.get_query_string(new_params={'p': None}, remove=['o']),
-            "?q=Beep"
-        )
+        self.assertEqual(view.get_query_string(new_params={"p": None}, remove=["o"]), "?q=Beep")
 
     def test_get_ordering_field(self):
         """
@@ -287,7 +281,7 @@ class TestBaseListView(ChangelistTestCase):
     def test_get_context_data(self):
         """Assert that get_context_data adds the expected items."""
         view = self.get_view(self.get_request())
-        view.object_list = view.get_queryset().order_by('id')
+        view.object_list = view.get_queryset().order_by("id")
         context = view.get_context_data()
         for context_item in ["page_range", "cl", "result_headers", "result_rows"]:
             with self.subTest(context_item=context_item):
@@ -432,5 +426,3 @@ class TestBaseListView(ChangelistTestCase):
                         self.assertFalse(kwargs["ranked"])
                     else:
                         self.assertTrue(kwargs["ranked"])
-
-
