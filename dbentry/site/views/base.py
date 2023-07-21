@@ -241,7 +241,7 @@ class BaseListView(ModelViewMixin, ListView):
     empty_value_display = "-"
     page_kwarg = PAGE_VAR
 
-    order_unfiltered_results = False
+    order_unfiltered_results = True
     prioritize_search_ordering = True
 
     def __init__(self, *args, **kwargs):
