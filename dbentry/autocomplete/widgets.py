@@ -7,19 +7,19 @@ from dbentry import models as _models
 
 
 DEFAULTS = {
-    (_models.Ausgabe, MIZSelectTabular): {
-        "url": "autocomplete_ausgabe",
-        "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
-        "filter_by": ("ausgabe__magazin", "magazin_id"),
-        "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
+    _models.Ausgabe: {
+       "url": "autocomplete_ausgabe",
+       "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
+       "filter_by": ("ausgabe__magazin", "magazin_id"),
+       "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
     },
-    (_models.Autor, MIZSelect): {"url": "autocomplete_autor", "create_field": "__any__"},
-    (_models.Band, MIZSelectTabular): {"extra_columns": {"alias_list": "Aliase"}},
-    (_models.Magazin, MIZSelect): {"url": "autocomplete_magazin"},
-    (_models.Musiker, MIZSelectTabular): {"extra_columns": {"alias_list": "Aliase"}},
-    (_models.Person, MIZSelect): {"url": "autocomplete_person", "create_field": "__any__"},
-    (_models.Spielort, MIZSelectTabular): {"extra_columns": {"ort___name": "Ort"}},
-    (_models.Veranstaltung, MIZSelectTabular): {"extra_columns": {"datum": "Datum", "spielort__name": "Spielort"}},
+    _models.Autor: {"url": "autocomplete_autor", "create_field": "__any__"},
+    _models.Band: {"extra_columns": {"alias_list": "Aliase"}},
+    _models.Magazin: {"url": "autocomplete_magazin"},
+    _models.Musiker: {"extra_columns": {"alias_list": "Aliase"}},
+    _models.Person: {"url": "autocomplete_person", "create_field": "__any__"},
+    _models.Spielort: {"extra_columns": {"ort___name": "Ort"}},
+    _models.Veranstaltung: {"extra_columns": {"datum": "Datum", "spielort__name": "Spielort"}},
 }
 
 
@@ -59,7 +59,7 @@ def make_widget(
         else:
             widget_class = MIZSelectMultiple
 
-    widget_opts = {"model": model, "attrs": {}, **DEFAULTS.get((model, widget_class), {}), **kwargs}
+    widget_opts = {"model": model, "attrs": {}, **DEFAULTS.get(model, {}), **kwargs}
     if "create_field" not in widget_opts and getattr(model, "create_field", None):
         widget_opts["create_field"] = getattr(model, "create_field")
 
