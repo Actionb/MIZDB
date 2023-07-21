@@ -28,7 +28,6 @@ Use SearchableListView to add a search form to the changelist:
 from django.views.generic import TemplateView
 
 from dbentry import models as _models
-from dbentry.autocomplete.widgets import make_widget
 from dbentry.site.registry import register_changelist, ModelType
 from dbentry.site.views.base import BaseViewMixin
 from dbentry.site.views.base import SearchableListView
@@ -42,6 +41,11 @@ from dbentry.utils.text import concat_limit
 class Index(BaseViewMixin, TemplateView):
     title = "Index"
     template_name = "mizdb/index.html"
+
+
+################################################################################
+# ARCHIVGUT
+################################################################################
 
 
 @register_changelist(_models.Artikel, category=ModelType.ARCHIVGUT)
@@ -107,16 +111,34 @@ class ArtikelList(SearchableListView):
         return obj.kuenstler_list or self.get_empty_value_display()
 
 
-@register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
-class GenreList(SearchableListView):
-    model = _models.Genre
-    list_display = ["genre", "alias_string"]
+@register_changelist(_models.Audio, category=ModelType.ARCHIVGUT)
+class AudioList(SearchableListView):
+    model = _models.Audio
+    ordering = ["titel", "jahr", "medium"]
+    list_display = ["titel", "jahr", "medium", "kuenstler_list"]
+    search_form_kwargs = {
+        "fields": [
+            "musiker",
+            "band",
+            "schlagwort",
+            "genre",
+            "ort",
+            "spielort",
+            "veranstaltung",
+            "person",
+            "plattenfirma",
+            "medium",
+            "release_id",
+            "land_pressung",
+        ],
+        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+    }
 
-    @add_attrs(description="Aliase")
-    def alias_string(self, obj: _models.Genre):
+    @add_attrs(description="Künstler")
+    def kuenstler_list(self, obj: _models.Audio):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
-        return obj.alias_list or self.get_empty_value_display()
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
@@ -197,123 +219,22 @@ class AusgabeList(SearchableListView):
         return obj.anz_artikel
 
 
-@register_changelist(_models.Audio, category=ModelType.ARCHIVGUT)
-class AudioList(SearchableListView):
-    model = _models.Audio
-    ordering = ["titel", "jahr", "medium"]
-    list_display = ["titel", "jahr", "medium", "kuenstler_list"]
+@register_changelist(_models.Brochure, category=ModelType.ARCHIVGUT)
+class BrochureList(SearchableListView):
+    model = _models.Brochure
+    list_display = ["titel", "zusammenfassung", "jahr_list"]
     search_form_kwargs = {
-        "fields": [
-            "musiker",
-            "band",
-            "schlagwort",
-            "genre",
-            "ort",
-            "spielort",
-            "veranstaltung",
-            "person",
-            "plattenfirma",
-            "medium",
-            "release_id",
-            "land_pressung",
-        ],
-        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range"],
+        "labels": {"jahre__jahr__range": "Jahr"},
+        "tabular": ["ausgabe"],
+        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
 
-    @add_attrs(description="Künstler")
-    def kuenstler_list(self, obj: _models.Audio):
+    @add_attrs(description="Jahre", ordering="jahr_min")
+    def jahr_list(self, obj: _models.BaseBrochure):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
-        return obj.kuenstler_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Autor, category=ModelType.STAMMDATEN)
-class AutorList(SearchableListView):
-    model = _models.Autor
-    ordering = ["_name"]
-    list_display = ["autor_name", "person", "kuerzel", "magazin_string"]
-    search_form_kwargs = {"fields": ["magazin", "person"]}
-
-    @add_attrs(description="Autor", ordering="_name")
-    def autor_name(self, obj: _models.Autor):
-        return obj._name
-
-    @add_attrs(description="Magazin(e)", ordering="magazin_list")
-    def magazin_string(self, obj: _models.Autor):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.magazin_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Band, category=ModelType.STAMMDATEN)
-class BandList(SearchableListView):
-    model = _models.Band
-    ordering = ["band_name"]
-    list_display = ["band_name", "genre_string", "musiker_string", "orte_string"]
-    search_form_kwargs = {
-        "fields": ["musiker", "genre", "orte__land", "orte"],
-        "labels": {"musiker": "Mitglied"},
-        "tabular": ["musiker"],
-    }
-
-    @add_attrs(description="Genres", ordering="genre_list")
-    def genre_string(self, obj: _models.Band):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.genre_list or self.get_empty_value_display()
-
-    @add_attrs(description="Mitglieder", ordering="musiker_list")
-    def musiker_string(self, obj: _models.Band):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.musiker_list or self.get_empty_value_display()
-
-    @add_attrs(description="Orte", ordering="orte_list")
-    def orte_string(self, obj: _models.Band):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.orte_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Plakat, category=ModelType.ARCHIVGUT)
-class PlakatList(SearchableListView):
-    model = _models.Plakat
-    ordering = ["titel", "datum"]
-    list_display = ["titel", "plakat_id", "size", "datum_localized", "veranstaltung_string"]
-    search_form_kwargs = {
-        "fields": [
-            "musiker",
-            "band",
-            "schlagwort",
-            "genre",
-            "ort",
-            "spielort",
-            "veranstaltung",
-            "person",
-            "reihe",
-            "datum__range",
-            "signatur__contains",
-        ],
-        "labels": {"reihe": "Bildreihe"},
-        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
-    }
-
-    @add_attrs(description="Plakat ID", ordering="id")
-    def plakat_id(self, obj: _models.Plakat):
-        """ID of this instance, with a prefixed 'P' and padded with zeros."""
-        if not obj.pk:
-            return self.get_empty_value_display()
-        return "P" + str(obj.pk).zfill(6)
-
-    @add_attrs(description="Datum", ordering="datum")
-    def datum_localized(self, obj: _models.Plakat):
-        return obj.datum.localize()
-
-    @add_attrs(description="Veranstaltungen", ordering="veranstaltung_list")
-    def veranstaltung_string(self, obj: _models.Plakat):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.veranstaltung_list or self.get_empty_value_display()
+        return obj.jahr_list
 
 
 @register_changelist(_models.Buch, category=ModelType.ARCHIVGUT)
@@ -369,6 +290,216 @@ class BuchList(SearchableListView):
         return obj.genre_list or self.get_empty_value_display()
 
 
+@register_changelist(_models.Foto, category=ModelType.ARCHIVGUT)
+class FotoList(SearchableListView):
+    model = _models.Foto
+    ordering = ["titel", "datum"]
+    list_display = ["titel", "foto_id", "size", "typ", "datum_localized", "schlagwort_list"]
+    search_form_kwargs = {
+        "fields": [
+            "musiker",
+            "band",
+            "schlagwort",
+            "genre",
+            "ort",
+            "spielort",
+            "veranstaltung",
+            "person",
+            "reihe",
+            "datum__range",
+        ],
+        "labels": {"reihe": "Bildreihe"},
+        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+    }
+
+    @add_attrs(description="Foto ID", ordering="id")
+    def foto_id(self, obj: _models.Foto):
+        """Return the id of the object, padded with zeros."""
+        if not obj.pk:
+            return self.get_empty_value_display()
+        return str(obj.pk).zfill(6)
+
+    @add_attrs(description="Datum", ordering="datum")
+    def datum_localized(self, obj: _models.Foto):
+        return obj.datum.localize()
+
+    @add_attrs(description="Schlagwörter", ordering="schlagwort_list")
+    def schlagwort_list(self, obj: _models.Foto):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.schlagwort_list or self.get_empty_value_display()
+
+
+@register_changelist(_models.Plakat, category=ModelType.ARCHIVGUT)
+class PlakatList(SearchableListView):
+    model = _models.Plakat
+    ordering = ["titel", "datum"]
+    list_display = ["titel", "plakat_id", "size", "datum_localized", "veranstaltung_string"]
+    search_form_kwargs = {
+        "fields": [
+            "musiker",
+            "band",
+            "schlagwort",
+            "genre",
+            "ort",
+            "spielort",
+            "veranstaltung",
+            "person",
+            "reihe",
+            "datum__range",
+            "signatur__contains",
+        ],
+        "labels": {"reihe": "Bildreihe"},
+        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+    }
+
+    @add_attrs(description="Plakat ID", ordering="id")
+    def plakat_id(self, obj: _models.Plakat):
+        """ID of this instance, with a prefixed 'P' and padded with zeros."""
+        if not obj.pk:
+            return self.get_empty_value_display()
+        return "P" + str(obj.pk).zfill(6)
+
+    @add_attrs(description="Datum", ordering="datum")
+    def datum_localized(self, obj: _models.Plakat):
+        return obj.datum.localize()
+
+    @add_attrs(description="Veranstaltungen", ordering="veranstaltung_list")
+    def veranstaltung_string(self, obj: _models.Plakat):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.veranstaltung_list or self.get_empty_value_display()
+
+
+@register_changelist(_models.Kalender, category=ModelType.ARCHIVGUT)
+class ProgrammheftList(SearchableListView):
+    model = _models.Kalender
+    list_display = ["titel", "zusammenfassung", "jahr_list"]
+    search_form_kwargs = {
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "spielort", "veranstaltung", "jahre__jahr__range"],
+        "labels": {"jahre__jahr__range": "Jahr"},
+        "tabular": ["ausgabe", "spielort", "veranstaltung"],
+        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
+    }
+
+    @add_attrs(description="Jahre", ordering="jahr_min")
+    def jahr_list(self, obj: _models.BaseBrochure):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
+
+
+@register_changelist(_models.Video, category=ModelType.ARCHIVGUT)
+class VideoList(SearchableListView):
+    model = _models.Video
+    ordering = ["titel"]
+    list_display = ["titel", "medium", "kuenstler_list"]
+    search_form_kwargs = {
+        "fields": [
+            "musiker",
+            "band",
+            "schlagwort",
+            "genre",
+            "ort",
+            "spielort",
+            "veranstaltung",
+            "person",
+            "medium",
+            "release_id",
+        ],
+        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+    }
+
+    @add_attrs(description="Künstler")
+    def kuenstler_list(self, obj: _models.Video):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
+
+
+@register_changelist(_models.Katalog, category=ModelType.ARCHIVGUT)
+class WarenkatalogList(SearchableListView):
+    model = _models.Katalog
+    list_display = ["titel", "zusammenfassung", "art", "jahr_list"]
+    search_form_kwargs = {
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range"],
+        "labels": {"jahre__jahr__range": "Jahr"},
+        "tabular": ["ausgabe"],
+        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
+    }
+
+    @add_attrs(description="Jahre", ordering="jahr_min")
+    def jahr_list(self, obj: _models.BaseBrochure):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
+
+
+################################################################################
+# STAMMDATEN
+################################################################################
+
+
+@register_changelist(_models.Autor, category=ModelType.STAMMDATEN)
+class AutorList(SearchableListView):
+    model = _models.Autor
+    ordering = ["_name"]
+    list_display = ["autor_name", "person", "kuerzel", "magazin_string"]
+    search_form_kwargs = {"fields": ["magazin", "person"]}
+
+    @add_attrs(description="Autor", ordering="_name")
+    def autor_name(self, obj: _models.Autor):
+        return obj._name
+
+    @add_attrs(description="Magazin(e)", ordering="magazin_list")
+    def magazin_string(self, obj: _models.Autor):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.magazin_list or self.get_empty_value_display()
+
+
+@register_changelist(_models.Band, category=ModelType.STAMMDATEN)
+class BandList(SearchableListView):
+    model = _models.Band
+    ordering = ["band_name"]
+    list_display = ["band_name", "genre_string", "musiker_string", "orte_string"]
+    search_form_kwargs = {
+        "fields": ["musiker", "genre", "orte__land", "orte"],
+        "labels": {"musiker": "Mitglied"},
+        "tabular": ["musiker"],
+    }
+
+    @add_attrs(description="Genres", ordering="genre_list")
+    def genre_string(self, obj: _models.Band):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.genre_list or self.get_empty_value_display()
+
+    @add_attrs(description="Mitglieder", ordering="musiker_list")
+    def musiker_string(self, obj: _models.Band):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.musiker_list or self.get_empty_value_display()
+
+    @add_attrs(description="Orte", ordering="orte_list")
+    def orte_string(self, obj: _models.Band):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.orte_list or self.get_empty_value_display()
+
+
+@register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
+class GenreList(SearchableListView):
+    model = _models.Genre
+    list_display = ["genre", "alias_string"]
+
+    @add_attrs(description="Aliase")
+    def alias_string(self, obj: _models.Genre):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.alias_list or self.get_empty_value_display()
+
+
 @register_changelist(_models.Magazin, category=ModelType.STAMMDATEN)
 class MagazinList(SearchableListView):
     model = _models.Magazin
@@ -419,6 +550,15 @@ class MusikerList(SearchableListView):
         return obj.orte_list or self.get_empty_value_display()
 
 
+@register_changelist(_models.Ort, category=ModelType.STAMMDATEN)
+class OrtList(SearchableListView):
+    model = _models.Ort
+    ordering = ["land", "bland", "stadt"]
+    list_display = ["stadt", "bland", "land"]
+    list_display_links = ["stadt", "bland", "land"]
+    search_form_kwargs = {"fields": ["land", "bland"], "forward": {"bland": "land"}}
+
+
 @register_changelist(_models.Person, category=ModelType.STAMMDATEN)
 class PersonList(SearchableListView):
     model = _models.Person
@@ -462,6 +602,29 @@ class SchlagwortList(SearchableListView):
         return obj.alias_list or self.get_empty_value_display()
 
 
+################################################################################
+# SONSTIGE
+################################################################################
+
+
+@register_changelist(_models.Herausgeber, category=ModelType.SONSTIGE)
+class HerausgeberList(SearchableListView):
+    model = _models.Herausgeber
+    ordering = ["herausgeber"]
+
+
+@register_changelist(_models.Instrument, category=ModelType.SONSTIGE)
+class InstrumentList(SearchableListView):
+    model = _models.Instrument
+    ordering = ["instrument"]
+    list_display = ["instrument", "kuerzel"]
+
+
+@register_changelist(_models.Plattenfirma, category=ModelType.SONSTIGE)
+class PlattenfirmaList(SearchableListView):
+    model = _models.Plattenfirma
+
+
 @register_changelist(_models.Spielort, category=ModelType.SONSTIGE)
 class SpielortList(SearchableListView):
     model = _models.Spielort
@@ -497,166 +660,3 @@ class VerlagList(SearchableListView):
     ordering = ["verlag_name", "sitz"]
     list_display = ["verlag_name", "sitz"]
     search_form_kwargs = {"fields": ["sitz", "sitz__land", "sitz__bland"], "labels": {"sitz": "Sitz"}}
-
-
-@register_changelist(_models.Video, category=ModelType.ARCHIVGUT)
-class VideoList(SearchableListView):
-    model = _models.Video
-    ordering = ["titel"]
-    list_display = ["titel", "medium", "kuenstler_list"]
-    search_form_kwargs = {
-        "fields": [
-            "musiker",
-            "band",
-            "schlagwort",
-            "genre",
-            "ort",
-            "spielort",
-            "veranstaltung",
-            "person",
-            "medium",
-            "release_id",
-        ],
-        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
-    }
-
-    @add_attrs(description="Künstler")
-    def kuenstler_list(self, obj: _models.Video):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.kuenstler_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Bundesland, category=ModelType.SONSTIGE)
-class BundeslandList(SearchableListView):
-    model = _models.Bundesland
-    ordering = ["land", "bland_name"]
-    list_display = ["bland_name", "code", "land"]
-    search_form_kwargs = {"fields": ["land"]}
-
-
-@register_changelist(_models.Land, category=ModelType.SONSTIGE)
-class LandList(SearchableListView):
-    model = _models.Land
-    ordering = ["land_name"]
-
-
-@register_changelist(_models.Ort, category=ModelType.STAMMDATEN)
-class OrtList(SearchableListView):
-    model = _models.Ort
-    ordering = ["land", "bland", "stadt"]
-    list_display = ["stadt", "bland", "land"]
-    list_display_links = ["stadt", "bland", "land"]
-    search_form_kwargs = {"fields": ["land", "bland"], "forward": {"bland": "land"}}
-
-
-@register_changelist(_models.Instrument, category=ModelType.SONSTIGE)
-class InstrumentList(SearchableListView):
-    model = _models.Instrument
-    ordering = ["instrument"]
-    list_display = ["instrument", "kuerzel"]
-
-
-@register_changelist(_models.Herausgeber, category=ModelType.SONSTIGE)
-class HerausgeberList(SearchableListView):
-    model = _models.Herausgeber
-    ordering = ["herausgeber"]
-
-
-@register_changelist(_models.Brochure, category=ModelType.ARCHIVGUT)
-class BrochureList(SearchableListView):
-    model = _models.Brochure
-    list_display = ["titel", "zusammenfassung", "jahr_list"]
-    search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range"],
-        "labels": {"jahre__jahr__range": "Jahr"},
-        "tabular": ["ausgabe"],
-        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
-    }
-
-    @add_attrs(description="Jahre", ordering="jahr_min")
-    def jahr_list(self, obj: _models.BaseBrochure):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.jahr_list
-
-
-@register_changelist(_models.Katalog, category=ModelType.ARCHIVGUT)
-class KatalogList(SearchableListView):
-    model = _models.Katalog
-    list_display = ["titel", "zusammenfassung", "art", "jahr_list"]
-    search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range"],
-        "labels": {"jahre__jahr__range": "Jahr"},
-        "tabular": ["ausgabe"],
-        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
-    }
-
-    @add_attrs(description="Jahre", ordering="jahr_min")
-    def jahr_list(self, obj: _models.BaseBrochure):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.jahr_list
-
-
-@register_changelist(_models.Kalender, category=ModelType.ARCHIVGUT)
-class KalenderList(SearchableListView):
-    model = _models.Kalender
-    list_display = ["titel", "zusammenfassung", "jahr_list"]
-    search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "spielort", "veranstaltung", "jahre__jahr__range"],
-        "labels": {"jahre__jahr__range": "Jahr"},
-        "tabular": ["ausgabe", "spielort", "veranstaltung"],
-        "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
-    }
-
-    @add_attrs(description="Jahre", ordering="jahr_min")
-    def jahr_list(self, obj: _models.BaseBrochure):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.jahr_list
-
-
-@register_changelist(_models.Foto, category=ModelType.ARCHIVGUT)
-class FotoList(SearchableListView):
-    model = _models.Foto
-    ordering = ["titel", "datum"]
-    list_display = ["titel", "foto_id", "size", "typ", "datum_localized", "schlagwort_list"]
-    search_form_kwargs = {
-        "fields": [
-            "musiker",
-            "band",
-            "schlagwort",
-            "genre",
-            "ort",
-            "spielort",
-            "veranstaltung",
-            "person",
-            "reihe",
-            "datum__range",
-        ],
-        "labels": {"reihe": "Bildreihe"},
-        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
-    }
-
-    @add_attrs(description="Foto ID", ordering="id")
-    def foto_id(self, obj: _models.Foto):
-        """Return the id of the object, padded with zeros."""
-        if not obj.pk:
-            return self.get_empty_value_display()
-        return str(obj.pk).zfill(6)
-
-    @add_attrs(description="Datum", ordering="datum")
-    def datum_localized(self, obj: _models.Foto):
-        return obj.datum.localize()
-
-    @add_attrs(description="Schlagwörter", ordering="schlagwort_list")
-    def schlagwort_list(self, obj: _models.Foto):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.schlagwort_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Plattenfirma, category=ModelType.SONSTIGE)
-class PlattenfirmaList(SearchableListView):
-    model = _models.Plattenfirma
