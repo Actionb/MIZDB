@@ -226,8 +226,10 @@ class BaseListView(ModelViewMixin, ListView):
     changelist.
 
     Additional attributes:
-        - expensive_ordering (bool): if True, only apply ordering on filtered
-          querysets
+        - order_unfiltered_results (bool): if True, apply ordering to unfiltered
+          changelist querysets. Setting this to False will only apply 'id'
+          ordering to an unfiltered queryset. This is useful for speeding up
+          the initial request for a changelist.
         - prioritize_search_ordering (bool): if True, do not override the
           ordering set by queryset.search()
     """
@@ -239,7 +241,7 @@ class BaseListView(ModelViewMixin, ListView):
     empty_value_display = "-"
     page_kwarg = PAGE_VAR
 
-    expensive_ordering = False  # TODO: just override order_queryset in views that use this?
+    order_unfiltered_results = False
     prioritize_search_ordering = True
 
     def __init__(self, *args, **kwargs):
@@ -323,8 +325,8 @@ class BaseListView(ModelViewMixin, ListView):
             return ordering
 
     def order_queryset(self, queryset):
-        if self.expensive_ordering and not queryset.query.where:
-            # Do not apply expensive ordering on an unfiltered queryset
+        if not (queryset.query.has_filters() or self.order_unfiltered_results):
+            # Do not apply (expensive) ordering on an unfiltered queryset.
             return queryset.order_by('id')
         return queryset.order_by(*self.get_ordering_fields(queryset))
 

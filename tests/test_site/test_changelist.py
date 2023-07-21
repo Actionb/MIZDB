@@ -269,43 +269,43 @@ class TestBaseListView(ChangelistTestCase):
         object_list = view.get_context_data()["object_list"]
         self.assertIn('members_list', object_list.query.annotations)
 
-    def test_order_queryset_expensive_ordering_filtered(self):
+    def test_order_queryset_order_unfiltered_results_filtered(self):
         """
         Assert that order_queryset applies extended ordering when the queryset
-        is filtered and expensive_ordering is True.
+        is filtered and order_unfiltered_results is False.
         """
         view = self.get_view(self.get_request())
-        view.expensive_ordering = True
+        view.order_unfiltered_results = False
         view.ordering = ["name"]
         queryset = self.queryset.filter(id=1).order_by("alias")
         queryset = view.order_queryset(queryset)
         self.assertCountEqual(queryset.query.order_by, ["name", "alias", "id"])
 
-    def test_order_queryset_expensive_ordering_unfiltered(self):
+    def test_order_queryset_order_unfiltered_results_unfiltered(self):
         """
         Assert that order_queryset does not apply extended ordering when the
-        queryset is unfiltered and expensive_ordering is True.
+        queryset is unfiltered and order_unfiltered_results is False.
         """
         view = self.get_view(self.get_request())
-        view.expensive_ordering = True
+        view.order_unfiltered_results = False
         view.ordering = ["name"]
         queryset = self.queryset.order_by("alias")
         queryset = view.order_queryset(queryset)
         self.assertCountEqual(queryset.query.order_by, ["id"])
 
-    def test_order_queryset_no_expensive_ordering(self):
+    def test_order_queryset_order_unfiltered_results_true(self):
         """
         Assert that order_queryset applies extended ordering regardless of
-        whether the queryset is ordered when expensive_ordering is False.
+        whether the queryset is filtered when order_unfiltered_results is True.
         """
         view = self.get_view(self.get_request())
-        view.expensive_ordering = False
+        view.order_unfiltered_results = True
         view.ordering = ["name"]
-        for is_ordered in (True, False):
+        for is_filtered in (True, False):
             queryset = self.queryset.order_by("alias")
-            if is_ordered:
+            if is_filtered:
                 queryset = queryset.filter(id=1)
-            with self.subTest(is_ordered=is_ordered):
+            with self.subTest(is_filtered=is_filtered):
                 queryset = view.order_queryset(queryset)
                 self.assertCountEqual(queryset.query.order_by, ["name", "alias", "id"])
 
