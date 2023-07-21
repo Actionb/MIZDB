@@ -115,6 +115,13 @@ class ArtikelList(SearchableListView):
 @register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
 class GenreList(SearchableListView):
     model = _models.Genre
+    list_display = ["genre", "alias_string"]
+
+    @add_attrs(description="Aliase")
+    def alias_string(self, obj: _models.Genre):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.alias_list or self.get_empty_value_display()
 
 
 @register_changelist(_models.Ausgabe, category=ModelType.ARCHIVGUT)
@@ -365,19 +372,6 @@ class BuchList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.genre_list or self.get_empty_value_display()
-
-
-@register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
-class GenreList(SearchableListView):  # TODO: duplicate!
-    model = _models.Genre
-    ordering = ["genre"]
-    list_display = ["genre", "alias_string"]
-
-    @add_attrs(description="Aliase")
-    def alias_string(self, obj: _models.Genre):
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.alias_list or self.get_empty_value_display()
 
 
 @register_changelist(_models.Magazin, category=ModelType.STAMMDATEN)
