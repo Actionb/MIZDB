@@ -228,20 +228,12 @@ class BaseListView(ModelViewMixin, ListView):
     template_name = "mizdb/changelist.html"
     list_display = ()
     list_display_links = ()
-    sortable_by = None
     paginate_by = 100
     empty_value_display = "-"
     page_kwarg = PAGE_VAR
 
     order_unfiltered_results = True
     prioritize_search_ordering = True
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.lookup_opts = self.opts = self.model._meta  # TODO: probably not needed anymore?
-        if self.list_display:
-            self.sortable_by = self.list_display  # TODO: what does this do? Is sortable_by needed at all?
-        self.formset = None  # required by tag admin_list.result_hidden_fields  # TODO: is this still needed?
 
     def get_ordering_field(self, field_name):
         """
@@ -449,7 +441,6 @@ class SearchableListView(SearchFormMixin, BaseListView):
         queryset = super().get_search_results(queryset)
         search_form = self.get_search_form(data=self.request.GET)
         if search_form.is_valid():
-            filter_params = self.get_filters(search_form)
             queryset = queryset.filter(**self.get_filters(search_form))
         return queryset
 
