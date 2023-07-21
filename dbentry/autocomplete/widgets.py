@@ -27,7 +27,7 @@ def make_widget(
         model,
         tabular=False,
         multiple=False,
-        namespace="admin",
+        namespace="admin",  # TODO: update default namespace once the site views are up
         can_add=True,
         can_list=True,
         can_edit=True,
