@@ -10,10 +10,6 @@ from dbentry.utils.url import get_changelist_url
 
 
 class SearchbarSearch(View):
-    blank = False
-
-    # TODO: add variable that dictates whether to include target="_blank" in the links
-    #  (blank if in a add/change form)
 
     def get(self, request, **kwargs):
         # TODO: stagger the searches? Search important models first and return
@@ -25,7 +21,7 @@ class SearchbarSearch(View):
                 data['results'].append({
                     'category': self.get_changelist_link(queryset),
                     'items': [
-                        get_obj_link(self.request, obj, blank=self.blank)
+                        get_obj_link(self.request, obj, blank="popup" in request.GET)
                         for obj in queryset
                     ]
                 })
@@ -58,6 +54,6 @@ class SearchbarSearch(View):
             label = opts.verbose_name
         if not url:
             return label
-        if self.blank:
+        if "popup" in self.request.GET:
             return create_hyperlink(url, label, target='_blank')
         return create_hyperlink(url, label)

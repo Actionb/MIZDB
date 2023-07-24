@@ -130,8 +130,8 @@ class TestSearchbarSearch(DataTestCase, ViewTestCase):
         view = self.get_view(self.get_request(user=self.noperms_user))
         self.assertEqual(view.get_changelist_link(Country.objects.all()), 'Country')
 
-    def test_get_changelist_link_blank(self):
-        view = self.get_view(self.get_request(), blank=True)
+    def test_get_changelist_link_popup(self):
+        view = self.get_view(self.get_request(data={"popup": True}))
         self.assertHTMLEqual(
             view.get_changelist_link(self.queryset.filter(pk=self.beatles.pk)),
             f'<a href="/band/?id__in={self.beatles.pk}" target="_blank">Band</a>'

@@ -8,12 +8,12 @@
         {% url opts|urlname:'changelist' as changelist_url %}
         <tr>
         <th class="container-fluid" scope="row">
-            <a class="text-decoration-none" href="{{ changelist_url }}" target="_blank">{{ opts.verbose_name }}</a>
+            <a class="text-decoration-none" href="{{ changelist_url }}" {% if popup_links %}target="_blank"{% endif %}>{{ opts.verbose_name }}</a>
         </th>
         {% has_perm user 'add' opts as has_add_perm %}
         {% url opts|urlname:'add' as add_url %}
         {% if has_add_perm and add_url %}
-          <td><a href="{{ add_url }}" class="addlink" target="_blank">Hinzufügen</a></td>
+          <td><a href="{{ add_url }}" class="addlink" {% if popup_links %}target="_blank"{% endif %}>Hinzufügen</a></td>
         {% else %}
           <td></td>
         {% endif %}

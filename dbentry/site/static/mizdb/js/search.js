@@ -1,13 +1,16 @@
 window.addEventListener("load", (event) => {
     const searchInput = document.querySelector('#searchInput');
     const searchURL = searchInput.dataset.searchUrl;
+    const popup = searchInput.dataset.popup;
     const searchResults = document.querySelector('#searchResults');
 
     searchInput.addEventListener("input", (event) => {
         function addResults() {
             const decoder = new TextDecoder();
+            const params = new URLSearchParams({q: event.target.value})
+            if (popup) params.append('popup', true)
 
-            fetch(`${searchURL}?q=${event.target.value}`)
+            fetch(`${searchURL}?${params.toString()}`)
                 .then((response) => response.json())
                 .then((data) => {
                     searchResults.innerHTML = "";

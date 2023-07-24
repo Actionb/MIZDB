@@ -67,6 +67,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
                     ('opts', self.model._meta),
                     ('add', add),
                     ('title', 'Foo hinzufügen' if add else 'Foo ändern'),
+                    ("popup_links", True)
                 ]
                 for k, v in test_data:
                     with self.subTest(key=k):
