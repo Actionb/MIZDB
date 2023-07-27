@@ -28,6 +28,9 @@ class WeightedColumn:
 class SearchVectorField(DjangoSearchVectorField):
 
     def __init__(self, *args, columns=None, **kwargs):
+        kwargs["null"] = True
+        kwargs["blank"] = True
+        kwargs["editable"] = False
         super().__init__(*args, **kwargs)
         self.columns = columns
 
