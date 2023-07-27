@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Type, Union
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import ModelAdmin, get_content_type_for_model
@@ -37,6 +37,28 @@ def create_hyperlink(url: str, content: Any, **attrs: str) -> SafeText:
     )
 
 
+def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str:
+    """
+    Return the URL to the change page of ``obj``.
+
+    Returns an empty string if no change page could be found, or if the user
+    has no change permissions.
+    """
+    opts = obj._meta
+    try:
+        admin_url = reverse(
+            '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
+            args=[quote(obj.pk)]
+        )
+    except NoReverseMatch:
+        return ''
+
+    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
+    if not user.has_perm(perm):
+        return ''
+    return admin_url
+
+
 def get_obj_link(
         obj: Model,
         user: User,
@@ -57,23 +79,11 @@ def get_obj_link(
         site_name (str): namespace of the site/app
         blank (bool): if True, the link will have a target="_blank" attribute
     """
-    # noinspection PyUnresolvedReferences
-    opts = obj._meta
-    no_edit_link = format_html(
-        '%s: %s' % (capfirst(opts.verbose_name), force_str(obj))
-    )
-    try:
-        admin_url = reverse(
-            '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
-            args=[quote(obj.pk)]
+    admin_url = get_change_page_url(obj, user, site_name)
+    if not admin_url:
+        return format_html(
+            '%s: %s' % (capfirst(obj._meta.verbose_name), force_str(obj))
         )
-    except NoReverseMatch:
-        return no_edit_link
-
-    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
-    if not user.has_perm(perm):
-        return no_edit_link
-
     if blank:
         return create_hyperlink(admin_url, obj, target='_blank')
     return create_hyperlink(admin_url, obj)
@@ -189,18 +199,6 @@ def get_model_admin_for_model(
             return site._registry.get(model)
     return None
 
-
-def has_admin_permission(request: HttpRequest, model_admin: ModelAdmin) -> bool:
-    """Return True if the request user has any module or model permissions."""
-    # (used by help views)
-    # Check if the user has any permissions to the module/app.
-    if not model_admin.has_module_permission(request):
-        return False
-    # Check if the user has any permissions
-    # (add, change, delete, view) for the model.
-    return True in model_admin.get_model_perms(request).values()
-
-
 def construct_change_message(
         form: ModelForm, formsets: List[BaseInlineFormSet], add: bool
 ) -> List[Dict]:
@@ -236,7 +234,7 @@ def construct_change_message(
 
 def _get_relation_change_message(obj: Model, parent_model: Type[Model]) -> Dict:
     """
-    Create the change message JSON for changes on relations.
+    Create the change message JSON for changes on m2m and m2o relations.
 
     Args:
         obj (model instance): the related model instance
@@ -250,9 +248,10 @@ def _get_relation_change_message(obj: Model, parent_model: Type[Model]) -> Dict:
     # noinspection PyUnresolvedReferences
     opts = obj._meta
     if opts.auto_created:
-        # An auto_created m2m through table only has two relation fields;
-        # one is the field pointing towards the parent model and the other is
-        # the one we are looking for here.
+        # Follow the relation to the model that isn't the parent model.
+        if issubclass(parent_model, opts.auto_created):
+            # parent_model inherited this relation from opts.auto_created.
+            parent_model = opts.auto_created
         for fld in opts.get_fields():
             if fld.is_relation and fld.related_model != parent_model:
                 return {
@@ -284,7 +283,7 @@ def create_logentry(
         action_flag (int): the integer flag/representation of the action
         message (str or list): the change message to add to the LogEntry
     """
-    return LogEntry.objects.log_action(
+    return LogEntry.objects.log_action(  # pragma: no cover
         user_id=user_id,
         content_type_id=get_content_type_for_model(obj).pk,
         object_id=obj.pk,
@@ -310,15 +309,19 @@ def log_addition(user_id: int, obj: Model, related_obj: Model = None) -> LogEntr
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
-def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> LogEntry:
+def log_change(
+        user_id: int,
+        obj: Model,
+        fields: Union[Sequence[str], str],
+        related_obj: Model = None
+) -> LogEntry:
     """
     Log that values for the ``fields`` of ``object`` have changed.
 
     If ``related_obj`` is given, log that a related object's field values have
-    been changed. (This is, basically, like logging changes on admin inline
-    formsets)
+    been changed. (useful for logging changes made with admin inlines)
     """
-    if isinstance(fields, str):
+    if isinstance(fields, str):  # pragma: no cover
         fields = [fields]
     message: Dict[str, dict] = {'changed': {}}
     # noinspection PyUnresolvedReferences

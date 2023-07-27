@@ -1,17 +1,21 @@
 from typing import Callable, Type
 
-from django.db.models import Model, QuerySet
-from django.http import HttpRequest
+from django.contrib.admin import ModelAdmin
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
 from django.views import View
 
 from dbentry.actions.views import (
-    BulkEditJahrgang, ChangeBestand, MergeViewWizarded, MoveToBrochureBase
+    BulkEditJahrgang, ChangeBestand, MergeView, MoveToBrochure, Replace
 )
+from dbentry.utils import add_attrs
+from dbentry.utils.summarize import get_summaries
 
 
 def add_cls_attrs(view_cls: Type[View]) -> Callable:
     """
-    A decorator for an action view function that adds view class attributes.
+    A decorator for an action view function that adds view class attributes to
+    the function.
 
     Adds the following attributes to the view function if it doesn't already
     have these set:
@@ -21,41 +25,51 @@ def add_cls_attrs(view_cls: Type[View]) -> Callable:
           access the action. See dbentry.admin.base.MIZModelAdmin.get_actions()
     """
 
-    def wrap(func):
-        if (not hasattr(func, 'short_description')
-                and hasattr(view_cls, 'short_description')):
-            func.short_description = view_cls.short_description
-        if (not hasattr(func, 'allowed_permissions')
-                and hasattr(view_cls, 'allowed_permissions')):
-            func.allowed_permissions = view_cls.allowed_permissions
+    def wrap(func: Callable) -> Callable:
+        for attr in ('short_description', 'allowed_permissions'):
+            if not hasattr(func, attr) and hasattr(view_cls, attr):
+                setattr(func, attr, getattr(view_cls, attr))
         return func
 
     return wrap
 
 
 @add_cls_attrs(BulkEditJahrgang)
-def bulk_jg(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return BulkEditJahrgang.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+def bulk_jg(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return BulkEditJahrgang.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
-@add_cls_attrs(MergeViewWizarded)
-def merge_records(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return MergeViewWizarded.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+@add_cls_attrs(MergeView)
+def merge_records(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return MergeView.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
-@add_cls_attrs(MoveToBrochureBase)
-def moveto_brochure(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return MoveToBrochureBase.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+@add_cls_attrs(MoveToBrochure)
+def moveto_brochure(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return MoveToBrochure.as_view(model_admin=model_admin, queryset=queryset)(request)
 
 
 @add_cls_attrs(ChangeBestand)
-def change_bestand(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
-    return ChangeBestand.as_view(
-        model_admin=model_admin, queryset=queryset
-    )(request)
+def change_bestand(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return ChangeBestand.as_view(model_admin=model_admin, queryset=queryset)(request)
+
+
+@add_cls_attrs(Replace)
+def replace(model_admin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> Callable:
+    return Replace.as_view(model_admin=model_admin, queryset=queryset)(request)
+
+
+# noinspection PyUnusedLocal
+@add_attrs(short_description="textuelle Zusammenfassung", allowed_permissions=("view",))
+def summarize(
+        model_admin: ModelAdmin,
+        request: HttpRequest,
+        queryset: QuerySet
+) -> HttpResponse:
+    """A model admin action that provides a summary for the selected items."""
+    response = HttpResponse()
+    for d in get_summaries(queryset):
+        for k, v in d.items():
+            response.write(f'<p>{k}: {v}</p>')
+        response.write('<hr style="break-after:page;">')
+    return response

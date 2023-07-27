@@ -1,16 +1,19 @@
 import calendar
 import datetime
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Union
+from typing import (
+    Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Sequence,
+    Tuple, Union
+)
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import transaction
-from django.db.models import Count, Max, Min, Model, QuerySet
+from django.db.models import Count, Max, Min, Model, QuerySet, OuterRef, Exists, Q
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.fts.query import TextSearchQuerySetMixin
-from dbentry.utils import leapdays
+from dbentry.utils import leapdays, add_attrs
 
 
 class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
@@ -23,16 +26,17 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
             **expressions: Any
     ) -> OrderedDictType[int, dict]:
         """
-        An extension of QuerySet.values() that merges results of the same record.
+        An extension of QuerySet.values() that merges results for the same
+        record.
 
         For example for  a pizza with two toppings and two sizes;
 
         values('pk', 'pizza__topping', 'pizza__size') will return:
                 [
-                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},\n
-                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},\n
-                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},\n
-                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'}\n
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'}
                 ]
 
 
@@ -46,12 +50,12 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
 
         Args:
             *fields (str): list of field names/paths that should be included
-            include_empty (bool): if True, include empty values
-              (here: as defined in django.core.validators.EMPTY_VALUES)
-            flatten (bool): if True, any values list that has a length of 1
-              will be replaced by just that one item. This does not apply to
-              values from reverse related fields, as an iterable always
-              expected here.
+            include_empty (bool): if True, include empty values as defined in
+              django.core.validators.EMPTY_VALUES
+            flatten (bool): if True, any values list that only contains one
+              item will be replaced by just that item, removing the list. This
+              does not apply to values from reverse related fields; in that
+              case, an iterable is expected.
             **expressions: additional expressions for values()
 
         Returns:
@@ -65,14 +69,13 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         # Make sure the query includes the model's primary key values as we
         # require it to build the result out of.
         # If fields is empty, the query targets all the model's fields.
-        if fields:
-            if pk_name not in fields:
-                if 'pk' in fields:
-                    pk_name = 'pk'
-                else:
-                    # The query does not query for the primary key at all;
-                    # it must be added to fields.
-                    fields += (pk_name,)
+        if fields and pk_name not in fields:
+            if 'pk' in fields:
+                pk_name = 'pk'
+            else:
+                # The query does not query for the primary key at all;
+                # it must be added to fields.
+                fields += (pk_name,)
 
         # Do not flatten reverse relation values.
         # An iterable object is expected.
@@ -97,8 +100,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         for val_dict in self.values(*fields, **expressions):
             pk = val_dict.pop(pk_name)
             # For easier lookups of field_names, use dictionaries for the
-            # item's values mapping. If tuplfy == True, we turn the values
-            # mapping back into a tuple before adding it to the result.
+            # item's values mapping.
             item_dict: Union[dict, tuple]  # for mypy
             if pk in result:
                 # Multiple rows returned due to joins over relations for this
@@ -112,7 +114,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
                 values: tuple  # for mypy
                 if field_path not in item_dict:
                     values = ()
-                elif flatten and not isinstance(item_dict.get(field_path), tuple):
+                elif flatten and not isinstance(item_dict[field_path], tuple):
                     # This value has previously been flattened!
                     values = (item_dict[field_path],)
                 else:
@@ -126,8 +128,13 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
             result[pk] = item_dict
         return result
 
+    def overview(self, *annotations) -> 'MIZQuerySet':
+        """Return a queryset that provides a comprehensive overview of the objects."""
+        return self.model.overview(self, *annotations)
+
 
 class CNQuerySet(MIZQuerySet):
+    # TODO: shouldn't get() update the name just like filter?
 
     def bulk_create(self, objs: Iterable[Model], **kwargs: Any) -> List[Model]:
         # Set the _changed_flag on the objects to be created
@@ -150,13 +157,13 @@ class CNQuerySet(MIZQuerySet):
             self._update_names()
         return super().only(*fields)
 
+    @add_attrs(alters_data=True)
     def update(self, **kwargs: Any) -> int:
         # Assume that a name update will be required after this update.
         # If _changed_flag is not already part of the update, add it.
         if '_changed_flag' not in kwargs:
             kwargs['_changed_flag'] = True
         return super().update(**kwargs)
-    update.alters_data = True  # type: ignore[attr-defined]
 
     def values(self, *fields: str, **expressions: Any) -> MIZQuerySet:
         if '_name' in fields:
@@ -168,6 +175,7 @@ class CNQuerySet(MIZQuerySet):
             self._update_names()
         return super().values_list(*fields, **kwargs)
 
+    @add_attrs(alters_data=True)
     def _update_names(self) -> None:
         """Update the names of rows where _changed_flag is True."""
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
@@ -184,7 +192,6 @@ class CNQuerySet(MIZQuerySet):
                     self.order_by().filter(pk=pk).update(
                         _name=new_name, _changed_flag=False
                     )
-    _update_names.alters_data = True  # type: ignore[attr-defined]
 
 
 def build_date(
@@ -223,11 +230,9 @@ class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
 
     def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
-        # QuerySet._chain() will update the clone's __dict__ with the kwargs
-        # we give it. (in django1.11: QuerySet._clone() did this job)
-        if 'chronologically_ordered' not in kwargs:
-            kwargs['chronologically_ordered'] = self.chronologically_ordered
-        return super()._chain(**kwargs)
+        clone = super()._chain(**kwargs)
+        clone.chronologically_ordered = self.chronologically_ordered
+        return clone
 
     def order_by(self, *field_names: str) -> 'AusgabeQuerySet':
         # Any call to order_by is almost guaranteed to break the
@@ -264,6 +269,7 @@ class AusgabeQuerySet(CNQuerySet):
             a dictionary that was used to update the jahrgang values;
               it maps jahrgang to list of ids.
         """
+        # TODO: the return value isn't use anywhere
         start = start_obj or self.chronological_order().first()
         start_date = start.e_datum
         years = start.ausgabejahr_set.values_list('jahr', flat=True)
@@ -426,8 +432,10 @@ class AusgabeQuerySet(CNQuerySet):
             pk_order_item = '-%s' % pk_name
 
         # Determine if jahr should come before jahrgang in ordering.
-        jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
+        jj_values: List[Tuple[int, int]] = list(self.values_list('ausgabejahr__jahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
+        jahr_values: Sequence[int]
+        jahrgang_values: Sequence[int]
         jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
@@ -436,14 +444,29 @@ class AusgabeQuerySet(CNQuerySet):
             ordering[jahr_index] = 'jahrgang'
             ordering[jahrgang_index] = 'jahr'
 
-        # Find the best criteria to order with, which might be either:
-        # num, lnum, monat or e_datum
-        # Count the presence of the different criteria and sort them accordingly.
-        counted = self.aggregate(
-            e_datum__sum=Count('e_datum', distinct=True),
-            lnum__sum=Count('ausgabelnum', distinct=True),
-            monat__sum=Count('ausgabemonat', distinct=True),
-            num__sum=Count('ausgabenum', distinct=True),
+        clone = self.annotate(
+            num=Max('ausgabenum__num'),
+            monat=Max('ausgabemonat__monat__ordinal'),
+            lnum=Max('ausgabelnum__lnum'),
+            jahr=Min('ausgabejahr__jahr')
+        )
+        # Find the best (annotated) fields to order against.
+        # Sort the fields e_datum, lnum, monat and num by how often the objects
+        # of the queryset have values in those fields.
+        from dbentry.models import AusgabeLnum, AusgabeNum, AusgabeMonat
+        counted = (
+            self
+            .annotate(
+                has_lnum=Exists(AusgabeLnum.objects.filter(ausgabe=OuterRef("pk"))),
+                has_monat=Exists(AusgabeMonat.objects.filter(ausgabe=OuterRef("pk"))),
+                has_num=Exists(AusgabeNum.objects.filter(ausgabe=OuterRef("pk")))
+            )
+            .aggregate(
+                e_datum__sum=Count('e_datum'),
+                lnum__sum=Count('has_lnum', filter=Q(has_lnum=True)),
+                monat__sum=Count('has_monat', filter=Q(has_monat=True)),
+                num__sum=Count('has_num', filter=Q(has_num=True)),
+            )
         )
         default_criteria_ordering = [
             'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
@@ -460,11 +483,6 @@ class AusgabeQuerySet(CNQuerySet):
         result_ordering = [sum_name.split('__')[0] for sum_name, _sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
 
-        clone = self.annotate(
-            num=Max('ausgabenum__num'),
-            monat=Max('ausgabemonat__monat__ordinal'),
-            lnum=Max('ausgabelnum__lnum'),
-            jahr=Min('ausgabejahr__jahr')
-        ).order_by(*ordering)
+        clone = clone.order_by(*ordering)
         clone.chronologically_ordered = True
         return clone

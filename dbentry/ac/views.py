@@ -137,7 +137,17 @@ class ACTabular(ACBase):
     Select2 will group the results returned by the JsonResponse into option
     groups (optgroup). This (plus bootstrap grids) will allow useful
     presentation of the data.
+
+    Attributes:
+        - overview_annotations (tuple): a sequence of field paths/annotations to
+          use as arguments to queryset.overview().
     """
+
+    overview_annotations: tuple = ()
+
+    def get_queryset(self) -> QuerySet:
+        # Apply overview annotations and optimizations:
+        return super().get_queryset().overview(*self.overview_annotations)
 
     def get_extra_data(self, result: Model) -> list:
         """Return the additional data to be displayed for the given result."""
@@ -205,19 +215,17 @@ class ACAusgabe(ACTabular):
     """
 
     model = _models.Ausgabe
+    overview_annotations = ('num_list', 'lnum_list', 'jahr_list')
 
     def get_queryset(self) -> AusgabeQuerySet:
-        queryset = super().get_queryset()
-        from dbentry.admin import AusgabenAdmin, miz_site
-        model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
+        return super().get_queryset().chronological_order()
 
     def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']  # pragma: no cover
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
 
     def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]  # pragma: no cover
+        return [result.num_list, result.lnum_list, result.jahr_list]
 
 
 class ACAutor(ACBase):
@@ -260,13 +268,14 @@ class ACAutor(ACBase):
 
 class ACBand(ACTabular):
     model = _models.Band
+    overview_annotations = ('alias_list',)
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
-        return [", ".join(str(alias) for alias in result.bandalias_set.all())]
+        return [result.alias_list]
 
 
 class ACBuchband(ACBase):
@@ -290,6 +299,7 @@ class ACLagerort(ACTabular):
 
     def get_extra_data(self, result: _models.Lagerort) -> list:
         # noinspection PyUnresolvedReferences
+        # NOTE: the model does not provide overview annotations
         return [result.ort, result.raum]  # pragma: no cover
 
 
@@ -305,13 +315,14 @@ class ACMagazin(ACBase):
 
 class ACMusiker(ACTabular):
     model = _models.Musiker
+    overview_annotations = ('alias_list',)
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
-        return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
+        return [result.alias_list]
 
 
 class ACPerson(ACBase):
@@ -352,7 +363,7 @@ class ACSpielort(ACTabular):
     model = _models.Spielort
 
     def get_group_headers(self) -> list:
-        return ['Ort']  # pragma: no cover
+        return ['Ort']
 
     def get_extra_data(self, result: _models.Spielort) -> list:
         return [str(result.ort)]
@@ -362,7 +373,7 @@ class ACVeranstaltung(ACTabular):
     model = _models.Veranstaltung
 
     def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']  # pragma: no cover
+        return ['Datum', 'Spielort']
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]

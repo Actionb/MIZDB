@@ -22,13 +22,19 @@ class BaseModel(models.Model):
           output of __str__().
         - ``create_field`` (str): the name of the field for the dal
           autocomplete object creation.
-        - ``exclude_from_str`` (list): list of field names to be excluded from
+        - ``exclude_from_str`` (tuple): tuple of field names to be excluded from
           the default __str__() implementation.
+        - ``select_related`` (tuple): tuple of ForeignKey field names. Used in
+          optimizations for the overview queryset.
+        - ``prefetch_related`` (tuple): tuple of M2M field names. Used in
+          optimizations for the overview queryset.
     """
 
     name_field: str = ''
     create_field: str = ''
-    exclude_from_str: list = ['beschreibung', 'bemerkungen', '_fts']
+    exclude_from_str: tuple = ('beschreibung', 'bemerkungen', '_fts')
+    select_related: tuple = ()
+    prefetch_related: tuple = ()
 
     objects = MIZQuerySet.as_manager()
 
@@ -46,12 +52,11 @@ class BaseModel(models.Model):
         if self.name_field:
             result = str(opts.get_field(self.name_field).value_from_object(self))
         else:
-            model_fields = get_model_fields(
-                opts.model,
-                foreign=False,
-                m2m=False,
-                exclude=self.exclude_from_str
-            )
+            model_fields = [
+                f for f in opts.get_fields()
+                if f.concrete
+                and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
+            ]
             result = " ".join(
                 [
                     str(fld.value_from_object(self))
@@ -69,19 +74,37 @@ class BaseModel(models.Model):
             TypeError: when qs() was called from class level. The method
                 requires a model instance.
         """
-        try:
-            # Use 'model.objects' instead of 'self.objects' as managers
-            # are not accessible via instances.
-            # noinspection PyUnresolvedReferences
-            return self._meta.model.objects.filter(pk=self.pk)
-        except TypeError:
-            # qs() was called from class level; i.e. 'self' is a model class.
-            # 'self.pk' thus refers to the property of that class which is not
-            # the right type.
+        if isinstance(self, type):
             raise TypeError(
-                "Calling qs() from class level is prohibited. "
-                "Use {}.objects instead.".format(self.__name__)
+                f"Calling qs() from class level is prohibited. Use {self.__name__}.objects instead."
             )
+        # noinspection PyUnresolvedReferences
+        return self._meta.model.objects.filter(pk=self.pk)
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        """Return a dictionary of queryset annotations required for a changelist view."""
+        return {}
+
+    @classmethod
+    def overview(cls, queryset, *annotations):
+        """
+        Add annotations and optimizations useful for an overview over objects
+        of this model to the given queryset.
+
+        If `annotations` is given, only apply matching annotations.
+        """
+        if select_related := cls.select_related:
+            queryset = queryset.select_related(*select_related)
+        if prefetch_related := cls.prefetch_related:
+            queryset = queryset.prefetch_related(*prefetch_related)
+        if all_annotations := cls.get_overview_annotations():
+            if annotations:
+                _annotations = {k: v for k, v in all_annotations.items() if k in annotations}
+            else:
+                _annotations = all_annotations
+            queryset = queryset.annotate(**_annotations)
+        return queryset
 
     class Meta:
         abstract = True
@@ -112,7 +135,7 @@ class BaseM2MModel(BaseModel):
             if not fk_field.null
         ]
         if len(data) < 2:
-            # Cannot build a meaningful representation.
+            # Cannot build a more meaningful representation than the default.
             return super().__str__()
         else:
             template = "{}" + " ({})" * (len(data) - 1)
@@ -175,7 +198,7 @@ class ComputedNameModel(BaseModel):
 
     objects = CNQuerySet.as_manager()
 
-    def __init__(self, *args, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # An up-to-date name _may_ be expected upon initialization.
         self.update_name()
@@ -215,9 +238,12 @@ class ComputedNameModel(BaseModel):
         return errors
 
     def save(self, update: bool = True, *args: Any, **kwargs: Any) -> None:
+        """
+        Save the current instance.
+
+        If 'update' is true, force an update of the name field.
+        """
         super().save(*args, **kwargs)
-        # Parameters that make up the name may have changed;
-        # update the name if necessary.
         if update:
             self.update_name(force_update=True)
 
@@ -280,7 +306,7 @@ class ComputedNameModel(BaseModel):
         The keyword arguments are the fields of ``name_composing_fields``
         and their respective values.
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError('Subclasses must implement this method.')  # pragma: no cover
 
     def __str__(self) -> str:
         # noinspection PyUnresolvedReferences

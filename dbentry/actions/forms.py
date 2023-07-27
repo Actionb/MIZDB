@@ -2,12 +2,12 @@ from typing import Any
 
 from django import forms
 from django.contrib.admin.helpers import Fieldset
-from django.core.exceptions import ValidationError
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.validators import MinValueValidator
+from django.urls import reverse_lazy
 
 from dbentry import models as _models
 from dbentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm
-from dbentry.utils import get_model_from_string
 
 
 class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
@@ -65,9 +65,9 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
     required_css_class = 'required'
 
     class Media:
-        css = {'all': ('admin/css/changelists.css', )}
+        css = {'all': ('admin/css/changelists.css',)}
 
-    def expand_primary_fieldset(self):
+    def expand_primary_fieldset(self) -> Fieldset:
         """
         Provide a Fieldset object of the expand_primary field for the template.
         """
@@ -103,10 +103,8 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Try to add a more accurate label to the posvals field.
-        if self.data.get(self.add_prefix('verbose_fld_name')):
-            self.fields['posvals'].label = 'Mögliche Werte für {}:'.format(
-                self.data.get(self.add_prefix('verbose_fld_name'))
-            )
+        if self.initial.get('verbose_fld_name'):
+            self.fields['posvals'].label = f"Mögliche Werte für {self.initial['verbose_fld_name']}:"
 
 
 MergeConflictsFormSet = forms.formset_factory(
@@ -198,19 +196,21 @@ class BrochureActionFormOptions(MIZAdminForm):
 
     def __init__(self, can_delete_magazin: bool = True, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if not can_delete_magazin:
-            # TODO: disable field instead of deleting it:
-            # self.fields['delete_magazin'].disabled = not can_delete_magazin
-            del self.fields['delete_magazin']
+        self.fields['delete_magazin'].disabled = not can_delete_magazin
 
-    def clean_brochure_art(self) -> str:
-        """Make sure the user has selected a valid model."""
-        # TODO: remove this: the field is restricted to choices. The user can't
-        #  select an invalid model unless it's included in the choices - in
-        #  which case it's not a user error.
-        value = self.cleaned_data.get('brochure_art')
-        try:
-            get_model_from_string(value)
-        except LookupError:
-            raise ValidationError("%s ist kein zulässiges Model." % value)
-        return value
+
+class ReplaceForm(DynamicChoiceFormMixin, MIZAdminForm):
+    replacements = forms.MultipleChoiceField(
+        label='Ersetzen durch:',
+        widget=FilteredSelectMultiple('Datensätze', False),
+        choices=[],
+    )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs, )
+        model = kwargs['choices']['replacements'].model
+        self.fields['replacements'].widget.verbose_name = model._meta.verbose_name_plural
+
+    class Media:
+        # FilteredSelectMultiple assumes that the jsi18n catalog is loaded
+        js = [reverse_lazy('admin:jsi18n')]

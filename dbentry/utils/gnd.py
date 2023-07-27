@@ -82,7 +82,7 @@ def searchgnd(
     root = ElementTree.fromstring(response.text)
     # Get the total number of matches:
     try:
-        result_count = int(root.find('.//sru:numberOfRecords', namespaces).text)  # type: ignore[union-attr, arg-type]  # noqa
+        result_count = int(root.find('.//sru:numberOfRecords', namespaces).text)  # type: ignore
     except AttributeError as exc:
         logger.error(
             "Could not find element 'sru:numberOfRecords' or the element found "

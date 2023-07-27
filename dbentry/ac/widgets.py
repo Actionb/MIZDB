@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Type
 
 # noinspection PyPackageRequirements
 from dal import autocomplete, forward
@@ -11,7 +11,7 @@ from django.urls import reverse
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
-# Generic URL name for the MIZWidgetMixin.
+# Generic URL-name for the MIZWidgetMixin.
 GENERIC_URL_NAME = 'acgeneric'
 
 # Name of the key under which views.ACTabular will add additional data for
@@ -97,7 +97,7 @@ class MIZWidgetMixin(GenericURLWidgetMixin):
 
     generic_url_name = GENERIC_URL_NAME
 
-    def __init__(self, *args, create_field: str = '', **kwargs):
+    def __init__(self, *args: Any, create_field: str = '', **kwargs: Any) -> None:
         self.create_field = create_field
         super().__init__(*args, **kwargs)
 
@@ -120,10 +120,9 @@ class TabularResultsMixin(object):
     autocomplete_function = 'select2Tabular'
     tabular_css_class = 'select2-tabular'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        # noinspection PyUnresolvedReferences
-        attrs = self.attrs
+        attrs = self.attrs  # type: ignore[attr-defined]
         if 'class' in attrs and attrs['class']:
             attrs['class'] += ' ' + self.tabular_css_class
         else:
@@ -131,9 +130,8 @@ class TabularResultsMixin(object):
         attrs['data-extra-data-key'] = EXTRA_DATA_KEY
 
     @property
-    def media(self):
-        # noinspection PyUnresolvedReferences
-        return super().media + Media(js=['admin/js/select2_tabular.js'])
+    def media(self) -> Media:
+        return super().media + Media(js=['admin/js/select2_tabular.js'])  # type: ignore[misc]
 
 
 class MIZModelSelect2(MIZWidgetMixin, autocomplete.ModelSelect2):
@@ -182,7 +180,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
     def __init__(
             self,
             widget: Widget,
-            remote_model: Model,
+            remote_model: Type[Model],
             remote_field_name: str = '',
             can_add_related: bool = True,
             can_change_related: bool = True,
@@ -268,7 +266,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
 
 def make_widget(
         url: str = GENERIC_URL_NAME,
-        tabular=False,
+        tabular: bool = False,
         multiple: bool = False,
         wrap: bool = False,
         remote_field_name: str = 'id',
