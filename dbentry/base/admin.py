@@ -125,10 +125,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                         get_fields_and_lookups(self.model, field)
                 except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                     errors.append(
-                        # TODO: use f-strings
                         checks.Error(
-                            "fieldset '%s' contains invalid item: '%s'. %s" % (
-                                fieldset_name, field, e.args[0]),
+                            f"fieldset '{fieldset_name}' contains invalid item: '{field}'. {e.args[0]}",
                             obj=self.__class__
                         )
                     )
