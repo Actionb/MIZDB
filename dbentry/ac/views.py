@@ -137,11 +137,17 @@ class ACTabular(ACBase):
     Select2 will group the results returned by the JsonResponse into option
     groups (optgroup). This (plus bootstrap grids) will allow useful
     presentation of the data.
+
+    Attributes:
+        - overview_annotations (tuple): a sequence of field paths/annotations to
+          use as arguments to queryset.overview().
     """
 
-    def get_queryset(self):
+    overview_annotations: tuple = ()
+
+    def get_queryset(self) -> QuerySet:
         # Apply overview annotations and optimizations:
-        return super().get_queryset().overview()
+        return super().get_queryset().overview(*self.overview_annotations)
 
     def get_extra_data(self, result: Model) -> list:
         """Return the additional data to be displayed for the given result."""
@@ -209,6 +215,7 @@ class ACAusgabe(ACTabular):
     """
 
     model = _models.Ausgabe
+    overview_annotations = ('num_list', 'lnum_list', 'jahr_list')
 
     def get_queryset(self) -> AusgabeQuerySet:
         return super().get_queryset().chronological_order()
@@ -261,6 +268,7 @@ class ACAutor(ACBase):
 
 class ACBand(ACTabular):
     model = _models.Band
+    overview_annotations = ('alias_list',)
 
     def get_group_headers(self) -> list:
         return ['Alias']
@@ -307,6 +315,7 @@ class ACMagazin(ACBase):
 
 class ACMusiker(ACTabular):
     model = _models.Musiker
+    overview_annotations = ('alias_list',)
 
     def get_group_headers(self) -> list:
         return ['Alias']

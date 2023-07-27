@@ -2,7 +2,7 @@ import json
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import BooleanField, Count, ExpressionWrapper, Q, QuerySet
+from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import override as translation_override
 
@@ -442,12 +442,13 @@ class TestACTabular(ACViewTestCase):
         self.assertFalse(json.loads(response.content.decode(response.charset))['results'])
 
 
-class TestACBand(RequestTestCase):
+class TestACBand(ACViewTestCase):
     """Integration tests for ACBand that also cover ACTabular and ACBase."""
 
     model = _models.Band
     path = reverse_lazy('acband')
     create_path = reverse_lazy('acband', kwargs={'create_field': 'band_name'})
+    view_class = views.ACBand
 
     @classmethod
     def setUpTestData(cls):
@@ -541,6 +542,12 @@ class TestACBand(RequestTestCase):
         self.assertEqual(response.status_code, 200, msg=response.content)
         self.assertEqual([str(self.contains.pk)], get_result_ids(response))
 
+    def test_get_queryset_adds_overview_annotations(self):
+        """Assert that get_queryset adds the annotations declared in overview_annotations."""
+        view = self.get_view(self.get_request())
+        queryset = view.get_queryset()
+        self.assertCountEqual(['alias_list'], list(queryset.query.annotations))
+
 
 class TestACAusgabe(ACViewTestCase):
     model = _models.Ausgabe
@@ -572,14 +579,6 @@ class TestACAusgabe(ACViewTestCase):
         ]
 
         super().setUpTestData()
-
-    def test_get_queryset_add_annotations(self):
-        """Assert that the ModelAdmin annotations are added to the queryset."""
-        with patch.object(self.model, "get_overview_annotations") as m:
-            m.return_value = {'foo': Count('*')}
-            view = self.get_view(self.get_request())
-            queryset = view.get_queryset()
-            self.assertIn('foo', queryset.query.annotations)
 
     def test_search_num(self):
         """Assert that an object can be found via its num value(s)."""
@@ -656,6 +655,14 @@ class TestACAusgabe(ACViewTestCase):
         self.assertEqual(result['text'], str(self.obj_num))
         self.assertEqual(result[EXTRA_DATA_KEY], ['10', '-', '2020'])
         self.assertEqual(result['selected_text'], str(self.obj_num))
+
+    def test_get_queryset_adds_overview_annotations(self):
+        """Assert that get_queryset adds the annotations declared in overview_annotations."""
+        view = self.get_view(self.get_request())
+        queryset = view.get_queryset()
+        for expected in ('num_list', 'lnum_list', 'jahr_list'):
+            with self.subTest(annotation=expected):
+                self.assertIn(expected, queryset.query.annotations)
 
 
 class TestACAutor(ACViewTestCase):
@@ -818,7 +825,7 @@ class TestACMagazin(ACViewTestCase):
         self.assertTrue(self.model.objects.get(pk=created['id']))
 
 
-class TestACMusiker(RequestTestCase):
+class TestACMusiker(ACViewTestCase):
     model = _models.Musiker
     path = reverse_lazy('acmusiker')
     create_path = reverse_lazy('acmusiker', kwargs={'create_field': 'kuenstler_name'})
@@ -830,6 +837,7 @@ class TestACMusiker(RequestTestCase):
         'beschreibung': 'American singer-songwriter',
         'bemerkungen': 'Alan: revisit this'
     }
+    view_class = views.ACMusiker
 
     @classmethod
     def setUpTestData(cls):
@@ -872,6 +880,12 @@ class TestACMusiker(RequestTestCase):
         self.assertEqual(created['text'], 'Princess')
         self.assertTrue(self.model.objects.filter(kuenstler_name='Princess').exists())
         self.assertTrue(self.model.objects.get(pk=created['id']))
+
+    def test_get_queryset_adds_overview_annotations(self):
+        """Assert that get_queryset adds the annotations declared in overview_annotations."""
+        view = self.get_view(self.get_request())
+        queryset = view.get_queryset()
+        self.assertCountEqual(['alias_list'], list(queryset.query.annotations))
 
 
 class TestACPerson(ACViewTestCase):
@@ -925,9 +939,10 @@ class TestACPerson(ACViewTestCase):
                 self.assertEqual(len(create_option), 4)
 
 
-class TestACSpielort(RequestTestCase):
+class TestACSpielort(ACViewTestCase):
     model = _models.Spielort
     path = reverse_lazy('acspielort')
+    view_class = views.ACSpielort
 
     @classmethod
     def setUpTestData(cls):
