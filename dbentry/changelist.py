@@ -2,7 +2,7 @@ from django.contrib.admin.views.main import ALL_VAR, ChangeList, ORDER_VAR
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
-from dbentry.search.admin import ChangelistSearchFormMixin
+from dbentry.search.mixins import ChangelistSearchFormMixin
 from dbentry.utils import get_model_fields
 
 

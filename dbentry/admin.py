@@ -1,17 +1,17 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, List, Optional, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
 from django.contrib import admin
+from django.contrib.admin.decorators import action, display
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField,
+    Count, Field as ModelField, IntegerField, ManyToManyField,
     Model, Min, OuterRef, QuerySet, Subquery, Value
 )
 from django.db.models.functions import Coalesce
@@ -30,7 +30,7 @@ from dbentry.base.admin import (
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
 from dbentry.changelist import AusgabeChangeList, BestandChangeList
-from dbentry.search.admin import MIZAdminSearchFormMixin
+from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
@@ -61,10 +61,10 @@ class BestandInLine(BaseTabularInline):
     # noinspection PyUnresolvedReferences
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
 
+    @display(description="Signatur")
     def bestand_signatur(self, obj):
         """Display the signatur of this Bestand object."""
         return obj.signatur or ""
-    bestand_signatur.short_description = "Signatur"
 
     # TODO: enable tabular autocomplete for 'lagerort'
     #  (see ac.views.ACLagerort and ac.urls for details)
@@ -75,12 +75,15 @@ class BestandInLine(BaseTabularInline):
 class AudioAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Audio.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Audio.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Audio.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseStackedInline):  # noqa
+
+    class MusikerInLine(BaseStackedInline):
         model = _models.Audio.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
@@ -90,29 +93,36 @@ class AudioAdmin(MIZModelAdmin):
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Audio.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Audio.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['veranstaltung']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Audio.ort.through
         verbose_model = _models.Ort
-    class PlattenInLine(BaseTabularInline):  # noqa
+
+    class PlattenInLine(BaseTabularInline):
         model = _models.Audio.plattenfirma.through
         verbose_model = _models.Plattenfirma
-    class AusgabeInLine(BaseAusgabeInline):  # noqa
+
+    class AusgabeInLine(BaseAusgabeInline):
         model = _models.Ausgabe.audio.through
         # Note that the tabular autocomplete widget for 'ausgabe' is created
         # by the AusgabeMagazinFieldForm of this inline class.
-    class DateiInLine(BaseTabularInline):  # noqa
+
+    class DateiInLine(BaseTabularInline):
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
         verbose_model = _models.Datei
@@ -122,7 +132,7 @@ class AudioAdmin(MIZModelAdmin):
     form = _forms.AudioForm
     index_category = 'Archivgut'
     save_on_top = True
-    list_display = ['titel', 'jahr', 'medium', 'kuenstler_string']
+    list_display = ['titel', 'jahr', 'medium', 'kuenstler_list']
     list_select_related = ['medium']
     ordering = ['titel', 'jahr', 'medium']
 
@@ -139,7 +149,7 @@ class AudioAdmin(MIZModelAdmin):
         }),
     ]
     inlines = [
-        MusikerInLine, BandInLine, SchlInLine, GenreInLine,
+        MusikerInLine, BandInLine, SchlagwortInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine,
         PlattenInLine, AusgabeInLine, DateiInLine, BestandInLine
     ]
@@ -152,19 +162,11 @@ class AudioAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
-    def kuenstler_string(self, obj: _models.Audio) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    @display(description="Künstler")
+    def kuenstler_list(self, obj: _models.Audio) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Ausgabe, site=miz_site)
@@ -172,21 +174,26 @@ class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
         model = _models.AusgabeNum
         extra = 0
-    class MonatInLine(BaseTabularInline):  # noqa
+
+    class MonatInLine(BaseTabularInline):
         model = _models.AusgabeMonat
         verbose_model = _models.Monat
         extra = 0
-    class LNumInLine(BaseTabularInline):  # noqa
+
+    class LNumInLine(BaseTabularInline):
         model = _models.AusgabeLnum
         extra = 0
-    class JahrInLine(BaseTabularInline):  # noqa
+
+    class JahrInLine(BaseTabularInline):
         model = _models.AusgabeJahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
-    class AudioInLine(BaseTabularInline):  # noqa
+
+    class AudioInLine(BaseTabularInline):
         model = _models.Ausgabe.audio.through
         verbose_model = _models.Audio
-    class VideoInLine(BaseTabularInline):  # noqa
+
+    class VideoInLine(BaseTabularInline):
         model = _models.Ausgabe.video.through
         verbose_model = _models.Video
 
@@ -204,7 +211,7 @@ class AusgabenAdmin(MIZModelAdmin):
         'beschreibung', 'bemerkungen'
     ]
     list_display = (
-        'ausgabe_name', 'num_string', 'lnum_string', 'monat_string', 'jahr_string',
+        'ausgabe_name', 'num_list', 'lnum_list', 'monat_list', 'jahr_list',
         'jahrgang', 'magazin_name', 'e_datum', 'anz_artikel', 'status'
     )
     search_form_kwargs = {
@@ -233,76 +240,43 @@ class AusgabenAdmin(MIZModelAdmin):
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[AusgabeChangeList]:
         return AusgabeChangeList
 
+    @display(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
         return obj._name
-    ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
-    ausgabe_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Magazin", ordering="magazin__magazin_name")
     def magazin_name(self, obj: _models.Ausgabe) -> str:
         return obj.magazin.magazin_name
-    magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
-    magazin_name.admin_order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
-    def get_changelist_annotations(self) -> dict:
-        # Can't use ArrayAgg directly to get a list of distinct monat__abk
-        # values as we are ordering by monat__ordinal: using distinct AND
-        # ordering requires that the ordering expressions are present in the
-        # argument list to ArrayAgg.
-        # Use a subquery instead:
-        subquery = (
-            self.model.objects.order_by().filter(id=OuterRef('id'))
-            .annotate(
-                x=Func(
-                    ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
-                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                    output_field=CharField()
-                )
-            )
-            .values('x')
-        )
-        return {
-            'jahr_string': Func(
-                ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-            'num_string': Func(
-                ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-            'lnum_string': Func(
-                ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-            'monat_string': Subquery(subquery),
-            'anz_artikel': Count('artikel', distinct=True)
-        }
-
+    @display(description="Anz. Artikel", ordering="anz_artikel")
     def anz_artikel(self, obj: _models.Ausgabe) -> int:
-        return obj.anz_artikel  # added by annotations  # noqa
-    anz_artikel.short_description = 'Anz. Artikel'  # type: ignore[attr-defined]  # noqa
-    anz_artikel.admin_order_field = 'anz_artikel'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.anz_artikel
 
-    def jahr_string(self, obj: _models.Ausgabe) -> str:
-        return obj.jahr_string  # added by annotations  # noqa
-    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
-    jahr_string.admin_order_field = 'jahr_string'  # type: ignore[attr-defined]  # noqa
+    @display(description="Jahre", ordering="jahr_list")
+    def jahr_list(self, obj: _models.Ausgabe) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
 
-    def num_string(self, obj: _models.Ausgabe) -> str:
-        return obj.num_string  # added by annotations  # noqa
-    num_string.short_description = 'Nummer'  # type: ignore[attr-defined]  # noqa
-    num_string.admin_order_field = 'num_string'  # type: ignore[attr-defined]  # noqa
+    @display(description="Nummer", ordering="num_list")
+    def num_list(self, obj: _models.Ausgabe) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.num_list
 
-    def lnum_string(self, obj: _models.Ausgabe) -> str:
-        return obj.lnum_string  # added by annotations  # noqa
-    lnum_string.short_description = 'lfd. Nummer'  # type: ignore[attr-defined]  # noqa
-    lnum_string.admin_order_field = 'lnum_string'  # type: ignore[attr-defined]  # noqa
+    @display(description="lfd. Nummer", ordering="lnum_list")
+    def lnum_list(self, obj: _models.Ausgabe) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.lnum_list
 
-    def monat_string(self, obj: _models.Ausgabe) -> str:
-        return obj.monat_string  # added by annotations  # noqa
-    monat_string.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
+    @display(description="Monate")
+    def monat_list(self, obj: _models.Ausgabe) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.monat_list
 
     def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
         """Update the ``status`` of the Ausgabe instances in ``queryset``."""
@@ -318,38 +292,35 @@ class AusgabenAdmin(MIZModelAdmin):
                     log_change(request.user.pk, obj, fields=['status'])
         except Exception as e:
             message_text = (
-                "Fehler beim Erstellen der LogEntry Objekte: \n"
-                "%(error_class)s: %(error_txt)s" % {
-                    'error_class': e.__class__.__name__, 'error_txt': e.args[0]}
+                    "Fehler beim Erstellen der LogEntry Objekte: \n"
+                    "%(error_class)s: %(error_txt)s" % {
+                        'error_class': e.__class__.__name__, 'error_txt': e.args[0]}
             )
             self.message_user(request, message_text, 'ERROR')
 
+    @action(permissions=["change"], description="Status ändern: unbearbeitet")
     def change_status_unbearbeitet(self, request: HttpRequest, queryset: QuerySet) -> None:
         """
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         UNBEARBEITET.
         """
         self._change_status(request, queryset, str(_models.Ausgabe.Status.UNBEARBEITET))
-    change_status_unbearbeitet.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
-    change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'  # type: ignore[attr-defined]  # noqa
 
+    @action(permissions=["change"], description="Status ändern: in Bearbeitung")
     def change_status_inbearbeitung(self, request: HttpRequest, queryset: QuerySet) -> None:
         """
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         INBEARBEITUNG.
         """
         self._change_status(request, queryset, str(_models.Ausgabe.Status.INBEARBEITUNG))
-    change_status_inbearbeitung.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
-    change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'  # type: ignore[attr-defined]  # noqa
 
+    @action(permissions=["change"], description="Status ändern: abgeschlossen")
     def change_status_abgeschlossen(self, request: HttpRequest, queryset: QuerySet) -> None:
         """
         Set the ``status`` of the Ausgabe instances in ``queryset`` to
         ABGESCHLOSSEN.
         """
         self._change_status(request, queryset, str(_models.Ausgabe.Status.ABGESCHLOSSEN))
-    change_status_abgeschlossen.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
-    change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'  # type: ignore[attr-defined]  # noqa
 
     @staticmethod
     def has_moveto_brochure_permission(request: HttpRequest) -> bool:
@@ -357,12 +328,11 @@ class AusgabenAdmin(MIZModelAdmin):
         Check that the request's user has permission to add Brochure objects
         and permission to delete Ausgabe objects.
         """
-        # This method is called by admin.checks._check_action_permission_methods
-        # TODO: just declare perms list - without the loop
-        perms = []
-        # noinspection PyUnresolvedReferences
-        for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
-            perms.append("%s.%s" % (opts.app_label, get_permission_codename(name, opts)))
+        # NOTE: This method is called by admin.checks._check_action_permission_methods
+        perms = [
+            "%s.%s" % (opts.app_label, get_permission_codename(name, opts))
+            for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]
+        ]
         # noinspection PyUnresolvedReferences
         return request.user.has_perms(perms)
 
@@ -381,7 +351,8 @@ class AutorAdmin(MIZModelAdmin):
         model = _models.Autor.magazin.through
         verbose_model = _models.Magazin
         extra = 1
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.AutorURL
 
     actions = [_actions.merge_records, _actions.summarize]
@@ -394,52 +365,53 @@ class AutorAdmin(MIZModelAdmin):
     ordering = ['_name']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'magazin_list': ArrayAgg(
-                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'
-            )
-        }
-
+    @display(description="Autor", ordering="_name")
     def autor_name(self, obj: _models.Autor) -> str:
         return obj._name
-    autor_name.short_description = 'Autor'  # type: ignore[attr-defined]  # noqa
-    autor_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Magazin(e)", ordering="magazin_list")
     def magazin_string(self, obj: _models.Autor) -> str:
-        return concat_limit(obj.magazin_list) or self.get_empty_value_display() # added by annotations  # noqa
-    magazin_string.short_description = 'Magazin(e)'  # type: ignore[attr-defined]  # noqa
-    magazin_string.admin_order_field = 'magazin_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.magazin_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Artikel, site=miz_site)
 class ArtikelAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Artikel.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Artikel.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Artikel.person.through
         verbose_model = _models.Person
-    class AutorInLine(BaseTabularInline):  # noqa
+
+    class AutorInLine(BaseTabularInline):
         model = _models.Artikel.autor.through
         verbose_model = _models.Autor
-    class MusikerInLine(BaseTabularInline):  # noqa
+
+    class MusikerInLine(BaseTabularInline):
         model = _models.Artikel.musiker.through
         verbose_model = _models.Musiker
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Artikel.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Artikel.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Artikel.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['spielort']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Artikel.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
@@ -457,12 +429,12 @@ class ArtikelAdmin(MIZModelAdmin):
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
-        AutorInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine,
+        AutorInLine, MusikerInLine, BandInLine, SchlagwortInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine
     ]
     list_display = [
         'schlagzeile', 'zusammenfassung_string', 'seite', 'schlagwort_string',
-        'ausgabe_name', 'artikel_magazin', 'kuenstler_string'
+        'ausgabe_name', 'artikel_magazin', 'kuenstler_list'
     ]
     search_form_kwargs = {
         'fields': [
@@ -474,60 +446,51 @@ class ArtikelAdmin(MIZModelAdmin):
         'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
-            ),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
+    @display(description="Ausgabe", ordering="ausgabe___name")
     def ausgabe_name(self, obj: _models.Artikel) -> str:
         return obj.ausgabe._name
-    ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
-    ausgabe_name.admin_order_field = 'ausgabe___name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Zusammenfassung", ordering="zusammenfassung")
     def zusammenfassung_string(self, obj: _models.Artikel) -> str:
         if not obj.zusammenfassung:
             return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
-    zusammenfassung_string.short_description = 'Zusammenfassung'  # type: ignore[attr-defined]  # noqa
-    zusammenfassung_string.admin_order_field = 'zusammenfassung'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Magazin", ordering="ausgabe__magazin__magazin_name")
     def artikel_magazin(self, obj: _models.Artikel) -> str:
         return obj.ausgabe.magazin.magazin_name
-    artikel_magazin.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
-    artikel_magazin.admin_order_field = 'ausgabe__magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Schlagwörter", ordering="schlagwort_list")
     def schlagwort_string(self, obj: _models.Artikel) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display() # added by annotations  # noqa
-    schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
-    schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.schlagwort_list or self.get_empty_value_display()
 
-    def kuenstler_string(self, obj: _models.Artikel) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display() # added by annotations  # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    @display(description="Künstler")
+    def kuenstler_list(self, obj: _models.Artikel) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Band, site=miz_site)
 class BandAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Band.genre.through
-    class MusikerInLine(BaseTabularInline):  # noqa
+
+    class MusikerInLine(BaseTabularInline):
         model = _models.Band.musiker.through
         verbose_name = 'Band-Mitglied'
         verbose_name_plural = 'Band-Mitglieder'
         tabular_autocomplete = ['musiker']
-    class AliasInLine(BaseAliasInline):  # noqa
+
+    class AliasInLine(BaseAliasInline):
         model = _models.BandAlias
-    class OrtInLine(BaseOrtInLine):  # noqa
+
+    class OrtInLine(BaseOrtInLine):
         model = _models.Band.orte.through
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.BandURL
 
     actions = [_actions.merge_records, _actions.summarize]
@@ -545,64 +508,63 @@ class BandAdmin(MIZModelAdmin):
         'tabular': ['musiker']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'alias_list': ArrayAgg(
-                'bandalias__alias', distinct=True, ordering='bandalias__alias'
-            ),
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
-        }
-
+    @display(description="Genres", ordering="genre_list")
     def genre_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()  # added by annotations  # noqa
-    genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
-    genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.genre_list or self.get_empty_value_display()
 
+    @display(description="Mitglieder", ordering="musiker_list")
     def musiker_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
-    musiker_string.short_description = 'Mitglieder'  # type: ignore[attr-defined]  # noqa
-    musiker_string.admin_order_field = 'musiker_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.musiker_list or self.get_empty_value_display()
 
+    @display(description="Aliase", ordering="alias_list")
     def alias_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()  # added by annotations  # noqa
-    alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
-    alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.alias_list or self.get_empty_value_display()
 
+    @display(description="Orte", ordering="orte_list")
     def orte_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations  # noqa
-    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
-    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.orte_list or self.get_empty_value_display()
 
 
-@admin.register(_models.Plakat, site=miz_site)  # noqa
+@admin.register(_models.Plakat, site=miz_site)
 class PlakatAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Plakat.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Plakat.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Plakat.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseTabularInline):  # noqa
+
+    class MusikerInLine(BaseTabularInline):
         model = _models.Plakat.musiker.through
         verbose_model = _models.Musiker
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Plakat.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Plakat.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Plakat.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['veranstaltung']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Plakat.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
@@ -621,7 +583,7 @@ class PlakatAdmin(MIZModelAdmin):
     ]
 
     inlines = [
-        SchlInLine, GenreInLine, MusikerInLine, BandInLine,
+        SchlagwortInLine, GenreInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, BestandInLine
     ]
@@ -634,21 +596,15 @@ class PlakatAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'veranstaltung_list':
-                ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
-        }
-
+    @display(description="Datum", ordering="datum")
     def datum_localized(self, obj: _models.Plakat) -> str:
         return obj.datum.localize()
-    datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
-    datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Veranstaltungen", ordering="veranstaltung_list")
     def veranstaltung_string(self, obj: _models.Plakat) -> str:
-        return concat_limit(obj.veranstaltung_list) or self.get_empty_value_display()  # added by annotations  # noqa
-    veranstaltung_string.short_description = 'Veranstaltungen'  # type: ignore[attr-defined]  # noqa
-    veranstaltung_string.admin_order_field = 'veranstaltung_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.veranstaltung_list or self.get_empty_value_display()
 
     def get_fields(self, request: HttpRequest, obj: Optional[_models.Plakat] = None) -> List[str]:
         """
@@ -678,50 +634,59 @@ class PlakatAdmin(MIZModelAdmin):
                 request, obj, 'veranstaltung__band', 'veranstaltung__musiker'
             )
 
+    @display(description="Plakat ID", ordering="id")
     def plakat_id(self, obj: _models.Plakat) -> str:
         """ID of this instance, with a prefixed 'P' and padded with zeros."""
         if not obj.pk:
             return self.get_empty_value_display()
         return "P" + str(obj.pk).zfill(6)
-    plakat_id.short_description = 'Plakat ID'  # type: ignore[attr-defined]  # noqa
-    plakat_id.admin_order_field = 'id'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Buch.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Buch.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Buch.person.through
         verbose_model = _models.Person
-    class AutorInLine(BaseTabularInline):  # noqa
+
+    class AutorInLine(BaseTabularInline):
         model = _models.Buch.autor.through
         verbose_model = _models.Autor
-    class MusikerInLine(BaseTabularInline):  # noqa
+
+    class MusikerInLine(BaseTabularInline):
         model = _models.Buch.musiker.through
         verbose_model = _models.Musiker
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Buch.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Buch.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Buch.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['veranstaltung']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Buch.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
-    class HerausgeberInLine(BaseTabularInline):  # noqa
+
+    class HerausgeberInLine(BaseTabularInline):
         model = _models.Buch.herausgeber.through
         verbose_model = _models.Herausgeber
-    class VerlagInLine(BaseTabularInline):  # noqa
+
+    class VerlagInLine(BaseTabularInline):
         model = _models.Buch.verlag.through
         verbose_model = _models.Verlag
 
@@ -748,12 +713,12 @@ class BuchAdmin(MIZModelAdmin):
         }),
     ]
     inlines = [
-        AutorInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine,
+        AutorInLine, MusikerInLine, BandInLine, SchlagwortInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, HerausgeberInLine, VerlagInLine, BestandInLine
     ]
     list_display = [
-        'titel', 'seitenumfang', 'autoren_string', 'kuenstler_string',
+        'titel', 'seitenumfang', 'autoren_string', 'kuenstler_list',
         'schlagwort_string', 'genre_string'
     ]
     search_form_kwargs = {
@@ -768,41 +733,29 @@ class BuchAdmin(MIZModelAdmin):
         'help_texts': {'autor': None}
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
-            'schlagwort_list': ArrayAgg(
-                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'
-            ),
-            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
+    @display(description="Autoren", ordering="autor_list")
     def autoren_string(self, obj: _models.Buch) -> str:
-        return concat_limit(obj.autor_list) or self.get_empty_value_display() # added by annotations  # noqa
-    autoren_string.short_description = 'Autoren'  # type: ignore[attr-defined]  # noqa
-    autoren_string.admin_order_field = 'autor_list'  # type: ignore[attr-defined]  # noqa
-
-    def schlagwort_string(self, obj: _models.Buch) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display() # added by annotations  # noqa
-    schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
-    schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
-
-    def genre_string(self, obj: _models.Buch) -> str:
-        return concat_limit(obj.genre_list) or self.get_empty_value_display() # added by annotations  # noqa
-    genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
-    genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
-
-    def kuenstler_string(self, obj: _models.Buch) -> str:
-        #  band_list and musiker_list added by annotations
         # noinspection PyUnresolvedReferences
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+        # (added by annotations)
+        return obj.autor_list or self.get_empty_value_display()
+
+    @display(description="Schlagwörter", ordering="schlagwort_list")
+    def schlagwort_string(self, obj: _models.Buch) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.schlagwort_list or self.get_empty_value_display()
+
+    @display(description="Genres", ordering="genre_list")
+    def genre_string(self, obj: _models.Buch) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.genre_list or self.get_empty_value_display()
+
+    @display(description="Künstler")
+    def kuenstler_list(self, obj: _models.Buch) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Dokument, site=miz_site)
@@ -830,14 +783,11 @@ class GenreAdmin(MIZModelAdmin):
     search_fields = ['__ANY__']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
-        }
-
+    @display(description="Aliase")
     def alias_string(self, obj: _models.Genre) -> str:
-        return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
-    alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.alias_list or self.get_empty_value_display()
 
     def _get_changelist_link_relations(self) -> list:
         return [
@@ -857,15 +807,19 @@ class GenreAdmin(MIZModelAdmin):
 class MagazinAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):
         model = _models.MagazinURL
-    class VerlagInLine(BaseTabularInline):  # noqa
+
+    class VerlagInLine(BaseTabularInline):
         model = _models.Magazin.verlag.through
         verbose_model = _models.Verlag
-    class HerausgeberInLine(BaseTabularInline):  # noqa
+
+    class HerausgeberInLine(BaseTabularInline):
         model = _models.Magazin.herausgeber.through
         verbose_model = _models.Herausgeber
-    class GenreInLine(BaseGenreInline):  # noqa
+
+    class GenreInLine(BaseGenreInline):
         model = _models.Magazin.genre.through
-    class OrtInLine(BaseOrtInLine):  # noqa
+
+    class OrtInLine(BaseOrtInLine):
         model = _models.Magazin.orte.through
 
     actions = [_actions.merge_records, _actions.summarize]
@@ -879,27 +833,21 @@ class MagazinAdmin(MIZModelAdmin):
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
-            'anz_ausgaben': Count('ausgabe', distinct=True)
-        }
-
+    @display(description="Anz. Ausgaben", ordering="anz_ausgaben")
     def anz_ausgaben(self, obj: _models.Magazin) -> int:
-        return obj.anz_ausgaben  # added by annotations  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.anz_ausgaben
 
-    anz_ausgaben.short_description = 'Anz. Ausgaben'  # type: ignore[attr-defined]  # noqa
-    anz_ausgaben.admin_order_field = 'anz_ausgaben'  # type: ignore[attr-defined]  # noqa
-
+    @display(description="Orte", ordering="orte_list")
     def orte_string(self, obj: _models.Magazin) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display() # added by annotations  # noqa
-    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
-    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.orte_list or self.get_empty_value_display()
 
+    @display(description="Beschreibung", ordering="beschreibung")
     def short_beschreibung(self, obj: _models.Magazin) -> str:
         return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
-    short_beschreibung.short_description = 'Beschreibung'  # type: ignore[attr-defined]  # noqa
-    short_beschreibung.admin_order_field = 'beschreibung'  # type: ignore[attr-defined]  # noqa
 
     def get_exclude(self, request: HttpRequest, obj: Optional[_models.Magazin] = None) -> List[str]:
         """
@@ -927,20 +875,25 @@ class MemoAdmin(MIZModelAdmin):
 class MusikerAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Musiker.genre.through
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
         tabular_autocomplete = ['band']
-    class AliasInLine(BaseAliasInline):  # noqa
+
+    class AliasInLine(BaseAliasInline):
         model = _models.MusikerAlias
-    class InstrInLine(BaseTabularInline):  # noqa
+
+    class InstrInLine(BaseTabularInline):
         model = _models.Musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
-    class OrtInLine(BaseOrtInLine):  # noqa
+
+    class OrtInLine(BaseOrtInLine):
         model = _models.Musiker.orte.through
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.MusikerURL
 
     actions = [_actions.merge_records, _actions.summarize]
@@ -954,34 +907,31 @@ class MusikerAdmin(MIZModelAdmin):
     ordering = ['kuenstler_name']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
-            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
-        }
-
+    @display(description="Bands", ordering="band_list")
     def band_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.band_list) or self.get_empty_value_display()  # added by annotations # noqa
-    band_string.short_description = 'Bands'  # type: ignore[attr-defined]  # noqa
-    band_string.admin_order_field = 'band_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.band_list or self.get_empty_value_display()
 
+    @display(description="Genres", ordering="genre_list")
     def genre_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()  # added by annotations # noqa
-    genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
-    genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.genre_list or self.get_empty_value_display()
 
+    @display(description="Orte", ordering="orte_list")
     def orte_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
-    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
-    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.orte_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Person, site=miz_site)
 class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.Person.orte.through
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.PersonURL
 
     actions = [_actions.merge_records, _actions.summarize]
@@ -1008,33 +958,23 @@ class PersonAdmin(MIZModelAdmin):
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def get_changelist_annotations(self) -> dict:
-        return {
-            'is_musiker': Exists(
-                _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))
-            ),
-            'is_autor': Exists(
-                _models.Autor.objects.only('id').filter(person_id=OuterRef('id'))
-            ),
-            'orte_list': ArrayAgg(
-                'orte___name', distinct=True, ordering='orte___name'
-            )
-        }
-
+    @display(description="Ist Musiker", boolean=True)
     def is_musiker(self, obj: _models.Person) -> bool:
-        return obj.is_musiker  # added by annotations # noqa
-    is_musiker.short_description = 'Ist Musiker'  # type: ignore[attr-defined]  # noqa
-    is_musiker.boolean = True  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.is_musiker
 
+    @display(description="Ist Autor", boolean=True)
     def is_autor(self, obj: _models.Person) -> bool:
-        return obj.is_autor  # added by annotations # noqa
-    is_autor.short_description = 'Ist Autor'  # type: ignore[attr-defined]  # noqa
-    is_autor.boolean = True  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.is_autor
 
+    @display(description="Orte", ordering="orte_list")
     def orte_string(self, obj: _models.Person) -> str:
-        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
-    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
-    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.orte_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Schlagwort, site=miz_site)
@@ -1054,22 +994,19 @@ class SchlagwortAdmin(MIZModelAdmin):
     search_fields = ['__ANY__']
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
-        }
-
+    @display(description="Aliase", ordering="alias_list")
     def alias_string(self, obj: _models.Schlagwort) -> str:
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()  # added by annotations # noqa
-    alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
-    alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.alias_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Spielort, site=miz_site)
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.SpielortAlias
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.SpielortURL
 
     list_display = ['name', 'ort']
@@ -1093,30 +1030,36 @@ class TechnikAdmin(MIZModelAdmin):
 class VeranstaltungAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Veranstaltung.genre.through
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Veranstaltung.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Veranstaltung.person.through
         verbose_model = _models.Person
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Veranstaltung.schlagwort.through
-    class MusikerInLine(BaseTabularInline):  # noqa
+
+    class MusikerInLine(BaseTabularInline):
         model = _models.Veranstaltung.musiker.through
         verbose_model = _models.Musiker
         tabular_autocomplete = ['musiker']
-    class AliasInLine(BaseAliasInline):  # noqa
+
+    class AliasInLine(BaseAliasInline):
         model = _models.VeranstaltungAlias
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.VeranstaltungURL
 
     collapse_all = True
     inlines = [
-        URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlInLine,
+        URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlagwortInLine,
         GenreInLine, PersonInLine
     ]
-    list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
+    list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_list']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
     tabular_autocomplete = ['spielort']
@@ -1129,24 +1072,15 @@ class VeranstaltungAdmin(MIZModelAdmin):
     }
     require_confirmation = True
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
+    @display(description="Künstler")
+    def kuenstler_list(self, obj: _models.Veranstaltung) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
-    def kuenstler_string(self, obj: _models.Veranstaltung) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
-
+    @display(description="Datum", ordering="datum")
     def datum_localized(self, obj: _models.Veranstaltung) -> str:
         return obj.datum.localize()
-    datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
-    datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Verlag, site=miz_site)
@@ -1164,12 +1098,15 @@ class VerlagAdmin(MIZModelAdmin):
 class VideoAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Video.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Video.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Video.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseStackedInline):  # noqa
+
+    class MusikerInLine(BaseStackedInline):
         model = _models.Video.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
@@ -1179,26 +1116,32 @@ class VideoAdmin(MIZModelAdmin):
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Video.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Video.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Video.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['veranstaltung']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
-    class AusgabeInLine(BaseAusgabeInline):  # noqa
+
+    class AusgabeInLine(BaseAusgabeInline):
         model = _models.Ausgabe.video.through
         # Note that the tabular autocomplete widget for 'ausgabe' is created
         # by the AusgabeMagazinFieldForm of this inline class.
-    class DateiInLine(BaseTabularInline):  # noqa
+
+    class DateiInLine(BaseTabularInline):
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
         verbose_model = _models.Datei
@@ -1208,13 +1151,13 @@ class VideoAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     collapse_all = True
     save_on_top = True
-    list_display = ['titel', 'medium', 'kuenstler_string']
+    list_display = ['titel', 'medium', 'kuenstler_list']
     ordering = ['titel']
     list_select_related = ['medium']
 
     inlines = [
         MusikerInLine, BandInLine,
-        SchlInLine, GenreInLine,
+        SchlagwortInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, AusgabeInLine, DateiInLine, BestandInLine
     ]
@@ -1238,19 +1181,11 @@ class VideoAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'musiker_list': ArrayAgg(
-                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'
-            ),
-            'band_list': ArrayAgg(
-                'band__band_name', distinct=True, ordering='band__band_name'
-            )
-        }
-
-    def kuenstler_string(self, obj: _models.Video) -> str:
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations # noqa
-    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
+    @display(description="Künstler")
+    def kuenstler_list(self, obj: _models.Video) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Bundesland, site=miz_site)
@@ -1273,7 +1208,7 @@ class OrtAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
-    search_form_kwargs = {'fields': ['land', 'bland']}  # FIXME: forward land to bland
+    search_form_kwargs = {'fields': ['land', 'bland'], 'forward': {'bland': 'land'}}
     ordering = ['land', 'bland', 'stadt']
     list_select_related = ['land', 'bland']
     require_confirmation = True
@@ -1338,19 +1273,19 @@ class BestandAdmin(MIZModelAdmin):
                 )
             }
 
+    @display(description="Art")
     def bestand_class(self, obj: _models.Bestand) -> str:
         try:
             return self._cache[obj.pk]['bestand_class']
         except KeyError:
             return ''
-    bestand_class.short_description = 'Art'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Links")
     def bestand_link(self, obj: _models.Bestand) -> Union[SafeText, str]:
         try:
             return self._cache[obj.pk]['bestand_link']
         except KeyError:
             return ''
-    bestand_link.short_description = 'Link'  # type: ignore[attr-defined]  # noqa
 
     def _check_search_form_fields(self, **kwargs: Any) -> list:
         # Ignore the search form fields check for BestandAdmin.
@@ -1364,12 +1299,15 @@ class BestandAdmin(MIZModelAdmin):
 class DateiAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Datei.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Datei.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Datei.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseStackedInline):  # noqa
+
+    class MusikerInLine(BaseStackedInline):
         model = _models.Datei.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
@@ -1379,22 +1317,27 @@ class DateiAdmin(MIZModelAdmin):
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Datei.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Datei.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Datei.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['veranstaltung']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Datei.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
-    class QuelleInLine(BaseStackedInline):  # noqa
+
+    class QuelleInLine(BaseStackedInline):
         model = _m2m.m2m_datei_quelle
         extra = 0
         description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
@@ -1407,7 +1350,7 @@ class DateiAdmin(MIZModelAdmin):
     ordering = ['titel']
 
     inlines = [
-        QuelleInLine, GenreInLine, SchlInLine,
+        QuelleInLine, GenreInLine, SchlagwortInLine,
         MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine,
@@ -1434,16 +1377,18 @@ class HerausgeberAdmin(MIZModelAdmin):
 class BaseBrochureAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
-    class JahrInLine(BaseTabularInline):  # noqa
+
+    class JahrInLine(BaseTabularInline):
         model = _models.BrochureYear
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
 
     actions = [_actions.merge_records, _actions.change_bestand]
     form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
-    list_display = ['titel', 'zusammenfassung', 'jahr_string']
+    list_display = ['titel', 'zusammenfassung', 'jahr_list']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
         'forwards': {'ausgabe': 'ausgabe__magazin'},
@@ -1485,33 +1430,28 @@ class BaseBrochureAdmin(MIZModelAdmin):
             'titel', 'jahr_min', 'zusammenfassung'
         )
 
-    def get_changelist_annotations(self) -> dict:
-        return {
-            'jahr_string': Func(
-                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-        }
-
-    def jahr_string(self, obj: _models.BaseBrochure) -> str:
-        return obj.jahr_string  # added by annotations  # noqa
-    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
-    jahr_string.admin_order_field = 'jahr_min'  # type: ignore[attr-defined]  # noqa
+    @display(description="Jahre", ordering="jahr_min")
+    def jahr_list(self, obj: _models.BaseBrochure) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
 
 
 @admin.register(_models.Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
     class JahrInLine(BaseTabularInline):
         model = _models.BrochureYear
-    class GenreInLine(BaseGenreInline):  # noqa
+
+    class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Brochure.schlagwort.through
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
 
-    inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, SchlagwortInLine, BestandInLine]
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
@@ -1527,7 +1467,7 @@ class BrochureAdmin(BaseBrochureAdmin):
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
-    list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
+    list_display = ['titel', 'zusammenfassung', 'art', 'jahr_list']
 
     def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
         """
@@ -1552,17 +1492,21 @@ class KatalogAdmin(BaseBrochureAdmin):
 class KalenderAdmin(BaseBrochureAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
-    class JahrInLine(BaseTabularInline):  # noqa
+
+    class JahrInLine(BaseTabularInline):
         model = _models.BrochureYear
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Kalender.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['spielort']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
-    class URLInLine(BaseTabularInline):  # noqa
+
+    class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
 
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
@@ -1584,27 +1528,34 @@ class KalenderAdmin(BaseBrochureAdmin):
 class FotoAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Foto.genre.through
-    class SchlInLine(BaseSchlagwortInline):  # noqa
+
+    class SchlagwortInLine(BaseSchlagwortInline):
         model = _models.Foto.schlagwort.through
-    class PersonInLine(BaseTabularInline):  # noqa
+
+    class PersonInLine(BaseTabularInline):
         model = _models.Foto.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseTabularInline):  # noqa
+
+    class MusikerInLine(BaseTabularInline):
         model = _models.Foto.musiker.through
         verbose_model = _models.Musiker
         tabular_autocomplete = ['musiker']
-    class BandInLine(BaseTabularInline):  # noqa
+
+    class BandInLine(BaseTabularInline):
         model = _models.Foto.band.through
         verbose_model = _models.Band
         tabular_autocomplete = ['band']
-    class OrtInLine(BaseTabularInline):  # noqa
+
+    class OrtInLine(BaseTabularInline):
         model = _models.Foto.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):  # noqa
+
+    class SpielortInLine(BaseTabularInline):
         model = _models.Foto.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['veranstaltung']
-    class VeranstaltungInLine(BaseTabularInline):  # noqa
+
+    class VeranstaltungInLine(BaseTabularInline):
         model = _models.Foto.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
@@ -1623,7 +1574,7 @@ class FotoAdmin(MIZModelAdmin):
         'owner', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
-        SchlInLine, GenreInLine, MusikerInLine, BandInLine,
+        SchlagwortInLine, GenreInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, BestandInLine
     ]
@@ -1636,29 +1587,22 @@ class FotoAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
 
-    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
-        return {
-            'schlagwort_list':
-                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
-        }
-
+    @display(description="Foto ID", ordering="id")
     def foto_id(self, obj: _models.Foto) -> str:
         """Return the id of the object, padded with zeros."""
         if not obj.pk:
             return self.get_empty_value_display()
         return str(obj.pk).zfill(6)
-    foto_id.short_description = 'Foto ID'  # type: ignore[attr-defined]  # noqa
-    foto_id.admin_order_field = 'id'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Datum", ordering="datum")
     def datum_localized(self, obj: _models.Foto) -> str:
         return obj.datum.localize()
-    datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
-    datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
+    @display(description="Schlagwörter", ordering="schlagwort_list")
     def schlagwort_list(self, obj: _models.Foto) -> str:
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()  # added by annotations  # noqa
-    schlagwort_list.short_description = 'Schlagworte'  # type: ignore[attr-defined]  # noqa
-    schlagwort_list.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.schlagwort_list or self.get_empty_value_display()
 
 
 @admin.register(_models.Plattenfirma, site=miz_site)
@@ -1741,12 +1685,11 @@ class MIZUserAdmin(AuthAdminMixin, UserAdmin):
         )
         return queryset.annotate(activity=Coalesce(subquery, Value(0)))
 
+    @display(description="Aktivität letzte 30 Tage", ordering="activity")
     def activity(self, user: User) -> int:
         """Return the total amount of the recent changes made by this user."""
         # noinspection PyUnresolvedReferences
         return user.activity or 0
-    activity.short_description = 'Aktivität letzte 30 Tage'  # type: ignore[attr-defined]
-    activity.admin_order_field = 'activity'  # type: ignore[attr-defined]
 
 
 @admin.register(LogEntry, site=miz_site)
@@ -1773,10 +1716,10 @@ class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
         """Return the admin link to the log entry object."""
         return self.object_link(obj)
 
+    @display(description="Änderungsmeldung")
     def change_message_verbose(self, obj: LogEntry) -> str:
         return obj.get_change_message()
-    change_message_verbose.short_description = 'Änderungsmeldung'  # type: ignore[attr-defined]
 
+    @display(description="Datenbank-Darstellung")
     def change_message_raw(self, obj: LogEntry) -> str:
         return obj.change_message
-    change_message_raw.short_description = 'Datenbank-Darstellung'  # type: ignore[attr-defined]

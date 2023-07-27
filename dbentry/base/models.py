@@ -24,11 +24,17 @@ class BaseModel(models.Model):
           autocomplete object creation.
         - ``exclude_from_str`` (list): list of field names to be excluded from
           the default __str__() implementation.
+        - ``select_related`` (tuple): tuple of ForeignKey field names. Used in
+          optimizations for the overview queryset.
+        - ``prefetch_related`` (tuple): tuple of M2M field names. Used in
+          optimizations for the overview queryset.
     """
 
     name_field: str = ''
     create_field: str = ''
-    exclude_from_str: list = ['beschreibung', 'bemerkungen', '_fts']
+    exclude_from_str: list = ['beschreibung', 'bemerkungen', '_fts']  # FIXME: this should probably be a tuple
+    select_related = ()
+    prefetch_related = ()
 
     objects = MIZQuerySet.as_manager()
 
@@ -81,6 +87,31 @@ class BaseModel(models.Model):
             )
         # noinspection PyUnresolvedReferences
         return self._meta.model.objects.filter(pk=self.pk)
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        """Return a dictionary of queryset annotations required for a changelist view."""
+        return {}
+
+    @classmethod
+    def overview(cls, queryset, *annotations):
+        """
+        Add annotations and optimizations useful for an overview over objects
+        of this model to the given queryset.
+
+        If `annotations` is given, only apply matching annotations.
+        """
+        if select_related := cls.select_related:
+            queryset = queryset.select_related(*select_related)
+        if prefetch_related := cls.prefetch_related:
+            queryset = queryset.prefetch_related(*prefetch_related)
+        if all_annotations := cls.get_overview_annotations():
+            if annotations:
+                _annotations = {k: v for k, v in all_annotations.items() if k in annotations}
+            else:
+                _annotations = all_annotations
+            queryset = queryset.annotate(**_annotations)
+        return queryset
 
     class Meta:
         abstract = True

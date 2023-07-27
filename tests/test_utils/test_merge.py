@@ -86,11 +86,11 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         utils.merge_records(original=self.obj1, queryset=self.model.objects.all())
         self.assertSequenceEqual(self.model.objects.all(), [self.obj1])
         self.assertSequenceEqual(
-            self.obj1.foo.all(),
+            self.obj1.foo.all().order_by('pk'),
             [self.foo_original, self.foo_merger1, self.foo_merger2]
         )
         self.assertSequenceEqual(
-            self.obj1.bar.all(),
+            self.obj1.bar.all().order_by('pk'),
             [self.bar_original, self.bar_merger1, self.bar_merger2]
         )
 

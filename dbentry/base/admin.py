@@ -26,7 +26,7 @@ from dbentry.base.models import ComputedNameModel
 from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.query import MIZQuerySet
-from dbentry.search.admin import MIZAdminSearchFormMixin
+from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.utils.admin import construct_change_message, get_obj_link
 from dbentry.utils.models import get_fields_and_lookups, get_model_relations
 from dbentry.utils.text import diffhtml
@@ -138,11 +138,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         return request.user.is_superuser
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        qs = super().get_queryset(request)
-        annotations = self.get_changelist_annotations()
-        if annotations:
-            return qs.annotate(**annotations)
-        return qs
+        queryset = super().get_queryset(request)
+        # overview() adds annotations and queryset optimizations for the
+        # changelist view:
+        if not hasattr(queryset, "overview"):
+            return queryset
+        return queryset.overview()
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:
         return MIZChangeList
@@ -425,10 +426,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
             form.instance.update_name(force_update=True)
-
-    def get_changelist_annotations(self) -> dict:
-        """Return annotations necessary for the changelist queryset."""
-        return {}
 
     def get_search_results(
             self,

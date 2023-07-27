@@ -8,16 +8,118 @@ from django.http.request import QueryDict
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.views.generic import TemplateView
 
-from dbentry.search.admin import (
-    AdminSearchFormMixin, ChangelistSearchFormMixin,
-    MIZAdminSearchFormMixin
-)
 from dbentry.search.forms import MIZAdminSearchForm
-from tests.case import AdminTestCase, RequestTestCase
+from dbentry.search.mixins import (
+    AdminSearchFormMixin, ChangelistSearchFormMixin,
+    MIZAdminSearchFormMixin, SearchFormMixin
+)
+from tests.case import AdminTestCase, RequestTestCase, ViewTestCase
 from tests.model_factory import batch, make
 from .admin import ArtikelAdmin, BandAdmin, admin_site
 from .models import Artikel, Ausgabe, Band, Genre
+
+
+class TestSearchFormMixin(ViewTestCase):
+    class view_class(SearchFormMixin, TemplateView):
+        model = Band
+
+    def test_has_search_form(self):
+        """
+        Assert that has_search_form returns True, if the search_form_kwargs
+        declare search fields.
+        """
+        test_data = [
+            (None, False), ({}, False), ({'fields': []}, False),
+            ({'fields': ['name']}, True)
+        ]
+        for search_form_kwargs, expected in test_data:
+            with self.subTest(search_form_kwargs=search_form_kwargs):
+                view = self.get_view(search_form_kwargs=search_form_kwargs)
+                self.assertEqual(view.has_search_form(), expected)
+
+    def test_get_search_form_class(self):
+        """
+        Assert that the searchform_factory is called with the expected kwargs.
+        (search_form_kwargs declared on the view + the passed in kwargs)
+        """
+        search_form_kwargs = {'fields': ['datum'], 'labels': {'datum': 'Not datum'}}
+        labels_override = {'datum': 'Das Datum!'}
+        view = self.get_view(search_form_kwargs=search_form_kwargs)
+        with mock.patch.object(view, "searchform_factory") as factory_mock:
+            view.get_search_form_class(labels=labels_override)
+            factory_mock.assert_called_with(model=self.view_class.model, fields=['datum'], labels=labels_override)
+
+    def test_get_search_form(self):
+        """Assert that the form class is instantiated with the provided kwargs."""
+        view = self.get_view()
+        with mock.patch.object(view, "searchform_factory") as factory_mock:
+            form_class_mock = mock.Mock()
+            factory_mock.return_value = form_class_mock
+            view.get_search_form(beep='boop')
+            form_class_mock.assert_called_with(beep='boop')
+
+    def test_get_context_data(self):
+        """Assert that the item 'advanced_search_form' is added to the context."""
+        view = self.get_view(self.get_request())
+        self.assertIn('advanced_search_form', view.get_context_data())
+        self.assertIn('has_search_form', view.get_context_data())
+
+    def test_check_search_form_fields_unknown_fields(self):
+        """
+        Assert that _check_search_form_fields correctly handles search fields
+        that either cannot be resolved to a model field.
+        """
+        # Patch get_model_fields to restrict the check to search fields
+        # declared in search_form_kwargs.
+        get_model_fields_mock = mock.Mock(return_value=[])
+        with mock.patch('dbentry.search.mixins.utils.get_model_fields', new=get_model_fields_mock):
+            view = self.get_view(search_form_kwargs={'fields': ['BeepBoop']})
+            errors = view._check_search_form_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Info)
+            self.assertEqual(
+                errors[0].msg,
+                "Ignored search form field: 'BeepBoop'. "
+                "Band has no field named 'BeepBoop'"
+            )
+
+    def test_check_search_form_fields_invalid_lookup(self):
+        """
+        Assert that _check_search_form_fields correctly handles search fields
+        that have an invalid lookup.
+        """
+        # Patch get_model_fields to restrict the check to search fields
+        # declared in search_form_kwargs.
+        get_model_fields_mock = mock.Mock(return_value=[])
+        with mock.patch('dbentry.search.mixins.utils.get_model_fields', new=get_model_fields_mock):
+            view = self.get_view(search_form_kwargs={'fields': ['band_name__beep']})
+            errors = view._check_search_form_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Info)
+            self.assertEqual(
+                errors[0].msg,
+                "Ignored search form field: 'band_name__beep'. "
+                "Invalid lookup: beep for CharField."
+            )
+
+    def test_check_search_form_fields_missing_fields(self):
+        """
+        Assert that _check_search_form_fields complains about missing search
+        fields.
+        """
+        view = self.get_view(search_form_kwargs={'fields': ['years_active']})
+        errors = view._check_search_form_fields()
+        self.assertTrue(errors)
+        self.assertEqual(len(errors), 1, msg=errors)
+        self.assertIsInstance(errors[0], checks.Info)
+        self.assertEqual(
+            errors[0].msg,
+            "Changelist search form is missing fields for relations:\n\t['genre']"
+        )
 
 
 @override_settings(ROOT_URLCONF='tests.test_search.urls')
@@ -31,41 +133,6 @@ class TestAdminMixin(AdminTestCase):
         cls.genre1 = make(Genre)
         cls.genre2 = make(Genre)
         super().setUpTestData()
-
-    def test_has_search_form(self):
-        """
-        Assert that has_search_form returns True, if the search_form_kwargs
-        declare search fields.
-        """
-        test_data = [
-            (None, False), ({}, False), ({'fields': []}, False),
-            ({'fields': ['name']}, True)
-        ]
-        for search_form_kwargs, expected in test_data:
-            with self.subTest(search_form_kwargs=search_form_kwargs):
-                with mock.patch.object(self.model_admin, 'search_form_kwargs', search_form_kwargs):
-                    self.assertEqual(self.model_admin.has_search_form(), expected)
-
-    @mock.patch('dbentry.search.admin.searchform_factory')
-    def test_get_search_form_class(self, factory_mock):
-        """
-        Assert that the searchform_factory is called with the expected kwargs.
-        (search_form_kwargs declared on the ModelAdmin + the passed in kwargs)
-        """
-        search_form_kwargs = {'fields': 'datum'}
-        labels = {'datum': 'Das Datum!'}
-        with mock.patch.object(self.model_admin, 'search_form_kwargs', search_form_kwargs):
-            self.model_admin.get_search_form_class(labels=labels)
-            expected = {'labels': labels, **search_form_kwargs}
-            factory_mock.assert_called_with(model=self.model, **expected)
-
-    @mock.patch('dbentry.search.admin.searchform_factory')
-    def test_get_search_form(self, factory_mock):
-        """Assert that the form class is instantiated with the provided kwargs."""
-        form_class_mock = mock.Mock()
-        factory_mock.return_value = form_class_mock
-        self.model_admin.get_search_form(beep='boop')
-        form_class_mock.assert_called_with(beep='boop')
 
     def test_context_contains_form(self):
         """
@@ -262,7 +329,7 @@ class TestAdminMixin(AdminTestCase):
         added if 'cl' is present in context_data.
         """
         tag_mock = mock.Mock(return_value={'cl': "extra from tag"})
-        with mock.patch('dbentry.search.admin.search_form_tag_context', tag_mock):
+        with mock.patch('dbentry.search.mixins.search_form_tag_context', tag_mock):
             for context_data in ({}, {'cl': ''}):
                 had_context = bool(context_data)
                 with self.subTest(context_data=context_data):
@@ -273,66 +340,6 @@ class TestAdminMixin(AdminTestCase):
                         self.assertEqual(response.context_data['cl'], "extra from tag")
                     else:
                         tag_mock.assert_not_called()
-
-    def test_check_search_form_fields_unknown_fields(self):
-        """
-        Assert that _check_search_form_fields correctly handles search fields
-        that either cannot be resolved to a model field.
-        """
-        # Patch get_model_fields to restrict the check to search fields
-        # declared in search_form_kwargs.
-        get_model_fields_mock = mock.Mock(return_value=[])
-        with mock.patch('dbentry.search.admin.utils.get_model_fields', new=get_model_fields_mock):
-            with mock.patch.object(self.model_admin, 'search_form_kwargs'):
-                # A search field that doesn't exist:
-                self.model_admin.search_form_kwargs = {'fields': ['BeepBoop']}
-                errors = self.model_admin._check_search_form_fields()
-                self.assertTrue(errors)
-                self.assertEqual(len(errors), 1)
-                self.assertIsInstance(errors[0], checks.Info)
-                self.assertEqual(
-                    errors[0].msg,
-                    "Ignored search form field: 'BeepBoop'. "
-                    "Band has no field named 'BeepBoop'"
-                )
-
-    def test_check_search_form_fields_invalid_lookup(self):
-        """
-        Assert that _check_search_form_fields correctly handles search fields
-        that have an invalid lookup.
-        """
-        # Patch get_model_fields to restrict the check to search fields
-        # declared in search_form_kwargs.
-        get_model_fields_mock = mock.Mock(return_value=[])
-        with mock.patch('dbentry.search.admin.utils.get_model_fields', new=get_model_fields_mock):
-            with mock.patch.object(self.model_admin, 'search_form_kwargs'):
-                # A valid search field with an invalid lookup:
-                self.model_admin.search_form_kwargs = {'fields': ['band_name__beep']}
-                errors = self.model_admin._check_search_form_fields()
-                self.assertTrue(errors)
-                self.assertEqual(len(errors), 1)
-                self.assertIsInstance(errors[0], checks.Info)
-                self.assertEqual(
-                    errors[0].msg,
-                    "Ignored search form field: 'band_name__beep'. "
-                    "Invalid lookup: beep for CharField."
-                )
-
-    def test_check_search_form_fields_missing_fields(self):
-        """
-        Assert that _check_search_form_fields complains about missing search
-        fields.
-        """
-        with mock.patch.object(self.model_admin, 'search_form_kwargs'):
-            self.model_admin.search_form_kwargs = {'fields': ['years_active']}
-            errors = self.model_admin._check_search_form_fields()
-            self.assertTrue(errors)
-            self.assertEqual(len(errors), 1, msg=errors)
-            self.assertIsInstance(errors[0], checks.Info)
-            self.assertEqual(
-                errors[0].msg,
-                "Changelist search form is missing fields for relations:\n\t['genre']"
-            )
 
 
 class TestMIZAdminSearchFormMixin(TestCase):
@@ -347,8 +354,7 @@ class TestMIZAdminSearchFormMixin(TestCase):
         def has_search_form(self):
             return True
 
-    @mock.patch('dbentry.search.admin.searchform_factory')
-    def test_get_search_form_class_custom_form_class(self, factory_mock):
+    def test_get_search_form_class_custom_form_class(self):
         """
         Assert that get_search_form_class calls the factory with the 
         expected 'form' kwarg.
@@ -357,8 +363,9 @@ class TestMIZAdminSearchFormMixin(TestCase):
         #   1. from get_search_form_class arguments
         #   2. from ModelAdmin search_form_kwargs attribute
         #   3. factory default argument
+        factory_mock = mock.Mock()
         view = self.Dummy()
-        with mock.patch.object(view, 'search_form_kwargs', {}):
+        with mock.patch.multiple(view, searchform_kwargs={}, searchform_factory=factory_mock, create=True):
             # Default:
             view.get_search_form_class()
             args, kwargs = factory_mock.call_args

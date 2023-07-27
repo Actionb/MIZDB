@@ -136,6 +136,12 @@ class TestMIZQuerySet(DataTestCase):
             self.queryset.values_dict('thisaintnofield', flatten=True)
             self.assertIn('Choices are', cm.exception.args[0])
 
+    def test_overview(self):
+        """Assert that overview calls the model's overview class method."""
+        with patch.object(self.model, "overview", create=True) as overview_mock:
+            self.queryset.overview("foo", "bar")
+            overview_mock.assert_called_with(self.queryset, "foo", "bar")
+
 
 class CNQuerySetModel(models.Model):
     _name = models.CharField(max_length=10, editable=False, default='YYYY-MM')

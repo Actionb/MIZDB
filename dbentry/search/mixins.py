@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Callable
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
@@ -9,23 +9,27 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDi
 
 from dbentry import utils
 from dbentry.search import utils as search_utils
-from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
+from dbentry.search.forms import MIZAdminSearchForm, SearchForm, SearchFormFactory, DALSearchFormFactory
 
 
-class AdminSearchFormMixin(object):
+class SearchFormMixin(object):
     """
-    A mixin for ModelAdmin classes that adds more search options to its
-    changelist.
+    A mixin for model list views that adds a search form to the context.
 
     Attributes:
         - ``search_form_kwargs`` (dict): the keyword arguments for
           searchform_factory to create a search form class with.
           These are *not* the arguments for form initialization!
+        - ``searchform_factory`` (callable): the factory function to create
+          search forms with
     """
 
-    change_list_template = 'admin/change_list.html'
+    search_form_kwargs: dict
+    searchform_factory: Callable = SearchFormFactory()
 
-    search_form_kwargs: dict = None  # type: ignore[assignment]
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.search_form_kwargs = getattr(self, 'search_form_kwargs', None) or {}
 
     def has_search_form(self) -> bool:
         """
@@ -35,9 +39,7 @@ class AdminSearchFormMixin(object):
         A search form class would be empty if the instance's
         ``search_form_kwargs`` did not specify any fields.
         """
-        if isinstance(self.search_form_kwargs, dict):
-            return bool(self.search_form_kwargs.get('fields'))
-        return False
+        return bool(self.search_form_kwargs.get('fields'))
 
     def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         """
@@ -46,15 +48,72 @@ class AdminSearchFormMixin(object):
         The form class is created by the searchform_factory, using the
         ModelAdmin's 'search_form_kwargs' and the provided keyword arguments.
         """
-        factory_kwargs = self.search_form_kwargs or {}
-        factory_kwargs.update(kwargs)
-        return searchform_factory(model=self.model, **factory_kwargs)  # type: ignore[attr-defined]
+        factory_kwargs = {'model': self.model, **self.search_form_kwargs, **kwargs}  # type: ignore[attr-defined]
+        return self.searchform_factory(**factory_kwargs)
 
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
         form_class = self.get_search_form_class()
         self.search_form = form_class(**form_kwargs)
         return self.search_form
+
+    def get_context_data(self, **kwargs: Any) -> dict:
+        ctx = super().get_context_data(**kwargs)  # type: ignore[misc]
+        ctx["advanced_search_form"] = self.get_search_form(data=self.request.GET)  # type: ignore[attr-defined]
+        ctx["has_search_form"] = self.has_search_form()
+        # TODO: should the form media be added?
+        return ctx
+
+    def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
+        errors = super().check(**kwargs)  # type: ignore[misc]
+        errors.extend(self._check_search_form_fields(**kwargs))
+        return errors
+
+    def _check_search_form_fields(self, **kwargs: Any) -> List[checks.CheckMessage]:
+        """Check the fields given in self.search_form_kwargs."""
+        if not self.has_search_form():
+            return []
+        errors = []
+        # Relation fields defined by the model should be in the search form:
+        rel_fields = [
+            field.name
+            for field in utils.get_model_fields(
+                self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
+            )
+            if not field.name.startswith('_')
+        ]
+        for field_path in self.search_form_kwargs.get('fields', []):
+            msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
+            try:
+                search_utils.get_dbfield_from_path(
+                    self.model, field_path  # type: ignore[attr-defined]
+                )
+            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
+                errors.append(checks.Info(msg % e.args[0], obj=self))
+            else:
+                try:
+                    rel_fields.remove(field_path.split('__')[0])
+                except ValueError:
+                    # The first part of field_path is not in the rel_fields.
+                    pass
+        if rel_fields:
+            errors.append(
+                checks.Info(
+                    "Changelist search form is missing fields for relations:"
+                    "\n\t%s" % rel_fields,
+                    obj=self
+                )
+            )
+        return errors
+
+
+class AdminSearchFormMixin(SearchFormMixin):
+    """
+    A mixin for ModelAdmin classes that adds more search options to its
+    changelist.
+    """
+
+    change_list_template = 'admin/change_list.html'
 
     def changelist_view(
             self,
@@ -121,7 +180,7 @@ class AdminSearchFormMixin(object):
         # All lookups that the formfield was registered with should be allowed
         # by default.
         allowed = self.search_form.lookups.get(field_path, [])
-        if Range.lookup_name in allowed:
+        if Range.lookup_name in allowed:  # pragma: no cover
             # Also allow lte lookups, if the form uses any range lookups.
             # (lte is the lookup used when a RangeField has an end value but no
             # start value).
@@ -190,50 +249,11 @@ class AdminSearchFormMixin(object):
         post_url = urlunparse(parsed_url)
         return HttpResponseRedirect(post_url)
 
-    def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
-        errors = super().check(**kwargs)  # type: ignore[misc]
-        errors.extend(self._check_search_form_fields(**kwargs))
-        return errors
-
-    def _check_search_form_fields(self, **kwargs: Any) -> List[checks.CheckMessage]:
-        """Check the fields given in self.search_form_kwargs."""
-        if not self.has_search_form():
-            return []
-        errors = []
-        # Relation fields defined by the model should be in the search form:
-        rel_fields = [
-            field.name
-            for field in utils.get_model_fields(
-                self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
-            )
-        ]
-        for field_path in self.search_form_kwargs.get('fields', []):
-            msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
-            try:
-                search_utils.get_dbfield_from_path(
-                    self.model, field_path  # type: ignore[attr-defined]
-                )
-            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
-                errors.append(checks.Info(msg % e.args[0], obj=self))
-            else:
-                try:
-                    rel_fields.remove(field_path.split('__')[0])
-                except ValueError:
-                    # The first part of field_path is not in the rel_fields.
-                    pass
-        if rel_fields:
-            errors.append(
-                checks.Info(
-                    "Changelist search form is missing fields for relations:"
-                    "\n\t%s" % rel_fields,
-                    obj=self
-                )
-            )
-        return errors
-
 
 class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     """Default mixin for MIZAdmin admin models adding more search options."""
+
+    searchform_factory = DALSearchFormFactory()
 
     def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         # Set the default form class for searchform_factory, unless a class is
