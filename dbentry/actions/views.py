@@ -322,7 +322,7 @@ class MergeView(MIZAdminMixin, WizardConfirmationView):
         # Sets are not JSON serializable (required for session storage):
         # turn them into lists and remove empty ones.
         updates: Dict[str, List] = {  # type: ignore[no-redef]
-            fld_name: list(value_set) for fld_name, value_set in updates.items() if value_set}
+            fld_name: sorted(list(value_set)) for fld_name, value_set in updates.items() if value_set}
         return has_conflict, updates
 
     def process_step(self, form: Form) -> dict:
@@ -343,25 +343,28 @@ class MergeView(MIZAdminMixin, WizardConfirmationView):
                 data = data.copy()
                 data['updates'] = updates
         if not has_conflict:
-            # No conflict found;
-            # Set the current_step to the CONFLICT_RESOLUTION_STEP
-            # so that the conflict resolution will be skipped.
-            self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
+            # No conflict found.
+            # Remove the conflict resolution form from the form list (which
+            # was turned into an OrderedDict in WizardView.get_initkwargs), and
+            # skip right to the last step.
+            self.form_list.pop(self.CONFLICT_RESOLUTION_STEP)  # noqa
+            self.storage.current_step = self.steps.last
         return data
 
     def get_form_kwargs(self, step: Optional[int] = None) -> dict:
         kwargs = super().get_form_kwargs(step)
         if step is None:  # pragma: no cover
             step = self.steps.current
+
         # Note that WizardView.get_initkwargs turns the form_list into an
         # OrderedDict.
         form_class: Union[MergeFormSelectPrimary, MergeConflictsFormSet] = self.form_list[step]
         prefix = self.get_form_prefix(step, form_class)
         if step == self.CONFLICT_RESOLUTION_STEP:
             # There is a conflict.
-            # We need to provide the MergeConflictsFormSet with 'data'
-            # for its fields AND 'choices' for the DynamicChoiceFormMixin.
-            data, choices, total_forms = {}, {}, 0
+            # Provide the MergeConflictsFormSet with the choices for the
+            # 'posval' fields.
+            choices, total_forms = {}, 0
 
             def add_prefix(key_name: str) -> str:
                 return prefix + '-' + str(total_forms) + '-' + key_name
@@ -370,32 +373,39 @@ class MergeView(MIZAdminMixin, WizardConfirmationView):
                 if len(values) > 1:
                     # Multiple different values possible for this field; let
                     # the user choose one.
-                    model_field = self.opts.get_field(fld_name)
-                    verbose_fld_name = model_field.verbose_name.capitalize()
-                    data[add_prefix('original_fld_name')] = fld_name
-                    data[add_prefix('verbose_fld_name')] = verbose_fld_name
                     choices[add_prefix('posvals')] = [(c, v) for c, v in enumerate(values)]
                     total_forms += 1
 
-            management_form_data = {
-                prefix + '-INITIAL_FORMS': '0',
-                prefix + '-MAX_NUM_FORMS': '',
-                prefix + '-TOTAL_FORMS': total_forms
-            }
-            data.update(management_form_data)
-            kwargs['data'] = data
             # In order to pass 'choices' on to the individual forms of the
             # MergeConflictsFormSet, we need to wrap it in yet another dict
             # called 'form_kwargs'.
             # forms.BaseFormSet.__init__ will then do the rest for us.
             kwargs['form_kwargs'] = {'choices': choices}
         elif step == self.SELECT_PRIMARY_STEP:
-            # MergeFormSelectPrimary form:
-            # choices for the selection of primary are objects in the queryset
-            kwargs['choices'] = {
-                prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset
-            }
+            # MergeFormSelectPrimary form: choices for the selection of the
+            # primary object are the objects in the queryset
+            kwargs['choices'] = {prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset}
         return kwargs
+
+    def get_form_initial(self, step):
+        if step == self.CONFLICT_RESOLUTION_STEP:
+            # There is a conflict.
+            # Provide initial data for the hidden fields of the conflict
+            # resolution form. This initial data is also used to set a better
+            # label for the 'posval' field.
+            initial = []
+            for fld_name, values in sorted(self.updates.items()):
+                if len(values) > 1:
+                    # More than one value: this is a field with conflicting values.
+                    initial.append(
+                        {
+                            'original_fld_name': fld_name,
+                            'verbose_fld_name': self.opts.get_field(fld_name).verbose_name.capitalize()
+                        }
+                    )
+            return initial
+        else:
+            return super().get_form_initial(step)
 
     def perform_action(self, *args: Any, **kwargs: Any) -> None:
         update_data = {}

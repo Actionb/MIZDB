@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- refactored MergeView to use django-formtool's SessionWizardView directly
+
 ## [0.11] - 2023-07-27
 
 ### Added
