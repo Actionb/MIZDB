@@ -11,26 +11,6 @@ from django.db.utils import ProgrammingError
 from dbentry.utils.progress import print_progress
 
 
-def _create_logs(new_pk, old_pk, new_ct, old_ct):
-    queryset = (
-        LogEntry.objects
-        .filter(object_id=old_pk, content_type=old_ct)
-        .values('action_time', 'user', 'object_repr', 'action_flag', 'change_message')
-    )
-    return [
-        LogEntry(
-            action_time=e.action_time,
-            user=e.user,
-            content_type=new_ct,
-            object_id=new_pk,
-            object_repr=e.object_repr,
-            action_flag=e.action_flag,
-            change_message=e.change_message,
-        )
-        for e in queryset
-    ]
-
-
 # noinspection PyPep8Naming
 @transaction.atomic
 def _migrate():
