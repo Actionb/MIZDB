@@ -166,5 +166,6 @@ class Command(BaseCommand):
                     return
                 self.stdout.write("Lösche vorhandene PrintMedia Objekte...")
                 PrintMedia.objects.filter(_brochure_ptr__isnull=False).delete()
+                LogEntry.objects.filter(content_type=ContentType.objects.get_for_model(PrintMedia)).delete()
             _migrate()
         self.stdout.write(self.style.SUCCESS("Fertig!"))
