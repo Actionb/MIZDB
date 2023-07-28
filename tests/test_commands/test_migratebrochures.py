@@ -148,7 +148,9 @@ class TestCommand(TestCase):
         self.kalender.delete()
         self.katalog.delete()
         self.run_command()
-        logentries = LogEntry.objects.all().order_by("action_time")
+        logentries = LogEntry.objects.filter(
+            content_type=ContentType.objects.get_for_model(_models.PrintMedia)
+        ).order_by("action_time")
         self.assertEqual(
             ["Added.", "Added Website.", "Changed Beschreibung."],
             list(logentries.values_list("change_message", flat=True)),
