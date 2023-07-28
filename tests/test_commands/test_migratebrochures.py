@@ -1,6 +1,9 @@
 import io
 from unittest import mock
 
+from django.contrib.admin.models import LogEntry, CHANGE, ADDITION
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from dbentry import models as _models
@@ -9,14 +12,10 @@ from tests.model_factory import make
 
 
 class TestCommand(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         cls.ausgabe = make(
-            _models.Ausgabe,
-            beschreibung="2023-06",
-            sonderausgabe=True,
-            magazin__magazin_name="Testmagazin"
+            _models.Ausgabe, beschreibung="2023-06", sonderausgabe=True, magazin__magazin_name="Testmagazin"
         )
         # Brochure:
         cls.brochure = make(
@@ -26,7 +25,7 @@ class TestCommand(TestCase):
             beschreibung="Testbroschüre Beschreibung",
             bemerkungen="Testbroschüre Bemerkungen",
             genre__genre=["Testbroschüre Genre 1", "Testbroschüre Genre 2"],
-            schlagwort__schlagwort=["Testbroschüre Schlagwort 1", "Testbroschüre Schlagwort 2"]
+            schlagwort__schlagwort=["Testbroschüre Schlagwort 1", "Testbroschüre Schlagwort 2"],
         )
         # Katalog (has 'art'):
         cls.katalog = make(
@@ -45,7 +44,7 @@ class TestCommand(TestCase):
             titel="Testkalender",
             spielort=[cls.spielort1, cls.spielort2],
             veranstaltung=[cls.veranstaltung1, cls.veranstaltung2],
-            bemerkungen="Kalender Bemerkungen"
+            bemerkungen="Kalender Bemerkungen",
         )
         # Bestand:
         cls.provenienz = make(
@@ -58,9 +57,12 @@ class TestCommand(TestCase):
             lagerort__ort="Keller",
             provenienz=cls.provenienz,
             anmerkungen="good quality",
-            brochure=cls.brochure.basebrochure_ptr
+            brochure=cls.brochure.basebrochure_ptr,
         )
         cls.bestand2 = make(_models.Bestand, lagerort__ort="Dachboden", brochure=cls.brochure.basebrochure_ptr)
+        cls.user = get_user_model().objects.create_superuser(
+            username="superuser", password="foobar", email="testtest@test.test"
+        )
 
     def run_command(self):
         cmd = Command(stdout=io.StringIO())
@@ -82,10 +84,10 @@ class TestCommand(TestCase):
         self.assertEqual(pmedia.titel, "Testbroschüre")
         self.assertEqual(pmedia.zusammenfassung, "Testbroschüre Zusammenfassung")
         self.assertEqual(pmedia.anmerkungen, "Testbroschüre Beschreibung\n----\nBemerkungen: Testbroschüre Bemerkungen")
-        self.assertIn("Testbroschüre Genre 1", pmedia.genre.values_list('genre', flat=True))
-        self.assertIn("Testbroschüre Genre 2", pmedia.genre.values_list('genre', flat=True))
-        self.assertIn("Testbroschüre Schlagwort 1", pmedia.schlagwort.values_list('schlagwort', flat=True))
-        self.assertIn("Testbroschüre Schlagwort 2", pmedia.schlagwort.values_list('schlagwort', flat=True))
+        self.assertIn("Testbroschüre Genre 1", pmedia.genre.values_list("genre", flat=True))
+        self.assertIn("Testbroschüre Genre 2", pmedia.genre.values_list("genre", flat=True))
+        self.assertIn("Testbroschüre Schlagwort 1", pmedia.schlagwort.values_list("schlagwort", flat=True))
+        self.assertIn("Testbroschüre Schlagwort 2", pmedia.schlagwort.values_list("schlagwort", flat=True))
         self.assertEqual(pmedia.bestand_set.count(), 2)
         self.assertCountEqual(pmedia.bestand_set.values_list("lagerort__ort", flat=True), ["Keller", "Dachboden"])
         b = pmedia.bestand_set.get(lagerort__ort="Keller")
@@ -125,3 +127,29 @@ class TestCommand(TestCase):
         self.run_command()
         pmedia = _models.PrintMedia.objects.get(_brochure_ptr=brochure_with_ausgabe.pk)
         self.assertIn("Beilage von Ausgabe: Testmagazin 2023-06", pmedia.anmerkungen)
+
+    def test_logentry(self):
+        def logentry_for_obj(obj, **kwargs):
+            ct = ContentType.objects.get_for_model(obj)
+            defaults = dict(
+                user_id=self.user.id,
+                content_type_id=ct.pk,
+                object_id=obj.pk,
+                object_repr=repr(obj),
+                action_flag=CHANGE,
+                change_message=f"Changed {obj}",
+            )
+            defaults.update(kwargs)
+            return LogEntry.objects.log_action(**defaults)
+
+        logentry_for_obj(self.brochure, action_flag=ADDITION, change_message="Added.")
+        logentry_for_obj(self.brochure, action_flag=ADDITION, change_message="Added Website.")
+        logentry_for_obj(self.brochure, action_flag=CHANGE, change_message="Changed Beschreibung.")
+        self.kalender.delete()
+        self.katalog.delete()
+        self.run_command()
+        logentries = LogEntry.objects.all().order_by("action_time")
+        self.assertEqual(
+            ["Added.", "Added Website.", "Changed Beschreibung."],
+            list(logentries.values_list("change_message", flat=True)),
+        )
