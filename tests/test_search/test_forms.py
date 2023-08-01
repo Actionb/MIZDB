@@ -287,7 +287,7 @@ class TestDALSearchFormFactory(TestCase):
     def test_get_widget_dal_with_forward(self, make_widget_mock):
         """Assert that declared dal forward is passed to the widget factory."""
         dbfield = Ausgabe._meta.get_field('magazin')
-        self.factory.get_widget(dbfield, 'ausgabe', forward={'ausgabe': 'foo'})
+        self.factory.get_widget(dbfield, 'ausgabe', forwards={'ausgabe': 'foo'})
         make_widget_mock.assert_called()
         _args, kwargs = make_widget_mock.call_args
         self.assertIn('forward', kwargs)
