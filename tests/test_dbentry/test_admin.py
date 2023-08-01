@@ -144,6 +144,15 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj = self.get_annotated_model_obj(self.obj1)
         self.assertEqual(self.model_admin.kuenstler_list(obj), 'Testband, Alice Tester')
 
+    def test_ausgabe_forwards(self):
+        """
+        Assert that the widget for the Ausgabe field on the changelist search
+        form has a forward value set.
+        """
+        form = self.model_admin.get_search_form()
+        widget = form.fields["ausgabe"].widget
+        self.assertTrue(widget.forward)
+
 
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AudioAdmin

@@ -387,7 +387,7 @@ class DALSearchFormFactory(SearchFormFactory):
             db_field: Field,
             path: str,
             tabular: Optional[list[str]] = None,
-            forward: Optional[dict[str, str]] = None,
+            forwards: Optional[dict[str, str]] = None,
             **kwargs: Any
     ) -> forms.Widget:
         """Create a dal widget if the field is a relation field."""
@@ -400,8 +400,8 @@ class DALSearchFormFactory(SearchFormFactory):
             'can_add_related': False,
             'tabular': bool(tabular and path in tabular),
         }
-        if forward and path in forward:
-            widget_opts['forward'] = forward[path]
+        if forwards and path in forwards:
+            widget_opts['forward'] = forwards[path]
         return make_dal_widget(**widget_opts)
 
 
