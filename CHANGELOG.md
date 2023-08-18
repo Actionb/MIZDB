@@ -1,6 +1,35 @@
 # Changelog
 
-## [Unreleased]
+## [unreleased]
+
+### Added
+
+- Docker support
+  - added new installation methods
+  - added management utility script `mizdb.sh` 
+  - reworked handling of secret files and database connection parameters
+
+### Changed
+
+- refactored MergeView to use django-formtool's SessionWizardView directly
+
+## [0.11] - 2023-07-27
+
+### Added
+
+- add overview (changelist view) queryset annotations and optimizations to models
+- add mizdb-tomselect widgets and views
+
+### Changed
+- dbentry admin changelists now use overview annotations
+- dal autocomplete tabular views now use the overview annotations
+- refactored search form factory and view mixins to allow using different widget factories
+
+## [0.10.1] - 2023-06-07
+
+### Fixed
+
+- fix incorrect tabular_autocomplete parameter for KalenderAdmin.SpielortInline  
 
 ## [0.10] - 2023-05-01
 

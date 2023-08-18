@@ -103,10 +103,8 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Try to add a more accurate label to the posvals field.
-        if self.data.get(self.add_prefix('verbose_fld_name')):
-            self.fields['posvals'].label = 'Mögliche Werte für {}:'.format(
-                self.data.get(self.add_prefix('verbose_fld_name'))
-            )
+        if self.initial.get('verbose_fld_name'):
+            self.fields['posvals'].label = f"Mögliche Werte für {self.initial['verbose_fld_name']}:"
 
 
 MergeConflictsFormSet = forms.formset_factory(

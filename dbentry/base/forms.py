@@ -343,7 +343,7 @@ class DynamicChoiceFormMixin(object):
                 fld.choices = list(field_choices)
 
 
-class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: shouldn't this be a mixin?
+class MIZAdminInlineFormBase(forms.ModelForm):
     """
     A model form class that flags forms for deletion when the form's model
     instance would violate uniqueness.
@@ -386,9 +386,6 @@ class DiscogsFormMixin(object):
             self.fields[self.url_field_name].validators.append(
                 DiscogsURLValidator()
             )
-
-    # TODO: add a systems check to check that url_field_name and
-    #  release_id_field_name are set?
 
     def clean(self: Form) -> dict:
         """Validate and clean release_id and discogs_url."""

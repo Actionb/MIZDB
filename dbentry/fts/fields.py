@@ -59,7 +59,7 @@ class SearchVectorField(tsvector_field.SearchVectorField):
         # Include blank and editable, if their values differ from the defaults.
         # Remove them from the kwargs, if they have their default values.
         # Explanation:
-        # Field.deconstruct will only include a parameter, if that parameter
+        # Field.deconstruct will only include a parameter if that parameter
         # does not have its default value. However, Field.deconstruct uses a
         # fixed set of default values, disregarding any overriding defaults
         # set by the field object itself.
@@ -67,11 +67,11 @@ class SearchVectorField(tsvector_field.SearchVectorField):
         # are the inverse of the values assumed by Field - that means that these
         # parameters would be incorrectly omitted when they do *not* have their
         # default values (although this is when they *must* be included).
-        if self.blank is not True:  # FIXME: do not use 'is' to compare booleans
+        if not self.blank:
             kwargs['blank'] = False
         else:
             kwargs.pop('blank', None)
-        if self.editable is not False:  # FIXME: do not use 'is' to compare booleans
+        if self.editable:
             kwargs['editable'] = True
         else:
             kwargs.pop('editable', None)

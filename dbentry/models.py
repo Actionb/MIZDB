@@ -3,6 +3,7 @@ from typing import Optional
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import OuterRef, Subquery, Count, Exists
 
 import dbentry.m2m as _m2m
 from dbentry.base.models import (
@@ -15,6 +16,10 @@ from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
 from dbentry.query import AusgabeQuerySet
 from dbentry.utils import concat_limit, get_model_fields, get_model_relations
+from dbentry.utils.query import to_array, array_to_string, limit, string_list
+
+
+# TODO: use Func(<concatenated array>, Value(50), function="left") in place of "concat_limit()"
 
 
 class Person(ComputedNameModel):
@@ -69,6 +74,14 @@ class Person(ComputedNameModel):
         opts = cls._meta
         return cls._name_default % {'verbose_name': opts.verbose_name}
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'is_musiker': Exists(Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
+            'is_autor': Exists(Autor.objects.only('id').filter(person_id=OuterRef('id'))),
+            'orte_list': string_list('orte___name', sep="; ")
+        }
+
 
 class PersonURL(AbstractURLModel):
     # TODO: field name is wrong
@@ -106,6 +119,15 @@ class Musiker(BaseModel):
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'band_list': string_list('band__band_name'),
+            'genre_list': string_list('genre__genre'),
+            'orte_list': string_list('orte___name', sep="; "),
+            'alias_list': string_list('musikeralias__alias')
+        }
+
 
 class MusikerAlias(BaseAliasModel):
     parent = models.ForeignKey('Musiker', models.CASCADE)
@@ -139,6 +161,10 @@ class Genre(BaseModel):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'alias_list': string_list('genrealias__alias')}
 
 
 class GenreAlias(BaseAliasModel):
@@ -177,6 +203,15 @@ class Band(BaseModel):
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'genre_list': string_list('genre__genre'),
+            'musiker_list': string_list('musiker__kuenstler_name'),
+            'alias_list': string_list('bandalias__alias'),
+            'orte_list': string_list('orte___name', sep="; ")
+        }
+
 
 class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
@@ -210,6 +245,7 @@ class Autor(ComputedNameModel):
 
     name_composing_fields = ['person___name', 'kuerzel']
     related_search_vectors = [('person___fts', SIMPLE)]
+    select_related = ("person",)
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'
@@ -251,6 +287,10 @@ class Autor(ComputedNameModel):
             # noinspection PyUnresolvedReferences
             opts = cls._meta
             return kuerzel or cls._name_default % {'verbose_name': opts.verbose_name}
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'magazin_list': string_list('magazin__magazin_name')}
 
 
 class AutorURL(AbstractURLModel):
@@ -298,6 +338,7 @@ class Ausgabe(ComputedNameModel):
         'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
     # TODO: magazin___fts as a related_search_vector?
+    select_related = ("magazin",)
 
     objects = AusgabeQuerySet.as_manager()
 
@@ -404,6 +445,30 @@ class Ausgabe(ComputedNameModel):
         # noinspection PyUnresolvedReferences
         opts = cls._meta
         return cls._name_default % {'verbose_name': opts.verbose_name}
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        # Can't use ArrayAgg directly to get a list of distinct monat__abk
+        # values as we are ordering by monat__ordinal: using distinct AND
+        # ordering requires that the ordering expressions are present in the
+        # argument list to ArrayAgg.
+        # Use a subquery instead:
+        subquery = (
+            Ausgabe.objects.order_by().filter(id=OuterRef('id'))
+            .annotate(
+                x=array_to_string(
+                    to_array('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal', distinct=False)
+                )
+            )
+            .values('x')
+        )
+        return {
+            'jahr_list': string_list('ausgabejahr__jahr'),
+            'num_list': string_list('ausgabenum__num'),
+            'lnum_list': string_list('ausgabelnum__lnum'),
+            'monat_list': Subquery(subquery),
+            'anz_artikel': Count('artikel', distinct=True)
+        }
 
 
 class AusgabeJahr(BaseModel):
@@ -528,6 +593,13 @@ class Magazin(BaseModel):
     def __str__(self) -> str:
         return str(self.magazin_name)
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'orte_list': string_list('orte___name', sep="; "),
+            'anz_ausgaben': Count('ausgabe', distinct=True)
+        }
+
 
 class MagazinURL(AbstractURLModel):
     magazin = models.ForeignKey('Magazin', models.CASCADE, related_name='urls')
@@ -546,6 +618,7 @@ class Verlag(BaseModel):
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
+    select_related = ("sitz",)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
@@ -570,6 +643,7 @@ class Ort(ComputedNameModel):
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
     ]
+    select_related = ("land", "bland")
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ort'
@@ -684,6 +758,10 @@ class Schlagwort(BaseModel):
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'alias_list': string_list('schlagwortalias__alias')}
+
 
 class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)
@@ -732,6 +810,7 @@ class Artikel(BaseModel):
     )
 
     name_field = 'schlagzeile'
+    select_related = ("ausgabe", "ausgabe__magazin")
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
@@ -751,6 +830,15 @@ class Artikel(BaseModel):
             return str(self.zusammenfassung)
         else:
             return 'Keine Schlagzeile gegeben!'
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'schlagwort_list': string_list('schlagwort__schlagwort'),
+            'kuenstler_list': limit(
+                array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name'))
+            )
+        }
 
 
 class Buch(BaseModel):
@@ -808,6 +896,17 @@ class Buch(BaseModel):
 
     def __str__(self) -> str:
         return str(self.titel)
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'autor_list': string_list('autor___name'),
+            'schlagwort_list': string_list('schlagwort__schlagwort'),
+            'genre_list': string_list('genre__genre'),
+            'kuenstler_list': limit(
+                array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name'))
+            ),
+        }
 
 
 class Herausgeber(BaseModel):
@@ -907,6 +1006,7 @@ class Audio(BaseModel):
     )
 
     name_field = 'titel'
+    select_related = ("medium",)
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -915,6 +1015,12 @@ class Audio(BaseModel):
 
     def __str__(self) -> str:
         return str(self.titel)
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'kuenstler_list': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
+        }
 
 
 class AudioMedium(BaseModel):
@@ -978,6 +1084,10 @@ class Plakat(BaseModel):
         ordering = ['titel']
         verbose_name = 'Plakat'
         verbose_name_plural = 'Plakate'
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'veranstaltung_list': string_list('veranstaltung__name')}
 
 
 class Bildreihe(BaseModel):
@@ -1096,6 +1206,7 @@ class Spielort(BaseModel):
         ('spielortalias___fts', SIMPLE),
         ('ort___fts', SIMPLE)
     ]
+    select_related = ("ort",)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -1179,11 +1290,20 @@ class Veranstaltung(BaseModel):
         ('spielort___fts', SIMPLE),
         ('spielort__ort___fts', SIMPLE)
     ]
+    select_related = ("spielort", "reihe")
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'datum', 'spielort']
+
+    require_confirmation = True
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'kuenstler_list': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
+        }
 
 
 class VeranstaltungAlias(BaseAliasModel):
@@ -1268,11 +1388,18 @@ class Video(BaseModel):
     )
 
     name_field = 'titel'
+    select_related = ("medium",)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
         verbose_name_plural = 'Video Materialien'
         ordering = ['titel']
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            'kuenstler_list': limit(array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name')))
+        }
 
 
 class VideoMedium(BaseModel):
@@ -1309,6 +1436,7 @@ class Provenienz(BaseModel):
 
     name_field = 'geber'
     related_search_vectors = [('geber___fts', SIMPLE)]
+    select_related = ("geber",)
 
     class Meta(BaseModel.Meta):
         ordering = ['geber', 'typ']
@@ -1407,6 +1535,8 @@ class Bestand(BaseModel):
     video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
     _fts = SearchVectorField(columns=[WeightedColumn('anmerkungen', 'A', STEMMING)])
+
+    select_related = ("lagerort", "provenienz__geber")
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
@@ -1559,6 +1689,10 @@ class BaseBrochure(BaseModel):
                 # This subclass is not related to this BaseBrochure instance.
                 continue
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'jahr_list': string_list('jahre__jahr')}
+
     class Meta(BaseModel.Meta):
         ordering = ['titel']
 
@@ -1670,6 +1804,10 @@ class Foto(BaseModel):
         ordering = ['titel']
         verbose_name = 'Foto'
         verbose_name_plural = 'Fotos'
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'schlagwort_list': string_list('schlagwort__schlagwort')}
 
 
 class PrintMediaType(BaseModel):

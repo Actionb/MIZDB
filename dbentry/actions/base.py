@@ -13,8 +13,8 @@ from django.utils.html import format_html
 from django.utils.safestring import SafeText
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
+from formtools.wizard.views import SessionWizardView
 
-from dbentry.base.views import FixedSessionWizardView
 from dbentry.utils import create_hyperlink, get_change_page_url
 
 SafeTextOrStr = Union[str, SafeText]
@@ -253,7 +253,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         return context
 
 
-class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
+class WizardConfirmationView(ConfirmationViewMixin, SessionWizardView):
     """Base view for action views that require a SessionWizardView."""
 
     template_name: str = 'admin/action_confirmation_wizard.html'

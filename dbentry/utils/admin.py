@@ -199,19 +199,6 @@ def get_model_admin_for_model(
             return site._registry.get(model)
     return None
 
-
-def has_admin_permission(request: HttpRequest, model_admin: ModelAdmin) -> bool:
-    """Return True if the request user has any module or model permissions."""
-    # TODO: remove: this isn't used anymore
-    # (used by help views)
-    # Check if the user has any permissions to the module/app.
-    if not model_admin.has_module_permission(request):
-        return False
-    # Check if the user has any permissions
-    # (add, change, delete, view) for the model.
-    return True in model_admin.get_model_perms(request).values()
-
-
 def construct_change_message(
         form: ModelForm, formsets: List[BaseInlineFormSet], add: bool
 ) -> List[Dict]:

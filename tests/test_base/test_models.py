@@ -60,6 +60,35 @@ class TestBaseModel(MIZTestCase):
             Permission.objects.filter(content_type=ct).values_list('codename', flat=True)
         )
 
+    def test_overview_applies_select_related(self):
+        """
+        Assert that overview() adds the declared select_related fields to the
+        overview queryset.
+        """
+        queryset = self.model.overview(self.model.objects.all())
+        self.assertIn(self.model.select_related[0], queryset.query.select_related)
+
+    def test_overview_applies_prefetch_related(self):
+        """
+        Assert that overview() adds the declared prefetch_related fields to the
+        overview queryset.
+        """
+        queryset = self.model.overview(self.model.objects.all())
+        with self.assertNumQueries(2) as cm:
+            list(queryset)
+            self.assertIn('FROM "test_base_musiker"', " ".join(q["sql"] for q in cm.captured_queries))
+
+    def test_overview_adds_annotations(self):
+        """
+        Assert that overview() adds the declared annotations to the overview
+        queryset.
+        """
+        for fields in ([], ["foo"], ["foo", "bar"]):
+            expected = fields or ["foo", "bar"]
+            queryset = self.model.overview(self.model.objects.all(), *fields)
+            with self.subTest(fields=fields):
+                self.assertCountEqual(queryset.query.annotations.keys(), expected)
+
 
 class TestBaseM2MModel(MIZTestCase):
     model = MusikerAudioM2M

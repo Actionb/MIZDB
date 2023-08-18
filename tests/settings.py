@@ -1,12 +1,18 @@
+import os
 import logging
 from pathlib import Path
 
-import yaml
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-with open(BASE_DIR / 'config.yaml', encoding='utf-8') as f:
-    config = yaml.safe_load(f)
+try:
+    with open(BASE_DIR / ".secrets" / ".passwd") as f:
+        password = f.readline().strip()
+except FileNotFoundError as e:
+    raise FileNotFoundError(
+        "No database password file found. Create a file called '.passwd' "
+        "in the '.secrets' subdirectory that contains the database password.\n"
+        "HINT: run setup.sh"
+    ) from e
 
 SECRET_KEY = 'abcdefghi'
 
@@ -28,6 +34,7 @@ ALWAYS_INSTALLED_APPS = [
 TEST_APPS = [
     "tests",
     "tests.test_actions",
+    "tests.test_ac",
     "tests.test_autocomplete",
     "tests.test_base",
     "tests.test_commands",
@@ -69,13 +76,13 @@ TEMPLATES = [
 ]
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'dbentry.fts.db',
-        'NAME': config.get('DATABASE_NAME', 'mizdb'),
-        'USER': config.get('DATABASE_USER', ''),
-        'PASSWORD': config.get('DATABASE_PASSWORD', ''),
-        'HOST': config.get('DATABASE_HOST', 'localhost'),
-        'PORT': config.get('DATABASE_PORT', ''),
+    "default": {
+        "ENGINE": "dbentry.fts.db",
+        "NAME": os.environ.get("DB_NAME", "mizdb"),
+        "USER": os.environ.get("DB_USER", "mizdb_user"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", 5432),
+        "PASSWORD": password,
     },
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3'

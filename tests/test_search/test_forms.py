@@ -8,7 +8,8 @@ from django.test import TestCase
 
 from dbentry import models as _models
 from dbentry.fields import PartialDate, PartialDateFormField
-from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory
+from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory, DALSearchFormFactory, \
+    MIZSelectSearchFormFactory
 from tests.model_factory import make
 from .models import Artikel, Ausgabe, Genre, InheritedPKModel, Magazin
 
@@ -27,6 +28,23 @@ class TestRangeWidget(TestCase):
         _args, kwargs = super_mock.call_args
         self.assertIn('widgets', kwargs)
         self.assertEqual(kwargs['widgets'], [widget] * 2)
+
+    def test_decompress(self):
+        test_data = [
+            ("1,2", ["1", "2"]),
+            ("1,", ["1", ""]),
+            (",2", ["", "2"]),
+            # Unsuitable values:
+            ("1", [None, None]),
+            ("", [None, None]),
+            (None, [None, None]),
+            ("1,2,3", [None, None]),
+            (["1,2"], [None, None])
+        ]
+        widget = RangeWidget(forms.TextInput())
+        for value, expected in test_data:
+            with self.subTest(value=value):
+                self.assertEqual(widget.decompress(value), expected)
 
 
 class TestRangeFormField(TestCase):
@@ -113,77 +131,35 @@ class TestSearchFormFactory(TestCase):
         super().setUp()
         self.factory = SearchFormFactory()
 
-    @patch("dbentry.search.forms.make_widget")
-    def test_formfield_for_dbfield_dal(self, make_widget_mock):
+    def test_get_formfield_form_class(self):
         """
-        Assert that formfield_for_dbfield attempts to create a dal widget for
-        many-to-one relations.
-        """
-        dbfield = Ausgabe._meta.get_field('magazin')
-        self.factory.formfield_for_dbfield(dbfield)
-        make_widget_mock.assert_called()
-        _args, kwargs = make_widget_mock.call_args
-        self.assertEqual(kwargs['model'], Magazin)
-        self.assertEqual(kwargs['multiple'], False)
-        self.assertEqual(kwargs['wrap'], False)
-        self.assertEqual(kwargs['can_add_related'], False)
-        self.assertEqual(kwargs['tabular'], False)
-
-    @patch("dbentry.search.forms.make_widget")
-    def test_formfield_for_dbfield_dal_m2m(self, make_widget_mock):
-        """
-        Assert that formfield_for_dbfield attempts to create a dal widget for
-        many-to-many relations.
-        """
-        dbfield = Artikel._meta.get_field('genre')
-        self.factory.formfield_for_dbfield(dbfield)
-        make_widget_mock.assert_called()
-        _args, kwargs = make_widget_mock.call_args
-        self.assertEqual(kwargs['model'], Genre)
-        self.assertEqual(kwargs['multiple'], True)
-        self.assertEqual(kwargs['wrap'], False)
-        self.assertEqual(kwargs['can_add_related'], False)
-        self.assertEqual(kwargs['tabular'], False)
-
-    @patch("dbentry.search.forms.make_widget")
-    def test_formfield_for_dbfield_dal_with_forward(self, make_widget_mock):
-        """Assert that forwarding declared for dal widgets is respected."""
-        dbfield = Ausgabe._meta.get_field('magazin')
-        self.factory.formfield_for_dbfield(dbfield, forward=['ausgabe'])
-        make_widget_mock.assert_called()
-        _args, kwargs = make_widget_mock.call_args
-        self.assertIn('forward', kwargs)
-        self.assertEqual(kwargs['forward'], ['ausgabe'])
-
-    def test_formfield_for_dbfield_form_class(self):
-        """
-        Assert that test_formfield_for_dbfield respects the formfield class
+        Assert that test_get_formfield respects the formfield class
         provided in the kwargs.
         """
         db_field = Ausgabe._meta.get_field('e_datum')
         self.assertIsInstance(
-            self.factory.formfield_for_dbfield(db_field, form_class=forms.CharField),
+            self.factory.get_formfield(db_field, form_class=forms.CharField),
             forms.CharField,
         )
 
-    def test_formfield_for_dbfield_fallback_form_class(self):
+    def test_get_formfield_fallback_form_class(self):
         """
-        Assert that formfield_for_dbfield creates a CharField formfield for
+        Assert that get_formfield creates a CharField formfield for
         fields that do not provide a formfield (such as AutoFields).
         """
         db_field = Ausgabe._meta.get_field('id')
         self.assertIsInstance(
-            self.factory.formfield_for_dbfield(db_field),
+            self.factory.get_formfield(db_field),
             forms.CharField
         )
 
-    def test_formfield_for_dbfield_adds_empty_choice(self):
+    def test_get_formfield_adds_empty_choice(self):
         """
-        Assert that formfield_for_dbfield adds an 'empty' choice for formfields
+        Assert that get_formfield adds an 'empty' choice for formfields
         with choices.
         """
         db_field = Ausgabe._meta.get_field('status')
-        formfield: ChoiceField = self.factory.formfield_for_dbfield(db_field)
+        formfield: ChoiceField = self.factory.get_formfield(db_field)
         self.assertIn(BLANK_CHOICE_DASH[0], formfield.choices)
 
     def test_get_search_form_ignores_invalid_fields(self):
@@ -203,29 +179,9 @@ class TestSearchFormFactory(TestCase):
                 else:
                     self.assertNotIn(field_name, form_fields)
 
-    def test_get_search_form_takes_formfield_callback(self):
-        """
-        Assert that custom formfield_callback can be passed to the factory
-        and that it uses that callback to create formfields for db fields.
-        """
-
-        def callback(_dbfield, **kwargs):
-            return forms.DateField(**kwargs)
-
-        form_class = self.factory.get_search_form(
-            model=Artikel, formfield_callback=callback, fields=['seite']
-        )
-        self.assertIn('seite', form_class.base_fields)
-        self.assertIsInstance(form_class.base_fields['seite'], forms.DateField)
-
-    def test_get_search_form_callback_not_callable(self):
-        """Assert that an exception is raised if the callback that is not callable."""
-        with self.assertRaises(TypeError):
-            self.factory(_models.Artikel, formfield_callback=1)
-
     def test_get_search_form_formfield_kwargs(self):
         """Assert that get_search_form passes on kwargs for the formfield."""
-        callback = Mock(return_value=forms.CharField())
+        get_formfield_mock = Mock(return_value=forms.CharField())
         formfield_kwargs = {
             'widgets': {'seite': forms.TextInput},
             'localized_fields': ['seite'],
@@ -233,26 +189,22 @@ class TestSearchFormFactory(TestCase):
             'help_texts': {'seite': 'Please enter a page number.'},
             'error_messages': {'seite': 'You did not enter a page number.'},
             'field_classes': {'seite': forms.CharField},
-            'forwards': {'seite': 'Forward.'},
-            'tabular': {'seite': True},
         }
-        # Have the factory process the PK field 'id' before 'seite, so that
-        # callback.call_args returns the kwargs for 'seite'.
-        self.factory.get_search_form(
-            model=Artikel, formfield_callback=callback, fields=['id', 'seite'],
-            **formfield_kwargs,
-        )
-        callback.assert_called()
-        _args, kwargs = callback.call_args
+        # The factory will create a formfield for the primary key last, unless
+        # the primary key field is included in the fields.
+        # Mock.call_args returns the arguments of the *last* call, so make sure
+        # that the last call was for 'seite' by including the PK field.
+        with patch.object(self.factory, "get_formfield", get_formfield_mock):
+            self.factory.get_search_form(model=Artikel, fields=['id', 'seite'], **formfield_kwargs)
+        get_formfield_mock.assert_called()
+        _args, kwargs = get_formfield_mock.call_args
         self.assertIn('widget', kwargs)
         self.assertEqual(kwargs['widget'], forms.TextInput)
         self.assertEqual(kwargs['localize'], True)
         self.assertEqual(kwargs['label'], 'Seiten')
         self.assertEqual(kwargs['help_text'], 'Please enter a page number.')
         self.assertEqual(kwargs['error_messages'], 'You did not enter a page number.')
-        self.assertEqual(kwargs['form_class'], forms.CharField)
-        self.assertEqual(kwargs['forward'], 'Forward.')
-        self.assertEqual(kwargs['tabular'], True)
+        self.assertEqual(kwargs['formfield_class'], forms.CharField)
 
     def test_get_search_form_range_lookup(self):
         """
@@ -294,6 +246,133 @@ class TestSearchFormFactory(TestCase):
         # widget created for the relational field.
         self.assertNotIsInstance(form_class.base_fields['id__in'].widget, forms.Select)
         self.assertIsInstance(form_class.base_fields['id__in'].widget, forms.TextInput)
+
+
+@patch("dbentry.search.forms.make_dal_widget")
+class TestDALSearchFormFactory(TestCase):
+
+    def setUp(self):
+        self.factory = DALSearchFormFactory()
+
+    def test_get_widget_dal(self, make_widget_mock):
+        """
+        Assert that get_widget calls the dal widget factory with the expected
+        arguments for a many-to-one relation field.
+        """
+        dbfield = Ausgabe._meta.get_field('magazin')
+        self.factory.get_widget(dbfield, 'magazin')
+        make_widget_mock.assert_called()
+        _args, kwargs = make_widget_mock.call_args
+        self.assertEqual(kwargs['model'], Magazin)
+        self.assertEqual(kwargs['multiple'], False)
+        self.assertEqual(kwargs['wrap'], False)
+        self.assertEqual(kwargs['can_add_related'], False)
+        self.assertEqual(kwargs['tabular'], False)
+
+    def test_get_widget_dal_m2m(self, make_widget_mock):
+        """
+        Assert that get_widget calls the dal widget factory with the expected
+        arguments for a many-to-many relation field.
+        """
+        dbfield = Artikel._meta.get_field('genre')
+        self.factory.get_widget(dbfield, 'genre')
+        make_widget_mock.assert_called()
+        _args, kwargs = make_widget_mock.call_args
+        self.assertEqual(kwargs['model'], Genre)
+        self.assertEqual(kwargs['multiple'], True)
+        self.assertEqual(kwargs['wrap'], False)
+        self.assertEqual(kwargs['can_add_related'], False)
+        self.assertEqual(kwargs['tabular'], False)
+
+    def test_get_widget_dal_with_forward(self, make_widget_mock):
+        """Assert that declared dal forward is passed to the widget factory."""
+        dbfield = Ausgabe._meta.get_field('magazin')
+        self.factory.get_widget(dbfield, 'ausgabe', forwards={'ausgabe': 'foo'})
+        make_widget_mock.assert_called()
+        _args, kwargs = make_widget_mock.call_args
+        self.assertIn('forward', kwargs)
+        self.assertEqual(kwargs['forward'], 'foo')
+
+    def test_get_widget_not_relation_field(self, make_widget_mock):
+        """Assert that the widget factory is only called for relational fields."""
+        for field in (Ausgabe._meta.get_field('magazin'), Ausgabe._meta.get_field('name')):
+            with self.subTest(is_relation=field.is_relation):
+                self.factory.get_widget(field, field.name)
+                if field.is_relation:
+                    make_widget_mock.assert_called()
+                else:
+                    make_widget_mock.assert_not_called()
+                make_widget_mock.reset_mock()
+
+
+@patch("dbentry.search.forms.make_mizselect_widget")
+class TestMIZSelectSearchFormFactory(TestCase):
+
+    def setUp(self):
+        self.factory = MIZSelectSearchFormFactory()
+
+    def test_get_widget(self, make_widget_mock):
+        """
+        Assert that get_widget calls the mizselect widget factory with the
+        expected arguments.
+        """
+        self.factory.get_widget(Ausgabe._meta.get_field('magazin'), 'magazin')
+        make_widget_mock.assert_called()
+        _args, kwargs = make_widget_mock.call_args
+        self.assertEqual(kwargs['model'], Magazin)
+        self.assertEqual(kwargs['can_add'], False)
+        self.assertEqual(kwargs['can_edit'], False)
+
+    def test_get_widget_multiple(self, make_widget_mock):
+        """
+        Assert that the mizselect widget factory is called with expected value
+        for the argument 'multiple'.
+        """
+        for dbfield, expected in [(Artikel._meta.get_field('genre'), True),
+                                  (Ausgabe._meta.get_field('magazin'), False)]:
+            with self.subTest(dbfield=dbfield, is_m2m=expected):
+                self.factory.get_widget(dbfield, dbfield.name)
+                make_widget_mock.assert_called()
+                _args, kwargs = make_widget_mock.call_args
+                self.assertEqual(kwargs['multiple'], expected)
+
+    def test_get_widget_tabular(self, make_widget_mock):
+        """
+        Assert that the mizselect widget factory is called with expected value
+        for the argument 'tabular'.
+        """
+        for tabular_arg, expected in [(['magazin'], True), ([], False), (['foo'], False)]:
+            with self.subTest(tabular_arg=tabular_arg):
+                self.factory.get_widget(Ausgabe._meta.get_field('magazin'), 'magazin', tabular=tabular_arg)
+                make_widget_mock.assert_called()
+                _args, kwargs = make_widget_mock.call_args
+                self.assertEqual(kwargs['tabular'], expected)
+
+    def test_get_widget_filter_by(self, make_widget_mock):
+        """
+        Assert that the mizselect widget factory is called with expected value
+        for the argument 'filter_by'.
+        """
+        for filter_by_arg in [{'magazin': 'filter_by_arg'}, {}, {'foo': 'bar'}]:
+            with self.subTest(filter_by_arg=filter_by_arg):
+                self.factory.get_widget(Ausgabe._meta.get_field('magazin'), 'magazin', filter_by=filter_by_arg)
+                make_widget_mock.assert_called()
+                _args, kwargs = make_widget_mock.call_args
+                if 'magazin' in filter_by_arg:
+                    self.assertEqual(kwargs['filter_by'], 'filter_by_arg')
+                else:
+                    self.assertNotIn('filter_by', kwargs)
+
+    def test_get_widget_not_relation_field(self, make_widget_mock):
+        """Assert that the widget factory is only called for relational fields."""
+        for field in (Ausgabe._meta.get_field('magazin'), Ausgabe._meta.get_field('name')):
+            with self.subTest(is_relation=field.is_relation):
+                self.factory.get_widget(field, field.name)
+                if field.is_relation:
+                    make_widget_mock.assert_called()
+                else:
+                    make_widget_mock.assert_not_called()
+                make_widget_mock.reset_mock()
 
 
 class TestSearchForm(TestCase):

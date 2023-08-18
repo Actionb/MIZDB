@@ -1,4 +1,6 @@
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import models
+from django.db.models import F
 
 from dbentry.base.models import BaseM2MModel, BaseModel, ComputedNameModel
 
@@ -38,11 +40,19 @@ class Musiker(models.Model):
         verbose_name = verbose_name_plural = 'Musiker'
 
 
-class Band(models.Model):
+class Band(BaseModel):
     band_name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.band_name
+
+    @staticmethod
+    def get_overview_annotations():
+        return {
+            'alias_list': ArrayAgg(
+                'bandalias__alias', distinct=True, ordering='bandalias__alias'
+            ),
+        }
 
     class Meta:
         verbose_name = 'Band'
@@ -67,6 +77,10 @@ class MusikerAudioM2M(BaseM2MModel):
         unique_together = ('audio', 'musiker')
 
 
+class AudioReihe(BaseModel):
+    name = models.CharField(max_length=50)
+
+
 class Audio(BaseModel):
     titel = models.CharField(max_length=100)
     other_title = models.CharField(max_length=100, blank=True)
@@ -75,6 +89,8 @@ class Audio(BaseModel):
     beschreibung = models.TextField(blank=True)
     bemerkungen = models.TextField(blank=True)
 
+    reihe = models.ForeignKey("test_base.AudioReihe", on_delete=models.SET_NULL, blank=True, null=True)
+
     musiker = models.ManyToManyField('test_base.Musiker', through=MusikerAudioM2M)
     band = models.ManyToManyField('test_base.Band')
 
@@ -82,6 +98,12 @@ class Audio(BaseModel):
 
     name_field = 'titel'
     exclude_from_str = ['beschreibung', 'bemerkungen']
+    select_related = ("reihe",)
+    prefetch_related = ("musiker",)
+
+    @staticmethod
+    def get_overview_annotations():
+        return {"foo": F("titel"), "bar": F("titel")}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Audio'

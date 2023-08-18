@@ -1,31 +1,42 @@
 """Settings shared by both production and development environments."""
+import os
 from pathlib import Path
-
-import yaml
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # BASE_DIR/MIZDB project dir/settings dir/__file__
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-with open(BASE_DIR / 'config.yaml', encoding='utf-8') as f:
-    config = yaml.safe_load(f)
+# Read secrets from files
+try:
+    with open(BASE_DIR / ".secrets" / ".passwd") as f:
+        password = f.readline().strip()
+except FileNotFoundError as e:
+    raise FileNotFoundError(
+        "No database password file found. Create a file called '.passwd' "
+        "in the '.secrets' subdirectory that contains the database password.\n"
+        "HINT: run setup.sh"
+    ) from e
 
-SECRET_KEY = config.get('SECRET_KEY', '')
-
-# NOTE: The ServerName declared in the VirtualHost
-#   /etc/apache2/sites-available/mizdb.conf must be included:
-ALLOWED_HOSTS = config.get('ALLOWED_HOSTS', [])
+try:
+    with open(BASE_DIR / ".secrets" / ".key") as f:
+        SECRET_KEY = f.readline().strip()
+except FileNotFoundError as e:
+    raise FileNotFoundError(
+        "No secret key file found. Create a file called '.key' "
+        "in the '.secrets' subdirectory that contains the secret key.\n"
+        "HINT: run setup.sh"
+    ) from e
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 DATABASES = {
-    'default': {
-        'ENGINE': 'dbentry.fts.db',
-        'NAME': config.get('DATABASE_NAME', 'mizdb'),
-        'USER': config.get('DATABASE_USER', ''),
-        'PASSWORD': config.get('DATABASE_PASSWORD', ''),
-        'HOST': config.get('DATABASE_HOST', 'localhost'),
-        'PORT': config.get('DATABASE_PORT', ''),
+    "default": {
+        "ENGINE": "dbentry.fts.db",
+        "NAME": os.environ.get("DB_NAME", "mizdb"),
+        "USER": os.environ.get("DB_USER", "mizdb_user"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", 5432),
+        "PASSWORD": password,
     }
 }
 
@@ -33,7 +44,6 @@ DATABASES = {
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # Application definition
-
 INSTALLED_APPS = [
     'jquery_351',
     'dbentry.apps.DbentryConfig',
@@ -47,7 +57,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'formtools',
     'django.contrib.postgres',
-    'django_admin_logs'
+    'django_admin_logs',
+    'mizdb_tomselect',
+    'mod_wsgi.server'
 ]
 
 MIDDLEWARE = [
@@ -83,7 +95,6 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -117,10 +128,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-
 STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = 'static/'
 
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -132,8 +142,3 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 # Avoid having the session cookie expire during work hours by adding 12 hours
 # to the default cookie age (2 weeks).
 SESSION_COOKIE_AGE = (14 * 24 + 12) * 60 * 60
-
-# URL to the wiki.
-# That URL is displayed in the header on each admin page.
-# See: sites.MIZAdminSite.each_context
-WIKI_URL = config.get('WIKI_URL', '')
