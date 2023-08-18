@@ -1864,3 +1864,7 @@ class PrintMedia(BaseModel):
         verbose_name = "Druckerzeugnis"
         verbose_name_plural = "Druckerzeugnisse"
         ordering = ['titel']
+
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {'jahr_list': string_list('jahre__jahr')}

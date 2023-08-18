@@ -1725,33 +1725,36 @@ class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
     @display(description="Datenbank-Darstellung")
     def change_message_raw(self, obj: LogEntry) -> str:
         return obj.change_message
-    change_message_raw.short_description = 'Datenbank-Darstellung'  # type: ignore[attr-defined]
 
 
 @admin.register(_models.PrintMedia, site=miz_site)
 class PrintMediaAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.PrintMedia.genre.through
+
     class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.PrintMedia.schlagwort.through
+
     class JahrInLine(BaseTabularInline):  # noqa
         model = _models.PrintMediaYear
+
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.PrintMediaURL
+
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.PrintMedia.spielort.through
         verbose_model = _models.Spielort
         tabular_autocomplete = ['spielort']
+
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.PrintMedia.veranstaltung.through
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
     actions = [_actions.merge_records, _actions.change_bestand]
-    # form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
-    list_display = ['titel', 'typ', 'zusammenfassung', 'jahr_string']
+    list_display = ['titel', 'typ', 'zusammenfassung', 'jahr_list']
     fieldsets = [
         (None, {'fields': ['titel', 'typ', 'zusammenfassung']}),
         ('Anmerkungen', {'fields': ['anmerkungen'], 'classes': ['collapse', 'collapsed']})
@@ -1763,21 +1766,10 @@ class PrintMediaAdmin(MIZModelAdmin):
     }
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        # Add the annotation necessary for the proper ordering:
-        return super().get_queryset(request).annotate(jahr_min=Min('jahre__jahr')).order_by(
-            'titel', 'jahr_min', 'zusammenfassung'
-        )
+        return super().get_queryset(request).order_by('titel', 'jahr_list', 'zusammenfassung')
 
-    def get_changelist_annotations(self) -> dict:
-        return {
-            'jahr_string': Func(
-                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
-                output_field=CharField()
-            ),
-        }
-
-    def jahr_string(self, obj: _models.BaseBrochure) -> str:
-        return obj.jahr_string  # added by annotations  # noqa
-    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
-    jahr_string.admin_order_field = 'jahr_min'  # type: ignore[attr-defined]  # noqa
+    @display(description="Jahre", ordering="jahr_list")
+    def jahr_list(self, obj: _models.PrintMedia) -> str:
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.jahr_list
