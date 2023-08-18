@@ -36,3 +36,6 @@ levenshtein
 
 # TomSelect autocomplete
 mizdb_tomselect
+
+# wsgi
+mod_wsgi

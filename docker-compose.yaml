@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres
+    container_name: mizdb-postgres
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db:/mizdb
+    environment:
+      POSTGRES_DB: mizdb
+      POSTGRES_USER: mizdb_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    restart: always
+    secrets:
+      - db_password
+
+  web:
+    build: .
+    container_name: mizdb-app
+    volumes:
+      - .:/mizdb
+      - ./logs:/var/log/mizdb
+    env_file:
+      - .env
+    ports:
+      - 80:8000
+    depends_on:
+      - db
+    restart: always
+    entrypoint: ["/mizdb/docker-entrypoint.sh"]
+    command: ["/etc/mizdb-server/apachectl", "start", "-DFOREGROUND"]
+
+secrets:
+  db_password:
+    file: .secrets/.passwd

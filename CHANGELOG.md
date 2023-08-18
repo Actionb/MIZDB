@@ -2,6 +2,13 @@
 
 ## [unreleased]
 
+### Added
+
+- Docker support
+  - added new installation methods
+  - added management utility script `mizdb.sh` 
+  - reworked handling of secret files and database connection parameters
+
 ### Changed
 
 - refactored MergeView to use django-formtool's SessionWizardView directly
