@@ -107,3 +107,17 @@ class TestMakeWidget(MIZTestCase):
                     self.assertTrue(
                         widget.add_url.startswith(f"{self.model._meta.app_label}_{self.model._meta.model_name}")
                     )
+
+    def test_make_widget_sets_tabular_when_extra_columns_given(self):
+        """
+        Assert that make_widget returns a tabular widget when the widget kwargs
+        contain extra_columns.
+        """
+        for widget_kwargs in ({}, {"extra_columns": {}}):
+            has_extra = "extra_columns" in widget_kwargs
+            with self.subTest(has_extra=has_extra):
+                widget = make_widget(self.model, **widget_kwargs)
+                if has_extra:
+                    self.assertIsInstance(widget, MIZSelectTabular)
+                else:
+                    self.assertIsInstance(widget, MIZSelect)
