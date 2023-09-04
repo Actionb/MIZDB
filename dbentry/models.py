@@ -902,7 +902,6 @@ class Buch(BaseModel):
         return {
             'autor_list': string_list('autor___name'),
             'schlagwort_list': string_list('schlagwort__schlagwort'),
-            'genre_list': string_list('genre__genre'),
             'kuenstler_list': limit(
                 array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name'))
             ),

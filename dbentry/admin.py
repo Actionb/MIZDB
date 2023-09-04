@@ -717,10 +717,7 @@ class BuchAdmin(MIZModelAdmin):
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, HerausgeberInLine, VerlagInLine, BestandInLine
     ]
-    list_display = [
-        'titel', 'seitenumfang', 'autoren_string', 'kuenstler_list',
-        'schlagwort_string', 'genre_string'
-    ]
+    list_display = ['titel', 'seitenumfang', 'autoren_string', 'kuenstler_list', 'schlagwort_string']
     search_form_kwargs = {
         'fields': [
             'autor', 'musiker', 'band', 'schlagwort', 'genre', 'ort',
@@ -744,12 +741,6 @@ class BuchAdmin(MIZModelAdmin):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.schlagwort_list or self.get_empty_value_display()
-
-    @display(description="Genres", ordering="genre_list")
-    def genre_string(self, obj: _models.Buch) -> str:
-        # noinspection PyUnresolvedReferences
-        # (added by annotations)
-        return obj.genre_list or self.get_empty_value_display()
 
     @display(description="Künstler")
     def kuenstler_list(self, obj: _models.Buch) -> str:
