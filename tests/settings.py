@@ -84,9 +84,6 @@ DATABASES = {
         "PORT": os.environ.get("DB_PORT", 5432),
         "PASSWORD": password,
     },
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3'
-    }
 }
 
 DEBUG = True

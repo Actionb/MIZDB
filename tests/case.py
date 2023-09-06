@@ -3,6 +3,7 @@ import sys
 import warnings
 from urllib.parse import unquote
 
+import pytest
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
@@ -51,6 +52,7 @@ class MIZTestCase(TestCase):
             i += 1
 
 
+@pytest.mark.django_db
 class DataTestCase(MIZTestCase):
     model = None
     queryset = None
@@ -60,6 +62,7 @@ class DataTestCase(MIZTestCase):
         self.queryset = self.model.objects.all()
 
 
+@pytest.mark.django_db
 class UserTestCase(MIZTestCase):
     super_user = None
     staff_user = None
