@@ -843,8 +843,6 @@ class TestModelBuch(MIZTestCase):
         self.assertIsInstance(annotations['autor_list'], Func)
         self.assertIn('schlagwort_list', annotations)
         self.assertIsInstance(annotations['schlagwort_list'], Func)
-        self.assertIn('genre_list', annotations)
-        self.assertIsInstance(annotations['genre_list'], Func)
         self.assertIn('kuenstler_list', annotations)
         self.assertIsInstance(annotations['kuenstler_list'], Func)
 

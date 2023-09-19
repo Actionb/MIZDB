@@ -245,7 +245,7 @@ class Autor(ComputedNameModel):
 
     name_composing_fields = ['person___name', 'kuerzel']
     related_search_vectors = [('person___fts', SIMPLE)]
-    select_related = ["person"]
+    select_related = ("person",)
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'
@@ -338,7 +338,7 @@ class Ausgabe(ComputedNameModel):
         'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
     # TODO: magazin___fts as a related_search_vector?
-    select_related = ["magazin"]
+    select_related = ("magazin",)
 
     objects = AusgabeQuerySet.as_manager()
 
@@ -618,7 +618,7 @@ class Verlag(BaseModel):
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
-    select_related = ["sitz"]
+    select_related = ("sitz",)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
@@ -643,7 +643,7 @@ class Ort(ComputedNameModel):
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
     ]
-    select_related = ["land", "bland"]
+    select_related = ("land", "bland")
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ort'
@@ -810,7 +810,7 @@ class Artikel(BaseModel):
     )
 
     name_field = 'schlagzeile'
-    select_related = ["ausgabe", "ausgabe__magazin"]
+    select_related = ("ausgabe", "ausgabe__magazin")
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
@@ -902,7 +902,6 @@ class Buch(BaseModel):
         return {
             'autor_list': string_list('autor___name'),
             'schlagwort_list': string_list('schlagwort__schlagwort'),
-            'genre_list': string_list('genre__genre'),
             'kuenstler_list': limit(
                 array_to_string(to_array('band__band_name'), to_array('musiker__kuenstler_name'))
             ),
@@ -1006,7 +1005,7 @@ class Audio(BaseModel):
     )
 
     name_field = 'titel'
-    select_related = ["medium"]
+    select_related = ("medium",)
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1206,7 +1205,7 @@ class Spielort(BaseModel):
         ('spielortalias___fts', SIMPLE),
         ('ort___fts', SIMPLE)
     ]
-    select_related = ["ort"]
+    select_related = ("ort",)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -1290,7 +1289,7 @@ class Veranstaltung(BaseModel):
         ('spielort___fts', SIMPLE),
         ('spielort__ort___fts', SIMPLE)
     ]
-    select_related = ["spielort", "reihe"]
+    select_related = ("spielort", "reihe")
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
@@ -1388,7 +1387,7 @@ class Video(BaseModel):
     )
 
     name_field = 'titel'
-    select_related = ["medium"]
+    select_related = ("medium",)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
@@ -1436,7 +1435,7 @@ class Provenienz(BaseModel):
 
     name_field = 'geber'
     related_search_vectors = [('geber___fts', SIMPLE)]
-    select_related = ["geber"]
+    select_related = ("geber",)
 
     class Meta(BaseModel.Meta):
         ordering = ['geber', 'typ']
@@ -1535,7 +1534,7 @@ class Bestand(BaseModel):
 
     _fts = SearchVectorField(columns=[WeightedColumn('anmerkungen', 'A', STEMMING)])
 
-    select_related = ["lagerort", "provenienz__geber"]
+    select_related = ("lagerort", "provenienz__geber")
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'

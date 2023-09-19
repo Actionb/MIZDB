@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from unittest.mock import DEFAULT, Mock, PropertyMock, patch
 
 from django import forms
@@ -644,6 +645,12 @@ class TestMergeViewAusgabe(ActionViewTestCase):
     model = _models.Ausgabe
     model_admin_class = _admin.AusgabenAdmin
 
+    def get_view(self, *args, **kwargs):
+        view = super().get_view(*args, **kwargs)
+        # Turn form_list into an OrderedDict like WizardView.get_initkwargs does
+        view.form_list = OrderedDict(view.form_list)
+        return view
+
     @classmethod
     def setUpTestData(cls):
         mag = make(_models.Magazin, magazin_name='Testmagazin')
@@ -804,11 +811,10 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             sorted(list(form_kwargs['choices'][formfield_name].values_list('pk', flat=True)))
         )
 
-    @patch.object(WizardView, 'get_form_kwargs', return_value={})
-    def test_get_form_kwargs_conflict_step(self, _super_mock):
+    def test_get_form_kwargs_conflict_step(self):
         """
-        Assert that get_form_kwargs adds the expected form data for the conflict
-        resolution step.
+        Assert that get_form_kwargs adds the 'choices' form kwarg for the
+        conflict resolution step.
         """
         view = self.get_view(
             queryset=self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]),
@@ -816,15 +822,9 @@ class TestMergeViewAusgabe(ActionViewTestCase):
             # (WizardView.get_initkwargs turns the form_list list into an OrderedDict)
             form_list={MergeView.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
         )
-        # Conflict for 'jahrgang':
+        # Create a conflict for 'jahrgang':
         view._updates = {'jahrgang': ['1', '2'], 'beschreibung': ['Test']}
         form_kwargs = view.get_form_kwargs(step=MergeView.CONFLICT_RESOLUTION_STEP)
-        self.assertIn('data', form_kwargs)
-        expected = {
-            '1-TOTAL_FORMS': 1, '1-MAX_NUM_FORMS': '', '1-0-original_fld_name': 'jahrgang',
-            '1-INITIAL_FORMS': '0', '1-0-verbose_fld_name': 'Jahrgang'
-        }
-        self.assertEqual(form_kwargs['data'], expected)
         self.assertIn('form_kwargs', form_kwargs)
         self.assertIn('choices', form_kwargs['form_kwargs'])
         self.assertEqual(
@@ -1026,12 +1026,35 @@ class TestMergeViewAusgabe(ActionViewTestCase):
         }
         with patch('dbentry.actions.views.merge_records') as merge_mock:
             self.post_response(self.changelist_path, data=request_data, user=self.super_user)
+        merge_mock.assert_called()
         args, _kwargs = merge_mock.call_args
-        # Not interested in the first and second argument. (primary object and queryset)
         self.assertFalse(
             args[2], msg="Third argument 'update_data' should be empty if expand_primary is False."
         )
         self.assertFalse(args[3], msg="Fourth argument 'expand' should be False.")
+
+    def test_conflict_resolution_form(self):
+        """
+        Assert that the form for the conflict resolution has the expected
+        fields, labels and choices.
+        """
+        request_data = {
+            'action': 'merge_records',
+            helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk],
+            # Management form:
+            'merge_view-current_step': 0,
+            # Form data:
+            '0-primary': self.obj1.pk,
+            '0-expand_primary': True
+        }
+        response = self.post_response(self.changelist_path, data=request_data)
+        formset = response.context['wizard']['form']
+        self.assertEqual(len(formset.forms), 1)
+        form = formset.forms[0]
+        self.assertIn('posvals', form.fields)
+        posvals = form.fields['posvals']
+        self.assertEqual(posvals.choices, [(0, '1'), (1, '2')])
+        self.assertEqual(posvals.label, "Mögliche Werte für Jahrgang:")
 
 
 class TestMergeViewArtikel(ActionViewTestCase):

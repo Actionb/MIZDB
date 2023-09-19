@@ -8,10 +8,10 @@ from dbentry import models as _models
 
 DEFAULTS = {
     _models.Ausgabe: {
-       "url": "autocomplete_ausgabe",
-       "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
-       "filter_by": ("ausgabe__magazin", "magazin_id"),
-       "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
+        "url": "autocomplete_ausgabe",
+        "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
+        "filter_by": ("ausgabe__magazin", "magazin_id"),
+        "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
     },
     _models.Autor: {"url": "autocomplete_autor", "create_field": "__any__"},
     _models.Band: {"extra_columns": {"alias_list": "Aliase"}},
@@ -47,9 +47,12 @@ def make_widget(
         kwargs: additional keyword arguments for the widget class constructor.
           The arguments override those in dbentry.autocomplete.widgets.DEFAULTS.
     """
-    if "widget_class" in kwargs:
-        widget_class = kwargs.pop("widget_class")
-    else:
+    widget_class = kwargs.pop("widget_class", None)
+    widget_opts = {"model": model, "attrs": {}, **DEFAULTS.get(model, {}), **kwargs}
+    if "extra_columns" in widget_opts:
+        tabular = True
+
+    if widget_class is None:
         if not tabular and not multiple:
             widget_class = MIZSelect
         elif tabular and not multiple:
@@ -59,7 +62,6 @@ def make_widget(
         else:
             widget_class = MIZSelectMultiple
 
-    widget_opts = {"model": model, "attrs": {}, **DEFAULTS.get(model, {}), **kwargs}
     if "create_field" not in widget_opts and getattr(model, "create_field", None):
         widget_opts["create_field"] = getattr(model, "create_field")
 

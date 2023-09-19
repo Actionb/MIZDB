@@ -775,8 +775,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertIsInstance(annotations['autor_list'], Func)
         self.assertIn('schlagwort_list', annotations)
         self.assertIsInstance(annotations['schlagwort_list'], Func)
-        self.assertIn('genre_list', annotations)
-        self.assertIsInstance(annotations['genre_list'], Func)
         self.assertIn('kuenstler_list', annotations)
         self.assertIsInstance(annotations['kuenstler_list'], Func)
 
@@ -790,10 +788,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_schlagwort_string(self):
         obj = self.get_annotated_model_obj(self.obj1)
         self.assertEqual(self.model_admin.schlagwort_string(obj), 'Schlagwort1, Schlagwort2')
-
-    def test_genre_string(self):
-        obj = self.get_annotated_model_obj(self.obj1)
-        self.assertEqual(self.model_admin.genre_string(obj), 'Testgenre1, Testgenre2')
 
     def test_kuenstler_list(self):
         obj = self.get_annotated_model_obj(self.obj1)

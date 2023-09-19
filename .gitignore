@@ -1,8 +1,10 @@
 /media/
 /static/
-/config.yaml
-/.vscode
-/.idea
+/.vscode/
+/.idea/
+/db/data/
+/.secrets/
+/dumps/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

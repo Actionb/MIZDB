@@ -1,75 +1,249 @@
-# Installation (Debian)
-## Installationsscript
-MIZDB unter `/srv/archiv/MIZDB` installieren:
+# MIZDB - Musikarchiv Datenbank
+
+Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
+
+<!-- TOC -->
+
+* [Installation Debian (Docker)](#installation-debian-docker)
+    * [Per script](#per-script)
+    * [Manuell](#manuell)
+* [Verwaltung](#verwaltung)
+    * [Docker Container & Webserver](#docker-container--webserver)
+    * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pgrestore)
+    * [Backup erstellen (pg_dump)](#backup-erstellen-pgdump)
+    * [Update](#update)
+    * [Django Shell & psql](#django-shell--psql)
+    * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
+* [Installation (ohne Docker)](#installation-ohne-docker)
+
+<!-- TOC -->
+
+# Installation Debian (Docker)
+
+### Per script
+
+Das Script installiert Docker und ladet MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
+Beim Aufruf des Scripts kann eine Backup-Datei der Datenbank übergeben werden (unten: `database_backup`), worauf die
+Datenbank in der neuen Installation sofort wiederhergestellt wird.
+
+```shell
+sudo apt update -qq && sudo apt install -qq -y curl
+curl -fsSL https://gist.github.com/Actionb/76babf08b35acc0f94a679e63d979d3a -o get-mizdb.sh
+sh get-mizdb.sh database_backup
 ```
-sudo mkdir /srv/archiv && sudo chown $USER /srv/archiv
-sudo apt update && sudo apt install git
-git clone https://github.com/Actionb/MIZDB /srv/archiv/MIZDB
-cd /srv/archiv/MIZDB && python3 -m install
+
+### Manuell
+
+- Docker installieren:  https://docs.docker.com/engine/install/
+- Docker Post-Install Schritte durchführen: https://docs.docker.com/engine/install/linux-postinstall/
+- MIZDB installieren:
+
+  ```shell
+  # Git installieren:
+  sudo apt update -qq 
+  sudo apt install -y git
+  # Repository holen:
+  git clone https://github.com/Actionb/MIZDB 
+  cd MIZDB
+  # Konfigurieren und Docker Umgebung vorbereiten:
+  sh setup.sh
+  # Docker Container erstellen und starten: 
+  docker compose up -d
+  # Statische Dateien sammeln:
+  docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
+  # Log-Verzeichnis Besitzer einrichten:
+  docker exec -i mizdb-app chown -R www-data:www-data logs
+  ```
+
+Wenn eine Backup-Datei (hier: `database_backup`) vorhanden ist, kann die Datenbank wiederhergestellt werden:
+
+```shell
+bash mizdb.sh restore database_backup
 ```
-Für eine Übersicht der verfügbaren Parameter `python3 -m install --help` ausführen.
 
-## Manuelle Installation
-###  1. Erforderliche Pakete installieren
+Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
+`bash mizdb.sh shell` und dann `python manage.py migrate`
 
-Paketquellen aktualisieren:  
-`sudo apt update`
+Für Entwicklung: füge `DJANGO_DEVELOPMENT=1` zu den Umgebungsvariablen in der Datei `.env` hinzu.
 
-Danach Apache2, diverse Python3 & PostgreSQL Pakete, git Versionskontrolle installieren:  
-`sudo apt install apache2 apache2-dev python3-dev python3-venv python3-pip postgresql-contrib libpq-dev git`
+# Verwaltung
 
+Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeichnis zur Verfügung:
+
+```shell
+cd MIZDB_VERZEICHNIS && bash mizdb.sh help
+```
+
+Wurde MIZDB mithilfe [des Scripts](#per-script) erstellt, so steht systemweit der Befehl `mizdb` zu Verfügung:
+
+```shell
+mizdb help
+```
+
+Dieser kann anstelle von `bash mizdb.sh` verwendet werden (also z.B. `mizdb reload` anstelle
+von `bash mizdb.sh reload`).
+
+### Docker Container & Webserver
+
+[Container starten](https://docs.docker.com/engine/reference/commandline/compose_up/): `bash mizdb.sh start`  
+[Container stoppen](https://docs.docker.com/engine/reference/commandline/compose_down/): `bash mizdb.sh stop`  
+[Container neustarten](https://docs.docker.com/engine/reference/commandline/restart/): `bash mizdb.sh restart`  
+[Webserver neuladen](https://httpd.apache.org/docs/current/stopping.html#graceful): `bash mizdb.sh reload`
+
+Mit [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) `docker ps` kann der Zustand der Container
+ermittelt werden.  
+Der Name des Containers der App ist `mizdb-app` und der Name des Containers der PostgreSQL Datenbank
+ist `mizdb-postgres`.
+
+### Datenbank wiederherstellen ([pg_restore](https://www.postgresql.org/docs/current/app-pgrestore.html))
+
+Um die Daten der Datenbank aus einer Backup-Datei wiederherzustellen, benutze:
+
+```shell
+bash mizdb.sh restore backup_datei 
+```
+
+### Backup erstellen ([pg_dump](https://www.postgresql.org/docs/current/app-pgdump.html))
+
+Um eine Backup-Datei zu erstellen, benutze:
+
+```shell
+bash mizdb.sh dump backup_datei
+```
+
+Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis `MIZDB/dumps` erstellt.
+
+### Update
+
+Um die Anwendung zu aktualisieren, benutze:
+
+```shell
+bash mizdb.sh update
+```
+
+Um die Änderungen für die Benutzer sichtbar zu machen, lade den Webserver neu:
+
+```shell
+bash mizdb.sh reload
+```
+
+`mizdb.sh update` führt `git pull` aus, um den lokalen Branch auf den Stand des Upstream-Branches zu bringen.
+Anschließend werden die statischen Dateien gesammelt und ein Django Systemcheck ausgeführt.
+
+### Tests ausführen
+
+Um einen Testlauf des Codes zu starten, benutze:
+
+```shell
+bash mizdb.sh test
+```
+
+### Django Shell & psql
+
+Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:  
+`bash mizdb shell` und dann `python manage.py shell`
+
+Um das interaktive PostgreSQL Terminal zu öffnen:  
+`bash mizdb dbshell` und dann `psql --user=$POSTGRES_USER $POSTGRES_DB`
+
+### Webserver Einhängepunkt ändern
+
+Standardmäßig ist die Seite der Datenbank unter `http://<ServerName>/miz` erreichbar, d.h. der Einhängepunkt ist `/miz`.
+Um einen anderen Einhängepunkt festzulegen, muss in der Datei `.env` der Wert für `MOUNT_POINT` geändert werden.  
+Anschließend müssen die Container gestoppt und neu gestartet werden:
+
+```shell
+bash mizdb.sh stop && bash mizdb.sh start
+```
+
+# Installation (ohne Docker)
+
+**Wichtig:** MIZDB sollte nicht im Home Verzeichnis erstellt werden, da der Webserver keinen Zugriff auf dieses
+Verzeichnis hat!
+Also zum Beispiel unter `/opt/` erstellen:
+
+```shell
+sudo mkdir -p /opt/archiv
+sudo chown $USER:$USER /opt/archiv
+cd /opt/archiv
+``` 
+
+### 1. Erforderliche Pakete installieren
+
+```shell
+# Paketquellen aktualisieren:  
+sudo apt update
+# Danach Apache2, diverse Python3 & PostgreSQL Pakete, git Versionskontrolle installieren:  
+sudo apt install apache2 apache2-dev python3-dev python3-venv python3-pip postgresql-contrib libpq-dev git
+```
 
 ### 2. Postgres Datenbank einrichten
 
-Datenbankbenutzer erstellen: `sudo -u postgres createuser mizdb -P --createdb`  
-Datenbank erzeugen: `sudo -u postgres createdb mizdb --owner=mizdb`
+```shell
+# Datenbankbenutzer erstellen:
+sudo -u postgres createuser mizdb_user -P --createdb  
+# Datenbank erzeugen:
+sudo -u postgres createdb mizdb --owner=mizdb_user
+```
 
-Benutzername (hier: `mizdb`) und das verwendete Passwort werden später noch einmal benötigt.
-
-
+Benutzername (hier: `mizdb_user`) und das verwendete Passwort werden später noch einmal benötigt.
 
 ### 3. MIZDB Dateien herunterladen und einrichten
 
-Eine virtuelle Umgebung erstellen:  `python3 -m venv ~/.venv/archiv`
+```shell
+# MIZDB git Repository klonen:
+git clone https://github.com/Actionb/MIZDB .
+# Virtuelle Umgebung erstellen und aktivieren:
+python3 -m venv venv && source venv/bin/activate
+# MIZDB einrichten:
+sh setup.sh
+```
 
-MIZDB git Repository klonen:  `git clone https://github.com/Actionb/MIZDB ~/archiv/MIZDB`
+Das Script `setup.sh` fragt nach einigen Daten für die Applikation und erstellt
+die folgenden Dateien:
 
-Virtuelle Umgebung aktivieren und zum MIZDB Verzeichnis navigieren:  
-`source ~/.venv/archiv/bin/activate && cd ~/archiv/MIZDB`
-
-#### MIZDB Konfigurationsdatei einrichten:
-Im Unterverzeichnis `MIZDB/settings` (also `~/archiv/MIZDB/MIZDB/settings`) befindet sich eine Vorlage der Konfigurationsdatei: `config_template.yaml`.
-Diese sollte in das Grundverzeichnis kopiert und in `config.yaml` umbenannt werden:  
-`cp MIZDB/settings/config_template.yaml config.yaml`  
-
-Danach müssen in dieser Datei Angaben zu `SECRET_KEY`, `ALLOWED_HOSTS`, `DATABASE_USER`, `DATABASE_PASSWORD` gemacht werden - Erklärungen sind in der Datei selber zu finden.
-Wird bei `WIKI_URL` nichts eingetragen, werden auf den Seiten keine Links zur Wiki eingefügt.
+- im Stammverzeichnis wird die Datei `.env` mit den Werten für Umgebungsvariablen erstellt
+- im Unterverzeichnis `.secrets` werden die folgenden Dateien erstellt:
+    - `.passwd`: beinhaltet das Passwort der Datenbank
+    - `.key`: beinhaltet einen kryptografischen Schlüssel
+    - `.allowedhosts`: beinhaltet die erwarteten Hostnamen
 
 #### Python Module installieren:
-Erforderliche Python Module installieren:  
-`pip install -r requirements.txt`  
-Datenbank Migrationen anwenden:  
-`python manage.py migrate`  
-Statische Dateien für die Webseite sammeln:  
-`python manage.py collectstatic`  
 
+```shell
+# Erforderliche Python Module installieren:  
+python3 -m pip install --upgrade pip wheel
+python3 -m pip install -r requirements.txt  
+# Datenbank Migrationen anwenden:  
+python manage.py migrate
+# Statische Dateien für die Webseite sammeln:  
+python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
+```
 
-### 4. mod_wsgi installieren
+#### Ordner für Log-Dateien einrichten:
 
-mod_wsgi installieren: `pip install mod_wsgi`  
-Den Loader für das mod_wsgi Module für Apache erstellen:  
-`sudo ~/.venv/archiv/bin/mod_wsgi-express install-module | sudo tee /etc/apache2/mods-available/mod_wsgi.load > /dev/null`  
-Danach kann das Modul aktiviert werden: `sudo a2enmod mod_wsgi`   
-Die virtuelle Umgebung kann nun deaktiviert werden: `deactivate`.
+```shell
+# Ordner erstellen:
+sudo mkdir -p /var/log/mizdb/
+# Den Webserver-Benutzer als Besitzer einstellen:
+sudo chown www-data:www-data /var/log/mizdb
+```
 
+### 4. Apache einrichten
 
-### 5. Apache einrichten
+```shell
+# Den Loader für das mod_wsgi Module für Apache erstellen:  
+sudo venv/bin/mod_wsgi-express install-module | sudo tee /etc/apache2/mods-available/mod_wsgi.load > /dev/null  
+# Danach kann das Modul aktiviert werden: 
+sudo a2enmod mod_wsgi
+# 'macro' Modul aktivieren:  
+sudo a2enmod macro
+# Danach Konfigurationsdatei für die MIZDB-Seite erstellen:  
+sudoedit /etc/apache2/sites-available/mizdb.conf  
+```
 
-Zunächst muss ein zusätzliches Modul aktiviert werden:  
-`sudo a2enmod macro`  
-Danach Konfigurationsdatei für die MIZDB-Seite erstellen:  
-`sudoedit /etc/apache2/sites-available/mizdb.conf`  
-Mit folgendem Code:  
+Folgendem Code in die Konfigurationsdatei einfügen:
+
 ```
 <Macro VHost $VENV_ROOT $PROJECT_ROOT>
 	<VirtualHost *:80>  
@@ -110,49 +284,49 @@ Mit folgendem Code:
 # Don't confuse the project directory with the project package directory:
 #	- the project directory contains manage.py and the various django apps
 #	- the project package is a directory inside the project directory and contains settings.py, wsgi.py and the root urls.py
-USE VHost /home/<user>/.venv/archiv /home/<user>/archiv/MIZDB
+USE VHost /opt/archiv/venv /opt/archiv
 
 # Undefine and free up the variable (basically).
 UndefMacro VHost
 ```
-Notwendige Angaben:
-* `ServerName`: der Hostname des Servers - dieser Name muss auch in der Konfigurationsdatei `config.yaml` 
-unter `ALLOWED_HOSTS` gelistet werden.
-* `USE VHOST`: benötigt einml den Pfad zum Verzeichnis, in welchem die virtuelle Umgebung erstellt, wurde 
-und den Pfad zum Verzeichnis, in welchem die MIZDB Dateien liegen.  
-Beispielsweise: `USE VHost /home/sysad/.venv/archiv /home/sysad/archiv/MIZDB`
 
+**⚠️ Notwendige Änderungen ⚠️**:
 
-MIZDB-Seite laden: `sudo a2ensite mizdb`  
-Apache neu starten: `sudo service apache2 restart`   
-Jetzt sollte MIZDB unter `http://<ServerName>/miz/admin` (also z.B `http://localhost/miz/admin`) erreichbar sein.
+* In der Zeile mit `ServerName` muss der Hostname des Servers eingefügt werden. Dieser Name muss auch in der `.env`
+  Datei unter `ALLOWED_HOSTS` auftauchen.
+* In der Zeile `USE VHOST` müssen gegebenenfalls die zwei Pfade angepasst werden.
+    * der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung
+    * der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch `manage.py` zu finden ist.
 
-### (Optional) MIZDB testen
+  Also beispielsweise: `USE VHost /opt/archiv/venv /opt/archiv`
 
-Zuerst Umgebung aktivieren `source ~/.venv/archiv/bin/activate && cd ~/archiv/MIZDB`, dann Testlauf starten:  
-`python manage.py test --keepdb`
+Danach:
 
-### (Optional) Postgres Benutzer Authentifizierung einrichten
-Damit man sich als der erstellte Datenbankbenutzer bei Postgres anmelden kann, muss die Datei 
-`pg_hba.conf` im entsprechenden Postgres Datenverzeichnis (also z.B.: `/etc/postgresql/13/main/pg_hba.conf`) 
-geändert werden.
-Am Ende der Datei befindet sich dieser Abschnitt hier:
+```shell
+# MIZDB-Seite aktivieren:
+sudo a2ensite mizdb
+# Apache neu starten:
+sudo service apache2 restart   
 ```
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
 
-# "local" is for Unix domain socket connections only
-local   all             all                                     peer
-```
-Ein Eintrag für den Datenbankbenutzer muss hinzugefügt werden.
-Hier lautet der Name der Datenbank `mizdb` und der Name des erstellten Benutzers `mizdb`:
-```
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
+Jetzt sollte MIZDB unter `http://<ServerName>/miz/admin` (also z.B http://localhost/miz/admin) erreichbar sein.
 
-# "local" is for Unix domain socket connections only
-local   mizdb           mizdb                                   md5
-local   all             all                                     peer
-```
-Anmerkung: wenn für den Benutzer kein Passwort verwendet wird, muss die 
-Authentifizierungsmethod von `md5` zu `trust` geändert werden.  
+### Datenbank wiederherstellen
 
-Danach kann man sich mit `psql --username=mizdb --dbname=mizdb` mit der Datenbank verbinden. 
+```shell
+sudo -u postgres dropdb mizdb
+sudo -u postgres createdb mizdb --owner=mizdb_user
+sudo -u postgres pg_restore --dbname mizdb < backup_datei
+```
+
+### MIZDB testen
+
+```shell
+python manage.py test --settings=tests.settings tests
+````
+
+### PostgreSQL Terminal aufrufen
+
+```shell
+psql --username=mizdb_user --host=localhost mizdb
+```

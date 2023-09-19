@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.12] - 2023-09-19
+
+### Added
+
+- Docker support
+  - added new installation methods
+  - added management utility script `mizdb.sh` 
+  - reworked handling of secret files and database connection parameters
+
+### Changed
+
+- Buch: removed Genre overview annotation to speed up changelist requests
+
+## [0.11.1] - 2023-08-01
+
+### Changed
+
+- refactored MergeView to use django-formtool's SessionWizardView directly
+- initialize changelist search form with `initial` instead of `data`
+
 ## [0.11] - 2023-07-27
 
 ### Added

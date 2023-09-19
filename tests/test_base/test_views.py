@@ -4,9 +4,7 @@ from django import forms, views
 from django.contrib.admin import AdminSite
 from django.core.exceptions import PermissionDenied
 
-from dbentry.base.views import (
-    FixedSessionWizardView, MIZAdminMixin, OptionalFormView, SuperUserOnlyMixin
-)
+from dbentry.base.views import MIZAdminMixin, OptionalFormView, SuperUserOnlyMixin
 from tests.case import ViewTestCase
 
 
@@ -105,27 +103,6 @@ class TestOptionalFormView(ViewTestCase):
         view = self.get_view(request, form_class=self.TestForm)
         view.post(request)
         self.assertTrue(form_invalid_mock.called)
-
-
-class TestFixedSessionWizardView(ViewTestCase):
-    class TestForm(forms.Form):
-        spam = forms.CharField()
-
-    view_class = FixedSessionWizardView
-
-    def test_get_context_data(self):
-        """Assert that get_context_data can deal with a 'form' kwarg."""
-        # See: https://github.com/jazzband/django-formtools/commit/bd970f673de8916fc058a2beef835139cbfe4ed6
-        view = self.get_view(self.get_request())
-        patches = {
-            'storage': mock.Mock(extra_data={}), 'steps': mock.DEFAULT,
-            'prefix': mock.DEFAULT
-        }
-
-        with mock.patch.multiple(view, **patches, create=True):
-            with mock.patch('formtools.wizard.views.ManagementForm'):
-                context = view.get_context_data(spam='egg', form=self.TestForm())
-        self.assertIn('form', context)
 
 
 class SuperUserOnlyTest(ViewTestCase):

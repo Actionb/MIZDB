@@ -22,7 +22,7 @@ class BaseModel(models.Model):
           output of __str__().
         - ``create_field`` (str): the name of the field for the dal
           autocomplete object creation.
-        - ``exclude_from_str`` (list): list of field names to be excluded from
+        - ``exclude_from_str`` (tuple): tuple of field names to be excluded from
           the default __str__() implementation.
         - ``select_related`` (tuple): tuple of ForeignKey field names. Used in
           optimizations for the overview queryset.
@@ -32,9 +32,9 @@ class BaseModel(models.Model):
 
     name_field: str = ''
     create_field: str = ''
-    exclude_from_str: list = ['beschreibung', 'bemerkungen', '_fts']  # FIXME: this should probably be a tuple
-    select_related = ()
-    prefetch_related = ()
+    exclude_from_str: tuple = ('beschreibung', 'bemerkungen', '_fts')
+    select_related: tuple = ()
+    prefetch_related: tuple = ()
 
     objects = MIZQuerySet.as_manager()
 
@@ -52,18 +52,11 @@ class BaseModel(models.Model):
         if self.name_field:
             result = str(opts.get_field(self.name_field).value_from_object(self))
         else:
-            model_fields = get_model_fields(
-                opts.model,
-                foreign=False,
-                m2m=False,
-                exclude=self.exclude_from_str
-            )
-            # TODO: replace the above with the below to remove the get_model_fields call:
-            # model_fields = [
-            #     f for f in opts.get_fields()
-            #     if f.concrete
-            #     and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
-            # ]
+            model_fields = [
+                f for f in opts.get_fields()
+                if f.concrete
+                and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
+            ]
             result = " ".join(
                 [
                     str(fld.value_from_object(self))
