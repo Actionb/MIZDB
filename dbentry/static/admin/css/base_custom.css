@@ -147,7 +147,7 @@ To properly display the additional data, increase the minimum width of select2
 elements that use optgroups/tables.
 */
 .select2-tabular {
-    width: 600px;
+    width: 780px;
 }
 
 /* Disable the horizontal scrollbar in grouped select2 dropdowns. */

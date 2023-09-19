@@ -44,6 +44,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
         widgets = {
             'ausgabe': make_widget(
                 model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True,
+                attrs={"style": "width: 720px;"}
             ),
         }
 
@@ -63,7 +64,8 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         fields = '__all__'
         widgets = {
             'ausgabe': make_widget(
-                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True
+                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True,
+                attrs={"style": "max-width: 720px;"}
             ),
             'schlagzeile': forms.Textarea(attrs={'rows': 2, 'cols': 90}),
         }
@@ -86,7 +88,8 @@ class BrochureForm(AusgabeMagazinFieldForm):
     class Meta:
         widgets = {
             'ausgabe': make_widget(
-                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True
+                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True,
+                attrs={"style": "width: 720px;"}
             ),
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})
         }

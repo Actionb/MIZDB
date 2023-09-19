@@ -268,14 +268,14 @@ class ACAutor(ACBase):
 
 class ACBand(ACTabular):
     model = _models.Band
-    overview_annotations = ('alias_list',)
+    overview_annotations = ('alias_list', 'orte_list')
 
     def get_group_headers(self) -> list:
-        return ['Alias']
+        return ['Alias', 'Orte']
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.alias_list]
+        return [result.alias_list, result.orte_list]
 
 
 class ACBuchband(ACBase):
@@ -315,14 +315,14 @@ class ACMagazin(ACBase):
 
 class ACMusiker(ACTabular):
     model = _models.Musiker
-    overview_annotations = ('alias_list',)
+    overview_annotations = ('alias_list', 'orte_list')
 
     def get_group_headers(self) -> list:
-        return ['Alias']
+        return ['Alias', 'Orte']
 
-    def get_extra_data(self, result: _models.Musiker) -> list:
+    def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.alias_list]
+        return [result.alias_list, result.orte_list]
 
 
 class ACPerson(ACBase):
