@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## [0.12] - 2023-09-19
 
 ### Added
 
@@ -11,7 +11,14 @@
 
 ### Changed
 
+- Buch: removed Genre overview annotation to speed up changelist requests
+
+## [0.11.1] - 2023-08-01
+
+### Changed
+
 - refactored MergeView to use django-formtool's SessionWizardView directly
+- initialize changelist search form with `initial` instead of `data`
 
 ## [0.11] - 2023-07-27
 
