@@ -197,6 +197,13 @@ class SearchForm(forms.Form):
             i for i in self.cleaned_data.get('id__in', '') if i.isnumeric() or i == ','
         )
 
+    def get_initial_for_field(self, field, field_name):
+        # Only return an initial value if the initial value was set explicitly
+        # (using form(initial={...})). If there are no explicit initial values,
+        # this method would return the default value of the model field, which
+        # we do not want for a search form.
+        return self.initial.get(field_name, None)
+
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     """A search form that includes django media and supports fieldsets."""

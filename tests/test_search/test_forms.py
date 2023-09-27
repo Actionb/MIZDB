@@ -547,3 +547,14 @@ class TestSearchForm(TestCase):
         form = form_class()
         form.cleaned_data = {'id__in': '1,2'}
         self.assertEqual(form.clean_id__in(), '1,2')
+
+    def test_get_initial_for_field_returns_none(self):
+        """
+        Assert that get_initial_for_field returns None instead of the default
+        of the model field, unless initial values were explicitly passed in.
+        """
+        form_class = self.factory(Ausgabe, fields=["status"])
+        for initial, expected in (({}, None), ({"status": Ausgabe.Status.INBEARBEITUNG}, Ausgabe.Status.INBEARBEITUNG)):
+            with self.subTest(initial=initial):
+                form = form_class(initial=initial)
+                self.assertEqual(form.get_initial_for_field(form.fields["status"], "status"), expected)
