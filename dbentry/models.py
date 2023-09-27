@@ -1433,7 +1433,7 @@ class Provenienz(BaseModel):
 
     geber = models.ForeignKey('Geber', models.PROTECT)
 
-    name_field = 'geber'
+    name_field = 'geber__name'
     related_search_vectors = [('geber___fts', SIMPLE)]
     select_related = ("geber",)
 

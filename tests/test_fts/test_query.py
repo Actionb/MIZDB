@@ -485,3 +485,23 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(len(queryset.query.where.children), 1)
         self.assertIsInstance(queryset.query.where.children[0], NothingNode)
         self.assertFalse(queryset.query.annotations)
+
+
+class TestProvenienzSearch(DataTestCase):
+    """
+    Performing a text search on the Provenienz model raised an error, due to
+    an invalid `name_field`. The name_field was `geber`. When adding ordering
+    to the result queryset of the search, TextSearchQuerySetMixin was adding
+    ordering items with 'iexact' and 'istartswith' lookups, which are invalid on
+    the field `geber` (it being a relation field).
+    """
+
+    model = _models.Provenienz
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, geber__name="Foo Bar")
+        super().setUpTestData()
+
+    def test_search(self):
+        self.assertIn(self.obj, self.model.objects.search("Foo Bar"))
