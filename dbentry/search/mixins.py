@@ -59,7 +59,7 @@ class SearchFormMixin(object):
 
     def get_context_data(self, **kwargs: Any) -> dict:
         ctx = super().get_context_data(**kwargs)  # type: ignore[misc]
-        ctx["advanced_search_form"] = self.get_search_form(initial=self.request.GET)  # type: ignore[attr-defined]
+        ctx["advanced_search_form"] = self.get_search_form(data=self.request.GET)  # type: ignore[attr-defined]
         ctx["has_search_form"] = self.has_search_form()
         # TODO: should the form media be added?
         return ctx
@@ -123,7 +123,7 @@ class AdminSearchFormMixin(SearchFormMixin):
         if extra_context is None:
             extra_context = {}
         # Add the search form as 'advanced_search_form' to the extra_context.
-        search_form = self.get_search_form(initial=request.GET)
+        search_form = self.get_search_form(data=request.GET)
         extra_context['advanced_search_form'] = search_form
         response = super().changelist_view(request, extra_context)  # type: ignore[misc]
         # Let django.admin do its thing, then update the response's context.
@@ -137,8 +137,6 @@ class AdminSearchFormMixin(SearchFormMixin):
         Add the search form's media to the media context and include other
         context variables required by the advanced_search_form.
         """
-        # TODO: why not add this as extra_context in changelist_view()?
-        #  (might have to add the search form media under a different name)
         if not hasattr(response, 'context_data'):
             # Not all responses allow access to the template context post
             # instantiation.
