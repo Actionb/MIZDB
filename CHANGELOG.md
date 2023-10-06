@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.12.2] - 2023-10-06
+
+### Reverted
+- reverted commit `3fc06493` from release 0.11.1:
+  >initialize changelist search form with `initial` instead of `data`
+  
+  Using `data` instead of `initial` was the proper way to go for search forms after all. 
+
+## Fixed
+- invalid name_field for Provenienz model. Was `geber`, should have been `geber__name`.
+
+## [0.12.1] - 2023-09-19
+
+### Added
+
+- added Orte column to Band and Musiker dal autocomplete
+
 ## [0.12] - 2023-09-19
 
 ### Added
