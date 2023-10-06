@@ -524,13 +524,13 @@ class TestACBand(ACViewTestCase):
         self.assertIn('is_optgroup', results.keys())
         self.assertEqual(results['is_optgroup'], True)
         self.assertIn('optgroup_headers', results.keys())
-        self.assertEqual(results['optgroup_headers'], ['Alias'])
+        self.assertEqual(results['optgroup_headers'], ['Alias', 'Orte'])
         self.assertIn('children', results.keys())
         self.assertEqual(len(results['children']), 2)
         result, _create_option = results['children']
         self.assertEqual(result['id'], str(self.alias.pk))
         self.assertEqual(result['text'], str(self.alias))
-        self.assertEqual(result[EXTRA_DATA_KEY], ['Fee Fighters'])
+        self.assertEqual(result[EXTRA_DATA_KEY], ['Fee Fighters', '-'])
         self.assertEqual(result['selected_text'], str(self.alias))
 
     def test_filter_with_forwarded_values(self):
@@ -546,7 +546,7 @@ class TestACBand(ACViewTestCase):
         """Assert that get_queryset adds the annotations declared in overview_annotations."""
         view = self.get_view(self.get_request())
         queryset = view.get_queryset()
-        self.assertCountEqual(['alias_list'], list(queryset.query.annotations))
+        self.assertCountEqual(['alias_list', 'orte_list'], list(queryset.query.annotations))
 
 
 class TestACAusgabe(ACViewTestCase):
@@ -862,13 +862,13 @@ class TestACMusiker(ACViewTestCase):
         self.assertIn('is_optgroup', results.keys())
         self.assertEqual(results['is_optgroup'], True)
         self.assertIn('optgroup_headers', results.keys())
-        self.assertEqual(results['optgroup_headers'], ['Alias'])
+        self.assertEqual(results['optgroup_headers'], ['Alias', 'Orte'])
         self.assertIn('children', results.keys())
         self.assertEqual(len(results['children']), 1, results['children'])
         result = results['children'][0]
         self.assertEqual(result['id'], str(self.obj.pk))
         self.assertEqual(result['text'], str(self.obj))
-        self.assertEqual(result[EXTRA_DATA_KEY], ['TAFKAP'])
+        self.assertEqual(result[EXTRA_DATA_KEY], ['TAFKAP', '-'])
         self.assertEqual(result['selected_text'], str(self.obj))
 
     def test_create_object(self):
@@ -885,7 +885,7 @@ class TestACMusiker(ACViewTestCase):
         """Assert that get_queryset adds the annotations declared in overview_annotations."""
         view = self.get_view(self.get_request())
         queryset = view.get_queryset()
-        self.assertCountEqual(['alias_list'], list(queryset.query.annotations))
+        self.assertCountEqual(['alias_list', 'orte_list'], list(queryset.query.annotations))
 
 
 class TestACPerson(ACViewTestCase):
