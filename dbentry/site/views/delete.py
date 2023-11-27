@@ -42,9 +42,10 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
         objects = self.get_objects_for_deletion()
 
         # Prepare the success message before deleting the objects:
+        icon = """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>"""  # noqa
         objects_str = ", ".join(str(o) for o in objects)
         verbose_name = self.opts.verbose_name_plural if len(objects) > 1 else self.opts.verbose_name
-        success_message = f"{verbose_name} erfolgreich gelöscht: {objects_str}"
+        success_message = f"{icon} {verbose_name} erfolgreich gelöscht: {objects_str}"
 
         collector = Collector(using="default", origin=objects)
         collector.collect(objects)
