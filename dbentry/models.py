@@ -15,7 +15,8 @@ from dbentry.fields import (
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
 from dbentry.query import AusgabeQuerySet
-from dbentry.utils import concat_limit, get_model_fields, get_model_relations
+from dbentry.utils.models import get_model_fields, get_model_relations
+from dbentry.utils.text import concat_limit
 from dbentry.utils.query import to_array, array_to_string, limit, string_list
 
 
@@ -817,8 +818,8 @@ class Artikel(BaseModel):
         verbose_name_plural = 'Artikel'
         ordering = [
             # TODO: ordering by ausgabe___name doesn't work well when name
-            # contains months (1970-Dez comes before 1970-Nov).
-            # (might be a PRO for introducing an order column on Ausgabe?)
+            #   contains months (1970-Dez comes before 1970-Nov).
+            #   (might be a PRO for introducing an order column on Ausgabe?)
             'ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite',
             'schlagzeile'
         ]
@@ -1296,7 +1297,7 @@ class Veranstaltung(BaseModel):
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'datum', 'spielort']
 
-    require_confirmation = True
+    require_confirmation = True  # FIXME: what is this doing here?
 
     @staticmethod
     def get_overview_annotations() -> dict:

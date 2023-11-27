@@ -1,0 +1,27 @@
+{% extends "mizdb/change_form.html" %}
+{% load static django_bootstrap5 %}
+
+{% block formfields %}
+{% for field in form %}
+    {% if field.name != "beschreibung" and field.name != "bemerkungen" and field.name != "titel_orig" and field.name != "jahr_orig" %}
+        {% bootstrap_field field layout="horizontal" %}
+    {% endif %}
+{% endfor %}
+{% endblock formfields %}
+{% block extrafields %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="original-extra-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#original-extra"
+                    aria-expanded="false" aria-controls="original-extra">
+                Original Angaben (bei Übersetzung)
+            </button>
+        </h2>
+        <div class="collapse accordion-collapse" id="original-extra">
+            <div class="accordion-body">
+                {% bootstrap_field form.titel_orig layout="horizontal" %}
+                {% bootstrap_field form.jahr_orig layout="horizontal" %}
+            </div>
+        </div>
+    </div>
+    {{ block.super }}
+{% endblock extrafields %}

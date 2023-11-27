@@ -22,13 +22,11 @@ from dbentry.actions.forms import (
 )
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
-from dbentry.utils import (
-    get_changelist_link, get_model_from_string, get_model_relations, get_obj_link,
-    get_updatable_fields, is_protected,
-    link_list, merge_records
-)
-from dbentry.utils.admin import (
-    create_logentry, log_addition, log_change, log_deletion
+from dbentry.utils.admin import create_logentry, log_addition, log_change, log_deletion
+from dbentry.utils.html import get_changelist_link, link_list, get_obj_link
+from dbentry.utils.merge import merge_records
+from dbentry.utils.models import (
+    get_model_from_string, get_model_relations, get_updatable_fields, is_protected
 )
 from dbentry.utils.replace import replace
 
@@ -452,7 +450,7 @@ class MergeView(MIZAdminMixin, WizardConfirmationView):
                 message=format_html(
                     msg_template,
                     object_name=object_name,
-                    protected=link_list(self.request, e.protected_objects)
+                    protected=link_list(self.request, e.protected_objects, namespace='admin')
                 )
             )
         return None
@@ -479,11 +477,16 @@ def check_protected_artikel(view: ActionConfirmationView, **_kwargs: Any) -> boo
             level=messages.ERROR,
             message=format_html(
                 msg_template,
-                link_list(view.request, ausgaben_with_artikel),
-                get_changelist_link(
-                    model=_models.Ausgabe,
-                    user=view.request.user,
+                link_list(
+                    request=view.request,
                     obj_list=ausgaben_with_artikel,
+                    namespace='admin'
+                ),
+                get_changelist_link(
+                    request=view.request,
+                    model=_models.Ausgabe,
+                    obj_list=ausgaben_with_artikel,
+                    namespace='admin',
                     blank=True
                 )
             )
@@ -655,11 +658,17 @@ class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
                 level=messages.ERROR,
                 message=format_html(
                     msg_template,
-                    obj_links=link_list(self.request, protected_ausg, blank=True),
-                    cl_link=get_changelist_link(
-                        model=_models.Ausgabe,
-                        user=self.request.user,
+                    obj_links=link_list(
+                        request=self.request,
                         obj_list=protected_ausg,
+                        namespace="admin",
+                        blank=True
+                    ),
+                    cl_link=get_changelist_link(
+                        request=self.request,
+                        model=_models.Ausgabe,
+                        obj_list=protected_ausg,
+                        namespace='admin',
                         blank=True
                     )
                 )
@@ -679,9 +688,7 @@ class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
                     level=messages.ERROR,
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
-                        get_obj_link(
-                            obj=magazin_instance, user=self.request.user, blank=True
-                        )
+                        get_obj_link(request=self.request, obj=magazin_instance, blank=True)
                     )
                 )
             else:
@@ -698,8 +705,8 @@ class MoveToBrochure(MIZAdminMixin, ActionConfirmationView):
         forms = []
         for form in formset:
             link = get_obj_link(
+                request=self.request,
                 obj=_models.Ausgabe.objects.get(pk=form['ausgabe_id'].initial),
-                user=self.request.user,
                 blank=True
             )
             forms.append((link, form))
@@ -808,7 +815,7 @@ class ChangeBestand(ConfirmationViewMixin, MIZAdminMixin, views.generic.Template
                 media_updated = True
             context['formsets'].append(
                 (
-                    get_obj_link(obj=obj, user=self.request.user, blank=True),
+                    get_obj_link(request=self.request, obj=obj, blank=True),
                     wrapped_formset
                 )
             )
@@ -891,10 +898,6 @@ class Replace(MIZAdminMixin, ActionConfirmationView):
                 related_set = getattr(to_replace, rel.get_accessor_name())
 
             for obj in related_set.all():
-                link = get_object_link(
-                    obj=obj,
-                    user=self.request.user,
-                    site_name=self.model_admin.admin_site.name,
-                )
+                link = get_object_link(self.request, obj, self.model_admin.admin_site.name)
                 objects_list.append((link,))
         return objects_list

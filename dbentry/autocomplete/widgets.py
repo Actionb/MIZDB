@@ -14,25 +14,33 @@ DEFAULTS = {
         "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
     },
     _models.Autor: {"url": "autocomplete_autor", "create_field": "__any__"},
-    _models.Band: {"extra_columns": {"alias_list": "Aliase"}},
+    _models.Band: {"extra_columns": {"alias_list": "Aliase", "orte_list": "Orte"}},
     _models.Magazin: {"url": "autocomplete_magazin"},
-    _models.Musiker: {"extra_columns": {"alias_list": "Aliase"}},
+    _models.Musiker: {"extra_columns": {"alias_list": "Aliase", "orte_list": "Orte"}},
     _models.Person: {"url": "autocomplete_person", "create_field": "__any__"},
     _models.Spielort: {"extra_columns": {"ort___name": "Ort"}},
     _models.Veranstaltung: {"extra_columns": {"datum": "Datum", "spielort__name": "Spielort"}},
+    _models.Provenienz: {"url": "autocomplete_provenienz", "label_field": "text"},
 }
+
+
+class MIZMediaMixin:
+    """Add a custom init script to the widget's media."""
+
+    class Media:
+        js = ["mizdb/js/mizselect_init.js"]
 
 
 def make_widget(
         model,
         tabular=False,
         multiple=False,
-        namespace="admin",
+        namespace="",
         can_add=True,
         can_list=True,
         can_edit=True,
         **kwargs,
-):
+    ):
     """
     Factory function that creates MIZSelect autocomplete widgets.
 
@@ -61,6 +69,10 @@ def make_widget(
             widget_class = MIZSelectTabularMultiple
         else:
             widget_class = MIZSelectMultiple
+        widget_class = type("AutocompleteWidget", (MIZMediaMixin, widget_class), {})
+
+    if tabular and "value_field_label" not in widget_opts:
+        widget_opts["value_field_label"] = "ID"
 
     if "create_field" not in widget_opts and getattr(model, "create_field", None):
         widget_opts["create_field"] = getattr(model, "create_field")

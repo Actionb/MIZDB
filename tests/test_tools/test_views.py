@@ -563,7 +563,7 @@ class TestMIZSiteSearch(ViewTestCase):
                 permission = Permission.objects.get(codename=codename, content_type=ct)
                 self.staff_user.user_permissions.set([permission])
                 response = self.get_response(
-                    reverse('site_search'),
+                    reverse('tools:site_search'),
                     data={'q': q},
                     user=self.reload_user(self.staff_user)
                 )

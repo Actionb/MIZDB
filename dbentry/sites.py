@@ -6,8 +6,8 @@ from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
-from dbentry import utils
 from dbentry.tools.sites import IndexToolsSite
+from dbentry.utils.admin import get_model_admin_for_model
 
 
 class MIZAdminSite(IndexToolsSite):
@@ -80,7 +80,7 @@ class MIZAdminSite(IndexToolsSite):
 
         # Divide the models into their categories.
         for m in model_list:
-            model_admin = utils.get_model_admin_for_model(m['object_name'], self)
+            model_admin = get_model_admin_for_model(m['object_name'], self)
             if model_admin is None:  # pragma: no cover
                 continue
             # FIXME: Add a issubclass check: only MIZModelAdmins have the

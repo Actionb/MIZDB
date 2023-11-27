@@ -10,7 +10,7 @@ def func0():
     pass
 
 
-#@formatter:off
+# @formatter:off
 def func1():
     pass
 func1.short_description = 'Foo'  # noqa

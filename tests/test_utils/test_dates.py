@@ -2,7 +2,7 @@ import datetime
 
 from django.test import TestCase
 
-from dbentry import utils
+from dbentry.utils.dates import leapdays
 
 
 class TestDateUtils(TestCase):
@@ -35,4 +35,4 @@ class TestDateUtils(TestCase):
             start = datetime.date(*start)
             end = datetime.date(*end)
             with self.subTest(start=str(start), end=str(end)):
-                self.assertEqual(utils.leapdays(start, end), expected)
+                self.assertEqual(leapdays(start, end), expected)

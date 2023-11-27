@@ -1,0 +1,36 @@
+form.change-form input.form-control.partial-date {
+    max-width: 216px;
+}
+
+form.search-form input.form-control.partial-date {
+    max-width: 101px;
+}
+
+form.search-form div.range-container div:first-child input.partial-date:last-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+form.search-form div.range-container div:last-child input.partial-date:first-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+
+/* Rules specific to admin (indicated by the body having the app-dbentry class). */
+body.app-dbentry input.partial-date {
+    max-width: 100px;
+}
+
+/* The admin doesn't support bootstrap input groups, so add a margin. */
+body.app-dbentry div.input-group input.partial-date:not(:last-child) {
+    margin-right: 10px;
+}
+
+body.app-dbentry form.search-form div.input-group.range-container {
+    display: flex;
+}
+
+body.app-dbentry form.search-form div.input-group.range-container > div {
+    display: flex;
+}

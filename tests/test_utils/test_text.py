@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from dbentry import utils
+from dbentry.utils.text import parse_name, concat_limit
 
 
 class TestTextUtils(TestCase):
@@ -20,7 +20,7 @@ class TestTextUtils(TestCase):
         ]
         for kwargs, expected in params:
             with self.subTest(kwargs=kwargs):
-                self.assertEqual(utils.concat_limit(**kwargs), expected)
+                self.assertEqual(concat_limit(**kwargs), expected)
 
     def test_parse_name(self):
         expected = ("Alice Jane", "Tester")
@@ -33,4 +33,4 @@ class TestTextUtils(TestCase):
         ]
         for name, expected in params:
             with self.subTest(name=name):
-                self.assertEqual(utils.parse_name(name), expected)
+                self.assertEqual(parse_name(name), expected)

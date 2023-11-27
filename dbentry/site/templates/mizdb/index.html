@@ -1,0 +1,35 @@
+{% extends "mizdb/base.html" %}
+{% load mizdb admin_urls log %}
+
+{% block nav %}{% endblock nav %}
+{% block nav-sidebar %}{% endblock nav-sidebar %}
+
+{% block content %}
+<div class="row">
+<div class="col-8">{% include "mizdb/includes/model_list.html" %}</div>
+
+<aside class="col-4 secondary-bg-subtle">
+    {% if user.is_authenticated %}
+    {% get_admin_log 10 as admin_log for_user user %}
+    <div id="recent-actions-module" class="bg-secondary bg-opacity-10 pb-2">
+        <h3 class="p-3 border-bottom">Letzte Änderungen</h3>
+        {% if not admin_log %}
+            <p>Keine vorhanden</p>
+        {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+                <li class="mb-2">
+                    {% get_actionlist_item entry as item %}
+                    <div title="{{ item.title }}">
+                        {{ item.image }} {{ item.change_link }}
+                        {% if entry.content_type %}<br><span class="small text-secondary ms-4">{{ entry.content_type.name|capfirst }}</span>{% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+</aside>
+</div>
+{% endblock content %}

@@ -1,4 +1,5 @@
 import contextlib
+import re
 import sys
 import warnings
 from urllib.parse import unquote
@@ -7,7 +8,8 @@ import pytest
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, get_permission_codename
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages import get_messages
 from django.test import RequestFactory, TestCase
@@ -86,6 +88,12 @@ class UserTestCase(MIZTestCase):
         # Have the super_user be logged in by default:
         self.client.force_login(self.super_user)
 
+    def add_permission(self, user, action, model):
+        codename = get_permission_codename(action, model._meta)
+        ct = ContentType.objects.get_for_model(model)
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type=ct))
+        return self.reload_user(user)
+
     def reload_user(self, user):
         """Reload user from database and return it. This resets the permission cache."""
         return get_user_model().objects.get(pk=user.pk)
@@ -118,20 +126,25 @@ class RequestTestCase(UserTestCase):
         request.user = user or self.super_user
         return request
 
+    def _has_message(self, expected, messages):
+        if isinstance(expected, str):
+            def test(m):
+                return expected in m
+        else:
+            def test(m):
+                return re.search(expected, m)
+        return any(test(m) for m in messages)
+
     def assertMessageSent(self, request, expected_message, msg=None):
         messages = [str(msg) for msg in get_messages(request)]
-        error_msg = "Message {} not found in messages: {}".format(
-            expected_message, [m[:len(expected_message) + 5] + "[...]" for m in messages]
-        )
-        if not any(m.startswith(expected_message) for m in messages):
+        error_msg = "Message {} not found in messages: {}".format(expected_message, messages)
+        if not self._has_message(expected_message, messages):
             self.fail(self._formatMessage(msg, error_msg))
 
     def assertMessageNotSent(self, request, expected_message, msg=None):
         messages = [str(msg) for msg in get_messages(request)]
-        error_msg = "Message {} found in messages: {}".format(
-            expected_message, [m[:len(expected_message) + 5] + "[...]" for m in messages]
-        )
-        if any(m.startswith(expected_message) for m in messages):
+        error_msg = "Message {} found in messages: {}".format(expected_message, messages)
+        if self._has_message(expected_message, messages):
             self.fail(self._formatMessage(msg, error_msg))
 
 

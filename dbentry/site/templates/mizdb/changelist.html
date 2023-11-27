@@ -1,0 +1,160 @@
+{% extends "mizdb/base.html" %}
+{% load mizdb static django_bootstrap5 %}
+
+{% block title %}{{ opts.verbose_name_plural }} Übersicht | MIZDB {% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {{ advanced_search_form.media }}
+  <script src="{% static 'mizdb/js/changelist_selection.js' %}"></script>
+{% endblock extrahead %}
+
+{% block mainclass %}container-fluid ps-5 pe-5{% endblock %}
+
+{% block content %}
+
+{% block search_form %}
+<div id="changelist-search-container" class="mb-3 pt-3 border bg-primary bg-opacity-10">
+<form method="get" class="search-form">
+    <div class="border-bottom mb-3">
+        <div class="row mb-3 ps-2">
+            <label for="id_textSearch" class="col-form-label col-lg-1">Textsuche</label>
+            <div class="col-lg-10 col-xl-9 col-xxl-8">
+                <input id="id_textSearch" class="form-control col-form-control" type="search" placeholder="{{ opts.verbose_name_plural }} durchsuchen..." name="q" value="{{ search_term }}" autofocus>
+            </div>
+        </div>
+        {% if has_search_form %}
+            <div id="advSearchForm">
+                {% block advanced_search_form %}
+                    <div id="search_form_shown">{% for field in shown_fields %}{% bootstrap_field field layout="horizontal" horizontal_label_class="col-lg-1" wrapper_class="mb-3 ps-2" %}{% endfor %}</div>
+                    <div id="search_form_collapsed" class="collapse">{% for field in collapsed_fields %}{% bootstrap_field field layout="horizontal" horizontal_label_class="col-lg-1" wrapper_class="mb-3 ps-2" %}{% endfor %}</div>
+                {% endblock %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="row ps-2 pb-2">
+        <div class="col">
+            <button class="btn btn-primary" type="submit"><span>Suchen</span></button>
+            {% if has_search_form %}
+            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#search_form_collapsed" title="Erweiterte Suchoptionen anzeigen" aria-expanded="false">
+                <span class="nav-text">Erweiterte Suchoptionen anzeigen </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sliders"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</form>
+</div>
+{% endblock %}
+
+{% url opts|urlname:'add' as add_url %}
+<div class="d-flex align-items-center mb-3">
+    {% include "mizdb/includes/pagination.html" %}
+    <p class="ps-2 mb-0">{% if result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
+    {% reset_ordering_link cl %}
+    <a href="{% add_preserved_filters add_url %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+</div>
+{% if result_rows %}
+{% has_module_perms user opts as user_has_module_perms %}
+<div class="results mb-3">
+<table id="result_list" class="table table-hover">
+<thead>
+    <tr class="table-primary">
+        {% if user_has_module_perms %}<th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input" type="checkbox" title="Alle auswählen"></th>{% endif %}
+        {% for header in result_headers %}
+            <th scope="col" class="sticky-top z-999">
+               <div class="text d-flex justify-content-between">
+                   <span class="me-2">{{ header.text|capfirst }}</span>
+                   {% if header.sortable %}
+                   <div class="sort-options d-flex">
+                   <a href="{{ header.url_primary }}" title="Sortieren"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up"><polyline points="17 11 12 6 7 11"></polyline><polyline points="17 18 12 13 7 18"></polyline></svg></a>
+                   {% if header.sorted %}
+                       <a href="{{ header.url_toggle }}" title="{% if header.ascending %}Absteigend{% else %}Aufsteigend{% endif %} sortieren">
+                           {% if header.ascending %}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-up"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                           {% else %}
+                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                           {% endif %}
+                       </a>
+                   {% endif %}
+                   {% endif %}
+                   </div>
+               </div>
+            </th>
+        {% endfor %}
+    </tr>
+</thead>
+<tbody>
+    {% for result_object, result_row in result_rows %}
+        <tr>
+            {% if user_has_module_perms %}<td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" title="Zur Auswahl hinzufügen"></td>{% endif %}
+            {% for item in result_row %}<td class="text-body">{{ item }}</td>{% endfor %}
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+{% if result_count %}
+<div class="d-flex align-items-center">
+    {% include "mizdb/includes/pagination.html" %}
+    <p class="ps-2 mb-0">{% if result_count and result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
+    <a href="{% add_preserved_filters add_url %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+</div>
+{% endif %}
+{% block selection %}
+<form method="post">
+{% csrf_token %}
+<div id="changelist-selection-container" class="changelist-selection accordion accordion-item mb-1 z-999">
+    <template id="selected-item-template">
+        <div class="selected-item row align-items-center mx-1 py-2">
+            <div class="item-container col-10">
+                <input type="hidden" value="" name="_selected-item">
+                <a href="#"></a>
+            </div>
+            <div class="remove-container col-2">
+                <a href="#" title="Aus Auswahl entfernen" class="remove-selection">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </a>
+            </div>
+        </div>
+    </template>
+  <h2 class="accordion-header">
+    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#list-container" aria-expanded="false" aria-controls="selected-items-container">
+        Ausgewählte {{ opts.verbose_name_plural }} (<span id="selection-count"></span>)
+    </button>
+  </h2>
+  <div id="list-container" class="accordion-collapse collapse accordion-body bg-body text-body border p-1">
+    <div id="selected-items-container" class="overflow-auto mb-1"></div>
+    <div id="selection-button-row" class="d-flex justify-content-between border-top pt-1 mx-1">
+        <div class="dropstart col-9">
+          <button class="btn btn-primary dropdown-toggle w-100 h-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Aktionen
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+              {% for action in actions %}
+                <button class="dropdown-item" type="submit" name="changelist_action" value="{{ action.value }}" title="{{ action.title }}">{{ action.text }}</button>
+              {% endfor %}
+          </ul>
+        </div>
+
+        <div class="col-2">
+        <button id="clear-selection" class="btn btn-outline-danger" title="Auswahl aufheben"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+        </div>
+    </div>
+  </div>
+</div>
+</form>
+{% endblock selection %}
+{% endblock %}
+
+
+{% block extrascript %}
+    {{ block.super }}
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const selection = new window.ChangelistSelection()
+        selection.render()
+    })
+    </script>
+{% endblock extrascript %}

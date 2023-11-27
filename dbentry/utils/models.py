@@ -3,6 +3,7 @@ from typing import Iterable, List, Optional, TextIO, Tuple, Type, Union
 
 from django.apps import apps
 from django.contrib import auth
+from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
@@ -10,6 +11,13 @@ from django.db import models, transaction, utils
 from django.db.models import Field, Model, constants
 from django.db.models.fields.related import ForeignKey, OneToOneField
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel, OneToOneRel
+from django.urls import NoReverseMatch
+from django.utils.safestring import mark_safe
+from django.utils.text import capfirst
+
+from dbentry.utils.html import create_hyperlink
+from dbentry.utils.permission import get_perm
+from dbentry.utils.url import get_change_url
 
 ModelClassOrInstance = Union[Model, Type[Model]]
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
@@ -337,3 +345,57 @@ def clean_permissions(stream: Optional[TextIO] = None) -> None:
             stream.write(
                 "Updated %s '%s' codename to '%s'\n" % (p, old_codename, new_codename)
             )
+
+
+def get_deleted_objects(request, objs, namespace=""):
+    """
+    Find all objects related to ``objs`` that should also be deleted. ``objs``
+    must be a homogeneous iterable of objects (e.g. a QuerySet).
+
+    Return a nested list of strings suitable for display in the
+    template with the ``unordered_list`` filter.
+    """
+    # Modified version of django.contrib.admin.utils.get_deleted_objects with
+    # better description for relations and related objects.
+    origin_model = objs[0].__class__
+    collector = NestedObjects(using="default", origin=objs)
+    collector.collect(objs)
+    perms_needed = set()
+
+    def get_related_obj_info(obj):
+        related_obj = obj
+        verbose_name = capfirst(obj._meta.verbose_name)
+        object_description = str(obj)
+        if obj._meta.auto_created:
+            # Assume an auto_created M2M model with a generic verbose_name.
+            # To get a better verbose_name, figure out from what side we
+            # are deleting and use the other side's verbose name.
+            for field in obj._meta.get_fields():
+                if field.is_relation and field.related_model != origin_model:
+                    other_pk = field.value_from_object(obj)
+                    related_obj = field.related_model.objects.get(pk=other_pk)
+                    object_description = str(related_obj)
+                    verbose_name = f"{field.related_model._meta.verbose_name} Beziehung"
+        return related_obj, verbose_name, object_description
+
+    def format_callback(obj):
+        related_obj, verbose_name, object_description = get_related_obj_info(obj)
+
+        try:
+            # Try to get a link to the object's edit page.
+            object_description = create_hyperlink(get_change_url(request, related_obj, namespace), object_description)
+            if not request.user.has_perm(get_perm("delete", obj._meta)):  # pragma: no cover
+                perms_needed.add(verbose_name)
+        except NoReverseMatch:
+            # obj has no edit page.
+            pass
+        return mark_safe(f"{verbose_name}: {object_description}")
+
+    to_delete = collector.nested(format_callback)
+
+    protected = [format_callback(obj) for obj in collector.protected]
+    model_count = {}
+    for model, objs in collector.model_objs.items():
+        _related_obj, verbose_name, _object_description = get_related_obj_info(list(objs)[0])
+        model_count[verbose_name] = len(objs)
+    return to_delete, model_count, perms_needed, protected

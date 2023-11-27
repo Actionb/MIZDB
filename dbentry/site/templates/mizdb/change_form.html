@@ -1,0 +1,139 @@
+{% extends "mizdb/base.html" %}
+{% load static django_bootstrap5 mizdb mizdb_inlines %}
+
+{% block title %}{% if not add %}{{ object }} | {% endif %}{{ block.super }}{% endblock title %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'mizdb/js/dirty.js' %}"></script>
+<script src="{% static 'mizdb_inlines/js/mizdb_inlines.js' %}"></script>
+{{ combined_media }}
+{% endblock extrahead %}
+
+{% block content_head %}
+    {{ block.super }}
+    {% if object.pk %}
+    <div id="object-tools" class="d-flex gap-2 align-items-center mb-3">
+        <div id="object-descr" class="me-auto">
+            <h3 class="mb-0">
+                {{ object|truncatechars:50 }}
+                <span class="ms-2 fs-6">(id: <span class="id-container">{{ object.pk }}</span>)</span>
+                {% if is_popup %}
+                    <a id="unpop" class="fs-6" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
+                {% endif %}
+            </h3>
+        </div>
+        {% block history_link %}<div id="history"><a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary">Änderungsgeschichte</a></div>{% endblock history_link %}
+    </div>
+
+    {% if changelist_links %}
+    <div id="related-objects-accordion" class="accordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#related-objects" aria-expanded="false" aria-controls="related-objects">
+            Verwandte Objekte
+          </button>
+        </h2>
+        <div id="related-objects" class="accordion-collapse collapse" data-bs-parent="#related-objects-accordion">
+          <div class="accordion-body p-1">
+            <div class="list-group list-group-flush">
+                {% for url, label in changelist_links %}
+                    <li class="list-group-item list-group-item-action"><a href="{{ url }}">{{ label }}</a></li>
+                {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+{% block form %}
+<form method="post" class="change-form">
+    {% csrf_token %}
+    {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+    {% include "mizdb/includes/submit_row.html" %}
+    <div class="form">
+    {% block modelform %}
+        {% if has_errors %}
+            <p class="errornote text-danger border border-danger p-2 fw-bold rounded">Bitte die unten aufgeführten Fehler korrigieren.</p>
+            {{ form.non_field_errors }}
+        {% endif %}
+        {% block formfields %}
+        {% for field in form %}
+            {% if field.name != "beschreibung" and field.name != "bemerkungen" %}
+                {% bootstrap_field field layout="horizontal" %}
+            {% endif %}
+        {% endfor %}
+        {% endblock formfields %}
+        <div id="extrafields-container" class="accordion mb-3">
+            {% block extrafields %}
+                {% block additional_notes %}
+                {% if form.beschreibung or form.bemerkungen %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="additional-notes-header">
+                                <button class="accordion-button {% if not form.beschreibung.value %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#additional-notes"
+                                        aria-expanded="false" aria-controls="additional-notes">
+                                    Weitere Anmerkungen
+                                </button>
+                            </h2>
+                            <div class="collapse accordion-collapse {% if form.beschreibung.value %}show{% endif %}" id="additional-notes">
+                                <div class="accordion-body">
+                                    {% if form.beschreibung %}{% bootstrap_field form.beschreibung layout="horizontal" %}{% endif %}
+                                    {% if form.bemerkungen %}{% bootstrap_field form.bemerkungen layout="horizontal" %}{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                {% endif %}
+                {% endblock additional_notes %}
+            {% endblock extrafields %}
+        </div>
+    {% endblock modelform %}
+    </div>
+
+    <div class="inlines">
+    {% block inlines %}
+    <ul class="nav nav-tabs nav-fill flex-column flex-md-row bg-secondary bg-opacity-10 border border-bottom-0 rounded-top">
+    {% for formset, inline_opts in inlines %}
+        {% formset_has_errors formset as formset_is_invalid %}
+        <li class="nav-item{% if formset_is_invalid %} invalid{% endif %}">
+            <button
+                    class="nav-link px-2{% if forloop.first%} active{% endif %}{% if formset_is_invalid %} me-4 border-danger{% endif %}"
+                    id="{{inline_opts.model_name}}-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#{{inline_opts.model_name}}-tab-pane"
+                    type="button"
+                    role="tab"
+                    aria-controls="{{inline_opts.model_name}}-tab-pane"
+                    aria-selected="true"
+            >
+                {{inline_opts.verbose_name_plural|capfirst}}
+                <span class="badge bg-secondary ms-1">{% if formset.forms|length > 1%}{{formset.forms|length|add:"-1"}}{% else %}0{% endif %}</span>
+                {% if formset_is_invalid %}<svg xmlns="http://www.w3.org/2000/svg" class="align-text-bottom" viewBox="0 0 12 12" width="18" height="18" fill="none" stroke="#e74c3c"><circle cx="6" cy="6" r="4.5"/><path stroke-linejoin="round" d="M5.8 3.6h.4L6 6.5z"/><circle cx="6" cy="8.2" r=".6" fill="#e74c3c" stroke="none"/></svg>{% endif %}
+            </button>
+        </li>
+    {% endfor %}
+    </ul>
+    {% for formset, inline_opts in inlines %}
+    <div class="tab-content">
+        <div class="tab-pane pt-1 px-3{% if forloop.first%} show active{% endif %} border border-top-0 rounded-bottom" id="{{inline_opts.model_name}}-tab-pane">
+            {% if inline_opts.tabular %}
+                <div class="row mb-1">
+                    {% for name, field in formset.empty_form.fields.items %}
+                        {% if not field.widget.is_hidden %}<div class="{% if name == 'DELETE' %}col-1 text-center{% else %}col{% endif %}"><span class="fw-bold">{{ field.label }}</span></div>{% endif %}
+                    {% endfor %}
+                </div>
+                {% tabular_inline_formset formset add_text=inline_opts.add_text wrapper_class="my-2 col" show_label=False %}
+            {% else %}
+                {% inline_formset formset add_text=inline_opts.add_text layout="horizontal" wrapper_class="my-2" %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% endblock inlines %}
+    </div>
+</form>
+{% endblock form %}
+{% endblock content %}

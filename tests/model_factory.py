@@ -13,7 +13,8 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.fields import PartialDateField
-from dbentry.utils import get_model_fields, get_model_relations, is_iterable
+from dbentry.utils.inspect import is_iterable
+from dbentry.utils.models import get_model_fields, get_model_relations
 
 Model = TypeVar('Model')
 

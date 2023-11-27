@@ -2,6 +2,9 @@
 
 Django
 
+# Form rendering
+django-bootstrap5
+
 # HumanName parsing for autocomplete
 nameparser
 
@@ -25,7 +28,7 @@ requests
 # Fork of tsvector-field updated for Django 4.0+:
 git+https://github.com/Actionb/django-tsvector-field-dj4.git
 
-# Config file parsing
+# Config file parsing  # TODO: remove this requirement - it is not needed anymore
 PyYAML
 
 # Django LogEntry ModelAdmin
@@ -35,7 +38,10 @@ django-admin-logs
 levenshtein
 
 # TomSelect autocomplete
-mizdb_tomselect
+mizdb-tomselect
 
 # wsgi
 mod_wsgi
+
+# inline formsets
+mizdb-inlines

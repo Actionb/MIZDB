@@ -1,0 +1,31 @@
+<div class="modal fade" id="searchModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <form class="d-flex align-items-center w-100" action="{% url 'site_search' %}">
+            <input id="searchInput"
+                   class="form-control me-2 h-100"
+                   type="search"
+                   placeholder="Suchbegriff eingeben..."
+                   name="q"
+                   data-search-url="{% url 'searchbar_search' %}"
+                   {% if popup_links %}data-popup="true"{% endif %}
+                   autocomplete="off"
+            >
+            <button class="btn btn-success" type="submit" title="Suchseite öffnen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+        </form>
+      </div>
+      <div class="modal-body">
+            <div id="searchSpinner" class="d-flex justify-content-center d-none text-secondary">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Suche...</span>
+              </div>
+            </div>
+          <div id="searchResults" role="list">
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,7 +9,7 @@ from django.db.models.query import QuerySet
 from django.forms import Form
 from django.utils.translation import gettext_lazy
 
-from dbentry.utils import snake_case_to_spaces
+from dbentry.utils.text import snake_case_to_spaces
 from dbentry.validators import DiscogsURLValidator
 
 # Default attrs for the TextArea form widget
@@ -343,7 +343,7 @@ class DynamicChoiceFormMixin(object):
                 fld.choices = list(field_choices)
 
 
-class MIZAdminInlineFormBase(forms.ModelForm):
+class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: could make this a mixin
     """
     A model form class that flags forms for deletion when the form's model
     instance would violate uniqueness.
@@ -377,6 +377,8 @@ class DiscogsFormMixin(object):
     and ``url_field_name``, and adds validation to both.
     """
 
+    # TODO: all forms using this mixin use the same values for url_field_name and
+    #   release_id_field_name => set these values as defaults
     url_field_name: str = ''
     release_id_field_name: str = ''
 

@@ -29,6 +29,10 @@ ALWAYS_INSTALLED_APPS = [
     'formtools',
     'django.contrib.postgres',
     'django_admin_logs',
+    'dbentry.site',
+    "django_bootstrap5",
+    "mizdb_inlines",
+    "mizdb_tomselect",
 ]
 
 TEST_APPS = [
@@ -42,6 +46,7 @@ TEST_APPS = [
     "tests.test_factory",
     "tests.test_tools",
     "tests.test_search",
+    "tests.test_site",
     "tests.test_templatetags",
     "tests.test_utils",
 ]
@@ -104,3 +109,19 @@ PASSWORD_HASHERS = [
 logging.getLogger().addHandler(logging.NullHandler())
 
 STATIC_URL = '/static/'
+
+WIKI_URL = 'http://test.wiki.org/'
+
+TIME_ZONE = 'Europe/Berlin'
+
+LANGUAGE_CODE = "de"
+
+LOGIN_URL = 'login'
+
+BOOTSTRAP5 = {
+    "field_renderers": {"default": "dbentry.site.renderer.MIZFieldRenderer"},
+    "required_css_class": "required",
+    "set_placeholder": False
+}
+
+ANONYMOUS_CAN_VIEW = True

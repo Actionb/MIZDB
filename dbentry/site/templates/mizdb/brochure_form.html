@@ -1,0 +1,27 @@
+{% extends "mizdb/change_form.html" %}
+{% load static django_bootstrap5 %}
+
+{% block formfields %}
+{% for field in form %}
+    {% if field.name != "beschreibung" and field.name != "bemerkungen" and field.name != "ausgabe" and field.name != "ausgabe__magazin" %}
+        {% bootstrap_field field layout="horizontal" %}
+    {% endif %}
+{% endfor %}
+{% endblock formfields %}
+{% block extrafields %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="ausgabe-extra-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ausgabe-extra"
+                    aria-expanded="false" aria-controls="ausgabe-extra">
+                Ausgabe
+            </button>
+        </h2>
+        <div class="collapse accordion-collapse" id="ausgabe-extra">
+            <div class="accordion-body">
+                {% bootstrap_field form.ausgabe__magazin layout="horizontal" %}
+                {% bootstrap_field form.ausgabe layout="horizontal" %}
+            </div>
+        </div>
+    </div>
+    {{ block.super }}
+{% endblock extrafields %}

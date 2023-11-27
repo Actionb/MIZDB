@@ -19,12 +19,13 @@ from dbentry.base.views import MIZAdminMixin
 from dbentry.tools.bulk.forms import BulkFormAusgabe
 from dbentry.tools.decorators import register_tool
 from dbentry.utils.admin import (
-    get_changelist_link, get_changelist_url, link_list, log_addition, log_change
+    get_changelist_url, log_addition, log_change
 )
+from dbentry.utils.html import get_changelist_link, link_list
 
 
 @register_tool(
-    url_name='bulk_ausgabe',
+    url_name='tools:bulk_ausgabe',
     index_label='Ausgaben Erstellung',
     permission_required=['dbentry.add_ausgabe']
 )
@@ -106,9 +107,10 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if created or updated:
                 # noinspection PyUnresolvedReferences
                 changelist_link = get_changelist_link(
+                    request,
                     _models.Ausgabe,
-                    request.user,
                     obj_list=[*created, *updated],
+                    namespace='admin',
                     blank=True
                 )
                 messages.success(

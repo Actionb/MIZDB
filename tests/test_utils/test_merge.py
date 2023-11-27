@@ -1,7 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from dbentry import utils
+from dbentry.utils.merge import merge_records
 from tests.case import DataTestCase, LoggingTestMixin, RequestTestCase
 from tests.model_factory import make
 
@@ -83,7 +83,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         super().setUpTestData()
 
     def test_merge(self):
-        utils.merge_records(original=self.obj1, queryset=self.model.objects.all())
+        merge_records(original=self.obj1, queryset=self.model.objects.all())
         self.assertSequenceEqual(self.model.objects.all(), [self.obj1])
         self.assertSequenceEqual(
             self.obj1.foo.all().order_by('pk'),
@@ -100,7 +100,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         True.
         """
         new_original: MergeBase
-        new_original, update_data = utils.merge_records(
+        new_original, update_data = merge_records(
             original=self.obj1,
             queryset=self.queryset,
             expand_original=True,
@@ -120,7 +120,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         expand_original is False.
         """
         new_original: MergeBase
-        new_original, update_data = utils.merge_records(
+        new_original, update_data = merge_records(
             self.obj1,
             self.queryset,
             expand_original=False,
@@ -135,7 +135,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         Assert that merge adds all the related objects of the other objects to
         the 'original'.
         """
-        _new_original, _update_data = utils.merge_records(
+        _new_original, _update_data = merge_records(
             self.obj1,
             self.queryset,
             expand_original=False,
@@ -166,7 +166,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
 
     def test_rest_deleted(self):
         """Assert that merge deletes the other objects."""
-        utils.merge_records(
+        merge_records(
             self.obj1,
             self.queryset,
             expand_original=True,
@@ -184,7 +184,7 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
         self.obj3.bar.add(self.bar_merger1)  # noqa
         queryset = self.queryset.filter(pk__in=[self.obj2.pk, self.obj3.pk])
         with self.assertRaises(models.deletion.ProtectedError):
-            utils.merge_records(
+            merge_records(
                 self.obj2, queryset, expand_original=True, user_id=self.super_user.pk
             )
             # Check that the merge was aborted and obj3 was not deleted:

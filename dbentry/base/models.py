@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy
 
 from dbentry.fields import YearField
 from dbentry.query import CNQuerySet, MIZQuerySet
-from dbentry.utils import get_fields_and_lookups, get_model_fields
+from dbentry.utils.models import get_fields_and_lookups, get_model_fields
 
 
 class BaseModel(models.Model):

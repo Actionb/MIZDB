@@ -102,13 +102,12 @@ class TestMIZSite(RequestTestCase):
         self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools')
 
-        self.assertIn('bulk_ausgabe', tools)
-        self.assertEqual(tools['bulk_ausgabe'], 'Ausgaben Erstellung')
-        self.assertIn('site_search', tools)
-        self.assertEqual(tools['site_search'], 'Datenbank durchsuchen')
-        self.assertIn('dupes_select', tools)
-        self.assertEqual(tools['dupes_select'], 'Duplikate finden')
-        self.assertNotIn('import_select', tools)
+        self.assertIn('tools:bulk_ausgabe', tools)
+        self.assertEqual(tools['tools:bulk_ausgabe'], 'Ausgaben Erstellung')
+        self.assertIn('tools:site_search', tools)
+        self.assertEqual(tools['tools:site_search'], 'Datenbank durchsuchen')
+        self.assertIn('tools:dupes_select', tools)
+        self.assertEqual(tools['tools:dupes_select'], 'Duplikate finden')
 
     def test_index_tools_mitarbeiter(self):
         """
@@ -123,10 +122,10 @@ class TestMIZSite(RequestTestCase):
         self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools').copy()
 
-        self.assertIn('bulk_ausgabe', tools)
-        self.assertEqual(tools.pop('bulk_ausgabe'), 'Ausgaben Erstellung')
-        self.assertIn('site_search', tools)
-        self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
+        self.assertIn('tools:bulk_ausgabe', tools)
+        self.assertEqual(tools.pop('tools:bulk_ausgabe'), 'Ausgaben Erstellung')
+        self.assertIn('tools:site_search', tools)
+        self.assertEqual(tools.pop('tools:site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
     def test_index_tools_view_only(self):
@@ -146,8 +145,8 @@ class TestMIZSite(RequestTestCase):
         self.assertTrue('admintools' in response.context_data)
         tools = response.context_data.get('admintools').copy()
 
-        self.assertIn('site_search', tools)
-        self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
+        self.assertIn('tools:site_search', tools)
+        self.assertEqual(tools.pop('tools:site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
     def test_changelist_availability_superuser(self):

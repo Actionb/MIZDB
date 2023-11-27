@@ -1,0 +1,12 @@
+{% extends "mizdb/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans 'Permission denied' %}{% endblock %}
+
+{% block content %}
+
+<h2>{% trans 'Permission denied' %}</h2>
+
+<p> {{exception}} </p>
+
+{% endblock %}

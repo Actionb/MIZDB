@@ -1,0 +1,15 @@
+{% extends "mizdb/base.html" %}
+{% load static django_bootstrap5 %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {{ form.media }}
+{% endblock extrahead %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% bootstrap_button button_type="submit" button_class="btn-success" content="OK" %}
+</form>
+{% endblock content %}

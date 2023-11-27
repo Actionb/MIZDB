@@ -66,7 +66,7 @@ class TestMakeWidget(MIZTestCase):
                 widget = make_widget(self.model, can_add=can_add)
                 if can_add:
                     self.assertEqual(
-                        widget.add_url, f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_add"
+                        widget.add_url, f"{self.model._meta.app_label}_{self.model._meta.model_name}_add"
                     )
                 else:
                     self.assertFalse(widget.add_url)
@@ -79,7 +79,7 @@ class TestMakeWidget(MIZTestCase):
                 if can_list:
                     self.assertEqual(
                         widget.changelist_url,
-                        f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist",
+                        f"{self.model._meta.app_label}_{self.model._meta.model_name}_changelist",
                     )
                 else:
                     self.assertFalse(widget.changelist_url)
@@ -91,7 +91,7 @@ class TestMakeWidget(MIZTestCase):
                 widget = make_widget(self.model, can_edit=can_edit)
                 if can_edit:
                     self.assertEqual(
-                        widget.edit_url, f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change"
+                        widget.edit_url, f"{self.model._meta.app_label}_{self.model._meta.model_name}_change"
                     )
                 else:
                     self.assertFalse(widget.edit_url)
