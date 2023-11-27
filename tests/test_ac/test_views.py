@@ -741,6 +741,14 @@ class TestACAutor(ACViewTestCase):
         )
         self.assertEqual(len(create_option), 5)
 
+    def test_create_object_only_kuerzel(self):
+        """
+        Assert that no Person instance is created if only the kuerzel is given.
+        """
+        response = self.post_response(self.path, data={'text': '(BT)'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(_models.Person.objects.exists())
+
 
 class TestACBuchband(ACViewTestCase):
     model = _models.Buch
