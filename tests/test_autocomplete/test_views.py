@@ -118,6 +118,18 @@ class TestAutocompleteAutor(ViewTestCase):
         self.assertEqual(person_call.args, (request.user.pk, obj.person))
         self.assertEqual(autor_call.args, (request.user.pk, obj))
 
+    def test_create_object_only_kuerzel(self):
+        """
+        Assert that no Person instance is created if only the kuerzel is given.
+        """
+        request = self.get_request(
+            data={"create-field": "cf", "model": f"{self.model._meta.app_label}.{self.model._meta.model_name}"}
+        )
+        view = self.get_view(request)
+        created = view.create_object({"cf": "(BT)"})
+        self.assertTrue(created.pk)
+        self.assertFalse(_models.Person.objects.exists())
+
 
 class TestAutocompleteBuchband(ViewTestCase):
     model = _models.Buch

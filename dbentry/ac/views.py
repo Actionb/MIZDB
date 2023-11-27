@@ -241,11 +241,15 @@ class ACAutor(ACBase):
         """
         vorname, nachname, kuerzel = parse_autor_name(text)
         with transaction.atomic():
-            person = _models.Person.objects.create(vorname=vorname, nachname=nachname)
-            obj = self.model.objects.create(kuerzel=kuerzel, person=person)
-        log_addition(self.request.user.pk, person)
-        log_addition(self.request.user.pk, obj)
-        return obj
+            if nachname:
+                person = _models.Person.objects.create(vorname=vorname, nachname=nachname)
+            else:
+                person = None
+            autor = self.model.objects.create(kuerzel=kuerzel, person=person)
+        if person:
+            log_addition(self.request.user.pk, person)
+        log_addition(self.request.user.pk, autor)
+        return autor
 
     def build_create_option(self, q: str) -> list:
         """
