@@ -373,9 +373,12 @@ def get_deleted_objects(request, objs, namespace=""):
             for field in obj._meta.get_fields():
                 if field.is_relation and field.related_model != origin_model:
                     other_pk = field.value_from_object(obj)
+                    # FIXME: this is incredibly inefficient as it creates a
+                    #  query for every related object!
                     related_obj = field.related_model.objects.get(pk=other_pk)
                     object_description = str(related_obj)
                     verbose_name = f"{field.related_model._meta.verbose_name} Beziehung"
+                    break
         return related_obj, verbose_name, object_description
 
     def format_callback(obj):
@@ -391,7 +394,12 @@ def get_deleted_objects(request, objs, namespace=""):
             pass
         return mark_safe(f"{verbose_name}: {object_description}")
 
-    to_delete = collector.nested(format_callback)
+    total_count = sum(len(objs) for model, objs in collector.model_objs.items())
+    if total_count < 500:
+        to_delete = collector.nested(format_callback)
+    else:
+        # Do not display a list of deleted items if there are too many.
+        to_delete = []
 
     protected = [format_callback(obj) for obj in collector.protected]
     model_count = {}

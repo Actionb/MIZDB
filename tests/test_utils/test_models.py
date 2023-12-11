@@ -332,3 +332,14 @@ class TestGetDeletedObjects(RequestTestCase):
         for desc in [f'Genre Beziehung: {self.genre1}', f'Genre Beziehung: {self.genre2}']:
             with self.subTest(desc=desc):
                 self.assertIn(desc, genres)
+
+    def test_no_list_of_deleted_objects(self):
+        """
+        Assert that the 'deleted objects' list is empty if there are too many
+        objects.
+        """
+        with patch("dbentry.utils.models.sum") as sum_mock:
+            sum_mock.return_value = 501
+            request = self.get_request("/")
+            to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [self.obj])
+            self.assertFalse(to_delete)

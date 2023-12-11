@@ -42,8 +42,10 @@
         {% endfor %}
     </ul>
 
-    <h2>Objekte</h2>
-    <ul>{{ deleted_objects|unordered_list }}</ul>
+    {% if deleted_objects %}
+        <h2>Objekte</h2>
+        <ul>{{ deleted_objects|unordered_list }}</ul>
+    {% endif %}
     <form method="post">
         {% csrf_token %}
         {# Sentinel field that signals the view that the user has confirmed the deletion #}
