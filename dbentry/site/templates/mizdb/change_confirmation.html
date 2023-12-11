@@ -1,12 +1,6 @@
 {% extends "mizdb/base.html" %}
 {% load i18n static %}
 
-{% comment %}
-{% block extrahead %}
-    {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/base.css' %}"/>
-{% endblock extrahead %}
-{% endcomment %}
 {% block extrastyle %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'admin/css/diff.css' %}"/>
@@ -14,10 +8,10 @@
 
 {% block bodyclass %}{{ block.super }} delete-confirmation{% endblock %}
 {% block content %}
-<p>Durch die Änderungen wird der Name des Datensatzes {{link}} stark verändert. (<a href="https://de.wikipedia.org/wiki/Levenshtein-Distanz">Distanz</a>: {{distance}}, Ratio: {{ratio}})</p>
+<p>Durch die Änderungen wird der Name des Datensatzes {{link}} stark verändert. (<a href="https://de.wikipedia.org/wiki/Levenshtein-Distanz" target="_blank">Distanz</a>: {{distance}}, Ratio: {{ratio}})</p>
 <p><strong>Dies könnte ein Hinweis darauf sein, dass Sie versehentlich den falschen Datensatz bearbeiten.</strong> Bitte bestätigen Sie, dass sie den richtigen Datensatz verändern und dass die Änderungen korrekt sind.</p>
 
-<div id="changes" style="padding: 1em;">
+<div id="changes" class="p-3">
 <p>Vorher: <strong>{{before}}</strong></p>
 <p>Nachher: <strong>{{after}}</strong></p>
 <p>Änderungen: {{diff}}</p>
