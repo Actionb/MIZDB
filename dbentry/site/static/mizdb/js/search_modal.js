@@ -33,7 +33,7 @@ window.addEventListener('load', () => {
           const results = makeDomElement('<ul class="list-group list-group-flush"></ul>')
           const count = data.total_count
           for (const result of data.results) {
-            const modelResult = makeDomElement('<li class="list-group-item list-group-item-action"></li>')
+            const modelResult = makeDomElement('<li class="list-group-item"></li>')
 
             // Add a title div that contains the changelist link and a toggler
             // button for the collapsible result list.
