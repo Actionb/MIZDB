@@ -2,8 +2,9 @@
 
 ## [unreleased]
 
-- added site app
-- added SCSS
+### Added
+- integrated site app that does not rely on django admin
+- use Sass/SCSS to generate CSS and theme
 
 ## [0.12.2] - 2023-10-06
 
