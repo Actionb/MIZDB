@@ -18,7 +18,7 @@ Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
 <!-- TOC -->
 
-# Installation Debian (Docker)
+## Installation Debian (Docker)
 
 ### Per script
 
@@ -66,7 +66,7 @@ Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
 
 Für Entwicklung: füge `DJANGO_DEVELOPMENT=1` zu den Umgebungsvariablen in der Datei `.env` hinzu.
 
-# Verwaltung
+## Verwaltung
 
 Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeichnis zur Verfügung:
 
@@ -156,7 +156,7 @@ Anschließend müssen die Container gestoppt und neu gestartet werden:
 bash mizdb.sh stop && bash mizdb.sh start
 ```
 
-# Installation (ohne Docker)
+## Installation (ohne Docker)
 
 **Wichtig:** MIZDB sollte nicht im Home Verzeichnis erstellt werden, da der Webserver keinen Zugriff auf dieses
 Verzeichnis hat!
@@ -330,3 +330,28 @@ python manage.py test --settings=tests.settings tests
 ```shell
 psql --username=mizdb_user --host=localhost mizdb
 ```
+
+## Development 
+
+Installiere zusätzliche Dependencies:
+```shell
+pip install -r requirements/dev.txt
+npm install
+```
+
+### CSS, Sass & Theme
+
+Benutze
+```shell
+npm run sass-build
+```
+oder
+```shell
+npm run sass-watch
+```
+Um die CSS Dateien zu erstellen. 
+
+Links:
+ - https://getbootstrap.com/
+ - https://bootswatch.com/flatly/
+ - https://sass-lang.com/

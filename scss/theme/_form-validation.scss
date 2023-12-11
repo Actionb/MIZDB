@@ -1,0 +1,43 @@
+// Set form validity colors and icons.
+@import "../../node_modules/bootstrap/scss/_maps";
+
+// Add a "valid" border class and overwrite the "invalid" border color.
+$utilities-border-colors: map-merge(
+    $utilities-border-colors, (
+        "valid": var(--bs-form-valid-border-color),
+        // When in dark mode, the "invalid" color doesn't update to the softer
+        // red used by the Flatly theme. Setting the invalid color to the 
+        // corresponding CSS variable fixes this.
+        "invalid": var(--bs-form-invalid-border-color),
+    )
+);
+
+@mixin background-icon($state){
+    padding-right: $input-height-inner;
+    @if ($state == "valid") {
+        background-image: escape-svg($form-feedback-icon-valid);
+    } @else {
+        background-image: escape-svg($form-feedback-icon-invalid);
+    }
+    background-repeat: no-repeat;
+    background-position: right $input-height-inner-quarter center;
+    background-size: $input-height-inner-half $input-height-inner-half;
+}
+
+// Add the text-$state, bg-$state and icon-$state CSS classes.
+@each $state in "valid", "invalid" {
+
+    .text-#{$state} {
+        color: var(--bs-form-#{$state}-color);
+    }
+
+    .bg-#{$state} {
+        @extend .border;
+        @include background-icon($state)
+    }
+
+    .icon-#{$state}::after {
+        content: "";
+        @include background-icon($state)
+    }
+}

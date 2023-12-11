@@ -58,7 +58,7 @@
     <div class="form">
     {% block modelform %}
         {% if has_errors %}
-            <p class="errornote text-danger border border-danger p-2 fw-bold rounded">Bitte die unten aufgeführten Fehler korrigieren.</p>
+            <p class="errornote text-invalid border border-invalid p-2 fw-bold rounded">Bitte die unten aufgeführten Fehler korrigieren.</p>
             {{ form.non_field_errors }}
         {% endif %}
         {% block formfields %}
@@ -100,7 +100,7 @@
         {% formset_has_errors formset as formset_is_invalid %}
         <li class="nav-item{% if formset_is_invalid %} invalid{% endif %}">
             <button
-                    class="nav-link px-2{% if forloop.first%} active{% endif %}{% if formset_is_invalid %} me-4 border-danger{% endif %}"
+                    class="nav-link px-2{% if forloop.first%} active{% endif %}{% if formset_is_invalid %} me-4 border-invalid icon-invalid{% endif %}"
                     id="{{inline_opts.model_name}}-tab"
                     data-bs-toggle="tab"
                     data-bs-target="#{{inline_opts.model_name}}-tab-pane"
@@ -111,7 +111,6 @@
             >
                 {{inline_opts.verbose_name_plural|capfirst}}
                 <span class="badge bg-secondary ms-1">{% if formset.forms|length > 1%}{{formset.forms|length|add:"-1"}}{% else %}0{% endif %}</span>
-                {% if formset_is_invalid %}<svg xmlns="http://www.w3.org/2000/svg" class="align-text-bottom" viewBox="0 0 12 12" width="18" height="18" fill="none" stroke="#e74c3c"><circle cx="6" cy="6" r="4.5"/><path stroke-linejoin="round" d="M5.8 3.6h.4L6 6.5z"/><circle cx="6" cy="8.2" r=".6" fill="#e74c3c" stroke="none"/></svg>{% endif %}
             </button>
         </li>
     {% endfor %}

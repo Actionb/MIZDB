@@ -1,0 +1,28 @@
+// Overwrites for MIZSelect
+
+// Set TomSelect is-invalid border color to the theme's invalid border color.
+// Without this, the border color won't update when switching into dark mode;
+// the color will remain dark red.
+.ts-wrapper.form-select.is-invalid {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+// Force TomSelect to use the same box-shadow and border as other form inputs.
+.plugin-dropdown_input.focus .ts-dropdown .dropdown-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    border: 1px solid $primary-border-subtle;
+
+}
+
+// Use full opacity on the box-shadow when in dark mode.
+@include color-mode("dark") {
+    .plugin-dropdown_input.focus .ts-dropdown .dropdown-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba($primary, 1);
+    }
+}
+
+// Make the placeholder more readable in dark mode.
+.ts-control input.items-placeholder::placeholder {
+    color: var(--bs-secondary-color);
+    opacity: 1;
+}

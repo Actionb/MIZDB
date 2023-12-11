@@ -3,6 +3,7 @@
 ## [unreleased]
 
 - added site app
+- added SCSS
 
 ## [0.12.2] - 2023-10-06
 
