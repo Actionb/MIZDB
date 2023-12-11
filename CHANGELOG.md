@@ -1,5 +1,9 @@
 # Changelog
 
+## [unreleased]
+
+- added site app
+
 ## [0.12.2] - 2023-10-06
 
 ### Reverted
