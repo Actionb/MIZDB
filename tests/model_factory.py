@@ -342,6 +342,8 @@ class M2MFactory(RelatedFactory):
             context: declarations.PostGenerationContext
     ) -> None:
         """Create the related objects and add references to the m2m table."""
+        if not instance.pk:
+            return
         related_manager = getattr(instance, self.descriptor_name)
         # Get the right field names from the intermediary m2m table.
         source_field = related_manager.through._meta.get_field(
