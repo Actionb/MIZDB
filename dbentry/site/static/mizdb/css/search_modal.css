@@ -1,7 +1,0 @@
-li::marker {
-    color: var(--bs-primary);
-}
-
-.list-group-item > a {
-    text-decoration: none;
-}
