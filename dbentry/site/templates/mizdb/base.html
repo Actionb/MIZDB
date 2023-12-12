@@ -118,10 +118,10 @@
     </div>
     {% endif %}
     <!-- Content -->
-    {% block content_head %}
-        {% if title %}{% block content_title %}<h1>{{ title }}</h1>{% endblock %}{% endif %}
-    {% endblock %}
     <div id="content" class="py-3">
+        {% block content_head %}
+            {% if title %}{% block content_title %}<h1>{{ title }}</h1>{% endblock %}{% endif %}
+        {% endblock %}
         {% block content %}{{ content }}{% endblock %}
     </div>
     <!-- END Content -->
