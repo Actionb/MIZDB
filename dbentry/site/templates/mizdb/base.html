@@ -125,7 +125,7 @@
         {% block content %}{{ content }}{% endblock %}
     </div>
     <!-- END Content -->
-    <a href="#" style="display: none;" type="button" class="btn btn-primary position-fixed start-50 bottom-0 mb-1 opacity-75" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen">
+    <a href="#" type="button" class="btn btn-primary position-fixed bottom-0 mb-1 opacity-75" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-up"><polyline points="18 15 12 9 6 15"></polyline></svg>
         <span>nach oben</span>
     </a>
@@ -140,9 +140,9 @@ window.onscroll = function() {scrollFunction()};
 
 function scrollFunction() {
   if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-    btn.style.display = "inline-block";
+    btn.classList.remove("d-none");
   } else {
-    btn.style.display = "none";
+    btn.classList.add("d-none");
   }
 }
 </script>
