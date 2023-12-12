@@ -11,43 +11,36 @@
 {% endblock extrahead %}
 
 {% block content_head %}
-    {{ block.super }}
-    {% if object.pk %}
-    <div id="object-tools" class="d-flex gap-2 align-items-center mb-3">
-        <div id="object-descr" class="me-auto">
-            <h3 class="mb-0">
-                {{ object|truncatechars:50 }}
-                <span class="ms-2 fs-6">(id: <span class="id-container">{{ object.pk }}</span>)</span>
-                {% if is_popup %}
-                    <a id="unpop" class="fs-6" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
-                {% endif %}
-            </h3>
-        </div>
-        {% block history_link %}<div id="history"><a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary">Änderungsgeschichte</a></div>{% endblock history_link %}
-    </div>
-
-    {% if changelist_links %}
-    <div id="related-objects-accordion" class="accordion">
-      <div class="accordion-item">
-        <h2 class="accordion-header">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#related-objects" aria-expanded="false" aria-controls="related-objects">
-            Verwandte Objekte
-          </button>
-        </h2>
-        <div id="related-objects" class="accordion-collapse collapse" data-bs-parent="#related-objects-accordion">
-          <div class="accordion-body p-1">
-            <div class="list-group list-group-flush">
-                {% for url, label in changelist_links %}
-                    <li class="list-group-item list-group-item-action"><a href="{{ url }}">{{ label }}</a></li>
-                {% endfor %}
+<div class="row">
+    <div class="col-10">
+        {{ block.super }}
+        {% if object.pk %}
+            <div id="object-description">
+                <h3 class="mb-0">
+                    {{ object|truncatechars:50 }}
+                    <span class="ms-2 fs-6">(id: <span class="id-container">{{ object.pk }}</span>)</span>
+                    {% if is_popup %}
+                        <a id="unpop" class="fs-6" href="{% remove_popup_param view.request %}"
+                           title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
+                    {% endif %}
+                </h3>
             </div>
-          </div>
+        {% endif %}
+    </div>
+    {% if object.pk %}
+        <div id="object-tools" class="col-2 text-center">
+            {% block history_link %}<div id="history"><a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary">Änderungsgeschichte</a></div>{% endblock history_link %}
         </div>
-      </div>
+    {% endif %}
+    {% if changelist_links %}
+    <div id="related-objects">
+        {% for url, label in changelist_links %}
+            <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
+        {% endfor %}
     </div>
     {% endif %}
-    {% endif %}
-{% endblock %}
+</div>
+{% endblock content_head %}
 
 {% block content %}
 {% block form %}
