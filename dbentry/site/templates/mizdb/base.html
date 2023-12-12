@@ -106,7 +106,7 @@
 </aside>
 {% endblock nav-sidebar %}
 
-<main id="main" class="p-1 {% block mainclass %}container-lg{% endblock %}">
+<main id="main" class="p-1 pb-0 {% block mainclass %}container-lg{% endblock %}">
     {% if messages %}
     <div id="messages-container" class="messages">
         {% for message in messages %}
@@ -122,14 +122,21 @@
         {% block content_head %}
             {% if title %}{% block content_title %}<h1>{{ title }}</h1>{% endblock %}{% endif %}
         {% endblock %}
-        {% block content %}{{ content }}{% endblock %}
+        {% block content %} {{ content }} {% endblock %}
     </div>
     <!-- END Content -->
-    <a href="#" type="button" class="btn btn-primary position-fixed bottom-0 mb-1 opacity-75" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-up"><polyline points="18 15 12 9 6 15"></polyline></svg>
-        <span>nach oben</span>
-    </a>
+    <div id="sticky-bottom-container" class="sticky-bottom pb-1">
+    {% block sticky_bottom %}
+        <div id="to-top-button-container" class="d-flex justify-content-center">
+            <a href="#" type="button" class="btn btn-primary mb-1 opacity-75 d-none" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-up"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                <span>nach oben</span>
+            </a>
+        </div>
+    {% endblock %}
+    </div>
 </main>
+
 {% block extrascript %}
 <script>
 // Script for the scroll back to top button:

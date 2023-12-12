@@ -44,10 +44,9 @@
 
 {% block content %}
 {% block form %}
-<form method="post" class="change-form">
+<form method="post" id="change-form" class="change-form">
     {% csrf_token %}
     {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
-    {% include "mizdb/includes/submit_row.html" %}
     <div class="form p-3 pb-1 bg-light-subtle rounded mb-3">
     {% block modelform %}
         {% if has_errors %}
@@ -129,3 +128,8 @@
 </form>
 {% endblock form %}
 {% endblock content %}
+
+{% block sticky_bottom %}
+ {{ block.super }}
+        {% include "mizdb/includes/submit_row.html" %}
+{% endblock sticky_bottom %}

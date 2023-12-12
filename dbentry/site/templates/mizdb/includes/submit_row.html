@@ -1,12 +1,12 @@
 {% load mizdb django_bootstrap5 %}
-<div class="submit-row control-button-row sticky-top z-999 p-2 mb-3 bg-primary rounded d-flex justify-content-between">
+<div class="submit-row control-button-row sticky-bottom z-999 p-2 bg-primary rounded d-flex justify-content-between">
 {% if is_popup %}
-    {% bootstrap_button button_type="submit" button_class="btn-success" content="Sichern" %}
+    {% bootstrap_button button_type="submit" button_class="btn-success" content="Sichern" form="change-form" %}
 {% else %}
     <div class="save-buttons">
-        {% bootstrap_button button_type="submit" button_class="btn-success" content="Sichern" %}
-        {% bootstrap_button button_type="submit" button_class="btn-outline-success" name="_continue" content="Sichern und weiterbearbeiten" %}
-        {% bootstrap_button button_type="submit" button_class="btn-outline-success" name="_addanother" content="Sichern und neu hinzufügen" %}
+        {% bootstrap_button button_type="submit" button_class="btn-success" content="Sichern" form="change-form" %}
+        {% bootstrap_button button_type="submit" button_class="btn-outline-success" name="_continue" content="Sichern und weiterbearbeiten" form="change-form" %}
+        {% bootstrap_button button_type="submit" button_class="btn-outline-success" name="_addanother" content="Sichern und neu hinzufügen" form="change-form" %}
     </div>
     <div class="danger-buttons">
         {% if object.pk %}

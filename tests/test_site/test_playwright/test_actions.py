@@ -81,7 +81,7 @@ def selection_panel():
     """Return the panel that shows the currently selected items."""
 
     def inner(changelist):
-        elem = changelist.locator("#changelist-selection-container")
+        elem = changelist.locator("#selection-panel")
         elem.wait_for(state="attached")
         return elem
 
