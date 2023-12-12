@@ -10,25 +10,23 @@
 
 <aside class="col-4 secondary-bg-subtle">
     {% if user.is_authenticated %}
-    {% get_admin_log 10 as admin_log for_user user %}
-    <div id="recent-actions-module" class="bg-secondary bg-opacity-10 pb-2">
-        <h3 class="p-3 border-bottom">Letzte Änderungen</h3>
-        {% if not admin_log %}
-            <p>Keine vorhanden</p>
-        {% else %}
-            <ul class="actionlist">
-            {% for entry in admin_log %}
-                <li class="mb-2">
-                    {% get_actionlist_item entry as item %}
-                    <div title="{{ item.title }}">
-                        {{ item.image }} {{ item.change_link }}
-                        {% if entry.content_type %}<br><span class="small text-secondary ms-4">{{ entry.content_type.name|capfirst }}</span>{% endif %}
-                    </div>
-                </li>
-            {% endfor %}
-            </ul>
+        {% get_admin_log 10 as admin_log for_user user %}
+        {% if admin_log %}
+            <div id="recent-actions-module" class="bg-secondary bg-opacity-10 pb-2">
+                <h3 class="p-3 border-bottom">Letzte Änderungen</h3>
+                <ul class="actionlist">
+                {% for entry in admin_log %}
+                    <li class="mb-2">
+                        {% get_actionlist_item entry as item %}
+                        <div title="{{ item.title }}">
+                            {{ item.image }} {{ item.change_link }}
+                            {% if entry.content_type %}<br><span class="small text-secondary ms-4">{{ entry.content_type.name|capfirst }}</span>{% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
         {% endif %}
-    </div>
     {% endif %}
 </aside>
 </div>
