@@ -55,7 +55,7 @@
     {% csrf_token %}
     {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
     {% include "mizdb/includes/submit_row.html" %}
-    <div class="form">
+    <div class="form p-3 pb-1 bg-light-subtle rounded mb-3">
     {% block modelform %}
         {% if has_errors %}
             <p class="errornote text-invalid border border-invalid p-2 fw-bold rounded">Bitte die unten aufgeführten Fehler korrigieren.</p>
@@ -93,7 +93,7 @@
     {% endblock modelform %}
     </div>
 
-    <div class="inlines">
+    <div class="inlines bg-light-subtle">
     {% block inlines %}
     <ul class="nav nav-tabs nav-fill flex-column flex-md-row bg-secondary bg-opacity-10 border border-bottom-0 rounded-top">
     {% for formset, inline_opts in inlines %}
