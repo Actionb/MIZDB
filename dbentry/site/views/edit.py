@@ -268,7 +268,7 @@ class BandView(BaseEditView):
 
     model = _models.Band
     inlines = [URLInline, GenreInline, AliasInline, MusikerInline, OrtInline]
-    widgets = {"band_name": GoogleBtnWidget(attrs={"style": "display: inline-block;"})}
+    widgets = {"band_name": GoogleBtnWidget()}
     require_confirmation = True
 
 
@@ -474,7 +474,7 @@ class MusikerView(BaseEditView):
     model = _models.Musiker
     fields = ["kuenstler_name", "person", "beschreibung", "bemerkungen"]
     inlines = [URLInline, GenreInline, AliasInline, BandInline, OrtInline, InstrInline]
-    widgets = {"kuenstler_name": GoogleBtnWidget(attrs={"style": "display: inline-block;"})}
+    widgets = {"kuenstler_name": GoogleBtnWidget()}
     require_confirmation = True
 
 
