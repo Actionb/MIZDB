@@ -11,8 +11,8 @@
 {% endblock extrahead %}
 
 {% block content_head %}
-<div class="row">
-    <div class="col-10">
+<div id="content-head" class="row{% if not changelist_links %} mb-3{% endif %}">
+    <div id="object-info" class="col-10">
         {{ block.super }}
         {% if object.pk %}
             <div id="object-description">
