@@ -59,6 +59,10 @@ form.search-form div.ts-wrapper {
   list-style: none;
 }
 
+.login-form {
+  width: 300px;
+}
+
 .changelist-selection {
   position: fixed;
   bottom: 0;
