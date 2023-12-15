@@ -1,16 +1,6 @@
-"""Various useful (and some not quite so useful) utility functions and helpers."""
-
-from typing import Callable, Iterable, Iterator  # noqa
-
-from dbentry.utils.admin import *  # NOQA
-from dbentry.utils.copyrelated import *  # NOQA
-from dbentry.utils.dates import *  # NOQA
-from dbentry.utils.debug import *  # NOQA
-from dbentry.utils.gnd import *  # NOQA
-from dbentry.utils.inspect import *  # NOQA
-from dbentry.utils.merge import *  # NOQA
-from dbentry.utils.models import *  # NOQA
-from dbentry.utils.text import *  # NOQA
+"""Utility functions and helpers."""
+from collections.abc import Callable, Iterable, Iterator
+from typing import Any, Union
 
 
 def nfilter(filters: Iterable[Callable], iterable: Iterable) -> Iterator:
@@ -33,3 +23,20 @@ def add_attrs(**kwargs):
         return obj
 
     return inner
+
+
+def flatten(iterable: Iterable) -> Union[list, Iterable]:
+    """Flatten a nested iterable. Does not flatten strings."""
+
+    def can_flatten(obj):
+        return isinstance(obj, Iterable) and not isinstance(obj, str)
+
+    if not can_flatten(iterable):
+        return iterable
+    flattened = []
+    for subiterable in iterable:
+        if can_flatten(subiterable):
+            flattened.extend(flatten(subiterable))
+        else:
+            flattened.append(subiterable)
+    return flattened

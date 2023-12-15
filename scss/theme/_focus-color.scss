@@ -1,0 +1,9 @@
+// Use a border color with more contrast and strengthen the box-shadow color.
+@include color-mode("dark") {
+    @each $elem in ".form-control", ".form-select", ".form-check-input" {
+        #{$elem}:focus {
+            border-color: $primary-border-subtle;  // default: --bs-body-color
+            box-shadow: 0 0 0 0.25rem rgba($primary, 1); // default: opacity 0.25
+        }
+    }
+}

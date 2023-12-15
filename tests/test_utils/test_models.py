@@ -7,9 +7,13 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
 from django.db import models
+from django.test import override_settings
+from django.urls import path
 
-from dbentry import utils
-from tests.case import MIZTestCase
+from dbentry.utils import models as utils
+from tests.case import MIZTestCase, RequestTestCase
+from tests.model_factory import make
+from tests.test_utils.models import Band, Genre
 
 
 class M2MTarget(models.Model):
@@ -293,3 +297,49 @@ class TestCleanPerms(MIZTestCase):
             utils.clean_permissions(stream)
         self.assertEqual(stream.getvalue(), expected_message)
         self.assertFalse(new.pk)
+
+
+class URLConf:
+    app_name = 'test_utils'
+    urlpatterns = [
+        path('<path:object_id>/change/', lambda r: None, name='test_utils_band_change'),
+    ]
+
+
+@override_settings(ROOT_URLCONF=URLConf)
+class TestGetDeletedObjects(RequestTestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.genre1 = make(Genre, genre="Rock")
+        cls.genre2 = make(Genre, genre="Funk")
+        cls.obj = make(Band)
+        cls.obj.genre.set([cls.genre1, cls.genre2])
+        super().setUpTestData()
+
+    def test_has_edit_link(self):
+        """Assert that the item for the band object contains a link to its edit page."""
+        request = self.get_request("/")
+        to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [self.obj])
+        band = to_delete[0]
+        self.assertEqual(band, f'Band: <a href="/{self.obj.pk}/change/">{self.obj}</a>')
+
+    def test_m2m_description(self):
+        """Assert that many-to-many relations get a useful description."""
+        request = self.get_request("/")
+        to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [self.obj])
+        genres = to_delete[1][:2]  # the first two items should be the genres
+        for desc in [f'Genre Beziehung: {self.genre1}', f'Genre Beziehung: {self.genre2}']:
+            with self.subTest(desc=desc):
+                self.assertIn(desc, genres)
+
+    def test_no_list_of_deleted_objects(self):
+        """
+        Assert that the 'deleted objects' list is empty if there are too many
+        objects.
+        """
+        with patch("dbentry.utils.models.sum") as sum_mock:
+            sum_mock.return_value = 501
+            request = self.get_request("/")
+            to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [self.obj])
+            self.assertFalse(to_delete)

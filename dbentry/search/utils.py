@@ -4,7 +4,7 @@ from django.core import exceptions
 from django.db.models import Field, Model
 from django.db.models.constants import LOOKUP_SEP
 
-from dbentry import utils
+from dbentry.utils.models import get_fields_and_lookups
 
 
 def get_dbfield_from_path(
@@ -21,7 +21,7 @@ def get_dbfield_from_path(
             if an invalid lookup was used.
         - FieldError: if the field_path results in a reverse relation
     """
-    fields, lookups = utils.get_fields_and_lookups(model, field_path)
+    fields, lookups = get_fields_and_lookups(model, field_path)
     db_field = fields[-1]
     if not db_field.concrete:
         # 'db_field' is a relation object.

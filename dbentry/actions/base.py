@@ -3,11 +3,11 @@ from typing import Any, Callable, Iterable, Optional, Sequence, Type, Union
 from django import views
 from django.contrib.admin import ModelAdmin, helpers
 from django.contrib.admin.utils import display_for_field, get_fields_from_path, model_format_dict
-from django.contrib.auth.models import User
 from django.db.models import Model, QuerySet
 from django.db.models.options import Options
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
+from django.urls import NoReverseMatch
 from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
@@ -15,20 +15,24 @@ from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
 from formtools.wizard.views import SessionWizardView
 
-from dbentry.utils import create_hyperlink, get_change_page_url
+from dbentry.utils.html import create_hyperlink
+from dbentry.utils.url import get_change_url
 
 SafeTextOrStr = Union[str, SafeText]
 
 
-def get_object_link(obj: Model, user: User, site_name: str) -> SafeText:
+def get_object_link(request: HttpRequest, obj: Model, namespace: str) -> SafeText:
     """
     Return a safe string containing the model name and a link to the change
     page of ``obj``.
     """
     model_name = capfirst(obj._meta.verbose_name)
-    url = get_change_page_url(obj, user, site_name)
+    try:
+        url = get_change_url(request, obj, namespace)
+    except NoReverseMatch:
+        url = ''
     if url:
-        link = create_hyperlink(url, obj, target='_blank')
+        link = create_hyperlink(url, str(obj), target='_blank')
     else:
         link = force_str(obj)
     return format_html('{model_name}: {object_link}', model_name=model_name, object_link=link)
@@ -211,8 +215,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         values (which may include yet more links) of fields declared in
         self.display_values.
         """
-        user = self.request.user
-        site_name = self.model_admin.admin_site.name
+        namespace = self.model_admin.admin_site.name
 
         objects = []
         for obj in self.queryset:
@@ -232,7 +235,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                             # values_list() will also gather None values
                             continue  # pragma: no cover
                         related_obj = field.related_model.objects.get(pk=pk)
-                        sub_list.append(get_object_link(related_obj, user, site_name))
+                        sub_list.append(get_object_link(self.request, related_obj, namespace))
                 else:
                     value = display_for_field(getattr(obj, field.name), field, '---')
                     verbose_name = field.verbose_name
@@ -241,9 +244,9 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                         verbose_name = verbose_name.title()
                     sub_list.append("{}: {}".format(verbose_name, str(value)))
             if self.display_fields:
-                links = (get_object_link(obj, user, site_name), sub_list)
+                links = (get_object_link(self.request, obj, namespace), sub_list)
             else:
-                links = (get_object_link(obj, user, site_name),)  # type: ignore[assignment]
+                links = (get_object_link(self.request, obj, namespace),)  # type: ignore[assignment]
             objects.append(links)
         return objects
 

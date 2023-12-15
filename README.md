@@ -18,7 +18,7 @@ Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
 <!-- TOC -->
 
-# Installation Debian (Docker)
+## Installation Debian (Docker)
 
 ### Per script
 
@@ -28,7 +28,7 @@ Datenbank in der neuen Installation sofort wiederhergestellt wird.
 
 ```shell
 sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://gist.github.com/Actionb/76babf08b35acc0f94a679e63d979d3a -o get-mizdb.sh
+curl -fsSL https://gist.githubusercontent.com/Actionb/76babf08b35acc0f94a679e63d979d3a/raw/b0494ee97bd2b645ce7b37a7fc3bc434aee93807/get-mizdb.sh -o get-mizdb.sh
 sh get-mizdb.sh database_backup
 ```
 
@@ -66,7 +66,7 @@ Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
 
 Für Entwicklung: füge `DJANGO_DEVELOPMENT=1` zu den Umgebungsvariablen in der Datei `.env` hinzu.
 
-# Verwaltung
+## Verwaltung
 
 Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeichnis zur Verfügung:
 
@@ -156,7 +156,7 @@ Anschließend müssen die Container gestoppt und neu gestartet werden:
 bash mizdb.sh stop && bash mizdb.sh start
 ```
 
-# Installation (ohne Docker)
+## Installation (ohne Docker)
 
 **Wichtig:** MIZDB sollte nicht im Home Verzeichnis erstellt werden, da der Webserver keinen Zugriff auf dieses
 Verzeichnis hat!
@@ -330,3 +330,28 @@ python manage.py test --settings=tests.settings tests
 ```shell
 psql --username=mizdb_user --host=localhost mizdb
 ```
+
+## Development 
+
+Installiere zusätzliche Dependencies:
+```shell
+pip install -r requirements/dev.txt
+npm install
+```
+
+### CSS, Sass & Theme
+
+Benutze
+```shell
+npm run sass-build
+```
+oder
+```shell
+npm run sass-watch
+```
+Um die CSS Dateien zu erstellen. 
+
+Links:
+ - https://getbootstrap.com/
+ - https://bootswatch.com/flatly/
+ - https://sass-lang.com/

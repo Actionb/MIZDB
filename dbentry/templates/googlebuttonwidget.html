@@ -1,2 +1,4 @@
-{% include "django/forms/widgets/input.html" %}
- <button id="btn-google-me" type="button" onclick="googleMe( '{{widget.name}}' )">Google Suche</button>
+<div class="d-flex gap-1">
+  {% include "django/forms/widgets/input.html" %}
+  <button id="btn-google-me" class="btn btn-outline-info align-baseline text-nowrap" type="button" onclick="googleMe( '{{widget.name}}' )">Google Suche</button>
+</div>

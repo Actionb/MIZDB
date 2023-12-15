@@ -11,20 +11,24 @@ from django.db.models import (
 )
 from django.db.models.query import RawQuerySet
 from django.forms import Form
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
 
-from dbentry import utils
 from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.tools.decorators import register_tool
 from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
+from dbentry.utils.html import get_obj_link, create_hyperlink
+from dbentry.utils.models import get_model_from_string, get_model_relations
+from dbentry.utils.url import get_changelist_url
 from dbentry.utils.query import string_list
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
+
+# TODO: must make SiteSearchView available for both site and admin app (URL namespace)
 
 
 def find_duplicates(queryset: QuerySet, fields: Sequence[str]) -> RawQuerySet:
@@ -85,7 +89,7 @@ class ModelSelectView(views.generic.FormView):
 
 
 @register_tool(
-    url_name='dupes_select',
+    url_name='tools:dupes_select',
     index_label='Duplikate finden',
     superuser_only=True
 )
@@ -121,7 +125,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         if not kwargs.get('model_name'):
             raise TypeError("Model not provided.")
         # noinspection PyAttributeOutsideInit
-        self.model = utils.get_model_from_string(kwargs['model_name'], app_label='dbentry')
+        self.model = get_model_from_string(kwargs['model_name'], app_label='dbentry')
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle the request to find duplicates."""
@@ -213,15 +217,19 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
                     if len(v) > 100:
                         v = v[:100] + ' [...]'
                 values.append(v)
-            return obj, utils.get_obj_link(obj, self.request.user, blank=True), values
+            link = get_obj_link(self.request, obj, namespace="admin", blank=True)
+            return obj, link, values
 
         # noinspection PyShadowingNames
         def get_cl_link(dupe_group: List[Tuple[Model, SafeString, list[str]]]) -> SafeString:
             """Provide a link to the changelist page for this group of duplicate items."""
-            cl_url = utils.get_changelist_url(
-                self.model, self.request.user, obj_list=[item[0] for item in dupe_group]
+            cl_url = get_changelist_url(
+                self.request,
+                self.model,
+                obj_list=[item[0] for item in dupe_group],
+                namespace='admin'
             )
-            return utils.create_hyperlink(
+            return create_hyperlink(
                 url=cl_url, content='Änderungsliste',
                 # 'class' cannot be a keyword argument, so wrap the element
                 # attribute arguments in a dictionary.
@@ -248,7 +256,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
 
 
 @register_tool(
-    url_name='find_unused',
+    url_name='tools:find_unused',
     index_label='Unreferenzierte Datensätze',
     superuser_only=True
 )
@@ -282,14 +290,14 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
             form = self.get_form()
             if form.is_valid():
                 model_name = form.cleaned_data['model_select']
-                model = utils.get_model_from_string(model_name)
+                model = get_model_from_string(model_name)
                 relations, queryset = self.get_queryset(model, form.cleaned_data['limit'])
                 # noinspection PyUnresolvedReferences
-                cl_url = utils.get_changelist_url(model, request.user, obj_list=queryset)
+                cl_url = get_changelist_url(request, model, obj_list=queryset, namespace='admin')
                 context_kwargs = {
                     'form': form,
                     'items': self.build_items(relations, queryset),
-                    'changelist_link': utils.create_hyperlink(
+                    'changelist_link': create_hyperlink(
                         url=cl_url, content='Änderungsliste',
                         **{'target': '_blank', 'class': 'button'}
                     )
@@ -320,7 +328,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         # For each reverse relation, query for the 'unused' objects, and remove
         # all OTHER IDs (i.e. those of objects that exceed the limit) from the
         # set 'unused'.
-        for rel in utils.get_model_relations(model, forward=False):
+        for rel in get_model_relations(model, forward=False):
             if rel.model == rel.related_model:
                 # self relation
                 continue
@@ -369,7 +377,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 )
             items.append(
                 (
-                    utils.get_obj_link(obj, user=self.request.user, blank=True),
+                    get_obj_link(self.request, obj, namespace="admin", blank=True),
                     ", ".join(sorted(under_limit))
                 )
             )
@@ -438,15 +446,15 @@ class SiteSearchView(views.generic.TemplateView):
                 continue
             # noinspection PyUnresolvedReferences
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
-            url = utils.get_changelist_url(model, self.request.user)
+            url = get_changelist_url(self.request, model, namespace='admin')
             if url:
                 url += f"?q={q!s}"
-                results.append(utils.create_hyperlink(url, label, target="_blank"))
+                results.append(create_hyperlink(url, label, target="_blank"))
         return results
 
 
 @register_tool(
-    url_name='site_search',
+    url_name='tools:site_search',
     index_label='Datenbank durchsuchen',
     superuser_only=False
 )
@@ -468,3 +476,13 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
     def _search(self, model: Model, q: str) -> Any:
         # noinspection PyUnresolvedReferences
         return model.objects.search(q, ranked=False)  # pragma: no cover
+
+
+class SearchbarSearch(MIZSiteSearch):
+
+    def get(self, request: HttpRequest, **kwargs: Any) -> JsonResponse:
+        if q := request.GET.get('q', ''):
+            results = self.get_result_list(q)
+        else:
+            results = []
+        return JsonResponse({'results': results})

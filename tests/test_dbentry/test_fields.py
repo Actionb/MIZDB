@@ -2,18 +2,21 @@ import datetime
 from typing import Union
 from unittest.mock import patch
 
+from bs4 import BeautifulSoup
 from django import forms
 from django.contrib.admin.widgets import AdminTextInputWidget
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.utils.translation import override as translation_override
+from django_bootstrap5.templatetags.django_bootstrap5 import bootstrap_field
 from stdnum import isbn, issn
 
 from dbentry.fields import (
     EANField, ISBNField, ISBNFormField, ISSNField, ISSNFormField, PartialDate, PartialDateField,
     PartialDateFormField, PartialDateWidget, StdNumField, StdNumFormField, StdNumWidget, YearField
 )
+from dbentry.site.renderer import IS_INVALID_CLASS
 from tests.case import DataTestCase, MIZTestCase
 from tests.model_factory import make
 
@@ -706,28 +709,41 @@ class TestPartialDate(MIZTestCase):
 
 class TestPartialDateWidget(MIZTestCase):
 
-    def test_init_widgets(self):
+    def test_init_sets_widgets(self):
         """Assert that init sets the 'widgets' argument if no widgets were passed in."""
         widget = PartialDateWidget()
         self.assertEqual(len(widget.widgets), 3)
-        expected_attrs = [
-            ({'placeholder': 'Jahr', 'style': 'width:70px; margin-right:10px;'}),
-            ({'placeholder': 'Monat', 'style': 'width:70px; margin-right:10px;'}),
-            ({'placeholder': 'Tag', 'style': 'width:70px;'}),
-        ]
         for i, widget in enumerate(widget.widgets):
             self.assertIsInstance(widget, forms.widgets.NumberInput)
-            self.assertEqual(widget.attrs, expected_attrs[i])
 
+    def test_init_widgets_passed_in(self):
+        """Assert that passed in widgets are not overwritten."""
         widget = PartialDateWidget(widgets=[forms.widgets.DateInput()])
         self.assertEqual(len(widget.widgets), 1)
         self.assertIsInstance(widget.widgets[0], forms.widgets.DateInput)
+
+    def test_init_placeholder(self):
+        """Assert that init sets the placeholders for the subwidgets."""
+        widget = PartialDateWidget()
+        expected_placeholders = ["Jahr", "Monat", "Tag"]
+        for i, widget in enumerate(widget.widgets):
+            self.assertEqual(widget.attrs["placeholder"], expected_placeholders[i])
 
     def test_decompress(self):
         pd = PartialDate(year=2019, month=5, day=20)
         self.assertEqual(PartialDateWidget().decompress(pd), [2019, 5, 20])
 
         self.assertEqual(PartialDateWidget().decompress(None), [None] * 3)
+
+    def test_get_context_adds_css_classes(self):
+        """Assert that get_context adds the expected CSS classes to the elements."""
+        pd = PartialDate(year=2019, month=5, day=20)
+        widget = PartialDateWidget()
+        context = widget.get_context("datum", pd, {})
+        for i, subwidget in enumerate(context["widget"]["subwidgets"]):
+            for expected_class in ("partial-date", "form-control"):
+                with self.subTest(widget_index=i, expected_class=expected_class):
+                    self.assertIn(expected_class, subwidget["attrs"]["class"])
 
 
 class TestPartialDateFormField(MIZTestCase):
@@ -916,3 +932,27 @@ class TestPartialDateFieldQueries(DataTestCase):
         qs = self.queryset.filter(datum__range=('2019-05-19', '2019-05-21'))
         self.assertIn(obj1, qs)
         self.assertNotIn(obj2, qs)
+
+
+class PartialDateInvalidBootstrap(MIZTestCase):
+
+    def test_invalid_class_added(self):
+        """
+        Assert that the IS_INVALID_CLASS is added to the input-group div of the
+        partial date element, if the value is invalid.
+        """
+
+        # There is an oddity with assigning CSS classes to MultiWidgets where
+        # declaring classes in init or build_attrs seems to prevent the renderer
+        # from adding any classes of its own.
+        # In the case of bootstrap, the renderer must be able to add the
+        # 'is-invalid' class for the elements to be shown as invalid.
+        class Form(forms.Form):
+            date = PartialDateFormField()
+
+        form = Form(data={"date_0": "-1"})
+        self.assertFalse(form.is_valid())
+        rendered = bootstrap_field(form["date"])
+        soup = BeautifulSoup(rendered, features="html.parser")
+        div = soup.find("div", class_="input-group")
+        self.assertIn(IS_INVALID_CLASS, div["class"])

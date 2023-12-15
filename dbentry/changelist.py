@@ -3,7 +3,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from dbentry.search.mixins import ChangelistSearchFormMixin
-from dbentry.utils import get_model_fields
+from dbentry.utils.models import get_model_fields
 
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):

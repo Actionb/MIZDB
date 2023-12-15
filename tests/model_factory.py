@@ -13,7 +13,8 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.fields import PartialDateField
-from dbentry.utils import get_model_fields, get_model_relations, is_iterable
+from dbentry.utils.inspect import is_iterable
+from dbentry.utils.models import get_model_fields, get_model_relations
 
 Model = TypeVar('Model')
 
@@ -341,6 +342,8 @@ class M2MFactory(RelatedFactory):
             context: declarations.PostGenerationContext
     ) -> None:
         """Create the related objects and add references to the m2m table."""
+        if not instance.pk:
+            return
         related_manager = getattr(instance, self.descriptor_name)
         # Get the right field names from the intermediary m2m table.
         source_field = related_manager.through._meta.get_field(

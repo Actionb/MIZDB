@@ -27,9 +27,11 @@ from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.query import MIZQuerySet
 from dbentry.search.mixins import MIZAdminSearchFormMixin
-from dbentry.utils.admin import construct_change_message, get_obj_link
+from dbentry.utils.admin import construct_change_message
+from dbentry.utils.html import get_obj_link
 from dbentry.utils.models import get_fields_and_lookups, get_model_relations
 from dbentry.utils.text import diffhtml
+from dbentry.utils.url import urlname
 
 FieldsetList = List[Tuple[Optional[str], dict]]
 BESTAND_MODEL_NAME = 'dbentry.Bestand'
@@ -373,7 +375,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     context = {
                         **self.admin_site.each_context(request),
                         "title": "Änderungen bestätigen",
-                        "link": get_obj_link(initial, request.user, blank=True),
+                        "link": get_obj_link(request, initial, blank=True),
                         "before": before,
                         "after": after,
                         "distance": distance,
@@ -442,6 +444,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             # Hide the "view related" icon:
             formfield.widget.can_view_related = False
         return formfield
+
+    def get_view_on_site_url(self, obj=None):
+        if obj and obj.pk:
+            try:
+                return reverse(urlname("change", self.opts), args=[obj.pk])
+            except NoReverseMatch:
+                pass
 
 
 class BaseInlineMixin(AutocompleteMixin):

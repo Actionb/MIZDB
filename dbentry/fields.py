@@ -10,6 +10,7 @@ from django.db import models
 from django.utils import formats
 from stdnum import ean, isbn, issn
 
+from dbentry.site.renderer import IS_INVALID_CLASS
 from dbentry.validators import EANValidator, ISBNValidator, ISSNValidator
 
 StrOrInt = Optional[Union[str, int]]
@@ -409,23 +410,43 @@ class PartialDate(datetime.date):
 class PartialDateWidget(forms.MultiWidget):
     """Default widget for the PartialDateFormField."""
 
-    def __init__(self, widgets: Optional[Sequence[forms.Widget]] = None, **kwargs: Any) -> None:
+    template_name = "partial_date.html"
+
+    def __init__(self, widgets: Optional[Sequence[forms.Widget]] = None, attrs: Optional[dict] = None) -> None:
         if not widgets:
             widgets = []
             for placeholder in ('Jahr', 'Monat', 'Tag'):
-                if placeholder != 'Tag':
-                    style = 'width:70px; margin-right:10px;'
-                else:
-                    style = 'width:70px;'
-                widgets.append(
-                    forms.NumberInput(attrs={'placeholder': placeholder, 'style': style})
-                )
-        super().__init__(widgets=widgets, **kwargs)
+                widgets.append(forms.NumberInput(attrs={'placeholder': placeholder}))
+        super().__init__(widgets=widgets, attrs=attrs)
+
+    def get_context(self, name, value, attrs):
+        ctx = super().get_context(name, value, attrs)
+
+        # For django bootstrap to render the error message of an invalid field,
+        # the div containing the subwidgets must have the is-invalid class.
+        if any(IS_INVALID_CLASS in w["attrs"].get("class", "") for w in ctx["widget"]["subwidgets"]):
+            ctx["is_invalid"] = IS_INVALID_CLASS
+
+        # Add required CSS classes.
+        # Adding these here because there is some weird stuff going on when
+        # declaring the classes in the init or somewhere else; the declared
+        # classes seem to prevent the renderer from adding its own classes.
+        # The result is that the renderer won't add the is-invalid class to the
+        # individual elements if the partial date is invalid.
+        for w in ctx["widget"]["subwidgets"]:
+            classes = w["attrs"].get("class", "").split(" ")
+            classes += ["partial-date", "form-control"]
+            w["attrs"]["class"] = " ".join(set(classes)).strip()
+
+        return ctx
 
     def decompress(self, value: Optional[PartialDate]) -> Union[List[int], List[None]]:
         if isinstance(value, PartialDate):
             return list(value)
         return [None, None, None]
+
+    class Media:
+        css = {"all": ["admin/css/partialdate.css"]}
 
 
 class PartialDateFormField(forms.MultiValueField):

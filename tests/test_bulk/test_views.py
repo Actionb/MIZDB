@@ -10,7 +10,7 @@ from tests.model_factory import batch, make
 class TestBulkAusgabe(ViewTestCase, LoggingTestMixin):
     model = _models.Ausgabe
     view_class = BulkAusgabe
-    path = reverse_lazy('bulk_ausgabe')
+    path = reverse_lazy('tools:bulk_ausgabe')
     fixtures = ['monat.json']
 
     @classmethod

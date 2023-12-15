@@ -1,0 +1,18 @@
+{% load mizdb django_bootstrap5 %}
+<div class="submit-row control-button-row sticky-bottom z-999 p-2 bg-primary rounded d-flex justify-content-between">
+{% if is_popup %}
+    {% bootstrap_button button_type="submit" button_class="btn-success" content="Sichern" form="change-form" %}
+{% else %}
+    <div class="save-buttons">
+        {% bootstrap_button button_type="submit" button_class="btn-success" content="Sichern" form="change-form" %}
+        {% bootstrap_button button_type="submit" button_class="btn-outline-success" name="_continue" content="Sichern und weiterbearbeiten" form="change-form" %}
+        {% bootstrap_button button_type="submit" button_class="btn-outline-success" name="_addanother" content="Sichern und neu hinzufügen" form="change-form" %}
+    </div>
+    <div class="danger-buttons">
+        {% if object.pk %}
+            {% url opts|urlname:'delete' object.pk as delete_url %}
+            <a class="btn btn-danger" href="{% add_preserved_filters delete_url %}">Löschen</a>
+        {% endif %}
+    </div>
+{% endif %}
+</div>

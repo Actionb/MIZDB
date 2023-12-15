@@ -20,19 +20,20 @@ import warnings
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
+from django.views import defaults
 
 from dbentry.sites import miz_site
 
 urlpatterns = [
-    path('admin/', include('dbentry.urls')),
-    path('admin/', miz_site.urls),
-
+    path("admin/", include("dbentry.urls")),  # TODO: tool views should be accessible outside of admin/
+    path("admin/", miz_site.urls),
+    path("", include("dbentry.site.urls")),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if os.environ.get('DJANGO_DEVELOPMENT'):
+if os.environ.get("DJANGO_DEVELOPMENT"):
     # Add django debug toolbar URLs:
     try:
         # noinspection PyUnresolvedReferences
@@ -40,6 +41,15 @@ if os.environ.get('DJANGO_DEVELOPMENT'):
     except ModuleNotFoundError as e:
         warnings.warn(f"Could not import django debug toolbar when setting up URL configs: {e!s}")
     else:
-        urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
+        urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))
 
-handler403 = 'dbentry.views.MIZ_permission_denied_view'
+
+def page_not_found(request, exception, template_name="mizdb/404.html"):  # pragma: no cover
+    if request.path_info.startswith("/admin"):
+        # Show the admin 404 if requesting an admin page.
+        template_name = "admin/404.html"
+    return defaults.page_not_found(request, exception, template_name)
+
+
+handler403 = "dbentry.site.views.auth.permission_denied_view"
+handler404 = page_not_found

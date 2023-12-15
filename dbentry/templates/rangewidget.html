@@ -1,7 +1,9 @@
 {% spaceless %}
+<div class="input-group range-container">
 {% with start=widget.subwidgets.0 end=widget.subwidgets.1 %}
-    {% include start.template_name with widget=start %} 
-    <span class="dash"> — </span>
+    {% include start.template_name with widget=start %}
+    <span class="dash input-group-text"> — </span>
     {% include end.template_name with widget=end %}
 {% endwith %}
+</div>
 {% endspaceless %}

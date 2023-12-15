@@ -1,0 +1,29 @@
+{% load mizdb %}
+
+{% for category, models in model_list %}
+<table class="table table-hover">
+    <thead><tr class="table-primary"><th scope="row" colspan="2">{{ category }}</th></tr></thead>
+    <tbody>
+    {% for opts in models %}
+        {% url opts|urlname:'changelist' as changelist_url %}
+        <tr>
+        <th class="container-fluid" scope="row">
+            <a class="text-decoration-none" href="{{ changelist_url }}" {% if popup_links %}target="_blank"{% endif %}>{{ opts.verbose_name }}</a>
+        </th>
+        {% has_perm user 'add' opts as has_add_perm %}
+        {% url opts|urlname:'add' as add_url %}
+        {% if has_add_perm and add_url %}
+          <td>
+              <div class="d-flex align-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus text-success me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <a href="{{ add_url }}" {% if popup_links %}target="_blank"{% endif %}>Hinzufügen</a>
+              </div>
+          </td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endfor %}

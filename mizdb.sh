@@ -69,6 +69,7 @@ update() {
   # https://stackoverflow.com/a/20562900/9313033
   if [ -n "$(git rev-list HEAD..@\{u\})" ]; then
     git pull || exit 1
+    docker exec -i $app_container pip install --quiet --upgrade -r requirements.txt --root-user-action=ignore
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
     docker exec -i $app_container python manage.py check
     echo "Updated. Lade den Webserver neu, damit die Änderungen sichtbar werden: mizdb reload"

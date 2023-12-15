@@ -1,0 +1,158 @@
+{% load static %}<!DOCTYPE html>
+<html lang="de" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }} | MIZDB{% endblock title %}</title>
+    {% block bootstrap %}
+        <script src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
+        <link id="default_theme" href="{% static 'mizdb/css/mizdb_theme.css' %}" rel="stylesheet">
+        <link id="user_theme" href="" rel="stylesheet" crossorigin="anonymous" type="text/css" media="screen">
+        <script src="{% static 'mizdb/js/mode_switch.js' %}"></script>
+    {% endblock bootstrap %}
+    {% block style %}
+        <link rel="stylesheet" href="{% static 'mizdb/css/mizdb.css' %}">
+    {% endblock style %}
+    {% block script %}
+        <script src="{% static 'mizdb/js/search_modal.js' %}"></script>
+        <script src="{% static 'mizdb/js/theme_switch.js' %}"></script>
+    {% endblock script %}
+    {% block extrastyle %}{% endblock extrastyle %}
+    {% block extrahead %}{% endblock extrahead %}
+</head>
+<body class="{% block bodyclass %}{% endblock %}" {% if opts %}data-model="{{ opts.model_name }}"{% endif %}>
+
+<!-- Header -->
+{% block header %}
+<header class="navbar navbar-dark bg-primary px-4">
+<div id="branding-user-links" class="container-fluid">
+    {# TODO: the entire navbar should be one responsive item. Currently, items just wrap individually #}
+    {% block branding %}<a class="navbar-brand" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
+
+    {% block nav %}
+        <button class="btn btn-primary border-dark p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
+            <span class="navbar-toggler-icon"></span>
+            <span class="nav-text">Navigation</span>
+        </button>
+    {% endblock nav %}
+
+    {% block searchbar %}
+        <div id="search" class="me-auto ms-auto">
+            {% include "mizdb/includes/searchbar.html" %}
+        </div>
+    {% endblock searchbar %}
+
+    {% block user-links %}
+        <div id="user-links" class="d-flex gap-2">
+            <button id="color-mode-toggle" type="button" class="btn btn-primary border-dark" title="Farbschema umschalten (hell/dunkel)">
+                <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg id="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon d-none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <div id="theme-select" class="dropdown{% if not user.is_superuser %} d-none{% endif %}">
+                <button type="button" class="btn btn-primary border-dark p-2 dropdown-toggle h-100" data-bs-toggle="dropdown" aria-expanded="false" title="Theme">
+                    <span>Theme</span>
+                </button>
+              <ul class="dropdown-menu dropdown-menu-end" id="theme-dropdown">
+                  <li><a href="#" class="change-theme-menu-item dropdown-item" rel="">Default (MIZDB/Flatly)</a></li>
+                  <li><a href="#" class="change-theme-menu-item dropdown-item" rel="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" crossorigin="anonymous">Bootstrap</a></li>
+              </ul>
+            </div>
+            {% if wiki_url %}
+                <a class="btn btn-primary border-dark p-2" href="{{ wiki_url }}" target="_blank" title="Hilfe">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-help-circle"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span class="nav-text">Hilfe</span>
+                </a>
+            {% endif %}
+            {% block account %}
+                <div id="user-account" class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary border-dark p-2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Benutzerkonto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span class="nav-text">{% if user.is_authenticated %}{{ user.get_username }}{% else %}Anmelden{% endif %}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% if user.is_authenticated %}
+                            <li><span class="dropdown-item-text">Willkommen, <strong>{% firstof user.get_short_name user.get_username %}</strong></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if user.is_staff and admin_url %}<li><a class="dropdown-item" href="{{ admin_url }}">Admin Seite</a></li>{% endif %}
+                            {% if user.has_usable_password %}<li><a class="dropdown-item" href="{% url 'password_change' %}">Passwort ändern</a></li>{% endif %}
+                            <li><form id="logout-form" method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button class="dropdown-item" type="submit">Abmelden</button>
+                            </form></li>
+                        {% else %}
+                            <li><a class="dropdown-item" href="{% url 'login' %}">Anmelden</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endblock account %}
+        </div>
+    {% endblock user-links %}
+</div>
+</header>
+{% endblock header %}
+<!-- END Header -->
+
+{% block nav-sidebar %}
+<aside>
+    <div id="nav-sidebar" class="offcanvas offcanvas-start">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title">Tabellen</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            {% include "mizdb/includes/model_list.html" %}
+        </div>
+    </div>
+</aside>
+{% endblock nav-sidebar %}
+
+<main id="main" class="p-1 pb-0 {% block mainclass %}container-lg{% endblock %}">
+    {% if messages %}
+    <div id="messages-container" class="messages">
+        {% for message in messages %}
+            <div class="alert alert-dismissible alert-{{ message.tags }}" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <!-- Content -->
+    <div id="content" class="mt-2">
+        {% block content_head %}
+            {% if title %}{% block content_title %}<h1>{{ title }}</h1>{% endblock %}{% endif %}
+        {% endblock %}
+        {% block content %} {{ content }} {% endblock %}
+    </div>
+    <!-- END Content -->
+    <div id="sticky-bottom-container" class="sticky-bottom pb-1">
+    {% block sticky_bottom %}
+        <div id="to-top-button-container" class="d-flex justify-content-center">
+            <a href="#" type="button" class="btn btn-primary mb-1 opacity-75 d-none" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen" tabindex="-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-up"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                <span>nach oben</span>
+            </a>
+        </div>
+    {% endblock %}
+    </div>
+</main>
+
+{% block extrascript %}
+<script>
+// Script for the scroll back to top button:
+let btn = document.getElementById("btn-back-to-top");
+
+// When the user scrolls down 20px from the top of the document, show the button
+window.onscroll = function() {scrollFunction()};
+
+function scrollFunction() {
+  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    btn.classList.remove("d-none");
+  } else {
+    btn.classList.add("d-none");
+  }
+}
+</script>
+{% endblock extrascript %}
+</body>
+</html>

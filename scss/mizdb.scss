@@ -1,0 +1,111 @@
+@use "sass:map";
+// Note that Bootstrap does not support @use yet: 
+// https://github.com/twbs/bootstrap/issues/30025#issuecomment-574825600
+@import "../node_modules/bootstrap/scss/functions";
+@import "../node_modules/bootstrap/scss/variables";
+
+// Hide nav text below the container-lg breakpoint.
+@media (max-width: map.get($grid-breakpoints, "lg")) {
+    .nav-text {
+        display:none
+    }
+}
+
+.z-999 {
+    z-index: 999;
+}
+
+// Index recent actions list
+.actionlist {
+    list-style: square;
+}
+
+span.id-container {
+  -webkit-user-select: all;
+  -moz-user-select: all;
+  -ms-user-select: all;
+  user-select: all;
+}
+
+// FORMS
+
+$input-max-width: 644px;
+$number-input-max-width: 200px;
+$textarea-height: 110px;  // textarea height to display roughly 4 rows
+$textarea-height-one-row: 38px;  // textarea height to display only a single row
+
+.required > label {
+    font-weight: $font-weight-bold;
+}
+
+textarea {
+    height: $textarea-height;
+}
+
+.textarea-rows-1 {
+    height: $textarea-height-one-row;
+}
+
+// Limit the width of form controls.
+input.form-control:not(.dropdown-input) {
+    max-width: $input-max-width;
+}
+
+input.form-control[type="number"] {
+    max-width: $number-input-max-width;
+}
+
+select.form-select {
+    max-width: $input-max-width;
+}
+
+// Limit the width of non-tabular tomselect elements.
+select.form-select:not([is-tabular]) + div.ts-wrapper {
+    max-width: $input-max-width;
+}
+
+// Limit the width of TomSelect elements in *search* forms. 
+// (TomSelect elements in *change* forms are already limited by the surrounding container-lg)
+form.search-form div.ts-wrapper {
+    max-width: 1200px;
+}
+
+// Add some space at the bottom so that the user can scroll the inlines into 
+// the center.
+.change-form {
+    margin-bottom: 400px;
+}
+
+.errorlist li {
+    color: var(--bs-form-invalid-border-color);
+    list-style: none;
+}
+
+.login-form {
+    width: 300px;
+}
+
+// CHANGELIST SELECTION
+
+.changelist-selection {
+    position: fixed;
+    bottom: 0;
+    right: 15%;
+    width: 350px;
+}
+
+#selected-items-container {
+    max-height: 80vh;
+}
+
+.selected-item:nth-child(2n) {
+    background-color: $table-striped-bg;
+}
+
+.selected-item:hover {
+    background-color: $table-hover-bg;
+}
+
+.selection-checkbox-column {
+    width: 1.5em;
+}

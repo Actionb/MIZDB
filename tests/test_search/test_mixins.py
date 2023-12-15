@@ -74,7 +74,7 @@ class TestSearchFormMixin(ViewTestCase):
         # Patch get_model_fields to restrict the check to search fields
         # declared in search_form_kwargs.
         get_model_fields_mock = mock.Mock(return_value=[])
-        with mock.patch('dbentry.search.mixins.utils.get_model_fields', new=get_model_fields_mock):
+        with mock.patch('dbentry.search.mixins.get_model_fields', new=get_model_fields_mock):
             view = self.get_view(search_form_kwargs={'fields': ['BeepBoop']})
             errors = view._check_search_form_fields()
             self.assertTrue(errors)
@@ -94,7 +94,7 @@ class TestSearchFormMixin(ViewTestCase):
         # Patch get_model_fields to restrict the check to search fields
         # declared in search_form_kwargs.
         get_model_fields_mock = mock.Mock(return_value=[])
-        with mock.patch('dbentry.search.mixins.utils.get_model_fields', new=get_model_fields_mock):
+        with mock.patch('dbentry.search.mixins.get_model_fields', new=get_model_fields_mock):
             view = self.get_view(search_form_kwargs={'fields': ['band_name__beep']})
             errors = view._check_search_form_fields()
             self.assertTrue(errors)
@@ -149,7 +149,7 @@ class TestAdminMixin(AdminTestCase):
         response = self.client.get(path=self.changelist_path)
         self.assertIn('media', response.context)
         media = response.context['media']
-        self.assertIn('admin/js/remove_empty_fields.js', media._js)
+        self.assertIn('search/js/remove_empty_fields.js', media._js)
         self.assertIn('admin/js/collapse.js', media._js)
         self.assertIn('all', media._css)
         self.assertIn('admin/css/forms.css', media._css['all'])

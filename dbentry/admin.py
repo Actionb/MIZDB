@@ -32,8 +32,10 @@ from dbentry.base.admin import (
 from dbentry.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
-from dbentry.utils import concat_limit, copy_related_set
-from dbentry.utils.admin import get_obj_link, log_change
+from dbentry.utils.admin import log_change
+from dbentry.utils.copyrelated import copy_related_set
+from dbentry.utils.html import get_obj_link
+from dbentry.utils.text import concat_limit
 
 
 # FIXME: deleting a related m2m object and then saving the parent form results
@@ -1260,7 +1262,7 @@ class BestandAdmin(MIZModelAdmin):
             self._cache[obj.pk] = {
                 'bestand_class': relation_field.related_model._meta.verbose_name,
                 'bestand_link': get_obj_link(
-                    getattr(obj, relation_field.name), request.user, blank=True
+                    request, getattr(obj, relation_field.name), namespace="admin", blank=True
                 )
             }
 

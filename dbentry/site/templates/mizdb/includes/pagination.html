@@ -1,0 +1,20 @@
+{% load mizdb %}
+<div class="pagination-container">
+{% if pagination_required %}
+<nav aria-label="Search results pages" class="d-flex align-items-center">
+  <ul class="pagination mb-0">
+      {% for i in page_range %}
+      {% if i == page_obj.number %}
+        {% with is_current=True %}
+          <li class="page-item"><a class="page-link disabled" href="#">{{i}}</a></li>
+        {% endwith %}
+      {% elif i == "…" %}
+        <li class="page-item"><span class="page-link disabled">…</span></li>
+      {% else %}
+        <li class="page-item"><a class="page-link" href="{% paginator_url cl i %}">{{i}}</a></li>
+      {% endif %}
+      {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+</div>

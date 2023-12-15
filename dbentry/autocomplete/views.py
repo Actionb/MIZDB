@@ -97,3 +97,13 @@ class AutocompletePerson(MIZAutocompleteView):
         obj = self.model.objects.create(vorname=vorname, nachname=nachname)
         log_addition(self.request.user.pk, obj)
         return obj
+
+
+class AutocompleteProvenienz(MIZAutocompleteView):
+    """
+    Autocomplete view for the Provenienz model that returns the str
+    representation of an object as values for the label field.
+    """
+
+    def get_result_values(self, results):
+        return [{self.model._meta.pk.name: r.pk, "text": str(r)} for r in results]

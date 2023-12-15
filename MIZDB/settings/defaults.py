@@ -59,7 +59,10 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'django_admin_logs',
     'mizdb_tomselect',
-    'mod_wsgi.server'
+    'mod_wsgi.server',
+    'dbentry.site',
+    'django_bootstrap5',
+    'mizdb_inlines'
 ]
 
 MIDDLEWARE = [
@@ -73,6 +76,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'MIZDB.urls'
+
+LOGIN_URL = 'login'
 
 TEMPLATES = [
     {
@@ -142,3 +147,12 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 # Avoid having the session cookie expire during work hours by adding 12 hours
 # to the default cookie age (2 weeks).
 SESSION_COOKIE_AGE = (14 * 24 + 12) * 60 * 60
+
+BOOTSTRAP5 = {
+    "field_renderers": {"default": "dbentry.site.renderer.MIZFieldRenderer"},
+    "required_css_class": "required",
+    "set_placeholder": False,
+}
+
+# Whether anonymous users can view pages as if they had 'view' permission.
+ANONYMOUS_CAN_VIEW = True

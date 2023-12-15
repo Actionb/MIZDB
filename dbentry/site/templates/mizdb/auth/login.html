@@ -1,0 +1,18 @@
+{% extends "mizdb/auth/auth_form.html" %}
+
+{# Do not include default scripts (i.e. search.js) #}
+{% block script %}{% endblock script %}
+
+{# Only show the branding in the header #}
+{% block header %}
+    <header class="navbar navbar-dark bg-primary justify-content-center">
+        {% block branding %}{{ block.super }}{% endblock branding %}
+    </header>
+{% endblock header %}
+
+{# Do not show a nav sidebar #}
+{% block nav-sidebar %}{% endblock nav-sidebar %}
+
+{% block content %}
+    {% include "mizdb/auth/login_form.html" %}
+{% endblock content %}

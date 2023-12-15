@@ -13,7 +13,8 @@ from django.db.models import Count, Max, Min, Model, QuerySet, OuterRef, Exists,
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.fts.query import TextSearchQuerySetMixin
-from dbentry.utils import leapdays, add_attrs
+from dbentry.utils import add_attrs
+from dbentry.utils.dates import leapdays
 
 
 class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):

@@ -5,6 +5,7 @@ from dbentry.tools.views import (
     DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, UnusedObjectsView
 )
 
+app_name = "tools"
 urlpatterns = [
     path('search/', MIZSiteSearch.as_view(), name='site_search'),
     path('dupes/<str:model_name>/', DuplicateObjectsView.as_view(), name='dupes'),
