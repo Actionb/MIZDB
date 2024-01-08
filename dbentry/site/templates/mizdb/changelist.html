@@ -159,7 +159,8 @@
     {{ block.super }}
     <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const selection = new window.ChangelistSelection()
+        const storage = new window.SelectionStorage(document.body.dataset.model, "mizdb_selection_" + {{ user.pk|default:"0" }})
+        const selection = new window.ChangelistSelection(storage)
         selection.render()
     })
     </script>
