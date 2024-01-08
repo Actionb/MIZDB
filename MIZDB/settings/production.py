@@ -20,7 +20,7 @@ CSRF_FAILURE_VIEW = 'dbentry.csrf.csrf_failure'
 # URL to the wiki.
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context
-WIKI_URL = os.environ.get('WIKI_URL') or f"/wiki/Hauptseite"
+WIKI_URL = os.environ.get('WIKI_URL') or "/wiki/Hauptseite"
 
 LOGGING = {
     'version': 1,
