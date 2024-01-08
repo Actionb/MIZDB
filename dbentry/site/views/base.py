@@ -309,8 +309,10 @@ class BaseEditView(
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        title_suffix = "hinzufügen" if self.add else "ändern"
-        ctx["title"] = f"{capfirst(self.opts.verbose_name)} {title_suffix}"
+        if self.add:
+            ctx["title"] = f"{capfirst(self.opts.verbose_name)} hinzufügen"
+        else:
+            ctx["title"] = capfirst(self.opts.verbose_name)
         ctx["popup_links"] = True  # open links in a new tab
         ctx["field_groups"] = self.field_groups
         ctx["inlines"] = list(
@@ -484,7 +486,6 @@ class BaseEditView(
         ctx = self.get_context_data()
         ctx["view_only"] = True
         ctx["data"] = self.get_object_data_dict(self.request, ctx["form"], ctx["inlines"])
-        ctx["title"] = self.opts.verbose_name
         return render(request, "mizdb/viewonly.html", ctx)
 
     @staticmethod
