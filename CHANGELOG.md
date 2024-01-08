@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## [0.13] - 2023-12-15
 
 ### Added
 - integrated site app that does not rely on django admin
