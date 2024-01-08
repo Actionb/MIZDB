@@ -26,7 +26,6 @@
 {% block header %}
 <header class="navbar navbar-dark bg-primary px-4">
 <div id="branding-user-links" class="container-fluid">
-    {# TODO: the entire navbar should be one responsive item. Currently, items just wrap individually #}
     {% block branding %}<a class="navbar-brand" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
 
     {% block nav %}
