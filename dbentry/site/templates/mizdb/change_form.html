@@ -130,6 +130,6 @@
 {% endblock content %}
 
 {% block sticky_bottom %}
- {{ block.super }}
-        {% include "mizdb/includes/submit_row.html" %}
+  {{ block.super }}
+  {% if not view_only %}{% include "mizdb/includes/submit_row.html" %}{% endif %}
 {% endblock sticky_bottom %}

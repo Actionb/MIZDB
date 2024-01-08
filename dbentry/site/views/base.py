@@ -482,6 +482,7 @@ class BaseEditView(
         """
         self.object = self.get_object()  # noqa
         ctx = self.get_context_data()
+        ctx["view_only"] = True
         ctx["data"] = self.get_object_data_dict(self.request, ctx["form"], ctx["inlines"])
         ctx["title"] = self.opts.verbose_name
         return render(request, "mizdb/viewonly.html", ctx)
