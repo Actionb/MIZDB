@@ -2,6 +2,13 @@
 
 ## [unreleased]
 
+### Changed
+
+- Changed how login and logout requests with invalid CSRF tokens are handled:
+  - invalid logins by authenticated users will cause a redirect to the login page so that the user can confirm the login with a refreshed token
+  - invalid logouts by authenticated users will cause a redirect to the index page with a warning message, but will not log out the user
+  - invalid logouts by _unauthenticated_ users will cause a redirect to the login page like a normal logout
+
 ### Fixed
 
 - Error when logging out in two separate tabs one after another 

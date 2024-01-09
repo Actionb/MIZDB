@@ -14,9 +14,6 @@ except FileNotFoundError as e:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Log CSRF failures:
-CSRF_FAILURE_VIEW = 'dbentry.csrf.csrf_failure'
-
 # URL to the wiki.
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context
