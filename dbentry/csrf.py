@@ -17,12 +17,13 @@ def csrf_failure(request, reason):
 
 
 @receiver(user_logged_in)
-def log_login(sender, **kwargs):
-    user = kwargs['user']
+def log_login(sender, user, **kwargs):
     logger.info(f'{user} ({user.pk}) logged in.')
 
 
 @receiver(user_logged_out)
-def log_logout(sender, **kwargs):
-    user = kwargs['user']
-    logger.info(f'{user} ({user.pk}) logged out.')
+def log_logout(sender, user=None, **kwargs):
+    # user can be None; for example when logging out in one tab and then also
+    # logging out in another tab.
+    if user is not None:
+        logger.info(f'{user} ({user.pk}) logged out.')

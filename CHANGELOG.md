@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+- Error when logging out in two separate tabs one after another 
+
 ## [0.13] - 2023-12-15
 
 ### Added
