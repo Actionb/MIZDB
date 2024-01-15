@@ -1,8 +1,9 @@
 from unittest.mock import Mock
-from urllib.parse import parse_qsl, urlparse, urlencode
+from urllib.parse import urlparse, urlencode
 
 # noinspection PyPackageRequirements
 from bs4 import BeautifulSoup
+from django.http import QueryDict
 from django.test.utils import override_settings
 from django.urls import path, reverse
 from mizdb_tomselect.views import IS_POPUP_VAR
@@ -33,7 +34,7 @@ class URLConf:
 
 def get_query_params(url):
     """Return a dictionary of the query string parameters in the given URL."""
-    return dict(parse_qsl(list(urlparse(url))[4]))
+    return QueryDict(urlparse(url).query)
 
 
 def get_soup(html):
@@ -64,7 +65,7 @@ class TestTags(ViewTestCase):
 
     def changelist_filters(self):
         """Return a query string of changelist filters for add_preserved_filters."""
-        return urlencode({"_changelist_filters": urlencode({"q": "Foo"})})
+        return urlencode({"_changelist_filters": urlencode([("q", "Foo"), ("q", "Bar")])})
 
     def preserved_filters_context(self):
         """Return the context argument for add_preserved_filters."""
@@ -79,7 +80,7 @@ class TestTags(ViewTestCase):
         preserved_filters = add_preserved_filters(base_url=url, context=self.preserved_filters_context())
         query_params = get_query_params(preserved_filters)
         self.assertIn("_changelist_filters", query_params)
-        self.assertIn("q=Foo", query_params["_changelist_filters"])
+        self.assertIn("q=Foo&q=Bar", query_params["_changelist_filters"])
 
     def test_add_preserved_filters_to_changelist(self):
         """
@@ -90,7 +91,7 @@ class TestTags(ViewTestCase):
         preserved_filters = add_preserved_filters(base_url=url, context=self.preserved_filters_context())
         query_params = get_query_params(preserved_filters)
         self.assertIn("q", query_params)
-        self.assertEqual("Foo", query_params["q"])
+        self.assertEqual(["Foo", "Bar"], query_params.getlist("q"))
 
     def test_reset_ordering_link(self):
         """

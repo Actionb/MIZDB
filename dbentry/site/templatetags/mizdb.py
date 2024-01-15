@@ -58,20 +58,28 @@ def add_preserved_filters(context, base_url):
     """
     MIZDB version of the django admin add_preserved_filters tag that appends
     previous changelist filter query parameters to URLs.
+
+    When navigating away from a changelist, the parameter "_changelist-filters"
+    will be added to the query string: '_changelist_filters=q%3DFoo%26q%3DBar'
+
+    When navigating back to the changelist, the filters are recovered from the
+    above query string parameter:
+        '_changelist_filters=q%3DFoo%26q%3DBar' => 'q=Foo&q=Bar'
     """
     opts = context.get("opts")
     preserved_filters = context.get("preserved_filters")
 
     parsed_url = list(urlparse(base_url))
-    parsed_qs = dict(parse_qsl(parsed_url[4]))
-    merged_qs = {}
+    parsed_qs = parse_qsl(parsed_url[4])
+    merged_qs = []
 
     if opts and preserved_filters:
-        preserved_filters = dict(parse_qsl(preserved_filters))
-        # Get the (url) name of the view targeted by the base_url. If base_url
-        # leads back to the changelist (f.ex. when saving a model object), we
-        # need to parse the preserved filters portion of the initial query
-        # string and add them to the result query string directly.
+        # Check if the url is for a changelist. If it is, parse the preserved
+        # filters and extract the changelist filters parameters, so that they
+        # can be added to the query string. For example:
+        #  preserved_filters is:         '_changelist_filters=q%3DFoo%26q%3DBar'
+        #  preserved_filters should be:  'q=Foo&q=Bar'
+        preserved_filters = parse_qsl(preserved_filters)  # [('_changelist_filters', 'q=Foo&q=Bar')]
         match_url = f"/{unquote(base_url).partition(get_script_prefix())[2]}"
         try:
             match = resolve(match_url)
@@ -79,12 +87,17 @@ def add_preserved_filters(context, base_url):
             pass
         else:
             changelist_url = url.urlname("changelist", opts)
-            if match.url_name == changelist_url and "_changelist_filters" in preserved_filters:
-                preserved_filters = dict(parse_qsl(preserved_filters["_changelist_filters"]))
+            # Calling dict on a query string list (qsl) will not preserve the
+            # "one key multiple values" nature of query strings, but in this
+            # case, _changelist_filters should only have one value anyway so
+            # this should be fine.
+            changelist_filters = dict(preserved_filters).get("_changelist_filters")
+            if match.url_name == changelist_url and changelist_filters:
+                preserved_filters = parse_qsl(changelist_filters)  # [('q', 'Foo'), ('q', 'Bar')]
 
-        merged_qs.update(preserved_filters)
+        merged_qs.extend(preserved_filters)
 
-    merged_qs.update(parsed_qs)
+    merged_qs.extend(parsed_qs)
 
     parsed_url[4] = urlencode(merged_qs)
     return urlunparse(parsed_url)
