@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models.deletion import Collector
 from django.urls import reverse, NoReverseMatch
+from django.utils.safestring import mark_safe
 from django.views.generic import DeleteView as BaseDeleteView
 
 from dbentry.site.templatetags.mizdb import add_preserved_filters
@@ -54,7 +55,7 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
                 log_deletion(self.request.user.pk, obj)
         response = super().form_valid(form)
 
-        messages.success(self.request, success_message)
+        messages.success(self.request, mark_safe(success_message))
         return response
 
     def get_context_data(self, **kwargs):
