@@ -125,3 +125,5 @@ BOOTSTRAP5 = {
 }
 
 ANONYMOUS_CAN_VIEW = True
+
+CSRF_FAILURE_VIEW = "dbentry.csrf.csrf_failure"
