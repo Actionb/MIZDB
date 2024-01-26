@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.urls import reverse, resolve, Resolver404
 from django.utils.safestring import mark_safe
 from django.views.csrf import csrf_failure as django_csrf_failure
 
@@ -108,6 +108,13 @@ def csrf_failure(request, reason):
     index_urls = [reverse("index"), reverse("admin:index")]
     user_is_logged_in = request.user is not None and request.user.is_authenticated
     warning_icon = """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>"""  # noqa
+
+    try:
+        resolver_match = resolve(request.get_full_path())
+    except Resolver404:
+        # NOTE: can this actually ever happen at the point?
+        resolver_match = None
+
     if request.path in login_urls and user_is_logged_in:
         # A logged-in user has sent a login form with an invalid CSRF token.
         # Assume that the user is trying to log in from a tab with an outdated
@@ -124,10 +131,12 @@ def csrf_failure(request, reason):
     elif request.path in logout_urls and user_is_logged_in:
         # A logout request was sent with an invalid token from an authenticated
         # user. Issue a warning message and redirect to the index.
-        messages.warning(
-            request,
-            mark_safe(f"{warning_icon} Abmeldung fehlgeschlagen (CSRF Token ungültig). Sie wurden nicht abgemeldet."),
-        )
+        message = "Abmeldung fehlgeschlagen (CSRF Token ungültig). Sie wurden nicht abgemeldet."
+        if "admin" not in resolver_match.namespaces:
+            # Add a warning icon. Admin user messages already contain an
+            # appropriate icon.
+            message = f"{warning_icon} {message}"
+        messages.warning(request, mark_safe(message))
         return HttpResponseRedirect(index_urls[logout_urls.index(request.path)])
     elif request.path.endswith("add/") or request.path.endswith("change/"):
         # TODO: endswith("add/") too imprecise? Should this check directly
