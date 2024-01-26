@@ -1,7 +1,5 @@
-from urllib.parse import urlparse
-
 from django import forms
-from django.urls import reverse, resolve
+from django.urls import reverse
 
 from dbentry.csrf import csrf_failure, _restore_formset, CSRF_FORM_DATA_KEY
 from tests.case import RequestTestCase, TestCase
@@ -157,15 +155,13 @@ class TestCSRF(RequestTestCase):
                 self.assertURLEqual(response.url, reverse(index_view))
                 self.assertMessageSent(request, "Abmeldung fehlgeschlagen")
 
-    def test_csrf_failure_add_or_change_page(self):
+    def test_csrf_failure_miz_site_add_or_change_page(self):
         """
-        Assert that a CSRF failure on an add or change page reloads the page
-        with the form data preserved in the session.
+        Assert that a CSRF failure on an add or change page of the MIZ site
+        reloads the page with the form data preserved in the session.
         """
         urls = [
-            reverse("admin:dbentry_band_add"),
             reverse("dbentry_band_add"),
-            reverse("admin:dbentry_band_change", args=[self.obj.pk]),
             reverse("dbentry_band_change", args=[self.obj.pk]),
         ]
         for url in urls:
@@ -181,3 +177,22 @@ class TestCSRF(RequestTestCase):
                 self.assertIn(CSRF_FORM_DATA_KEY, request.session)
                 self.assertEqual(request.session[CSRF_FORM_DATA_KEY], {"band_name": ["foo"], "_continue": ["1"]})
                 self.assertMessageSent(request, "Speichern fehlgeschlagen")
+
+    def test_csrf_failure_admin_add_or_change_page(self):
+        """
+        Assert that a CSRF failure on an add or change page of the admin site
+        creates a 403 response.
+        """
+        urls = [
+            reverse("admin:dbentry_band_add"),
+            reverse("admin:dbentry_band_change", args=[self.obj.pk]),
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                request = self.client.post(
+                    url,
+                    data={"band_name": "foo", "csrfmiddlewaretoken": "", "_continue": "1"},
+                    user=self.super_user,
+                ).wsgi_request
+                response = csrf_failure(request, "Token invalid.")
+                self.assertEqual(response.status_code, 403)

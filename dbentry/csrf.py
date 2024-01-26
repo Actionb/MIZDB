@@ -10,6 +10,8 @@ from django.urls import reverse, resolve, Resolver404
 from django.utils.safestring import mark_safe
 from django.views.csrf import csrf_failure as django_csrf_failure
 
+from dbentry.site.registry import miz_site
+
 logger = logging.getLogger(__name__)
 
 CSRF_FORM_DATA_KEY = "_csrf_form_data"
@@ -111,9 +113,11 @@ def csrf_failure(request, reason):
 
     try:
         resolver_match = resolve(request.get_full_path())
-    except Resolver404:
-        # NOTE: can this actually ever happen at the point?
+    except Resolver404:  # pragma: no cover
         resolver_match = None
+        view_class = None
+    else:
+        view_class = getattr(resolver_match.func, "view_class", None)
 
     if request.path in login_urls and user_is_logged_in:
         # A logged-in user has sent a login form with an invalid CSRF token.
@@ -138,13 +142,11 @@ def csrf_failure(request, reason):
             message = f"{warning_icon} {message}"
         messages.warning(request, mark_safe(message))
         return HttpResponseRedirect(index_urls[logout_urls.index(request.path)])
-    elif request.path.endswith("add/") or request.path.endswith("change/"):
-        # TODO: endswith("add/") too imprecise? Should this check directly
-        #  test that the view is included in miz_site.views?
-        # User send an add or change form with an invalid token. Store the form
-        # data in the session and reload the page. The presence of the data in
-        # the session will prompt BaseEditView to restore the form and the
-        # formsets.
+    elif view_class and view_class in miz_site.views.values():
+        # User send an add or change form for a MIZ Site edit view with an
+        # invalid token. Store the form data in the session and reload the page.
+        # The presence of the data in the session will prompt BaseEditView to
+        # restore the form and the formsets.
         messages.warning(
             request,
             mark_safe(
