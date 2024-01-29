@@ -12,24 +12,25 @@
 
 {% block content_head %}
 <div id="content-head" class="row{% if not changelist_links %} mb-3{% endif %}">
-    <div id="object-info" class="col-10">
-        {{ block.super }}
-        {% if object.pk %}
-            <div id="object-description">
-                <h3 class="mb-0">
-                    {{ object|truncatechars:50 }}
-                    <span class="ms-2 fs-6">(id: <span class="id-container">{{ object.pk }}</span>)</span>
-                    {% if is_popup %}
-                        <a id="unpop" class="fs-6" href="{% remove_popup_param view.request %}"
-                           title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
-                    {% endif %}
-                </h3>
-            </div>
-        {% endif %}
+    <div id="object-info" class="col">
+        {% block content_title %}
+            {% if object.pk %}
+                <h1>{{ title }}: {{ object|truncatechars:50 }}<span class="ms-2 fs-6 text-nowrap">(id: <span class="id-container">{{ object.pk }}</span>)</span></h1>
+            {% else %}
+                {{ block.super }}
+            {% endif %}
+        {% endblock content_title %}
     </div>
-    {% if object.pk %}
+    {% if object.pk and not view_only %}
         <div id="object-tools" class="col-2 text-center">
-            {% block history_link %}<div id="history"><a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary">Änderungsgeschichte</a></div>{% endblock history_link %}
+            <div id="history-link-container" class="mb-1">
+                <a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary">Änderungsgeschichte</a>
+            </div>
+            {% if is_popup %}
+                <div id="unpop-link-container" class="mb-1">
+                    <a id="unpop" class="btn btn-primary" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
+                </div>
+            {% endif %}
         </div>
     {% endif %}
     {% if changelist_links %}
@@ -130,6 +131,6 @@
 {% endblock content %}
 
 {% block sticky_bottom %}
- {{ block.super }}
-        {% include "mizdb/includes/submit_row.html" %}
+  {{ block.super }}
+  {% if not view_only %}{% include "mizdb/includes/submit_row.html" %}{% endif %}
 {% endblock sticky_bottom %}

@@ -28,6 +28,7 @@ from mizdb_inlines.views import InlineFormsetMixin
 from mizdb_tomselect.views import PopupResponseMixin, IS_POPUP_VAR
 
 from dbentry.base.models import ComputedNameModel
+from dbentry.csrf import _restore_formset, CSRF_FORM_DATA_KEY
 from dbentry.search.forms import MIZSelectSearchFormFactory
 from dbentry.search.mixins import SearchFormMixin
 from dbentry.site.forms import MIZEditForm, InlineForm
@@ -250,6 +251,11 @@ class BaseEditView(
     def get(self, request, *args, **kwargs):
         if self.extra_context.get("view_only", False):
             return self.view_only(request)
+        if CSRF_FORM_DATA_KEY in request.session:
+            # This is the data of a POST request that failed due to an invalid
+            # CSRF token. Add a reference to the data of the failed form, so
+            # that it can be restored.
+            self.csrf_form_data = request.session.pop(CSRF_FORM_DATA_KEY)  # noqa
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -309,8 +315,10 @@ class BaseEditView(
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        title_suffix = "hinzufügen" if self.add else "ändern"
-        ctx["title"] = f"{capfirst(self.opts.verbose_name)} {title_suffix}"
+        if self.add:
+            ctx["title"] = f"{capfirst(self.opts.verbose_name)} hinzufügen"
+        else:
+            ctx["title"] = capfirst(self.opts.verbose_name)
         ctx["popup_links"] = True  # open links in a new tab
         ctx["field_groups"] = self.field_groups
         ctx["inlines"] = list(
@@ -364,7 +372,29 @@ class BaseEditView(
         # Add preserved changelist filters:
         if "_changelist_filters" in self.request.GET:
             initial.update(dict(parse_qsl(self.request.GET["_changelist_filters"])))
+        if hasattr(self, "csrf_form_data"):
+            # Handling a CSRF failure: add data to restore the form.
+            select_multiple = (forms.MultipleChoiceField, forms.ModelMultipleChoiceField)
+            for field in self.get_form_class().base_fields:
+                if field in self.csrf_form_data:
+                    value = self.csrf_form_data[field]
+                    if not isinstance(field, select_multiple) and isinstance(value, list):
+                        value = value[0]
+                    initial[field] = value
         return initial
+
+    def get_formsets(self, parent_instance):
+        """Return a list of formset instances."""
+        formsets = []
+        kwargs = self.get_formset_kwargs()
+        kwargs["instance"] = parent_instance
+        for formset_class in self.get_formset_classes():
+            formset = formset_class(**kwargs)
+            if hasattr(self, "csrf_form_data"):
+                # Handling a CSRF failure: restore the formset.
+                formset = _restore_formset(formset, getattr(self, "csrf_form_data"))
+            formsets.append(formset)
+        return formsets
 
     def post_save(self, form, formsets):
         # Hook called by InlineFormsetMixin.
@@ -482,8 +512,8 @@ class BaseEditView(
         """
         self.object = self.get_object()  # noqa
         ctx = self.get_context_data()
+        ctx["view_only"] = True
         ctx["data"] = self.get_object_data_dict(self.request, ctx["form"], ctx["inlines"])
-        ctx["title"] = self.opts.verbose_name
         return render(request, "mizdb/viewonly.html", ctx)
 
     @staticmethod
