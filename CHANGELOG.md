@@ -1,17 +1,19 @@
 # Changelog
 
-## [unreleased]
+## [0.14] - 2024-01-29
 
 ### Changed
 
-- Changed how login and logout requests with invalid CSRF tokens are handled:
-  - invalid logins by authenticated users will cause a redirect to the login page so that the user can confirm the login with a refreshed token
-  - invalid logouts by authenticated users will cause a redirect to the index page with a warning message, but will not log out the user
-  - invalid logouts by _unauthenticated_ users will cause a redirect to the login page like a normal logout
+- changed handling of requests with invalid CSRF tokens:
+  - invalid login requests by authenticated users will cause a redirect to the login page so that the user can confirm the login with a refreshed token
+  - invalid logout requests by authenticated users will cause a redirect to the index page with a warning message, but will not log out the user
+  - invalid logout requests by _unauthenticated_ users will cause a redirect to the login page like a normal logout
+  - invalid add/change page requests will redirect back to the page, preserving the previous form data, for the user to try again with a refreshed token
 
 ### Fixed
 
-- Error when logging out in two separate tabs one after another 
+- fixed error occurring when logging out in two separate tabs one after another 
+- fixed sticky bottom container not always being placed at the very bottom of the view port
 
 ## [0.13] - 2023-12-15
 
