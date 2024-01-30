@@ -14,26 +14,7 @@ class NoValidFieldRenderer(FieldRenderer):
         return ""
 
 
-class FixedFieldRenderer(FieldRenderer):
-    """
-    A field renderer that applies `field_class` argument to the element.
-
-    Workaround for: https://github.com/zostera/django-bootstrap5/issues/287
-    """
-
-    # TODO: remove when the workaround is no longer needed
-
-    def add_widget_class_attrs(self, widget=None):
-        if widget is None:  # pragma: no cover
-            widget = self.widget
-        super().add_widget_class_attrs(widget)
-        classes = widget.attrs.get("class", "")
-        if self.field_class:
-            classes += f" {self.field_class}"
-        widget.attrs["class"] = classes
-
-
-class MIZFieldRenderer(NoValidFieldRenderer, FixedFieldRenderer):
+class MIZFieldRenderer(NoValidFieldRenderer):
     pass
 
 
