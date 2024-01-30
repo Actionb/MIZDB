@@ -1511,7 +1511,7 @@ class TestChangelistAnnotations(AdminTestCase):
         response = self.client.get(self.changelist_path + query_string)
         result_list = response.context_data['cl'].result_list
         self.assertIn('num_list', result_list.query.order_by)
-        self.assertQuerysetEqual([other, self.obj], result_list)
+        self.assertQuerySetEqual([other, self.obj], result_list)
 
 
 class TestAuthAdminMixin(TestCase):

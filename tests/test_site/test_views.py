@@ -1055,7 +1055,7 @@ class TestHistoryView(ViewTestCase):
     def test_get_queryset(self):
         """Assert that get_queryset returns the expected LogEntry queryset."""
         view = self.get_view(kwargs={"object_id": str(self.obj.pk)})
-        self.assertQuerysetEqual(view.get_queryset(), [self.obj_log1, self.obj_log2])
+        self.assertQuerySetEqual(view.get_queryset(), [self.obj_log1, self.obj_log2])
 
 
 @override_settings(ROOT_URLCONF=URLConf)

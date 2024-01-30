@@ -74,7 +74,7 @@ def test_story_create_artikel(context, page, view_name, dropdown, dropdown_input
     page.get_by_label("Benutzername").fill("admin")
     page.get_by_label("Passwort").fill("admin")
     page.get_by_role("button", name="Anmelden").click()
-    page.wait_for_url("")
+    page.wait_for_url(re.compile(""))
     expect(page).to_have_title(re.compile("Index"))
 
     # Go to the Artikel changelist, and search for Artikel objects of a

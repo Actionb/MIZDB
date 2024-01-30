@@ -230,7 +230,7 @@ class TestBulkFormAusgabe(DataTestCase):
                     self.assertIsNone(row.get('instance', None))
                 if 'multiples' in row and 'multiples' in expected[c]:
                     # Need to compare the QuerySets of key 'multiples' separately.
-                    # assertQuerysetEqual doesn't transform the second parameter.
+                    # assertQuerySetEqual doesn't transform the second parameter.
                     self.assertEqual(
                         sorted(list(row.pop('multiples').values_list('pk', flat=True))),
                         sorted(list(expected[c].pop('multiples').values_list('pk', flat=True)))

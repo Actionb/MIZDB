@@ -1,5 +1,14 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- updated dependencies:
+  - updated to Django 4.2.9. Notable change: [set formfield_callback](https://docs.djangoproject.com/en/5.0/releases/4.2/#forms) in `MIZEditForm.Meta`
+  - removed unused dependencies PyYAML, pipreqs and pylint 
+
+
 ## [0.14] - 2024-01-29
 
 ### Changed

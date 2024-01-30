@@ -263,7 +263,7 @@ class TestACBase(ACViewTestCase):
         queryset = self.model.objects.all()
         view = self.get_view()
         view.forwarded = {'genre': self.genre.pk}
-        self.assertQuerysetEqual(view.apply_forwarded(queryset), [self.obj1])
+        self.assertQuerySetEqual(view.apply_forwarded(queryset), [self.obj1])
 
         musiker = make(Musiker)
         view.forwarded['musiker'] = musiker.pk
@@ -304,7 +304,7 @@ class TestACBase(ACViewTestCase):
         # return a queryset containing just obj2 - but obj2 doesn't have the
         # required genre: the result queryset would be empty.
         view.forwarded = {'genre': self.genre.pk}
-        self.assertQuerysetEqual(view.get_queryset(), [self.obj1])
+        self.assertQuerySetEqual(view.get_queryset(), [self.obj1])
 
     def test_create_object(self):
         """
@@ -1235,7 +1235,7 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
         view = self.get_view()
         view.admin_site = DummySite
         opts = Band._meta
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             view.get_queryset(),
             ContentType.objects.filter(app_label=opts.app_label, model=opts.model_name)
         )

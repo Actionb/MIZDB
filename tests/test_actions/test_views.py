@@ -1185,11 +1185,11 @@ class TestMoveToBrochure(ActionViewTestCase):
         self.assertTrue(_models.Katalog.objects.filter(titel='Bar Katalog').exists())
         katalog2 = _models.Katalog.objects.get(titel='Bar Katalog')
         # ...along with the year values...
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             katalog1.jahre.values_list('jahr', flat=True),
             ['2000', '2001'], transform=str
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             katalog2.jahre.values_list('jahr', flat=True),
             ['2000', '2001'], transform=str
         )
@@ -1416,7 +1416,7 @@ class TestMoveToBrochure(ActionViewTestCase):
 
         view.perform_action(form_data, options_form_data)
         new_brochure = target_model.objects.get()
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             new_brochure.jahre.values_list('jahr', flat=True),
             ['2000', '2001'], transform=str
         )
@@ -1836,7 +1836,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         # Check some attributes of the formset/inline.
         self.assertEqual(inline.model, _models.Bestand)
         self.assertEqual(formset.instance, self.obj1)
-        self.assertQuerysetEqual(formset.queryset.all(), self.obj1.bestand_set.all())
+        self.assertQuerySetEqual(formset.queryset.all(), self.obj1.bestand_set.all())
 
     def test_get_bestand_formset_form_data(self):
         """
@@ -1984,7 +1984,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateNotUsed(response, 'admin/action_confirmation.html')
         self.assertTemplateUsed(response, 'admin/change_list.html')
-        self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
+        self.assertQuerySetEqual(self.band.genres.all(), [self.obj2])
 
     @patch('dbentry.actions.views.Replace.admin_site', new=admin_site)
     def test_can_only_select_one(self):
@@ -2059,7 +2059,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
         form_kwargs = view.get_form_kwargs()
         self.assertIn('choices', form_kwargs)
         self.assertIn('replacements', form_kwargs['choices'])
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             form_kwargs['choices']['replacements'],
             self.model.objects.all(),
             ordered=False
@@ -2071,7 +2071,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             queryset=self.model.objects.filter(pk=self.obj1.pk)
         )
         view.perform_action(cleaned_data={'replacements': [str(self.obj2.pk)]})
-        self.assertQuerysetEqual(self.band.genres.all(), [self.obj2])
+        self.assertQuerySetEqual(self.band.genres.all(), [self.obj2])
         change_message = [
             {'deleted': {'object': str(self.obj1), 'name': 'Genre'}},
             {'added': {'object': str(self.obj2), 'name': 'Genre'}},
@@ -2088,7 +2088,7 @@ class TestReplace(ActionViewTestCase, LoggingTestMixin):
             queryset=Band.objects.filter(pk=self.band.pk)
         )
         view.perform_action(cleaned_data={'replacements': [str(replacement.pk)]})
-        self.assertQuerysetEqual(audio.bands.all(), [replacement])
+        self.assertQuerySetEqual(audio.bands.all(), [replacement])
         change_message = [
             {'deleted': {'object': str(self.band), 'name': 'Band'}},
             {'added': {'object': str(replacement), 'name': 'Band'}},
