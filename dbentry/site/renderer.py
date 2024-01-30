@@ -4,18 +4,13 @@ from mizdb_inlines.renderers import InlineFormsetRenderer, InlineFormRenderer
 IS_INVALID_CLASS = "is-invalid"
 
 
-class NoValidFieldRenderer(FieldRenderer):
-    # A FieldRenderer that doesn't add the 'is-valid' class to valid elements.
+class MIZFieldRenderer(FieldRenderer):
 
     def get_server_side_validation_classes(self):
         """Return CSS classes for server-side validation."""
         if self.field_errors:
             return IS_INVALID_CLASS
-        return ""
-
-
-class MIZFieldRenderer(NoValidFieldRenderer):
-    pass
+        return ""  # Do not add the 'is-valid' class to valid elements
 
 
 class TabularInlineFormRenderer(InlineFormRenderer):
