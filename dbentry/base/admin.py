@@ -21,7 +21,7 @@ from django.utils.text import capfirst
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.actions.actions import merge_records
-from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
+from dbentry.base.forms import ATTRS_TEXTAREA, InlineFormBase
 from dbentry.base.models import ComputedNameModel
 from dbentry.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
@@ -473,7 +473,7 @@ class BaseInlineMixin(AutocompleteMixin):
     extra: int = 1
     classes: list = ['collapse']
     description: str = ''
-    form: ModelForm = MIZAdminInlineFormBase
+    form: ModelForm = InlineFormBase
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

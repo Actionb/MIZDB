@@ -6,7 +6,7 @@ from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
 from dbentry.base.forms import (
-    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, MIZAdminFormMixin, MIZAdminInlineFormBase,
+    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, MIZAdminFormMixin, DeleteDuplicatesMixin,
     MinMaxRequiredFormMixin
 )
 from tests.case import MIZTestCase
@@ -267,7 +267,9 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
             form.set_choices(choices=[1, 2, 3])
 
 
-class MIZAdminInlineFormBaseTest(MIZTestCase):
+class TestDeleteDuplicatesMixin(MIZTestCase):
+    class InlineFormClass(DeleteDuplicatesMixin, forms.ModelForm):
+        pass
 
     @classmethod
     def setUpTestData(cls):
@@ -276,7 +278,7 @@ class MIZAdminInlineFormBaseTest(MIZTestCase):
         cls.m2m = MusikerAudioM2M.objects.create(audio=cls.audio, musiker=cls.musiker)  # noqa
 
     def test_validate_unique(self):
-        """Assert that MIZAdminInlineFormBase flags duplicates for deletion."""
+        """Assert that DeleteDuplicatesMixin flags duplicates for deletion."""
         data = {
             'musikeraudiom2m_set-INITIAL_FORMS': '1',
             'musikeraudiom2m_set-TOTAL_FORMS': '2',
@@ -289,7 +291,7 @@ class MIZAdminInlineFormBaseTest(MIZTestCase):
         }
         formset_class = forms.inlineformset_factory(
             parent_model=Audio, model=MusikerAudioM2M,
-            form=MIZAdminInlineFormBase, fields=forms.ALL_FIELDS, extra=1,
+            form=self.InlineFormClass, fields=forms.ALL_FIELDS, extra=1,
         )
         formset = formset_class(instance=self.audio, data=data)
         original, duplicate = formset.forms

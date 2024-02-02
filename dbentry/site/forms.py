@@ -4,7 +4,7 @@ from django.db import models
 from dbentry import forms as base_forms
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
-from dbentry.base.forms import DiscogsFormMixin, MinMaxRequiredFormMixin, MIZAdminInlineFormBase
+from dbentry.base.forms import DiscogsFormMixin, MinMaxRequiredFormMixin, InlineFormBase
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.site.widgets import MIZURLInput
 
@@ -189,7 +189,7 @@ class FotoForm(MIZEditForm):
 ################################################################################
 
 
-class InlineForm(MIZAdminInlineFormBase):
+class InlineForm(InlineFormBase):
     class Media:
         js = ["mizdb/js/inlines_scroll.js"]
 

@@ -343,19 +343,18 @@ class DynamicChoiceFormMixin(object):
                 fld.choices = list(field_choices)
 
 
-class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: could make this a mixin
+class DeleteDuplicatesMixin(object):
     """
-    A model form class that flags forms for deletion when the form's model
+    A model form mixin that flags forms for deletion when the form's model
     instance would violate uniqueness.
 
-    Intended to be used as base form class for inline formsets such as
-    model admin inlines.
+    Intended to be used with inline formsets such as model admin inlines.
     """
 
-    def validate_unique(self) -> None:
+    def validate_unique(self: forms.ModelForm) -> None:
         """
-        Call the instance's validate_unique() method and, if unique validity is
-        violated, plan the deletion of this inline formset form.
+        Call the instance's validate_unique() method and plan the deletion of
+        this inline formset form, if unique constraints are violated.
         """
         exclude = self._get_validation_exclusions()
         try:
@@ -363,6 +362,11 @@ class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: could make this a mixin
         except ValidationError:
             # Ignore non-unique entries in the same formset.
             self.cleaned_data['DELETE'] = True
+
+
+class InlineFormBase(DeleteDuplicatesMixin, forms.ModelForm):
+    """Base model form class to be used in inline formsets."""
+    pass
 
 
 class DiscogsFormMixin(object):
