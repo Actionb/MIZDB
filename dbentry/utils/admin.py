@@ -16,7 +16,7 @@ from django.utils.translation import override as translation_override
 from dbentry.utils.models import get_model_from_string
 
 
-def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str:
+def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str:  # TODO: remove - unused
     """
     Return the URL to the change page of ``obj``.
 
@@ -43,7 +43,7 @@ def get_changelist_url(
         user: User,
         site_name: str = 'admin',
         obj_list: Optional[Iterable[Model]] = None
-) -> str:
+) -> str:  # TODO: remove - unused
     """
     Return an url to the changelist of ``model``.
 
@@ -93,6 +93,7 @@ def get_model_admin_for_model(
         if site.is_registered(model):
             return site._registry.get(model)
     return None
+
 
 def construct_change_message(
         form: ModelForm, formsets: List[BaseInlineFormSet], add: bool
