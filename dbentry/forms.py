@@ -7,7 +7,7 @@ from django.contrib.admin.widgets import AdminTextInputWidget
 from django.core.exceptions import ValidationError
 
 from dbentry import models as _models
-from dbentry.ac.widgets import make_widget
+from dbentry.admin.autocomplete.widgets import make_widget
 from dbentry.base.forms import DiscogsFormMixin, MinMaxRequiredFormMixin
 from dbentry.utils.gnd import searchgnd
 from dbentry.validators import DNBURLValidator
@@ -22,7 +22,7 @@ class GoogleBtnWidget(AdminTextInputWidget):
     template_name = 'googlebuttonwidget.html'
 
     class Media:
-        js = ('admin/js/googlebtn.js',)
+        js = ('mizdb/js/googlebtn.js',)
 
 
 class AusgabeMagazinFieldForm(forms.ModelForm):

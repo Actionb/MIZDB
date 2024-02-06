@@ -8,7 +8,6 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
 from django.db.models import Model
 from django.forms import BaseInlineFormSet, ModelForm
-from django.http import HttpRequest
 from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
 from django.utils.translation import override as translation_override
@@ -85,7 +84,7 @@ def get_model_admin_for_model(
     Check the registries of ``admin_sites`` for a ModelAdmin that represents
     ``model`` and return the first such ModelAdmin instance found.
     """
-    from dbentry.sites import miz_site
+    from dbentry.admin.site import miz_site
     if isinstance(model, str):
         model = get_model_from_string(model)  # type: ignore[assignment]
     sites = admin_sites or [miz_site]

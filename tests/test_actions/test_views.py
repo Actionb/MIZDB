@@ -16,7 +16,7 @@ from django.utils.translation import override as translation_override
 from django.views.generic.base import ContextMixin, View
 from formtools.wizard.views import SessionWizardView, WizardView
 
-import dbentry.admin as _admin
+import dbentry.admin.admin as _admin
 import dbentry.models as _models
 from dbentry.actions import actions as _actions
 from dbentry.actions.base import (
@@ -30,7 +30,7 @@ from dbentry.actions.views import (
 )
 from dbentry.base.forms import MIZAdminForm
 from dbentry.base.views import MIZAdminMixin
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 from dbentry.utils.html import get_obj_link
 from tests.case import AdminTestCase, LoggingTestMixin, ViewTestCase
 from tests.model_factory import make
@@ -1916,7 +1916,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             'log_deletion': DEFAULT,
         }
         with patch.multiple('dbentry.actions.views', **patches) as mocks:
-            with patch('dbentry.admin.AusgabenAdmin.log_change') as admin_log_change:
+            with patch('dbentry.admin.admin.AusgabenAdmin.log_change') as admin_log_change:
                 self.post_response(
                     path=self.changelist_path,
                     data={

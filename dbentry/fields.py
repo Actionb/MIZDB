@@ -446,7 +446,7 @@ class PartialDateWidget(forms.MultiWidget):
         return [None, None, None]
 
     class Media:
-        css = {"all": ["admin/css/partialdate.css"]}
+        css = {"all": ["mizdb/css/partialdate.css"]}
 
 
 class PartialDateFormField(forms.MultiValueField):

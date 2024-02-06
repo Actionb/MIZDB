@@ -7,8 +7,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
-from dbentry.ac import views
-from dbentry.ac.widgets import EXTRA_DATA_KEY, GENERIC_URL_NAME
+from dbentry.admin.autocomplete import views
+from dbentry.admin.autocomplete.widgets import EXTRA_DATA_KEY, GENERIC_URL_NAME
 from tests.case import MIZTestCase, RequestTestCase, ViewTestCase
 from tests.model_factory import make
 from tests.test_ac.models import Band, Genre, Musiker
@@ -94,7 +94,7 @@ class TestACBase(ACViewTestCase):
         view.setup(request, create_field="this ain't no field")
         self.assertEqual(view.create_field, "this ain't no field")
 
-    @patch('dbentry.ac.views.ACBase.has_more')
+    @patch('dbentry.admin.autocomplete.views.ACBase.has_more')
     def test_display_create_option(self, has_more_mock):
         """
         A create option should be displayed when:
@@ -131,7 +131,7 @@ class TestACBase(ACViewTestCase):
             with self.subTest(q=q):
                 self.assertFalse(view.display_create_option({}, q))
 
-    @patch('dbentry.ac.views.ACBase.has_more')
+    @patch('dbentry.admin.autocomplete.views.ACBase.has_more')
     def test_display_create_option_no_pagination(self, has_more_mock):
         """A create option should be shown, if there is no pagination."""
         view = self.get_view()
@@ -142,7 +142,7 @@ class TestACBase(ACViewTestCase):
         # Context is missing 'page_obj':
         self.assertTrue(view.display_create_option({}, 'foo'))
 
-    @patch('dbentry.ac.views.ACBase.has_more')
+    @patch('dbentry.admin.autocomplete.views.ACBase.has_more')
     def test_display_create_option_more_results(self, has_more_mock):
         """No create option should be shown, if there are more pages of results."""
         view = self.get_view()
@@ -201,7 +201,7 @@ class TestACBase(ACViewTestCase):
         view = self.get_view(request)
         self.assertFalse(view.get_create_option(context={'object_list': []}, q='Beep'))
 
-    @patch('dbentry.ac.views.ACBase.display_create_option')
+    @patch('dbentry.admin.autocomplete.views.ACBase.display_create_option')
     def test_get_create_option_strips_q(self, display_mock):
         """
         Assert that get_create_option transforms the search term into a string
@@ -313,7 +313,7 @@ class TestACBase(ACViewTestCase):
         """
         view = self.get_view(self.get_request(), create_field='band_name')
 
-        with patch('dbentry.ac.views.log_addition') as log_addition_mock:
+        with patch('dbentry.admin.autocomplete.views.log_addition') as log_addition_mock:
             new_obj = view.create_object('Fee Fighters')
             self.assertIsInstance(new_obj, self.model)
             self.assertEqual(new_obj.band_name, 'Fee Fighters')
@@ -696,7 +696,7 @@ class TestACAutor(ACViewTestCase):
         )
         self.assertTrue(self.model.objects.get(pk=created['id']))
 
-    @patch('dbentry.ac.views.log_addition')
+    @patch('dbentry.admin.autocomplete.views.log_addition')
     def test_create_object_adds_log_entry(self, log_addition_mock):
         """Assert that log entries are added for the created objects."""
         request = self.get_request()
@@ -814,11 +814,11 @@ class TestACMagazin(ACViewTestCase):
         view = self.get_view(self.get_request())
         queryset = self.model.objects.all()
         # Valid ISSN:
-        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+        with patch('dbentry.admin.autocomplete.views.ACBase.get_search_results') as super_mock:
             view.get_search_results(queryset, '1234-5679')
             super_mock.assert_called_with(queryset, '12345679')
         # Invalid ISSN, search term should be left as-is:
-        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+        with patch('dbentry.admin.autocomplete.views.ACBase.get_search_results') as super_mock:
             view.get_search_results(queryset, '1234-5670')
             super_mock.assert_called_with(queryset, '1234-5670')
 
@@ -908,7 +908,7 @@ class TestACPerson(ACViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([str(obj.pk)], get_result_ids(response))
 
-    @patch('dbentry.ac.views.log_addition')
+    @patch('dbentry.admin.autocomplete.views.log_addition')
     def test_create_object_adds_log_entry(self, log_addition_mock):
         """Assert that a log entry is added for the created object."""
         view = self.get_view(self.get_request())
@@ -1040,7 +1040,7 @@ class TestGND(ViewTestCase):
     path = reverse_lazy('gnd')
     view_class = views.GND
 
-    @patch('dbentry.ac.views.searchgnd')
+    @patch('dbentry.admin.autocomplete.views.searchgnd')
     def test(self, query_mock):
         """Assert that the response contains the expected results."""
         query_mock.return_value = ([('134485904', 'Plant, Robert')], 1)
@@ -1070,7 +1070,7 @@ class TestGND(ViewTestCase):
         view = self.get_view()
         self.assertFalse(view.get_query_string(q=""))
 
-    @patch('dbentry.ac.views.searchgnd')
+    @patch('dbentry.admin.autocomplete.views.searchgnd')
     def test_get_queryset(self, mocked_query_func):
         """Assert that get_queryset returns the query results."""
         results = [('id', 'label')]
@@ -1078,7 +1078,7 @@ class TestGND(ViewTestCase):
         view = self.get_view(request=self.get_request(), q='q')
         self.assertEqual(view.get_queryset(), results)
 
-    @patch('dbentry.ac.views.searchgnd')
+    @patch('dbentry.admin.autocomplete.views.searchgnd')
     def test_get_queryset_page_number(self, mocked_query_func):
         """
         Assert that for a given page number, get_queryset calls the query func
@@ -1117,7 +1117,7 @@ class TestGND(ViewTestCase):
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['21'])
 
-    @patch('dbentry.ac.views.searchgnd')
+    @patch('dbentry.admin.autocomplete.views.searchgnd')
     def test_get_queryset_paginate_by(self, mocked_query_func):
         """
         Assert that get_queryset factors in the paginate_by attribute when
@@ -1136,7 +1136,7 @@ class TestGND(ViewTestCase):
         )
         self.assertEqual(kwargs['startRecord'], ['11'])
 
-    @patch('dbentry.ac.views.searchgnd')
+    @patch('dbentry.admin.autocomplete.views.searchgnd')
     def test_get_queryset_maximum_records(self, mocked_query_func):
         """
         Assert that get_queryset passes 'paginate_by' to the query func as
@@ -1174,7 +1174,7 @@ class TestGND(ViewTestCase):
             view.get_result_label(('134485904', 'Plant, Robert'))
         )
 
-    @patch('dbentry.ac.views.searchgnd')
+    @patch('dbentry.admin.autocomplete.views.searchgnd')
     def test_get_query_func_kwargs(self, mocked_query_func):
         """
         Assert that the view's query func is called with the kwargs added by

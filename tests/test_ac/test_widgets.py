@@ -7,7 +7,7 @@ from django.forms import Media, widgets
 from django.test import override_settings
 from django.utils.translation import override as translation_override
 
-from dbentry.ac.widgets import (
+from dbentry.admin.autocomplete.widgets import (
     EXTRA_DATA_KEY, GenericURLWidgetMixin, MIZModelSelect2, MIZModelSelect2Multiple,
     MIZModelSelect2MultipleTabular, MIZModelSelect2Tabular, MIZWidgetMixin,
     RemoteModelWidgetWrapper, TabularResultsMixin, make_widget
@@ -135,21 +135,21 @@ class TestGenericURLWidgetMixin(MIZTestCase):
             self.assertEqual(self.Widget(model_name='genre')._url, 'this-is-the-default')
             self.assertEqual(self.Widget(model_name='genre', url='nocapture')._url, 'nocapture')
 
-    @patch('dbentry.ac.widgets.reverse')
+    @patch('dbentry.admin.autocomplete.widgets.reverse')
     def test_get_url_none(self, reverse_mock):
         """_get_url should return None, if the url was set to None."""
         obj = self.Widget(model_name='genre', url=None)
         self.assertIsNone(obj._get_url())
         self.assertFalse(reverse_mock.called)
 
-    @patch('dbentry.ac.widgets.reverse')
+    @patch('dbentry.admin.autocomplete.widgets.reverse')
     def test_get_url_set_url(self, reverse_mock):
         """_get_url should return any URLs directly, if they contain a forward slash."""
         obj = self.Widget(model_name='genre', url='Test/Test')
         self.assertEqual(obj._get_url(), 'Test/Test')
         self.assertFalse(reverse_mock.called)
 
-    @patch('dbentry.ac.widgets.reverse')
+    @patch('dbentry.admin.autocomplete.widgets.reverse')
     def test_get_url_reverses_generic_url_name(self, reverse_mock):
         """
         _get_url should attempt reversing the generic URL name with the
@@ -163,7 +163,7 @@ class TestGenericURLWidgetMixin(MIZTestCase):
         self.assertIn('model_name', reverse_kwargs['kwargs'])
         self.assertEqual(reverse_kwargs['kwargs']['model_name'], 'genre')
 
-    @patch('dbentry.ac.widgets.reverse')
+    @patch('dbentry.admin.autocomplete.widgets.reverse')
     def test_get_url_reverses(self, reverse_mock):
         """
         _get_url should just reverse the given URL name, if it doesn't contain

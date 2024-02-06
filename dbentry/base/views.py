@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 
 
 class MIZAdminMixin(object):
@@ -40,7 +40,7 @@ class MIZAdminMixin(object):
         return {**site_context, **context}
 
 
-class OptionalFormView(views.generic.FormView):
+class OptionalFormView(views.generic.FormView):  # TODO: remove - not used (?)
     """A FormView that does not require form_class to be set."""
 
     def get_form(self, form_class: Optional[Type[Form]] = None) -> Optional[Form]:

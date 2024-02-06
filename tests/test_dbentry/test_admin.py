@@ -16,10 +16,10 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
-import dbentry.admin as _admin
+import dbentry.admin.admin as _admin
 import dbentry.models as _models
-from dbentry.changelist import AusgabeChangeList, BestandChangeList
-from dbentry.sites import miz_site
+from dbentry.admin.changelist import AusgabeChangeList, BestandChangeList
+from dbentry.admin.site import miz_site
 from tests.case import AdminTestCase
 from tests.model_factory import make
 
@@ -325,7 +325,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.obj1.refresh_from_db()
                 self.assertEqual(self.obj1.status, expected_value)
 
-    @patch('dbentry.admin.log_change')
+    @patch('dbentry.admin.admin.log_change')
     def test_change_status_logentry_error(self, log_change_mock):
         """
         Assert that exceptions raised during the creation of LogEntry objects
@@ -1175,7 +1175,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_formfield_for_foreignkey_land_forwarded_to_bland(self):
         field = self.model._meta.get_field('bland')
-        with patch("dbentry.admin.make_widget") as make_widget_mock:
+        with patch("dbentry.admin.admin.make_widget") as make_widget_mock:
             self.model_admin.formfield_for_foreignkey(field, self.get_request())
             make_widget_mock.assert_called_with(model=_models.Bundesland, forward=['land'])
 
@@ -1294,7 +1294,7 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_save_related_calls_copy_related(self):
         """Assert that save_related calls _copy_related."""
         form_mock = Mock(instance=1)
-        with patch('dbentry.admin.super'):
+        with patch('dbentry.admin.admin.super'):
             with patch.object(self.model_admin, '_copy_related') as copy_related_mock:
                 self.model_admin.save_related(
                     request=None,
@@ -1516,7 +1516,7 @@ class TestChangelistAnnotations(AdminTestCase):
 
 class TestAuthAdminMixin(TestCase):
 
-    @patch('dbentry.admin.super')
+    @patch('dbentry.admin.admin.super')
     def test_formfield_for_manytomany(self, mocked_super):
         """
         Assert that formfield_for_manytomany adds the model name to the

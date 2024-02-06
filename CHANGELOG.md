@@ -8,6 +8,13 @@
     - updated to Django 4.2.9. Notable
       change: [set formfield_callback](https://docs.djangoproject.com/en/5.0/releases/4.2/#forms) in `MIZEditForm.Meta`
     - removed unused dependencies PyYAML, pipreqs and pylint
+- admin refactor:
+    - moved modules specific to admin to `dbentry/admin`
+    - added `DbentryAdminConfig` app config. With the above change, Django's autodiscovery for the admin _module_
+      containing the model admin classes will no longer work (it will try to import `dbentry.admin`, which is now a
+      package). `DbentryAdminConfig` is a config that disables the autodiscovery and imports the admin module.
+    - moved dal package `ac` to `dbentry/admin/autocomplete`
+    - moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
 
 ## [0.14] - 2024-01-29
 

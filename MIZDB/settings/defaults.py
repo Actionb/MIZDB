@@ -50,9 +50,9 @@ INSTALLED_APPS = [
     # https://github.com/yourlabs/django-autocomplete-light/issues/1283
     'jquery_351',
     'dbentry.apps.DbentryConfig',
+    'dbentry.apps.DbentryAdminConfig',
     'dal',
     'dal_select2',
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'django_admin_logs',
     'mizdb_tomselect',
     'mod_wsgi.server',
-    'dbentry.site',
+    'dbentry.site',  # required for finding dbentry/site/static files
     'django_bootstrap5',
     'mizdb_inlines'
 ]

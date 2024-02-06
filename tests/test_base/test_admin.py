@@ -8,8 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import checks
 from django.test import RequestFactory, TestCase, override_settings
 
-from dbentry.base.admin import AutocompleteMixin
-from dbentry.changelist import MIZChangeList
+from dbentry.admin.base import AutocompleteMixin
+from dbentry.admin.changelist import MIZChangeList
 from tests.case import AdminTestCase
 from tests.model_factory import make
 from .admin import AudioAdmin, BandAdmin, admin_site, PersonAdmin
@@ -26,8 +26,8 @@ class TestAutocompleteMixin(TestCase):
         Assert that formfield_for_foreignkey calls make_widget with tabular=True
         if the field's name is in the inline's 'tabular_autocomplete' list.
         """
-        with patch('dbentry.base.admin.super'):
-            with patch('dbentry.base.admin.make_widget') as make_mock:
+        with patch('dbentry.admin.base.super'):
+            with patch('dbentry.admin.base.make_widget') as make_mock:
                 inline = AutocompleteMixin()
                 inline.tabular_autocomplete = ['dummy']
                 inline.formfield_for_foreignkey(db_field=self.DummyModelField(), request=None)
@@ -42,8 +42,8 @@ class TestAutocompleteMixin(TestCase):
         Assert that formfield_for_foreignkey calls make_widget with tabular=False
         if the field's name isn't present in the 'tabular_autocomplete' list.
         """
-        with patch('dbentry.base.admin.super'):
-            with patch('dbentry.base.admin.make_widget') as make_mock:
+        with patch('dbentry.admin.base.super'):
+            with patch('dbentry.admin.base.make_widget') as make_mock:
                 inline = AutocompleteMixin()
                 inline.tabular_autocomplete = []
                 inline.formfield_for_foreignkey(db_field=self.DummyModelField(), request=None)
@@ -58,8 +58,8 @@ class TestAutocompleteMixin(TestCase):
         Assert that formfield_for_foreignkey does not call make_widget if a
         widget was passed in.
         """
-        with patch('dbentry.base.admin.super'):
-            with patch('dbentry.base.admin.make_widget') as make_mock:
+        with patch('dbentry.admin.base.super'):
+            with patch('dbentry.admin.base.make_widget') as make_mock:
                 inline = AutocompleteMixin()
                 inline.tabular_autocomplete = []
                 inline.formfield_for_foreignkey(
@@ -185,7 +185,7 @@ class MIZModelAdminTest(AdminTestCase):
         self.staff_user.user_permissions.add(*perms)
 
         request = RequestFactory().get('/')
-        with patch('dbentry.base.admin.BESTAND_MODEL_NAME', 'test_base.Bestand'):
+        with patch('dbentry.admin.base.BESTAND_MODEL_NAME', 'test_base.Bestand'):
             request.user = self.noperms_user
             self.assertFalse(self.model_admin.has_alter_bestand_permission(request))
             request.user = self.staff_user
@@ -366,7 +366,7 @@ class MIZModelAdminTest(AdminTestCase):
         obj.nachname = 'Mantest'
         obj.save(update=False)
         form = mock.Mock(instance=obj)
-        with mock.patch('dbentry.base.admin.super'):
+        with mock.patch('dbentry.admin.base.super'):
             self.model_admin.save_related(None, form, [], None)
 
         self.assertEqual(form.instance._name, 'Alice Mantest')

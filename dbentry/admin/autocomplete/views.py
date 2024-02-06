@@ -15,9 +15,9 @@ from nameparser import HumanName
 from stdnum import issn
 
 from dbentry import models as _models
-from dbentry.ac.widgets import EXTRA_DATA_KEY
+from dbentry.admin.autocomplete.widgets import EXTRA_DATA_KEY
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string

@@ -24,14 +24,14 @@ import dbentry.actions.actions as _actions
 import dbentry.forms as _forms
 import dbentry.m2m as _m2m
 import dbentry.models as _models
-from dbentry.ac.widgets import make_widget
-from dbentry.base.admin import (
+from dbentry.admin.autocomplete.widgets import make_widget
+from dbentry.admin.base import (
     BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseOrtInLine, BaseSchlagwortInline,
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
-from dbentry.changelist import AusgabeChangeList, BestandChangeList
+from dbentry.admin.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.search.mixins import MIZAdminSearchFormMixin
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 from dbentry.utils.admin import log_change
 from dbentry.utils.copyrelated import copy_related_set
 from dbentry.utils.html import get_obj_link
@@ -69,7 +69,8 @@ class BestandInLine(BaseTabularInline):
         return obj.signatur or ""
 
     # TODO: enable tabular autocomplete for 'lagerort'
-    #  (see ac.views.ACLagerort and ac.urls for details)
+    #  (see admin.autocomplete.views.ACLagerort and admin.autocomplete.urls for
+    #  details)
     # tabular_autocomplete = ['lagerort']
 
 

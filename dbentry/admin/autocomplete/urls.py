@@ -1,7 +1,7 @@
 from django.urls import include, path
 
-from dbentry.ac import views
-from dbentry.ac.widgets import GENERIC_URL_NAME
+from dbentry.admin.autocomplete import views
+from dbentry.admin.autocomplete.widgets import GENERIC_URL_NAME
 
 # noinspection SpellCheckingInspection
 autocomplete_patterns = [

@@ -453,12 +453,14 @@ class SiteSearchView(views.generic.TemplateView):
         return results
 
 
+# TODO: MIZSiteSearch requires a permission check
 @register_tool(
     url_name='tools:site_search',
     index_label='Datenbank durchsuchen',
     superuser_only=False
 )
 class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
+    """Site search for the admin page."""
     app_label = 'dbentry'
 
     title = 'Datenbank durchsuchen'
@@ -478,6 +480,7 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
         return model.objects.search(q, ranked=False)  # pragma: no cover
 
 
+# TODO: remove SearchbarSearch - not used
 class SearchbarSearch(MIZSiteSearch):
 
     def get(self, request: HttpRequest, **kwargs: Any) -> JsonResponse:

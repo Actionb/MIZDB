@@ -1,4 +1,4 @@
-from dbentry.sites import MIZAdminSite
+from dbentry.admin.site import MIZAdminSite
 from dbentry.tools.decorators import register_tool
 from tests.case import MIZTestCase
 

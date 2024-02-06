@@ -19,11 +19,11 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 
 from dbentry import models as _models
-from dbentry.ac.widgets import make_widget
+from dbentry.admin.autocomplete.widgets import make_widget
 from dbentry.actions.actions import merge_records
 from dbentry.base.forms import ATTRS_TEXTAREA, InlineFormBase
 from dbentry.base.models import ComputedNameModel
-from dbentry.changelist import MIZChangeList
+from dbentry.admin.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.query import MIZQuerySet
 from dbentry.search.mixins import MIZAdminSearchFormMixin

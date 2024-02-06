@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from django.views import defaults
 
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 
 urlpatterns = [
     path("admin/", include("dbentry.urls")),  # TODO: tool views should be accessible outside of admin/

@@ -1,16 +1,19 @@
 from collections import OrderedDict
-from typing import Any, List, Optional, OrderedDict as OrderedDictType
+from typing import Any, List, Optional, OrderedDict as OrderedDictType, Sequence, ValuesView
 
 from django.conf import settings
+from django.contrib import admin
+from django.core import checks
 from django.http import HttpRequest, HttpResponse
+from django.urls import reverse, NoReverseMatch
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.cache import never_cache
 
-from dbentry.tools.sites import IndexToolsSite
 from dbentry.utils.admin import get_model_admin_for_model
 
 
-class MIZAdminSite(IndexToolsSite):
+class MIZAdminSite(admin.AdminSite):
     """
     AdminSite for the dbentry app.
 
@@ -18,10 +21,15 @@ class MIZAdminSite(IndexToolsSite):
     includes links to 'tool views'.
     MIZAdminSite adds a link to the site's wiki instance to the context of
     every page.
+
+    Also, links to registered tool views are added to the sidebar of the index
+    page.
     """
     site_header = 'MIZDB'
     site_title = 'MIZDB'
     index_title = 'Index'
+    # TODO: move tools/index.html stuff into the base admin index.html
+    index_template = 'tools/index.html'
 
     # Do not display the “View on site” link in the header:
     site_url = None
@@ -67,6 +75,7 @@ class MIZAdminSite(IndexToolsSite):
             if app_dict['app_label'] == 'dbentry':
                 dbentry_dict = app_list.pop(i)
                 break
+
         if dbentry_dict is None:
             # No app with label 'dbentry' found.
             # Return an empty app_list.
@@ -102,12 +111,71 @@ class MIZAdminSite(IndexToolsSite):
 
     @method_decorator(never_cache)
     def index(self, request: HttpRequest, extra_context: Optional[dict] = None) -> HttpResponse:
+        # Add the registered admintools to the index page.
+        extra_context = extra_context or {}
+        extra_context['admintools'] = self.build_admintools_context(request)
         response = super().index(request, extra_context)
         # Replace the original app_list with the one containing the grouping.
         new_app_list = self.add_categories(response.context_data['app_list'])
         if new_app_list:
             response.context_data['app_list'] = new_app_list
         return response
+
+    def check(self, app_configs: Optional[ValuesView]) -> List[checks.CheckMessage]:
+        errors = super().check(app_configs)
+        # Check that the registered urls are reversible.
+        for tool, url_name, *_ in self.tools:
+            try:
+                reverse(url_name)
+            except NoReverseMatch as e:
+                errors.append(
+                    checks.Error(
+                        str(e),
+                        hint="Check register_tool decorator args of %s" % tool,
+                        obj="%s admin tools" % self.__class__
+                    )
+                )
+        return errors
+
+    def register_tool(
+            self,
+            view: View,
+            url_name: str,
+            index_label: str,
+            permission_required: Sequence = (),
+            superuser_only: bool = False
+    ) -> None:
+        """
+        Add the given view to the sites' registered tools. A link to the
+        registered view will be displayed in the sidebar of the index page.
+
+        Args:
+            view: the tool view
+            url_name: the reversible url name of the view
+            index_label: the label for the link
+            permission_required: permissions required for the link to be
+              displayed on the index page
+            superuser_only: if True, a link will only be displayed to superusers
+        """
+        self.tools.append((view, url_name, index_label, permission_required, superuser_only))
+
+    def build_admintools_context(self, request: HttpRequest) -> OrderedDictType[str, str]:
+        """
+        Return a mapping of url_name: index_label of registered tools, ordered
+        by index_label, to be added to the index' context.
+        Exclude tool views the user does not have permission for.
+        """
+        result = OrderedDict()
+        # noinspection PyUnresolvedReferences
+        user = request.user
+        # Walk through the tools sorted by index_label:
+        for _tool, url, label, perms, su_only in sorted(self.tools, key=lambda tpl: tpl[2]):
+            if su_only and not user.is_superuser:
+                continue
+            if not user.has_perms(perms):
+                continue
+            result[url] = label
+        return result
 
 
 miz_site = MIZAdminSite()

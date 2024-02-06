@@ -7,7 +7,7 @@ from django.db.models import Model
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 from dbentry.utils import nfilter
 from dbentry.utils.models import get_reverse_field_path
 

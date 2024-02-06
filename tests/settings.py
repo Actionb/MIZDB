@@ -17,10 +17,10 @@ except FileNotFoundError as e:
 SECRET_KEY = 'abcdefghi'
 
 ALWAYS_INSTALLED_APPS = [
-    'dbentry',
+    'dbentry.apps.DbentryConfig',
+    'dbentry.apps.DbentryAdminConfig',
     'dal',
     'dal_select2',
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

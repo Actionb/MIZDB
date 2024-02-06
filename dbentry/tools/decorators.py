@@ -2,7 +2,7 @@ from typing import Callable, Sequence
 
 from django.views import View
 
-from dbentry.sites import MIZAdminSite, miz_site
+from dbentry.admin.site import MIZAdminSite, miz_site
 
 
 def register_tool(

@@ -8,10 +8,11 @@ from django.db.models.query import EmptyQuerySet
 from django.test import override_settings
 from django.urls import path
 
-from dbentry import admin as _admin, models as _models
-from dbentry.base.admin import MIZModelAdmin
-from dbentry.changelist import MIZChangeList
-from dbentry.sites import miz_site
+from dbentry.admin import admin as _admin
+from dbentry import models as _models
+from dbentry.admin.base import MIZModelAdmin
+from dbentry.admin.changelist import MIZChangeList
+from dbentry.admin.site import miz_site
 from tests.case import AdminTestCase
 from tests.model_factory import make
 
