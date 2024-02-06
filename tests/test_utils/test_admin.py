@@ -1,18 +1,14 @@
 from unittest.mock import Mock, patch
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from django.db import models
 from django.forms import modelform_factory
 from django.test import override_settings
-from django.urls import NoReverseMatch
 
 from dbentry.utils import admin as admin_utils
 from tests.case import RequestTestCase
 from tests.model_factory import make
-from .admin import AudioAdmin, admin_site
-from .models import Audio, Band, Bestand, Genre, Kalender, Lagerort, Musiker
+from tests.test_utils.admin import AudioAdmin, admin_site
+from tests.test_utils.models import Audio, Band, Bestand, Genre, Kalender, Lagerort, Musiker
 
 
 @override_settings(ROOT_URLCONF='tests.test_utils.urls')
@@ -23,107 +19,14 @@ class TestAdminUtils(RequestTestCase):
     def setUpTestData(cls):
         cls.musiker = make(Musiker, kuenstler_name='Robert Plant')
         cls.band = make(Band, band_name='Led Zeppelin')
-        cls.obj1 = make(cls.model, titel='Testaudio')
-        cls.obj2 = make(cls.model, titel='Hovercrafts')
+        cls.obj1 = obj1 = make(cls.model, titel='Testaudio')
+        cls.obj2 = obj2 = make(cls.model, titel='Hovercrafts')
         lagerort = make(Lagerort, ort="Aufm Tisch!")
-        cls.bestand = make(Bestand, audio=cls.obj1, lagerort=lagerort)
+        cls.bestand = make(Bestand, audio=obj1, lagerort=lagerort)
 
-        cls.test_data = [cls.obj1, cls.obj2]
+        cls.test_data = [obj1, obj2]
 
         super().setUpTestData()
-
-    ################################################################################################
-    # test get_change_page_url
-    ################################################################################################
-
-    def test_get_change_page_url(self):
-        """Assert that the expected URL is returned by get_change_page_url."""
-        self.assertEqual(
-            admin_utils.get_change_page_url(self.obj1, self.super_user),
-            f'/admin/test_utils/audio/{self.obj1.pk}/change/'
-        )
-
-    def test_get_change_page_url_no_change_permission(self):
-        """
-        Assert that get_change_page_url returns an empty string if the user
-        lacks change permission.
-        """
-        self.assertFalse(admin_utils.get_change_page_url(self.obj1, self.noperms_user))
-
-    def test_get_change_page_url_no_reverse_match(self):
-        """
-        Assert that get_change_page_url returns an empty string if there is no
-        reverse match for the object.
-        """
-
-        class URLConf:
-            urlpatterns = []
-
-        with override_settings(ROOT_URLCONF=URLConf):
-            with self.assertNotRaises(NoReverseMatch):
-                link = admin_utils.get_change_page_url(self.obj1, self.super_user)
-        self.assertFalse(link)
-
-    ################################################################################################
-    # test get_changelist_url
-    ################################################################################################
-
-    def test_get_changelist_url(self):
-        """
-        Check the output of get_changelist_url for various obj_list arguments.
-        """
-        obj2 = Audio.objects.create(titel='Any')
-        for obj_list in (None, [self.obj1], [self.obj1, obj2]):
-            expected = '/admin/test_utils/audio/'
-            if obj_list:
-                expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
-            with self.subTest(obj_list=obj_list):
-                self.assertEqual(
-                    admin_utils.get_changelist_url(
-                        self.model,
-                        self.super_user,
-                        obj_list=obj_list
-                    ),
-                    expected
-                )
-
-    def test_get_changelist_url_no_perms(self):
-        """
-        Assert that get_changelist_url returns an empty string if the user has
-        no permission to access the requested changelist.
-        """
-        self.assertEqual(admin_utils.get_changelist_url(self.model, self.noperms_user), "")
-
-    def test_get_changelist_url_no_reverse(self):
-        """
-        Assert that get_changelist_url returns an empty string if no reverse
-        match could be found for the requested changelist.
-        """
-
-        class UnknownModel(models.Model):
-            pass
-
-        self.assertEqual(admin_utils.get_changelist_url(UnknownModel, self.super_user), "")
-
-    def test_get_changelist_url_requires_change_or_view_perm(self):
-        """
-        Assert that either change or view permissions are needed for
-        get_changelist_url to produce a URL.
-        """
-        ct = ContentType.objects.get_for_model(self.model)
-        change = Permission.objects.get(codename='change_audio', content_type=ct)
-        view = Permission.objects.get(codename='view_audio', content_type=ct)
-        perms = [[], [change], [view], [change, view]]
-
-        for permissions in perms:
-            with self.subTest(permissions=permissions):
-                self.staff_user.user_permissions.set(permissions)
-                self.staff_user = self.reload_user(self.staff_user)
-                url = admin_utils.get_changelist_url(model=self.model, user=self.staff_user)
-                if not permissions:
-                    self.assertFalse(url)
-                else:
-                    self.assertEqual(url, '/admin/test_utils/audio/')
 
     ################################################################################################
     # test construct_change_message and _get_relation_change_message

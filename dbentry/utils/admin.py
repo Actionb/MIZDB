@@ -1,80 +1,14 @@
-from typing import Dict, Iterable, List, Optional, Sequence, Type, Union
+from typing import Dict, List, Optional, Sequence, Type, Union
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import ModelAdmin, get_content_type_for_model
 from django.contrib.admin.sites import AdminSite
-from django.contrib.admin.utils import quote
-from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import User
 from django.db.models import Model
 from django.forms import BaseInlineFormSet, ModelForm
-from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
 from django.utils.translation import override as translation_override
 
 from dbentry.utils.models import get_model_from_string
-
-
-def get_change_page_url(obj: Model, user: User, site_name: str = 'admin') -> str:  # TODO: remove - unused
-    """
-    Return the URL to the change page of ``obj``.
-
-    Returns an empty string if no change page could be found, or if the user
-    has no change permissions.
-    """
-    opts = obj._meta
-    try:
-        admin_url = reverse(
-            '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
-            args=[quote(obj.pk)]
-        )
-    except NoReverseMatch:
-        return ''
-
-    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
-    if not user.has_perm(perm):
-        return ''
-    return admin_url
-
-
-def get_changelist_url(
-        model: Union[Model, Type[Model]],
-        user: User,
-        site_name: str = 'admin',
-        obj_list: Optional[Iterable[Model]] = None
-) -> str:  # TODO: remove - unused
-    """
-    Return an url to the changelist of ``model``.
-
-    If ``obj_list`` is given, the url to the changelist will include a query
-    parameter to filter to records in that list.
-
-    Args:
-        model (model class or instance): the model of the desired changelist
-        user (User): the user that the URL is for
-        site_name (str): namespace of the site/app
-        obj_list (Iterable): an iterable of model instances. If given, the url
-          to the changelist will include a query parameter to filter to records
-          in that list.
-    """
-    # noinspection PyUnresolvedReferences
-    opts = model._meta
-    try:
-        url = reverse(
-            '%s:%s_%s_changelist' % (site_name, opts.app_label, opts.model_name)
-        )
-    except NoReverseMatch:
-        return ''
-
-    change_perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
-    view_perm = '%s.%s' % (opts.app_label, get_permission_codename('view', opts))
-    if not (user.has_perm(change_perm) or user.has_perm(view_perm)):
-        # 'change' or 'view' permission is required to access the changelist.
-        return ''
-
-    if obj_list:
-        url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))
-    return url
 
 
 def get_model_admin_for_model(
