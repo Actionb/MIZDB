@@ -25,6 +25,7 @@ from dbentry.base.forms import ATTRS_TEXTAREA, InlineFormBase
 from dbentry.base.models import ComputedNameModel
 from dbentry.admin.changelist import MIZChangeList
 from dbentry.forms import AusgabeMagazinFieldForm
+from dbentry.models import BESTAND_MODEL_NAME
 from dbentry.query import MIZQuerySet
 from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.utils.admin import construct_change_message
@@ -34,7 +35,6 @@ from dbentry.utils.text import diffhtml
 from dbentry.utils.url import urlname
 
 FieldsetList = List[Tuple[Optional[str], dict]]
-BESTAND_MODEL_NAME = 'dbentry.Bestand'  # TODO: move to models.py
 
 
 class AutocompleteMixin(object):
