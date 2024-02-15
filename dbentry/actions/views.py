@@ -220,7 +220,13 @@ class MergeView(WizardConfirmationView):
 
     def get_context_for_primary_step(self, context: dict) -> dict:
         """Return additional template context for the 'select primary' step."""
-        return context
+        queryset = self.view.add_list_display_annotations(self.queryset)
+        queryset = self.view.order_queryset(queryset)
+        primary_step_context = {
+            "result_headers": self.view.get_result_headers(),
+            "result_rows": self.view.get_result_rows(queryset),
+        }
+        return primary_step_context
 
     @property
     def updates(self) -> dict:
