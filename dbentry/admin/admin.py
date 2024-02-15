@@ -20,7 +20,7 @@ from django.http import HttpRequest
 from django.utils.safestring import SafeText
 from django_admin_logs.admin import LogEntryAdmin
 
-import dbentry.actions.actions as _actions
+import dbentry.admin.actions as _actions
 import dbentry.forms as _forms
 import dbentry.m2m as _m2m
 import dbentry.models as _models

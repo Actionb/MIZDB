@@ -1,0 +1,51 @@
+{% extends "mizdb/base.html" %}
+{% load i18n l10n django_bootstrap5 %}
+
+{% block content %}
+<form method="post">
+    
+    {% if wizard.steps.prev %}
+        {% if wizard.steps.prev != wizard.steps.first %}
+            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="button">{% trans "first step" %}</button>
+        {% endif %}
+            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="button">{% trans "prev step" %}</button>
+    {% endif %}
+    
+    {% csrf_token %}
+    {{ wizard.management_form }}
+    {{ wizard.form.non_field_errors }}
+
+    {% if current_step == '0' %}
+        {# Select primary merge instance #}
+        <div class="select-primary-container">
+            {% for field in wizard.form %}
+                {% if forloop.first %}
+                    {# TODO: render selectable items #}
+                {% else %}
+                    {# TODO: render expand_primary field/form #}
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        {# Conflict resolution stage #}
+        {{ wizard.form.management_form }}
+
+        {% for form in wizard.form.forms %}
+            {% bootstrap_form form layout="horizontal" %}
+        {% endfor %}
+    {% endif %}
+
+    {% if non_reversible_warning %}
+        <p>{{non_reversible_warning}}</p>
+    {% endif %}
+    
+    <div>
+        {% for obj in queryset %}
+            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
+        {% endfor %}
+        <input type="hidden" name="changelist_action" value="{{action_name}}" />
+        <input class="btn btn-danger" type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="Weiter">
+        <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
+    </div>
+</form>
+{% endblock content %}

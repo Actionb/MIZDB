@@ -15,6 +15,7 @@
       package). `DbentryAdminConfig` is a config that disables the autodiscovery and imports the admin module.
     - moved dal package `ac` to `dbentry/admin/autocomplete`
     - moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
+- changelist action refactor: make action base views compatible with non-admin views
 
 ## [0.14] - 2024-01-29
 

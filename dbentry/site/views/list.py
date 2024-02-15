@@ -29,9 +29,9 @@ from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView
 
 from dbentry import models as _models
-from dbentry.site.forms import boolean_select, null_boolean_select
+from dbentry.site.forms import null_boolean_select
 from dbentry.site.registry import register_changelist, ModelType
-from dbentry.site.views.base import BaseViewMixin, BaseListView
+from dbentry.site.views.base import BaseViewMixin
 from dbentry.site.views.base import SearchableListView
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit

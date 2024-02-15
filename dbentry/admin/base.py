@@ -20,7 +20,7 @@ from django.utils.text import capfirst
 
 from dbentry import models as _models
 from dbentry.admin.autocomplete.widgets import make_widget
-from dbentry.actions.actions import merge_records
+from dbentry.admin.actions import merge_records
 from dbentry.base.forms import ATTRS_TEXTAREA, InlineFormBase
 from dbentry.base.models import ComputedNameModel
 from dbentry.admin.changelist import MIZChangeList
@@ -34,7 +34,7 @@ from dbentry.utils.text import diffhtml
 from dbentry.utils.url import urlname
 
 FieldsetList = List[Tuple[Optional[str], dict]]
-BESTAND_MODEL_NAME = 'dbentry.Bestand'
+BESTAND_MODEL_NAME = 'dbentry.Bestand'  # TODO: move to models.py
 
 
 class AutocompleteMixin(object):

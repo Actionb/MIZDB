@@ -1,9 +1,9 @@
 # noinspection GrazieInspection
 """
-Custom admin actions for the dbentry app.
+Changelist actions for the dbentry app and the admin.
+See: https://docs.djangoproject.com/en/5.0/ref/contrib/admin/actions/
 
-actions.py: view functions derived from the class based views in views.py
-base.py: view base classes for the actions
+base.py: base classes for the action views
 forms.py: the forms for the action views
 views.py: concrete views for the actions
 """
