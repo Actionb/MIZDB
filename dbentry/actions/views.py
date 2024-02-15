@@ -211,7 +211,7 @@ class MergeView(WizardConfirmationView):
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
-        # Add the current step to the view's title.
+        context["current_step"] = self.steps.current
         context["title"] = gettext("Merge objects: step {}").format(str(int(self.steps.current) + 1))
         if self.steps.current == self.SELECT_PRIMARY_STEP:
             context.update(self.get_context_for_primary_step(context))
@@ -440,7 +440,7 @@ class AdminMergeView(MIZAdminMixin, AdminActionMixin, MergeView):
         # Trying to sort would send the user back to the changelist.
         cl.sortable_by = []
         primary_label = context["form"]["primary"].label_tag(attrs={"style": "width: 100%;"})
-        return {"cl": cl, "primary_label": primary_label, "current_step": "0"}
+        return {"cl": cl, "primary_label": primary_label}
 
 
 class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):

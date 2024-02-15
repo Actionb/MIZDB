@@ -355,7 +355,6 @@ class TestAdminMergeView(AdminActionViewTestCase):
         context = view.get_context_for_primary_step({"form": {"primary": boundfield_mock}})
         self.assertIsInstance(context["cl"], ChangeList)
         self.assertEqual(context["primary_label"], primary_label)
-        self.assertEqual(context["current_step"], "0")
 
 
 class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
