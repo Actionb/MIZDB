@@ -166,6 +166,16 @@ def selected_object(selected_pk):
 
 
 @pytest.fixture
+def delete_action_button(changelist):
+    """Return the button for the 'delete' action."""
+    from playwright.sync_api import Locator
+    changelist: Locator
+    elem = changelist.get_by_title(re.compile("Ausgewählte Objekte löschen"))
+    elem.wait_for(state="attached")
+    return elem
+
+
+@pytest.fixture
 def action_selection_button(changelist):
     """Return the button that opens the action selection dropdown."""
     elem = changelist.get_by_text(re.compile("Aktion"))
@@ -209,6 +219,7 @@ def test_selection(
     select_all_checkbox,
     clear_all,
 ):
+    """Test selecting rows and using the selection container/panel."""
     # Select the first row.
     cb = selection_checkboxes.first
     cb.click()
@@ -294,7 +305,7 @@ def test_no_view_perms(login_noperms_user, changelist, selection_checkbox_locato
 
 
 @pytest.mark.usefixtures("test_data", "login_superuser")
-def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_panel, get_action_button):
+def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_panel, delete_action_button):
     """
     Assert that the deletion confirmation page is shown for the selected items
     and that they will be deleted if confirmed.
@@ -308,8 +319,7 @@ def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_
 
     # Select the delete action:
     selection_panel(changelist).click()
-    with changelist.expect_request_finished():
-        get_action_button("Löschen").click()
+    delete_action_button.click()
 
     # Should be on the delete confirmation page now. Confirm the deletion:
     expect(changelist).to_have_title(re.compile("Löschen"))
@@ -320,7 +330,7 @@ def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_
 
 
 @pytest.mark.usefixtures("test_data", "login_superuser")
-def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, selection_panel, get_action_button):
+def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, selection_panel, delete_action_button):
     """
     Assert that clicking the abort button on the confirmation page does not
     delete the selected items.
@@ -334,8 +344,7 @@ def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, sele
 
     # Select the delete action:
     selection_panel(changelist).click()
-    with changelist.expect_request_finished():
-        get_action_button("Löschen").click()
+    delete_action_button.click()
 
     # Should be on the delete confirmation page now. Confirm the deletion:
     expect(changelist).to_have_title(re.compile("Löschen"))
