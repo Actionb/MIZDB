@@ -444,9 +444,11 @@ def test_merge_action(
 
     # Check that the secondary instances have been removed from the selection
     # panel:
+    expect(selection_panel(changelist)).to_be_visible()
+    selection_panel(changelist).click()
     items = selected_items(changelist)
     expect(items).to_have_count(1)
-    expect(items.first.get_by_role("link")).to_have_text(name=re.compile(primary.schlagzeile))
+    expect(items.get_by_role("link", name=re.compile(primary.schlagzeile))).to_be_visible()
 
     # Check the model instance:
     assert _models.Artikel.objects.filter(pk=primary.pk).exists()
@@ -490,6 +492,8 @@ def test_merge_action_no_expand(
 
     # Check that the secondary instances have been removed from the selection
     # panel:
+    expect(selection_panel(changelist)).to_be_visible()
+    selection_panel(changelist).click()
     items = selected_items(changelist)
     expect(items).to_have_count(1)
-    expect(items.first.get_by_role("link")).to_have_text(name=re.compile(primary.schlagzeile))
+    expect(items.get_by_role("link", name=re.compile(primary.schlagzeile))).to_be_visible()
