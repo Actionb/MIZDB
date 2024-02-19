@@ -107,7 +107,7 @@
 {% block sticky_bottom %}
   {{ block.super }}
   {% block selection %}
-    <div id="changelist-selection-container">
+    <div id="changelist-selection-container" class="d-none">
     <form method="post">
     {% csrf_token %}
         <div id="selection-panel" class="changelist-selection accordion accordion-item mb-1 z-999">
@@ -169,9 +169,9 @@
     {{ block.super }}
     <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const storage = new window.SelectionStorage(document.body.dataset.model, "mizdb_selection_" + {{ user.pk|default:"0" }})
+        const storage = new window.SelectionStorage(document.body.dataset.model, {{ user.pk|default:"0" }})
         const selection = new window.ChangelistSelection(storage)
-        selection.render()
+        selection.sync()
     })
     </script>
 {% endblock extrascript %}

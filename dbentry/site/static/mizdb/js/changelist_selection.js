@@ -14,6 +14,16 @@
   }
 
   /**
+   * Return the storage key for the given userID.
+   *
+   * @param {int} userID the primary key of the user
+   * @returns a storage key string
+   */
+  function getStorageKey (userID) {
+    return `${defaults.storageKey}_${userID | '0'}`
+  }
+
+  /**
    * Interface for storing and loading changelist selections for a model.
    *
    * Use load() to load a selection for the current model from localStorage.
@@ -25,9 +35,9 @@
    * the current selection (or delete it if no selection).
    */
   class SelectionStorage {
-    constructor (model, storageKey) {
+    constructor (model, userID) {
       this.model = model || document.body.dataset.model
-      this.storageKey = storageKey || defaults.storageKey
+      this.storageKey = getStorageKey(userID)
 
       // Restore selections from local storage:
       this.load()
@@ -46,6 +56,21 @@
           this.linkMapping = fromStorage[this.model].linkMapping || {}
         }
       }
+    }
+
+    /**
+     * Sync with database; remove any selected items which do not exist in db.
+     */
+    async syncWithDB () {
+      const params = new URLSearchParams({ ids: JSON.stringify(this.selected), model: this.model })
+      await fetch(`${document.body.dataset.clsSyncUrl}?${params.toString()}`)
+        .then(response => response.json())
+        .then(json => {
+          if (json.remove) {
+            json.remove.forEach((id) => this.removeItem(id))
+          }
+        })
+        .catch((error) => console.log(`Failed to sync changelist selection: ${error}`))
     }
 
     /**
@@ -186,6 +211,14 @@
     update () {
       this.storage.store()
       this.render()
+    }
+
+    /**
+     * Sync the current selection with the database.
+     */
+    async sync () {
+      await this.storage.syncWithDB()
+      this.update()
     }
 
     /**

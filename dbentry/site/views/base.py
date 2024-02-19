@@ -329,7 +329,7 @@ class BaseEditView(
         if not self.add:
             ctx["changelist_links"] = self.get_changelist_links(self.changelist_link_labels)
         ctx["has_errors"] = (
-                ctx["form"].errors or ctx["form"].non_field_errors() or any(fs.errors for fs in ctx["formsets"])
+            ctx["form"].errors or ctx["form"].non_field_errors() or any(fs.errors for fs in ctx["formsets"])
         )
         return ctx
 
@@ -749,6 +749,12 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
                 "actions": actions,
             }
         )
+        # Provide the template with the URL for the view that syncs the
+        # changelist selection:
+        try:
+            ctx["cls_sync_url"] = reverse("changelist_selection_sync")
+        except NoReverseMatch:
+            pass
         return ctx
 
     def get_empty_value_display(self):

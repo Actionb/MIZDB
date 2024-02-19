@@ -25,6 +25,10 @@ Use SearchableListView to add a search form to the changelist:
             "fields": ["name", "field_2"]
         }
 """
+import json
+
+from django.apps import apps
+from django.http import JsonResponse
 from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView
 
@@ -42,6 +46,18 @@ BOOLEAN_TRUE = mark_safe(
 BOOLEAN_FALSE = mark_safe(
     '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
 )
+
+
+def changelist_selection_sync(request):
+    """
+    A view called by the changelist selection script that returns a JsonResponse
+    with ids of selected items that are not found in the database.
+    The script will then remove these items from the selection.
+    """
+    model = apps.get_model(request.GET["model"])
+    selection_ids = set(json.loads(request.GET.get("ids", [])))
+    existing_ids = [str(pk) for pk in model.objects.filter(pk__in=selection_ids).values_list("pk", flat=True)]
+    return JsonResponse({"remove": list(selection_ids.difference(existing_ids))})
 
 
 class Index(BaseViewMixin, TemplateView):

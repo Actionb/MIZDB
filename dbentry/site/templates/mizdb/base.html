@@ -20,7 +20,7 @@
     {% block extrastyle %}{% endblock extrastyle %}
     {% block extrahead %}{% endblock extrahead %}
 </head>
-<body class="{% block bodyclass %}{% endblock %}" {% if opts %}data-model="{{ opts.model_name }}"{% endif %}>
+<body class="{% block bodyclass %}{% endblock %}" {% if opts %}data-model="{{ opts.app_label }}.{{ opts.model_name }}"{% endif %}{% if cls_sync_url %} data-cls-sync-url="{{ cls_sync_url }}"{% endif %}>
 
 <!-- Header -->
 {% block header %}

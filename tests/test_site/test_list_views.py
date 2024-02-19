@@ -1,10 +1,29 @@
 """Tests for the (change)list views."""
+import json
 
 from django.urls import reverse
 
 from dbentry.site.views import list
-from tests.case import ViewTestCase
+from tests.case import ViewTestCase, RequestTestCase, DataTestCase
 from tests.model_factory import make
+from tests.test_site.models import Band
+
+
+class TestChangelistSelectionSync(DataTestCase, RequestTestCase):
+    model = Band
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model)
+        super().setUpTestData()
+
+    def test_changelist_selection_sync(self):
+        selected = json.dumps([str(self.obj.pk), "-1"])
+        opts = self.model._meta
+        request = self.get_request(data={"model": f"{opts.app_label}.{opts.model_name}", "ids": selected})
+        response = list.changelist_selection_sync(request)
+        data = json.loads(response.content)
+        self.assertEqual(data["remove"], ["-1"])
 
 
 class ListViewTestCase(ViewTestCase):

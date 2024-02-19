@@ -169,6 +169,7 @@ def selected_object(selected_pk):
 def delete_action_button(changelist):
     """Return the button for the 'delete' action."""
     from playwright.sync_api import Locator
+
     changelist: Locator
     elem = changelist.get_by_title(re.compile("Ausgewählte Objekte löschen"))
     elem.wait_for(state="attached")
@@ -305,7 +306,14 @@ def test_no_view_perms(login_noperms_user, changelist, selection_checkbox_locato
 
 
 @pytest.mark.usefixtures("test_data", "login_superuser")
-def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_panel, delete_action_button):
+def test_delete_action(
+    changelist,
+    selection_checkboxes,
+    selected_pk,
+    selection_panel,
+    delete_action_button,
+    selected_items,
+):
     """
     Assert that the deletion confirmation page is shown for the selected items
     and that they will be deleted if confirmed.
@@ -328,9 +336,20 @@ def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_
     expect(changelist).to_have_title(re.compile("Übersicht"))
     assert not _models.Artikel.objects.filter(pk__in=selected_pks).exists()
 
+    # The deleted items should not be in the selection:
+    expect(selection_panel(changelist)).not_to_be_visible()
+    expect(selected_items(changelist)).to_have_count(0)
+
 
 @pytest.mark.usefixtures("test_data", "login_superuser")
-def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, selection_panel, delete_action_button):
+def test_delete_action_abort(
+    changelist,
+    selection_checkboxes,
+    selected_pk,
+    selection_panel,
+    delete_action_button,
+    selected_items,
+):
     """
     Assert that clicking the abort button on the confirmation page does not
     delete the selected items.
@@ -352,3 +371,7 @@ def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, sele
         changelist.get_by_role("button", name=re.compile("Nein")).click()
     expect(changelist).to_have_title(re.compile("Übersicht"))
     assert _models.Artikel.objects.filter(pk__in=selected_pks).exists()
+
+    # The selected items should still be in the selection:
+    expect(selection_panel(changelist)).to_be_visible()
+    expect(selected_items(changelist)).to_have_count(2)
