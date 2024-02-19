@@ -28,6 +28,7 @@ from dbentry.actions.forms import (
     MergeConflictsFormSet,
     MergeFormSelectPrimary,
     ReplaceForm,
+    AdminMergeConflictsFormSet,
 )
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
@@ -433,6 +434,10 @@ class AdminMergeView(MIZAdminMixin, AdminActionMixin, MergeView):
     """MergeView for the admin site."""
 
     template_name = "admin/merge_records.html"
+    form_list = [
+        (MergeView.SELECT_PRIMARY_STEP, MergeFormSelectPrimary),
+        (MergeView.CONFLICT_RESOLUTION_STEP, AdminMergeConflictsFormSet),
+    ]
 
     def get_context_for_primary_step(self, context: dict) -> dict:
         """Return additional template context for the 'select primary' step."""

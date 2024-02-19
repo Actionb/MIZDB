@@ -51,14 +51,14 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         required=True,
         widget=forms.HiddenInput(),
         label="Bitten wählen Sie den Datensatz, dem die verwandten "
-              "Objekte der anderen Datensätze angehängt werden sollen",
+        "Objekte der anderen Datensätze angehängt werden sollen",
     )
     expand_primary = forms.BooleanField(
         required=False,
         label="Primären Datensatz erweitern",
         initial=True,
         help_text="Sollen fehlende Grunddaten des primäre Datensatzes um "
-                  "in anderen Datensätzen vorhandenen Daten erweitert werden?",
+        "in anderen Datensätzen vorhandenen Daten erweitert werden?",
     )
 
     PRIMARY_FIELD_NAME = "primary"
@@ -74,7 +74,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         return Fieldset(self, fields=["expand_primary"])
 
 
-class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
+class MergeFormHandleConflicts(DynamicChoiceFormMixin, forms.Form):
     """
     The form that resolves merge conflicts for one model field.
 
@@ -97,8 +97,13 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
             self.fields["posvals"].label = f"Mögliche Werte für {self.initial['verbose_fld_name']}:"
 
 
-# To handle merge conflicts for multiple fields, use this formset:
+class AdminMergeFormHandleConflicts(MergeFormHandleConflicts, MIZAdminForm):
+    pass
+
+
+# To handle merge conflicts for multiple fields, use these formset:
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)
+AdminMergeConflictsFormSet = forms.formset_factory(AdminMergeFormHandleConflicts, extra=0, can_delete=False)
 
 
 class BrochureActionForm(MIZAdminForm):
@@ -126,8 +131,8 @@ class BrochureActionForm(MIZAdminForm):
         required=False,
         initial=True,
         help_text="Hiermit bestätigen Sie, dass diese Ausgabe verschoben "
-                  "werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu "
-                  "überspringen und nicht zu verschieben.",
+        "werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu "
+        "überspringen und nicht zu verschieben.",
     )
 
     fieldsets = [
