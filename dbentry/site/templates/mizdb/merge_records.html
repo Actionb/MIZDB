@@ -1,5 +1,12 @@
 {% extends "mizdb/base.html" %}
-{% load i18n l10n django_bootstrap5 %}
+{% load i18n l10n static django_bootstrap5 %}
+
+{% block extrahead %}
+    <!-- Extrahead -->
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'mizdb/js/merge.js' %}"></script>
+    <script type="text/javascript" src="{% static 'mizdb/js/cancel.js' %}"></script>
+{% endblock extrahead %}
 
 {% block content %}
 <form method="post">
@@ -23,30 +30,31 @@
                     {{ field.errors }}
                     {{ field }}  {# the field is hidden and only stores the id selected in the 'result list' #}
                     {{ primary_label }}
-            <table id="result_list" class="table table-hover">
-                <thead>
-                    <tr class="table-primary">
-                        <th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input d-none" type="checkbox"></th>
-                        {% for header in result_headers %}
-                            <th scope="col" class="sticky-top z-999">
-                               <div class="text d-flex justify-content-between">
-                                   <span class="me-2">{{ header.text|capfirst }}</span>
-                               </div>
-                            </th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result_object, result_row in result_rows %}
-                        <tr>
-                            <td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" name="_selected-item"></td>
-                            {% for item in result_row %}<td class="text-body">{{ item }}</td>{% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    <table id="result_list" class="table table-hover">
+                        <thead>
+                            <tr class="table-primary">
+                                <th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input d-none" type="checkbox"></th>
+                                {% for header in result_headers %}
+                                    <th scope="col" class="sticky-top z-999">
+                                       <div class="text d-flex justify-content-between">
+                                           <span class="me-2">{{ header.text|capfirst }}</span>
+                                       </div>
+                                    </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result_object, result_row in result_rows %}
+                                <tr>
+                                    <td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" name="_selected-item"></td>
+                                    {% for item in result_row %}<td class="text-body">{{ item }}</td>{% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <hr>
                 {% else %}
-                    {# TODO: render expand_primary field/form #}
+                    {% bootstrap_field field layout="horizontal" horizontal_field_offset_class="ms-2" %}
                 {% endif %}
             {% endfor %}
         </div>
