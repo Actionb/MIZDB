@@ -24,8 +24,7 @@ import dbentry.models as _models
 from dbentry.actions.forms import (
     BrochureActionFormOptions,
     BrochureActionFormSet,
-    MergeConflictsFormSet,
-    MergeFormSelectPrimary,
+    MergeFormSelectPrimary, AdminMergeConflictsFormSet,
 )
 from dbentry.actions.views import (
     BulkEditJahrgang,
@@ -110,9 +109,13 @@ class TestMergeView(ActionViewTestCase):
         view.steps = Mock(current=step)
         with patch("dbentry.actions.views.super") as super_mock:
             super_mock.return_value.get_context_data.return_value = {}
-            context = view.get_context_data()
-            self.assertEqual(context["title"], "Merge objects: step 1")
-            self.assertEqual(context["view_helptext"], view.view_helptext[step])
+            with patch.object(view, "get_context_for_primary_step") as primary_step_context_mock:
+                primary_step_context_mock.return_value = {}
+                context = view.get_context_data()
+                self.assertEqual(context["current_step"], "0")
+                self.assertEqual(context["title"], "Merge objects: step 1")
+                self.assertEqual(context["view_helptext"], view.view_helptext[step])
+                primary_step_context_mock.assert_called()
 
     @translation_override(language=None)
     def test_get_context_data_conflict_resolution_step(self):
@@ -355,7 +358,6 @@ class TestAdminMergeView(AdminActionViewTestCase):
         context = view.get_context_for_primary_step({"form": {"primary": boundfield_mock}})
         self.assertIsInstance(context["cl"], ChangeList)
         self.assertEqual(context["primary_label"], primary_label)
-        self.assertEqual(context["current_step"], "0")
 
 
 class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
@@ -585,7 +587,7 @@ class TestMergeViewAusgabe(AdminActionViewTestCase):
         response = self.post_response(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "admin/merge_records.html")
-        self.assertIsInstance(response.context["wizard"]["form"], MergeConflictsFormSet)
+        self.assertIsInstance(response.context["wizard"]["form"], AdminMergeConflictsFormSet)
 
     def test_post_merge_conflict_handled(self):
         """
@@ -717,7 +719,7 @@ class TestMergeViewAusgabe(AdminActionViewTestCase):
         self.assertIn("posvals", form.fields)
         posvals = form.fields["posvals"]
         self.assertEqual(posvals.choices, [(0, "1"), (1, "2")])
-        self.assertEqual(posvals.label, "Mögliche Werte für Jahrgang:")
+        self.assertEqual(posvals.label, "Mögliche Werte für Feld Jahrgang:")
 
 
 class TestMergeViewArtikel(AdminActionViewTestCase):

@@ -74,7 +74,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         return Fieldset(self, fields=["expand_primary"])
 
 
-class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
+class MergeFormHandleConflicts(DynamicChoiceFormMixin, forms.Form):
     """
     The form that resolves merge conflicts for one model field.
 
@@ -94,11 +94,16 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
         super().__init__(*args, **kwargs)
         # Try to add a more accurate label to the posvals field.
         if self.initial.get("verbose_fld_name"):
-            self.fields["posvals"].label = f"Mögliche Werte für {self.initial['verbose_fld_name']}:"
+            self.fields["posvals"].label = f"Mögliche Werte für Feld {self.initial['verbose_fld_name']}:"
 
 
-# To handle merge conflicts for multiple fields, use this formset:
+class AdminMergeFormHandleConflicts(MergeFormHandleConflicts, MIZAdminForm):
+    pass
+
+
+# To handle merge conflicts for multiple fields, use these formset:
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)
+AdminMergeConflictsFormSet = forms.formset_factory(AdminMergeFormHandleConflicts, extra=0, can_delete=False)
 
 
 class BrochureActionForm(MIZAdminForm):

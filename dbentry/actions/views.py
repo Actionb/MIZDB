@@ -28,6 +28,7 @@ from dbentry.actions.forms import (
     MergeConflictsFormSet,
     MergeFormSelectPrimary,
     ReplaceForm,
+    AdminMergeConflictsFormSet,
 )
 from dbentry.base.views import MIZAdminMixin
 from dbentry.models import Magazin
@@ -49,7 +50,7 @@ def check_same_magazin(view: ActionConfirmationView) -> bool:
     else:
         view.message_user(
             request=view.request,
-            level=messages.ERROR,
+            level=messages.WARNING,
             message=(
                 f"Aktion abgebrochen: Die ausgewählten {view.opts.verbose_name_plural} "
                 "gehören zu unterschiedlichen Magazinen."
@@ -170,7 +171,8 @@ class MergeView(WizardConfirmationView):
                 request=self.request,
                 level=messages.WARNING,
                 message=(
-                    "Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen."
+                    "Aktion abgebrochen: Es müssen mindestens zwei Objekte aus "
+                    "der Liste ausgewählt werden, um diese Aktion durchzuführen."
                 ),
             )
             return False
@@ -186,10 +188,10 @@ class MergeView(WizardConfirmationView):
             return True
         else:
             denied_message = (
-                f"Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
+                f"Aktion abgebrochen: Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
                 f"unterschiedlichen {_models.Magazin._meta.verbose_name_plural}n."
             )
-            self.message_user(request=self.request, message=denied_message, level=messages.ERROR)
+            self.message_user(request=self.request, message=denied_message, level=messages.WARNING)
             return False
 
     def check_same_ausgabe(self) -> bool:
@@ -203,24 +205,30 @@ class MergeView(WizardConfirmationView):
             return True
         else:
             denied_message = (
-                f"Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
+                f"Aktion abgebrochen: Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
                 f"unterschiedlichen {_models.Ausgabe._meta.verbose_name_plural}."
             )
-            self.message_user(request=self.request, message=denied_message, level=messages.ERROR)
+            self.message_user(request=self.request, message=denied_message, level=messages.WARNING)
             return False
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
-        # Add the current step to the view's title.
+        context["current_step"] = self.steps.current
         context["title"] = gettext("Merge objects: step {}").format(str(int(self.steps.current) + 1))
         if self.steps.current == self.SELECT_PRIMARY_STEP:
             context.update(self.get_context_for_primary_step(context))
         context["view_helptext"] = self.view_helptext[self.steps.current]
         return context
 
-    def get_context_for_primary_step(self, context: dict) -> dict:
+    def get_context_for_primary_step(self, context: dict) -> dict:  # pragma: no cover
         """Return additional template context for the 'select primary' step."""
-        return context
+        queryset = self.view.add_list_display_annotations(self.queryset)
+        queryset = self.view.order_queryset(queryset)
+        primary_step_context = {
+            "result_headers": self.view.get_result_headers(),
+            "result_rows": self.view.get_result_rows(queryset),
+        }
+        return primary_step_context
 
     @property
     def updates(self) -> dict:
@@ -427,6 +435,10 @@ class AdminMergeView(MIZAdminMixin, AdminActionMixin, MergeView):
     """MergeView for the admin site."""
 
     template_name = "admin/merge_records.html"
+    form_list = [
+        (MergeView.SELECT_PRIMARY_STEP, MergeFormSelectPrimary),
+        (MergeView.CONFLICT_RESOLUTION_STEP, AdminMergeConflictsFormSet),
+    ]
 
     def get_context_for_primary_step(self, context: dict) -> dict:
         """Return additional template context for the 'select primary' step."""
@@ -440,7 +452,7 @@ class AdminMergeView(MIZAdminMixin, AdminActionMixin, MergeView):
         # Trying to sort would send the user back to the changelist.
         cl.sortable_by = []
         primary_label = context["form"]["primary"].label_tag(attrs={"style": "width: 100%;"})
-        return {"cl": cl, "primary_label": primary_label, "current_step": "0"}
+        return {"cl": cl, "primary_label": primary_label}
 
 
 class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
@@ -472,7 +484,7 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
                     blank=True,
                 ),
             )
-            self.message_user(request=self.request, level=messages.ERROR, message=message)
+            self.message_user(request=self.request, level=messages.WARNING, message=message)
             return False
         return True
 
@@ -752,10 +764,10 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
             self.message_user(
                 request=self.request,
                 message=(
-                    "Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: "
+                    "Aktion abgebrochen: Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: "
                     "bitte wählen Sie nur einen Datensatz aus."
                 ),
-                level=messages.ERROR,
+                level=messages.WARNING,
             )
             return False
         return True
