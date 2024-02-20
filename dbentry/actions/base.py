@@ -148,7 +148,7 @@ class ActionMixin(object):
         return super().get_context_data(**kwargs)  # type: ignore[misc]
 
     def message_user(
-            self, request: HttpRequest, level: int, message: str, extra_tags: str = "", fail_silently: bool = False
+        self, request: HttpRequest, level: int, message: str, extra_tags: str = "", fail_silently: bool = False
     ) -> None:
         """Send a user message using Django messages."""
         messages.add_message(request, level, message, extra_tags, fail_silently)
@@ -185,7 +185,7 @@ class AdminActionMixin(ActionMixin):
         return context
 
     def message_user(
-            self, request: HttpRequest, level: int, message: str, extra_tags: str = "", fail_silently: bool = False
+        self, request: HttpRequest, level: int, message: str, extra_tags: str = "", fail_silently: bool = False
     ) -> None:
         """Send a user message using admin messages."""
         # model_admin.message_user accepts the args in different order to

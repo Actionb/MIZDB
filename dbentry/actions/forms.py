@@ -51,14 +51,14 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         required=True,
         widget=forms.HiddenInput(),
         label="Bitten wählen Sie den Datensatz, dem die verwandten "
-        "Objekte der anderen Datensätze angehängt werden sollen",
+              "Objekte der anderen Datensätze angehängt werden sollen",
     )
     expand_primary = forms.BooleanField(
         required=False,
         label="Primären Datensatz erweitern",
         initial=True,
         help_text="Sollen fehlende Grunddaten des primäre Datensatzes um "
-        "in anderen Datensätzen vorhandenen Daten erweitert werden?",
+                  "in anderen Datensätzen vorhandenen Daten erweitert werden?",
     )
 
     PRIMARY_FIELD_NAME = "primary"
@@ -131,8 +131,8 @@ class BrochureActionForm(MIZAdminForm):
         required=False,
         initial=True,
         help_text="Hiermit bestätigen Sie, dass diese Ausgabe verschoben "
-        "werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu "
-        "überspringen und nicht zu verschieben.",
+                  "werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu "
+                  "überspringen und nicht zu verschieben.",
     )
 
     fieldsets = [

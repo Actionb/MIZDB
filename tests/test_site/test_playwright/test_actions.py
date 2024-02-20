@@ -391,6 +391,7 @@ def test_delete_action_abort(
     expect(selection_panel(changelist)).to_be_visible()
     expect(selected_items(changelist)).to_have_count(2)
 
+
 @pytest.fixture
 def merge_data():
     """Test data for the merge action tests."""
