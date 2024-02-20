@@ -94,7 +94,7 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
         # Try to add a more accurate label to the posvals field.
         if self.initial.get("verbose_fld_name"):
-            self.fields["posvals"].label = f"Mögliche Werte für {self.initial['verbose_fld_name']}:"
+            self.fields["posvals"].label = f"Mögliche Werte für Feld {self.initial['verbose_fld_name']}:"
 
 
 class AdminMergeFormHandleConflicts(MergeFormHandleConflicts, MIZAdminForm):
