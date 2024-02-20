@@ -8,15 +8,12 @@
 {% endblock extrahead %}
 
 {% block content %}
-<form method="post">
-    
-    {% if wizard.steps.prev %}
-        {% if wizard.steps.prev != wizard.steps.first %}
-            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="btn btn-secondary">{% trans "first step" %}</button>
-        {% endif %}
-            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-secondary">{% trans "prev step" %}</button>
+{% block view_helptext %}
+    {% if view_helptext %}
+        <p> {{view_helptext|linebreaks}} </p>
     {% endif %}
-    
+{% endblock view_helptext %}
+<form method="post">
     {% csrf_token %}
     {{ wizard.management_form }}
     {{ wizard.form.non_field_errors }}
