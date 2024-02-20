@@ -50,7 +50,7 @@ def check_same_magazin(view: ActionConfirmationView) -> bool:
     else:
         view.message_user(
             request=view.request,
-            level=messages.ERROR,
+            level=messages.WARNING,
             message=(
                 f"Aktion abgebrochen: Die ausgewählten {view.opts.verbose_name_plural} "
                 "gehören zu unterschiedlichen Magazinen."
@@ -190,7 +190,7 @@ class MergeView(WizardConfirmationView):
                 f"Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
                 f"unterschiedlichen {_models.Magazin._meta.verbose_name_plural}n."
             )
-            self.message_user(request=self.request, message=denied_message, level=messages.ERROR)
+            self.message_user(request=self.request, message=denied_message, level=messages.WARNING)
             return False
 
     def check_same_ausgabe(self) -> bool:
@@ -207,7 +207,7 @@ class MergeView(WizardConfirmationView):
                 f"Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
                 f"unterschiedlichen {_models.Ausgabe._meta.verbose_name_plural}."
             )
-            self.message_user(request=self.request, message=denied_message, level=messages.ERROR)
+            self.message_user(request=self.request, message=denied_message, level=messages.WARNING)
             return False
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -483,7 +483,7 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
                     blank=True,
                 ),
             )
-            self.message_user(request=self.request, level=messages.ERROR, message=message)
+            self.message_user(request=self.request, level=messages.WARNING, message=message)
             return False
         return True
 
@@ -766,7 +766,7 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
                     "Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: "
                     "bitte wählen Sie nur einen Datensatz aus."
                 ),
-                level=messages.ERROR,
+                level=messages.WARNING,
             )
             return False
         return True
