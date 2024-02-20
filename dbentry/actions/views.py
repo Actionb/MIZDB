@@ -171,7 +171,8 @@ class MergeView(WizardConfirmationView):
                 request=self.request,
                 level=messages.WARNING,
                 message=(
-                    "Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen."
+                    "Aktion abgebrochen: Es müssen mindestens zwei Objekte aus "
+                    "der Liste ausgewählt werden, um diese Aktion durchzuführen."
                 ),
             )
             return False
@@ -187,7 +188,7 @@ class MergeView(WizardConfirmationView):
             return True
         else:
             denied_message = (
-                f"Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
+                f"Aktion abgebrochen: Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
                 f"unterschiedlichen {_models.Magazin._meta.verbose_name_plural}n."
             )
             self.message_user(request=self.request, message=denied_message, level=messages.WARNING)
@@ -204,7 +205,7 @@ class MergeView(WizardConfirmationView):
             return True
         else:
             denied_message = (
-                f"Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
+                f"Aktion abgebrochen: Die ausgewählten {self.opts.verbose_name_plural} gehören zu "
                 f"unterschiedlichen {_models.Ausgabe._meta.verbose_name_plural}."
             )
             self.message_user(request=self.request, message=denied_message, level=messages.WARNING)
@@ -763,7 +764,7 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
             self.message_user(
                 request=self.request,
                 message=(
-                    "Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: "
+                    "Aktion abgebrochen: Diese Aktion kann nur mit einzelnen Datensätzen durchgeführt werden: "
                     "bitte wählen Sie nur einen Datensatz aus."
                 ),
                 level=messages.WARNING,
