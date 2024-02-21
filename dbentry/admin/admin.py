@@ -64,9 +64,9 @@ class BestandInLine(BaseTabularInline):
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
 
     @display(description="Signatur")
-    def bestand_signatur(self, obj):
+    def bestand_signatur(self, obj: _models.Bestand) -> str:
         """Display the signatur of this Bestand object."""
-        return obj.signatur or ""
+        return str(obj.signatur) or ""
 
     # TODO: enable tabular autocomplete for 'lagerort'
     #  (see admin.autocomplete.views.ACLagerort and admin.autocomplete.urls for
@@ -1259,7 +1259,6 @@ class BestandAdmin(MIZModelAdmin):
                     break
             if not relation_field:
                 continue
-            # noinspection PyUnresolvedReferences
             self._cache[obj.pk] = {
                 'bestand_class': relation_field.related_model._meta.verbose_name,
                 'bestand_link': get_obj_link(

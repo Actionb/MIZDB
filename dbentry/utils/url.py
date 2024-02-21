@@ -1,3 +1,9 @@
+from typing import Optional, Type, Callable, Sequence, Union
+
+from django.db import models
+from django.db.models import ForeignObjectRel
+from django.db.models.options import Options
+from django.http import HttpRequest
 from django.urls import reverse, NoReverseMatch
 from django.utils.text import capfirst
 
@@ -8,7 +14,7 @@ from dbentry.utils import permission as perms
 #  all they do is include a permission check and it might be better to do that explicitly where needed anyway
 
 
-def urlname(name, opts=None, namespace=''):
+def urlname(name: str, opts: Optional[Options] = None, namespace: str = "") -> str:
     """
     Return the 'url name' for the given name/action.
 
@@ -25,7 +31,12 @@ def urlname(name, opts=None, namespace=''):
     return name
 
 
-def get_changelist_url(request, model, obj_list=None, namespace=''):
+def get_changelist_url(
+    request: HttpRequest,
+    model: Type[models.Model],
+    obj_list: Optional[Union[Sequence[models.Model], models.QuerySet]] = None,
+    namespace: str = "",
+) -> str:
     """
     Return the URL for the changelist view of the given model.
 
@@ -37,18 +48,18 @@ def get_changelist_url(request, model, obj_list=None, namespace=''):
     """
     opts = model._meta
     if not perms.has_view_permission(request.user, opts):
-        return ''
+        return ""
     try:
-        url = reverse(urlname('changelist', opts, namespace))
+        url = reverse(urlname("changelist", opts, namespace))
     except NoReverseMatch:
-        return ''
+        return ""
 
     if obj_list:
         url = f'{url}?id__in={",".join(str(obj.pk) for obj in obj_list)}'
     return url
 
 
-def get_add_url(request, model, namespace=''):
+def get_add_url(request: HttpRequest, model: Type[models.Model], namespace: str = "") -> str:
     """
     Return the URL for the add view of the given model.
 
@@ -56,11 +67,11 @@ def get_add_url(request, model, namespace=''):
     """
     opts = model._meta
     if not perms.has_add_permission(request.user, opts):
-        return ''
-    return reverse(urlname('add', opts, namespace))
+        return ""
+    return reverse(urlname("add", opts, namespace))
 
 
-def get_change_or_view_url(request, obj, namespace=""):
+def get_change_or_view_url(request: HttpRequest, obj: models.Model, namespace: str = "") -> str:
     """
     Return the URL for the change or view page (depending on permissions) of
     the given model object.
@@ -71,7 +82,7 @@ def get_change_or_view_url(request, obj, namespace=""):
     return get_change_url(request, obj, namespace) or get_view_url(request, obj, namespace) or ""
 
 
-def get_change_url(request, obj, namespace=''):
+def get_change_url(request: HttpRequest, obj: models.Model, namespace: str = "") -> str:
     """
     Return the URL for the change view of the given model object.
 
@@ -79,11 +90,11 @@ def get_change_url(request, obj, namespace=''):
     """
     opts = obj._meta
     if not perms.has_change_permission(request.user, opts):
-        return ''
-    return reverse(urlname('change', opts, namespace), args=[obj.pk])
+        return ""
+    return reverse(urlname("change", opts, namespace), args=[obj.pk])
 
 
-def get_view_url(request, obj, namespace=""):
+def get_view_url(request: HttpRequest, obj: models.Model, namespace: str = "") -> str:
     """
     Return the URL for the 'view' page of the given model object.
 
@@ -95,7 +106,7 @@ def get_view_url(request, obj, namespace=""):
     return reverse(urlname("view", opts, namespace), args=[obj.pk])
 
 
-def get_delete_url(request, obj, namespace=''):
+def get_delete_url(request: HttpRequest, obj: models.Model, namespace: str = "") -> str:
     """
     Return the URL for the delete view of the given model object.
 
@@ -103,11 +114,11 @@ def get_delete_url(request, obj, namespace=''):
     """
     opts = obj._meta
     if not perms.has_delete_permission(request.user, opts):
-        return ''
-    return reverse(urlname('delete', opts, namespace), args=[obj.pk])
+        return ""
+    return reverse(urlname("delete", opts, namespace), args=[obj.pk])
 
 
-def get_history_url(request, obj, namespace=''):
+def get_history_url(request: HttpRequest, obj: models.Model, namespace: str = "") -> str:
     """
     Return the URL for the history view of the given model object.
 
@@ -116,11 +127,17 @@ def get_history_url(request, obj, namespace=''):
     """
     opts = obj._meta
     if not perms.has_view_permission(request.user, opts):
-        return ''
-    return reverse(urlname('history', opts, namespace), args=[obj.pk])
+        return ""
+    return reverse(urlname("history", opts, namespace), args=[obj.pk])
 
 
-def get_changelist_url_for_relation(rel, model, object_id, url_callback, labels=None):
+def get_changelist_url_for_relation(
+    rel: ForeignObjectRel,
+    model: Type[models.Model],
+    object_id: int,
+    url_callback: Callable,
+    labels: Optional[dict[str, str]] = None,
+) -> tuple[Optional[str], int, str]:
     """
     Determine the URL of the changelist that is filtered to the related objects
     of the given object.
@@ -132,8 +149,8 @@ def get_changelist_url_for_relation(rel, model, object_id, url_callback, labels=
 
     Args:
         rel: the relation for which to create a URL for
-        object_id: the primary key of the main object
         model: the model of the main object
+        object_id: the primary key of the main object
         url_callback: a callable that takes the model of the related objects
           and returns the URL to the changelist of the related objects
         labels: an optional mapping of related model name to label for the link
@@ -156,7 +173,7 @@ def get_changelist_url_for_relation(rel, model, object_id, url_callback, labels=
     if labels and query_model._meta.model_name in labels:
         label = labels[query_model._meta.model_name]
     elif rel.related_name:
-        label = " ".join(capfirst(s) for s in rel.related_name.split('_'))
+        label = " ".join(capfirst(s) for s in rel.related_name.split("_"))
     else:
         label = query_model._meta.verbose_name_plural
     return changelist_url, count, label

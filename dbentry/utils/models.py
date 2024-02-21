@@ -1,5 +1,5 @@
 import sys
-from typing import Iterable, List, Optional, TextIO, Tuple, Type, Union
+from typing import Iterable, List, Optional, TextIO, Tuple, Type, Union, Sequence
 
 from django.apps import apps
 from django.contrib import auth
@@ -11,6 +11,7 @@ from django.db import models, transaction, utils
 from django.db.models import Field, Model, constants
 from django.db.models.fields.related import ForeignKey, OneToOneField
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel, OneToOneRel
+from django.http import HttpRequest
 from django.urls import NoReverseMatch
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
@@ -24,7 +25,7 @@ Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 RelationalFields = Union[ForeignKey, OneToOneField]
 
 
-def get_model_from_string(model_name: str, app_label: str = 'dbentry') -> Type[Model]:
+def get_model_from_string(model_name: str, app_label: str = "dbentry") -> Type[Model]:
     """
     Find the model class with name ``model_name``.
 
@@ -41,18 +42,18 @@ def get_model_from_string(model_name: str, app_label: str = 'dbentry') -> Type[M
         LookupError: if no application exists with this label, or no model
           exists with this name in the application
     """
-    if '.' in model_name:
-        app_label, model_name = model_name.split('.')
+    if "." in model_name:
+        app_label, model_name = model_name.split(".")
     return apps.get_model(app_label, model_name)
 
 
 def get_model_fields(
-        model: ModelClassOrInstance,
-        base: bool = True,
-        foreign: bool = True,
-        m2m: bool = True,
-        exclude: Iterable[str] = (),
-        primary_key: bool = False
+    model: ModelClassOrInstance,
+    base: bool = True,
+    foreign: bool = True,
+    m2m: bool = True,
+    exclude: Iterable[str] = (),
+    primary_key: bool = False,
 ) -> List[Field]:
     """
     Return a list of concrete model fields of the given model.
@@ -83,11 +84,7 @@ def get_model_fields(
     return result
 
 
-def get_model_relations(
-        model: ModelClassOrInstance,
-        forward: bool = True,
-        reverse: bool = True
-) -> List[Relations]:
+def get_model_relations(model: ModelClassOrInstance, forward: bool = True, reverse: bool = True) -> List[Relations]:
     """
     Return a list of relation objects that involve the given model.
 
@@ -101,9 +98,7 @@ def get_model_relations(
     """
     # noinspection PyUnresolvedReferences
     intermediary_models = {
-        f.remote_field.through if f.concrete else f.through
-        for f in model._meta.get_fields()
-        if f.many_to_many
+        f.remote_field.through if f.concrete else f.through for f in model._meta.get_fields() if f.many_to_many
     }
 
     result = []
@@ -139,10 +134,7 @@ def get_model_relations(
     return result
 
 
-def get_relation_info_to(
-        model: ModelClassOrInstance,
-        rel: Relations
-) -> Tuple[Type[Model], RelationalFields]:
+def get_relation_info_to(model: ModelClassOrInstance, rel: Relations) -> Tuple[Type[Model], RelationalFields]:
     """
     Return the model that implements the relation ``rel`` and the relation
     field that points towards ``model`` from that model.
@@ -186,11 +178,9 @@ def get_updatable_fields(instance: ModelClassOrInstance) -> List[str]:
     # (used by merge_records)
     result = []
     # noinspection PyUnresolvedReferences
-    fields = get_model_fields(
-        instance._meta.model, m2m=False, primary_key=False
-    )
+    fields = get_model_fields(instance._meta.model, m2m=False, primary_key=False)
     for fld in fields:
-        if not fld.concrete or fld.name.startswith('_'):
+        if not fld.concrete or fld.name.startswith("_"):
             # Exclude 'private' fields
             continue
         field_value = fld.value_from_object(instance)
@@ -207,10 +197,7 @@ def get_updatable_fields(instance: ModelClassOrInstance) -> List[str]:
     return result
 
 
-def is_protected(
-        objs: List[ModelClassOrInstance],
-        using: str = 'default'
-) -> Optional[models.ProtectedError]:
+def is_protected(objs: List[ModelClassOrInstance], using: str = "default") -> Optional[models.ProtectedError]:
     """
     Check if any model instances in ``objs`` is protected through a ForeignKey.
 
@@ -229,7 +216,7 @@ def get_reverse_field_path(rel: Relations, field_name: str) -> str:
     """
     Build a field_path to ``field_name`` using the reverse relation ``rel``.
     """
-    # (used by maint.forms.get_dupe_fields_for_model)
+    # (used by dbentry.tools.forms.get_dupe_field_choices)
     if rel.related_query_name:
         field_path = rel.related_query_name
     elif rel.related_name:
@@ -239,10 +226,7 @@ def get_reverse_field_path(rel: Relations, field_name: str) -> str:
     return field_path + constants.LOOKUP_SEP + field_name
 
 
-def get_fields_and_lookups(
-        model: ModelClassOrInstance,
-        field_path: str
-) -> Tuple[List[Field], List[str]]:
+def get_fields_and_lookups(model: ModelClassOrInstance, field_path: str) -> Tuple[List[Field], List[str]]:
     """
     Extract model fields and lookups from ``field_path``.
 
@@ -265,7 +249,7 @@ def get_fields_and_lookups(
     opts = model._meta
     prev_field = None
     for part in field_path.split(models.constants.LOOKUP_SEP):
-        if part == 'pk':
+        if part == "pk":
             part = opts.pk.name
         try:
             field = opts.get_field(part)
@@ -277,15 +261,14 @@ def get_fields_and_lookups(
                     lookups.append(part)
                     continue
                 raise exceptions.FieldError(
-                    "Invalid lookup: %(lookup)s for %(field)s." % {
-                        'lookup': part, 'field': prev_field.__class__.__name__
-                    }
+                    "Invalid lookup: %(lookup)s for %(field)s."
+                    % {"lookup": part, "field": prev_field.__class__.__name__}
                 )
             raise
         else:
             fields.append(field)
             prev_field = field
-            if hasattr(field, 'get_path_info'):
+            if hasattr(field, "get_path_info"):
                 # Update opts to follow the relation.
                 opts = field.get_path_info()[-1].to_opts
     return fields, lookups
@@ -313,13 +296,12 @@ def clean_permissions(stream: Optional[TextIO] = None) -> None:
     if stream is None:  # pragma: no cover
         stream = sys.stdout
     for p in Permission.objects.all():
-        action, _model_name = p.codename.split('_', 1)
+        action, _model_name = p.codename.split("_", 1)
         model = p.content_type.model_class()
         if not model:
             stream.write(
                 "ContentType of %s references unknown model: %s.%s\n"
-                "Try running clean_contenttypes.\n" % (
-                    p.name, p.content_type.app_label, p.content_type.model)
+                "Try running clean_contenttypes.\n" % (p.name, p.content_type.app_label, p.content_type.model)
             )
             continue
         opts = model._meta
@@ -342,18 +324,27 @@ def clean_permissions(stream: Optional[TextIO] = None) -> None:
             )
             p.delete()
         else:
-            stream.write(
-                "Updated %s '%s' codename to '%s'\n" % (p, old_codename, new_codename)
-            )
+            stream.write("Updated %s '%s' codename to '%s'\n" % (p, old_codename, new_codename))
 
 
-def get_deleted_objects(request, objs, namespace=""):
+def get_deleted_objects(
+    request: HttpRequest,
+    objs: Sequence[models.Model],
+    namespace: str = "",
+) -> tuple[list, dict, set, list]:
     """
     Find all objects related to ``objs`` that should also be deleted. ``objs``
-    must be a homogeneous iterable of objects (e.g. a QuerySet).
+    must be a homogeneous sequence of objects (e.g. a QuerySet).
 
-    Return a nested list of strings suitable for display in the
-    template with the ``unordered_list`` filter.
+    Returns a 4-tuple:
+        - a nested list of string representations of objects that will be
+          deleted as returned by the NestedObjects collector
+        - a mapping of model verbose name to the number of objects belonging
+          to that model that will be deleted
+        - a set of model verbose names of models for which the user is lacking
+          delete permission
+        - a list of string representations of model objects that are protected
+          by a relation
     """
     # Modified version of django.contrib.admin.utils.get_deleted_objects with
     # better description for relations and related objects.
@@ -362,10 +353,10 @@ def get_deleted_objects(request, objs, namespace=""):
     collector.collect(objs)
     perms_needed = set()
 
-    def get_related_obj_info(obj):
+    def get_related_obj_info(obj: models.Model) -> tuple[models.Model, str, str]:
         related_obj = obj
-        verbose_name = capfirst(obj._meta.verbose_name)
-        object_description = str(obj)
+        obj_verbose_name = capfirst(obj._meta.verbose_name)
+        obj_description = str(obj)
         if obj._meta.auto_created:
             # Assume an auto_created M2M model with a generic verbose_name.
             # To get a better verbose_name, figure out from what side we
@@ -376,23 +367,23 @@ def get_deleted_objects(request, objs, namespace=""):
                     # FIXME: this is incredibly inefficient as it creates a
                     #  query for every related object!
                     related_obj = field.related_model.objects.get(pk=other_pk)
-                    object_description = str(related_obj)
-                    verbose_name = f"{field.related_model._meta.verbose_name} Beziehung"
+                    obj_description = str(related_obj)
+                    obj_verbose_name = f"{field.related_model._meta.verbose_name} Beziehung"
                     break
-        return related_obj, verbose_name, object_description
+        return related_obj, obj_verbose_name, obj_description
 
-    def format_callback(obj):
-        related_obj, verbose_name, object_description = get_related_obj_info(obj)
+    def format_callback(obj: models.Model) -> str:
+        related_obj, obj_verbose_name, obj_description = get_related_obj_info(obj)
 
         try:
             # Try to get a link to the object's edit page.
-            object_description = create_hyperlink(get_change_url(request, related_obj, namespace), object_description)
+            obj_description = create_hyperlink(get_change_url(request, related_obj, namespace), obj_description)
             if not request.user.has_perm(get_perm("delete", obj._meta)):  # pragma: no cover
-                perms_needed.add(verbose_name)
+                perms_needed.add(obj_verbose_name)
         except NoReverseMatch:
             # obj has no edit page.
             pass
-        return mark_safe(f"{verbose_name}: {object_description}")
+        return mark_safe(f"{obj_verbose_name}: {obj_description}")
 
     total_count = sum(len(objs) for model, objs in collector.model_objs.items())
     if total_count < 500:

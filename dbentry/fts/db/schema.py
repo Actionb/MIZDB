@@ -11,7 +11,7 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
     ignored when creating the setweight SQL.
     """
 
-    def _to_tsvector_weights(self, field):
+    def _to_tsvector_weights(self, field):  # type: ignore[no-untyped-def]
         sql_setweight = (
             " setweight(to_tsvector({language}, COALESCE(NEW.{column}, '')), {weight}) ||"
         )
@@ -38,22 +38,22 @@ class MIZDBSchemaEditor(PostgreSQLSchemaEditor):
 
     trigger_editor_class = MIZDBTriggerEditor
 
-    def create_model(self, model):
+    def create_model(self, model):  # type: ignore[no-untyped-def]
         super().create_model(model)
         self.trigger_editor_class(self).create_model(model)
 
-    def delete_model(self, model):
+    def delete_model(self, model):  # type: ignore[no-untyped-def]
         super().delete_model(model)
         self.trigger_editor_class(self).delete_model(model)
 
-    def add_field(self, model, field):
+    def add_field(self, model, field):  # type: ignore[no-untyped-def]
         super().add_field(model, field)
         self.trigger_editor_class(self).add_field(model, field)
 
-    def remove_field(self, model, field):
+    def remove_field(self, model, field):  # type: ignore[no-untyped-def]
         super().remove_field(model, field)
         self.trigger_editor_class(self).remove_field(model, field)
 
-    def alter_field(self, model, old_field, new_field, strict=False):
+    def alter_field(self, model, old_field, new_field, strict=False):  # type: ignore[no-untyped-def]
         super().alter_field(model, old_field, new_field)
         self.trigger_editor_class(self).alter_field(model, old_field, new_field)

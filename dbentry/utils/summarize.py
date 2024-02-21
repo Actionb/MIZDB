@@ -40,7 +40,7 @@ def _register(model: ModelClass) -> Callable:
     return inner
 
 
-def _concat(objects: Iterable, sep: str = "; "):
+def _concat(objects: Iterable, sep: str = "; ") -> str:
     return concat_limit(objects, sep=sep, width=0)
 
 

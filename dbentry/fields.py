@@ -419,7 +419,7 @@ class PartialDateWidget(forms.MultiWidget):
                 widgets.append(forms.NumberInput(attrs={'placeholder': placeholder}))
         super().__init__(widgets=widgets, attrs=attrs)
 
-    def get_context(self, name, value, attrs):
+    def get_context(self, name: str, value: Any, attrs: Any) -> dict:
         ctx = super().get_context(name, value, attrs)
 
         # For django bootstrap to render the error message of an invalid field,

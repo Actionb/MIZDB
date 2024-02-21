@@ -4,7 +4,7 @@ from django.db import DEFAULT_DB_ALIAS, connections
 from django.test.utils import CaptureQueriesContext
 
 
-def timethis(func, *args, **kwargs):
+def timethis(func, *args, **kwargs):  # type: ignore[no-untyped-def]
     """Return the time needed to run func with the given args and kwargs."""
     ts = time.time()
     func(*args, **kwargs)
@@ -12,7 +12,7 @@ def timethis(func, *args, **kwargs):
     return te - ts
 
 
-def num_queries(func=None, *args, **kwargs):
+def num_queries(func=None, *args, **kwargs):  # type: ignore[no-untyped-def]
     """Expose the functionality of assertNumQueries to use outside of tests."""
     using = kwargs.pop("using", DEFAULT_DB_ALIAS)
     conn = connections[using]

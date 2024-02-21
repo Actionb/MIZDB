@@ -157,19 +157,24 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         kwargs['data'] = self.request.GET
         return kwargs
 
-    def build_duplicates_items(self, form: Form) -> list:
+    def build_duplicates_items(self, form: Form) -> list[tuple[Model, str, list]]:
         """
         Prepare the content of the table that lists the duplicates.
 
-        Returns a list of 2-tuples. The first item of that 2-tuple contains
-        table date for the duplicate instances. The second item is a link to the
-        changelist of those instances. Example:
-        [
-            (
+        Returns a list of 2-tuples for each group of duplicates found.
+
+        The first item of that 2-tuple is a list of 3-tuples, one for each
+        duplicate of that group, and the second item is a link to a changelist
+        filtered to display the group.
+
+        The 3-tuple contains a reference to the model instance, a link to the
+        change page, and the values to display for a given duplicate.
+
+        Example:
+            [(
                 [(model instance, change page URL, display values), ...],
                 <link to the changelist of the duplicate instances>
-            ), ...
-        ]
+            ), ...]
         """
         # Optimize the query by using StringAgg on values for many_to_many and
         # many_to_one relations. Use select_related for many_to_one relations.
@@ -401,7 +406,7 @@ class SiteSearchView(views.generic.TemplateView):
             context['results'] = self.get_result_list(q)
         return self.render_to_response(context)
 
-    def _get_models(self, app_label: str = '') -> List[Model]:
+    def _get_models(self, app_label: str = '') -> List[Type[Model]]:
         """
         Return a list of models to be queried.
 
@@ -412,7 +417,7 @@ class SiteSearchView(views.generic.TemplateView):
             app_label (str): name of the app whose models should be queried
         """
 
-        def has_permission(user, model):
+        def has_permission(user, model):  # type: ignore[no-untyped-def]
             opts = model._meta
             codename_view = get_permission_codename('view', opts)
             codename_change = get_permission_codename('change', opts)
@@ -427,7 +432,7 @@ class SiteSearchView(views.generic.TemplateView):
             if has_permission(self.request.user, model)
         ]
 
-    def _search(self, model: Model, q: str) -> Any:
+    def _search(self, model: Type[Model], q: str) -> Any:
         """Search the given model for the search term ``q``."""
         raise NotImplementedError("The view class must implement the search.")  # pragma: no cover
 

@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
 from django.urls import reverse, resolve, Resolver404
 from django.utils.safestring import mark_safe
 from django.views.csrf import csrf_failure as django_csrf_failure
@@ -17,10 +17,14 @@ logger = logging.getLogger(__name__)
 CSRF_FORM_DATA_KEY = "_csrf_form_data"
 
 
-def _restore_formset(formset, data):
+# Do not add a return type annotation. The formset base classes do not include
+# attributes added by the formset factory functions (such as formset.extra).
+# Using these base classes as return type would lead to unresolved attributes
+# down the line.
+def _restore_formset(formset: forms.BaseInlineFormSet, data: dict):  # type: ignore[no-untyped-def]
     """
-    Modify the formset so that it reflects the changes given by `data`, where
-    `data` is the POST data of the request that caused the CSRF failure.
+    Modify the inline formset so that it reflects the changes given by `data`,
+    where `data` is the POST data of the request that caused the CSRF failure.
 
     In effect, this will reset the formset to how it was just before the failed
     POST request, so that the user can confirm the changes.
@@ -49,7 +53,7 @@ def _restore_formset(formset, data):
     initial_extra = []
     pattern = re.compile(f"{formset.prefix}-(?P<index>\d+)-(?P<field>[\w_]+)")  # noqa
     # Group the data items by index:
-    indexes = {}
+    indexes: dict = {}
     for k, v in sorted(data.items()):
         m = pattern.search(k)
         if not m:
@@ -79,7 +83,7 @@ def _restore_formset(formset, data):
             # Do not add an empty form now. An empty extra form will later be
             # added to the end of initial_extra.
             continue
-        if len(form_initial.keys()) == 1 and formset.fk.name in form_initial:
+        if len(form_initial.keys()) == 1 and formset.fk.name in form_initial:  # type: ignore
             # The initial data for this form only contains a value for the
             # InlineForeignKeyField, i.e. it's an 'empty extra' form for a
             # bound formset. Do not include it.
@@ -100,11 +104,11 @@ def _restore_formset(formset, data):
     # done at the beginning of this function. For the initial data to take
     # effect, the cache must be reset so that the forms will be re-created with
     # the updated data the next time that the property is accessed.
-    del formset.forms
+    del formset.forms  # noqa
     return formset
 
 
-def csrf_failure(request, reason):
+def csrf_failure(request: HttpRequest, reason: str) -> HttpResponse:
     login_urls = [reverse("login"), reverse("admin:login")]
     logout_urls = [reverse("logout"), reverse("admin:logout")]
     index_urls = [reverse("index"), reverse("admin:index")]
@@ -173,12 +177,12 @@ def csrf_failure(request, reason):
 
 
 @receiver(user_logged_in)
-def log_login(sender, user, **kwargs):
+def log_login(sender, user, **kwargs):  # type: ignore[no-untyped-def]  # noqa
     logger.info(f"{user} ({user.pk}) logged in.")
 
 
 @receiver(user_logged_out)
-def log_logout(sender, user=None, **kwargs):
+def log_logout(sender, user=None, **kwargs):  # type: ignore[no-untyped-def]  # noqa
     # user can be None; for example when logging out in one tab and then also
     # logging out in another tab.
     if user is not None:

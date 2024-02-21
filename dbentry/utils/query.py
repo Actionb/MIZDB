@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Any, Optional
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import models
@@ -8,7 +8,7 @@ from django.db.models.expressions import Combinable
 LENGTH_LIMIT = 100
 
 
-def to_array(path: str, ordering: str = "", distinct=True) -> ArrayAgg:
+def to_array(path: str, ordering: str = "", distinct: bool = True) -> ArrayAgg:
     """
     Aggregate objects from `path` into an array.
 
@@ -23,7 +23,7 @@ def join_arrays(*arrays: Expression) -> Func:
     return Func(*arrays, function="array_cat", output_field=models.CharField())
 
 
-def array_remove(array: Expression, remove=None) -> Func:
+def array_remove(array: Expression, remove: Optional[Any] = None) -> Func:
     """Remove all elements equal to the given value from the array."""
     return Func(array, Value(remove), function="array_remove")
 
@@ -58,6 +58,6 @@ def concatenate(*expr: Union[Expression, Combinable], sep: str = ", ") -> Func:
     return Func(Value(sep), *expr, function="concat_ws")
 
 
-def string_list(path: str, sep: str = ", ", length: int = LENGTH_LIMIT, distinct=True) -> Func:
+def string_list(path: str, sep: str = ", ", length: int = LENGTH_LIMIT, distinct: bool = True) -> Func:
     """Concatenate the values from `path`, separated by `sep`, up to a length of `length`."""
     return limit(array_to_string(to_array(path, distinct=distinct), sep=sep), length=length)
