@@ -55,7 +55,7 @@ class GenericURLWidgetMixin(object):
     def __init__(
             self,
             model_name: str,
-            url: str = '',
+            url: Optional[str] = '',
             forward: Optional[list] = None,
             *args: Any,
             **kwargs: Any

@@ -8,8 +8,8 @@ from django.db.models.query import EmptyQuerySet
 from django.test import override_settings
 from django.urls import path
 
-from dbentry.admin import admin as _admin
 from dbentry import models as _models
+from dbentry.admin import admin as _admin
 from dbentry.admin.base import MIZModelAdmin
 from dbentry.admin.changelist import MIZChangeList
 from dbentry.admin.site import miz_site
@@ -25,13 +25,12 @@ class ChangeListTestModel(models.Model):
 
 @admin.register(ChangeListTestModel, site=admin_site)
 class ChangeListTestAdmin(MIZModelAdmin):
-
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
 
 
 class URLConf:
-    urlpatterns = [path('test_changelist/', admin_site.urls)]
+    urlpatterns = [path("test_changelist/", admin_site.urls)]
 
 
 @override_settings(ROOT_URLCONF=URLConf)
@@ -47,7 +46,7 @@ class TestMIZChangeList(AdminTestCase):
         """
         request = self.get_request()
         changelist = self.model_admin.get_changelist_instance(request)
-        with patch.object(self.model_admin, 'has_search_form', new=Mock(return_value=True)):
+        with patch.object(self.model_admin, "has_search_form", new=Mock(return_value=True)):
             changelist.get_results(request)
         self.assertIsInstance(changelist.result_list, EmptyQuerySet)
 
@@ -56,9 +55,9 @@ class TestMIZChangeList(AdminTestCase):
         Assert that the result_list is not an EmptyQuerySet if the changelist
         queryset is filtered.
         """
-        request = self.get_request(data={'id': '1'})
+        request = self.get_request(data={"id": "1"})
         changelist = self.model_admin.get_changelist_instance(request)
-        with patch.object(self.model_admin, 'has_search_form', new=Mock(return_value=True)):
+        with patch.object(self.model_admin, "has_search_form", new=Mock(return_value=True)):
             changelist.get_results(request)
         self.assertNotIsInstance(changelist.result_list, EmptyQuerySet)
 
@@ -69,7 +68,7 @@ class TestMIZChangeList(AdminTestCase):
         """
         request = self.get_request()
         changelist = self.model_admin.get_changelist_instance(request)
-        with patch.object(self.model_admin, 'has_search_form', new=Mock(return_value=False)):
+        with patch.object(self.model_admin, "has_search_form", new=Mock(return_value=False)):
             changelist.get_results(request)
         self.assertNotIsInstance(changelist.result_list, EmptyQuerySet)
 
@@ -78,7 +77,7 @@ class TestMIZChangeList(AdminTestCase):
         Assert that the result_list is not an EmptyQuerySet if the ALL_VAR
         parameter is present in the request parameters.
         """
-        request = self.get_request(data={ALL_VAR: '1'})
+        request = self.get_request(data={ALL_VAR: "1"})
         changelist = self.model_admin.get_changelist_instance(request)
         changelist.get_results(request)
         self.assertNotIsInstance(changelist.result_list, EmptyQuerySet)
@@ -104,7 +103,7 @@ class TestAusgabeChangeList(AdminTestCase):
         Assert that chronological order is not applied to the queryset if the
         ORDER_VAR is present in the query string.
         """
-        for params in ({}, {ORDER_VAR: '1'}):
+        for params in ({}, {ORDER_VAR: "1"}):
             with self.subTest(params=params):
                 request = self.get_request(data=params)
                 changelist = self.model_admin.get_changelist_instance(request=request)
@@ -129,17 +128,23 @@ class TestBestandChangelist(AdminTestCase):
         changelist.get_results(request)
         select_related = list(changelist.result_list.query.select_related)
         for field_path in (
-                'audio', 'ausgabe', 'brochure', 'buch', 'dokument', 'foto',
-                'memorabilien', 'plakat', 'technik', 'video',
-                'lagerort', 'provenienz__geber'
+            "audio",
+            "ausgabe",
+            "brochure",
+            "buch",
+            "dokument",
+            "foto",
+            "memorabilien",
+            "plakat",
+            "technik",
+            "video",
+            "lagerort",
+            "provenienz__geber",
         ):
             # Note that a path like provenienz__geber will be represented by a
             # nested dict in query.select_related: {'provenienz': {'geber': {}}}
-            related = field_path.split('__', 1)[0]
+            related = field_path.split("__", 1)[0]
             with self.subTest(relation_path=field_path):
                 self.assertIn(related, select_related)
                 select_related.remove(related)
-        self.assertFalse(
-            select_related,
-            msg="Queryset unexpectedly selected additional related-object data."
-        )
+        self.assertFalse(select_related, msg="Queryset unexpectedly selected additional related-object data.")

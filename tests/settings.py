@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,7 +38,8 @@ ALWAYS_INSTALLED_APPS = [
 TEST_APPS = [
     "tests",
     "tests.test_actions",
-    "tests.test_ac",
+    "tests.test_admin_autocomplete",
+    "tests.test_admin",
     "tests.test_autocomplete",
     "tests.test_base",
     "tests.test_commands",

@@ -26,39 +26,37 @@ class DummyTool(View):
 # of MIZAdminSite look for the 'dbentry' app specifically.
 @admin.register(_models.Artikel, site=miz_admin_site)
 class ArtikelAdmin(MIZModelAdmin):
-    index_category = 'Archivgut'
+    index_category = "Archivgut"
 
 
 class URLConf:
-    urlpatterns = [
-        path('admin/', miz_admin_site.urls),
-        path('dummy_tool/', DummyTool.as_view(), name='dummy_tool')
-    ]
+    urlpatterns = [path("admin/", miz_admin_site.urls), path("dummy_tool/", DummyTool.as_view(), name="dummy_tool")]
 
 
 class TestMIZAdminSite(RequestTestCase):
     """Test the base admin site class MIZAdminSite."""
+
     site = miz_admin_site
 
     def test_each_context(self):
         """Assert that the Wiki URL is added to the context."""
-        with override_settings(WIKI_URL='localhost/wiki/index.html'):
+        with override_settings(WIKI_URL="localhost/wiki/index.html"):
             context = self.site.each_context(self.get_request())
-            self.assertIn('wiki_url', context)
-            self.assertEqual('localhost/wiki/index.html', context['wiki_url'])
+            self.assertIn("wiki_url", context)
+            self.assertEqual("localhost/wiki/index.html", context["wiki_url"])
         with override_settings(WIKI_URL=None):
             context = self.site.each_context(self.get_request())
-            self.assertNotIn('wiki_url', context)
+            self.assertNotIn("wiki_url", context)
 
-    @patch('dbentry.admin.site.super')
+    @patch("dbentry.admin.site.super")
     def test_app_index_returns_dbentry(self, super_mock):
         """
         Assert that a request for the app index of app 'dbentry' returns the
         main admin index (which would include the fake apps).
         """
-        for app_label, index_called in [('dbentry', True), ('Beep', False)]:
+        for app_label, index_called in [("dbentry", True), ("Beep", False)]:
             with self.subTest(app_label=app_label):
-                with patch.object(self.site, 'index') as index_mock:
+                with patch.object(self.site, "index") as index_mock:
                     self.site.app_index(request=None, app_label=app_label)  # noqa
                     if index_called:
                         self.assertTrue(index_mock.called)
@@ -72,11 +70,11 @@ class TestMIZAdminSite(RequestTestCase):
         Assert that the dbentry app_list contains the additional 'fake' apps
         that organize the various models of the app.
         """
-        request = self.get_request(path=reverse('admin:index'))
-        response = self.site.app_index(request, app_label='dbentry')
-        app_list = response.context_data['app_list']  # noqa
-        app_names = [d.get('name') for d in app_list if d.get('name')]
-        for category in ['Archivgut', 'Stammdaten', 'Sonstige']:
+        request = self.get_request(path=reverse("admin:index"))
+        response = self.site.app_index(request, app_label="dbentry")
+        app_list = response.context_data["app_list"]  # noqa
+        app_names = [d.get("name") for d in app_list if d.get("name")]
+        for category in ["Archivgut", "Stammdaten", "Sonstige"]:
             with self.subTest():
                 self.assertIn(category, app_names)
 
@@ -86,16 +84,16 @@ class TestMIZAdminSite(RequestTestCase):
         one of the three default ones (Archivgut, Stammdaten, Sonstige) into
         the 'Sonstige' category.
         """
-        for index_category in ('Sonstige', 'Beep', None):
-            app_list = [{'app_label': 'dbentry', 'models': [{'object_name': 'Artikel'}]}]
+        for index_category in ("Sonstige", "Beep", None):
+            app_list = [{"app_label": "dbentry", "models": [{"object_name": "Artikel"}]}]
             with self.subTest(index_category=str(index_category)):
                 with patch.object(ArtikelAdmin, "index_category", new=index_category):
                     app_list = self.site.add_categories(app_list)
                     self.assertEqual(len(app_list), 3, app_list)
-                    self.assertEqual(app_list[-1]['name'], 'Sonstige')
+                    self.assertEqual(app_list[-1]["name"], "Sonstige")
                     sonstige_category = app_list[-1]
-                    self.assertEqual(len(sonstige_category['models']), 1)
-                    self.assertEqual(sonstige_category['models'][0]['object_name'], 'Artikel')
+                    self.assertEqual(len(sonstige_category["models"]), 1)
+                    self.assertEqual(sonstige_category["models"][0]["object_name"], "Artikel")
 
     def test_add_categories_no_dbentry_app(self):
         """
@@ -104,23 +102,23 @@ class TestMIZAdminSite(RequestTestCase):
         """
         app_list = []
         self.assertFalse(self.site.add_categories(app_list))
-        app_list.append({'app_label': 'Beep', 'models': []})
+        app_list.append({"app_label": "Beep", "models": []})
         self.assertFalse(self.site.add_categories(app_list))
-        app_list.append({'app_label': 'dbentry', 'models': []})
+        app_list.append({"app_label": "dbentry", "models": []})
         self.assertTrue(self.site.add_categories(app_list))
 
     @patch("dbentry.admin.site.super")
     def test_check(self, super_mock):
         """Assert that check() adds errors if an url name cannot be reversed."""
         super_mock.return_value.check.return_value = []
-        with patch.object(self.site, 'tools', new=[]):
+        with patch.object(self.site, "tools", new=[]):
             # No tools, no errors:
             self.assertFalse(self.site.check(None))
             # The site's index is a reversible url name:
-            self.site.tools = [(None, f"{self.site.name}:index", '', (), False)]
+            self.site.tools = [(None, f"{self.site.name}:index", "", (), False)]
             self.assertFalse(self.site.check(None))
             # Add a tool with a bogus url name:
-            self.site.tools.append((None, '404_url', '', (), False))
+            self.site.tools.append((None, "404_url", "", (), False))
             errors = self.site.check(None)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
@@ -128,8 +126,8 @@ class TestMIZAdminSite(RequestTestCase):
     def test_register_tool(self):
         """Assert that register_tool() appends tools to the tools list."""
         self.assertFalse(self.site.tools)
-        tool = ('view class', 'url name', 'label', ('test_dbentry.add_band',), False)
-        with patch.object(self.site, 'tools', new=[]):
+        tool = ("view class", "url name", "label", ("test_dbentry.add_band",), False)
+        with patch.object(self.site, "tools", new=[]):
             self.site.register_tool(*tool)
             self.assertIn(tool, self.site.tools)
 
@@ -138,31 +136,24 @@ class TestMIZAdminSite(RequestTestCase):
         Assert that build_admintools_context() excludes tools if the user does
         not have all the required permissions.
         """
-        band_codename = get_permission_codename('add', Band._meta)
-        musiker_codename = get_permission_codename('add', Musiker._meta)
-        perms_required = (
-            f"{Band._meta.app_label}.{band_codename}",
-            f"{Musiker._meta.app_label}.{musiker_codename}"
-        )
+        band_codename = get_permission_codename("add", Band._meta)
+        musiker_codename = get_permission_codename("add", Musiker._meta)
+        perms_required = (f"{Band._meta.app_label}.{band_codename}", f"{Musiker._meta.app_label}.{musiker_codename}")
         request = self.get_request(user=self.staff_user)
 
-        tool = (None, '', '', perms_required, False)
-        with patch.object(self.site, 'tools', new=[tool]):
+        tool = (None, "", "", perms_required, False)
+        with patch.object(self.site, "tools", new=[tool]):
             self.assertFalse(self.site.build_admintools_context(request))
 
             # Add band permission:
             ct = ContentType.objects.get_for_model(Band)
-            self.staff_user.user_permissions.add(
-                Permission.objects.get(codename=band_codename, content_type=ct)
-            )
+            self.staff_user.user_permissions.add(Permission.objects.get(codename=band_codename, content_type=ct))
             request.user = self.reload_user(self.staff_user)
             self.assertFalse(self.site.build_admintools_context(request))
 
             # Add musiker permission:
             ct = ContentType.objects.get_for_model(Musiker)
-            self.staff_user.user_permissions.add(
-                Permission.objects.get(codename=musiker_codename, content_type=ct)
-            )
+            self.staff_user.user_permissions.add(Permission.objects.get(codename=musiker_codename, content_type=ct))
             request.user = self.reload_user(self.staff_user)
             self.assertTrue(self.site.build_admintools_context(request))
 
@@ -171,8 +162,8 @@ class TestMIZAdminSite(RequestTestCase):
         Assert that build_admintools_context() excludes tools flagged with
         superuser_only=True if the user is not a superuser.
         """
-        tool = (None, '', '', (), True)
-        with patch.object(self.site, 'tools', new=[tool]):
+        tool = (None, "", "", (), True)
+        with patch.object(self.site, "tools", new=[tool]):
             request = self.get_request(user=self.super_user)
             self.assertTrue(self.site.build_admintools_context(request))
             request = self.get_request(user=self.noperms_user)
@@ -183,13 +174,13 @@ class TestMIZAdminSite(RequestTestCase):
         """Assert that the admintools are added to the index context."""
         # Items in the tools list are a 5-tuple:
         #   (tool, url_name, index_label, permission_required, superuser_only)
-        tool = ('view class', 'dummy_tool', 'label', ('test_dbentry.add_band',), False)
-        with patch.object(self.site, 'tools', new=[tool]):
-            response = self.get_response(reverse(f'{self.site.name}:index'))
-            self.assertIn('admintools', response.context_data)
-            tools = response.context_data.get('admintools')
-            self.assertIn('dummy_tool', tools)
-            self.assertEqual(tools['dummy_tool'], 'label')
+        tool = ("view class", "dummy_tool", "label", ("test_dbentry.add_band",), False)
+        with patch.object(self.site, "tools", new=[tool]):
+            response = self.get_response(reverse(f"{self.site.name}:index"))
+            self.assertIn("admintools", response.context_data)
+            tools = response.context_data.get("admintools")
+            self.assertIn("dummy_tool", tools)
+            self.assertEqual(tools["dummy_tool"], "label")
 
 
 class TestMIZSite(RequestTestCase):
@@ -197,16 +188,16 @@ class TestMIZSite(RequestTestCase):
 
     def test_index_tools_superuser(self):
         """Check the admintools registered and available to a superuser."""
-        response = self.get_response(reverse(f'{miz_site.name}:index'), user=self.super_user)
-        self.assertTrue('admintools' in response.context_data)
-        tools = response.context_data.get('admintools')
+        response = self.get_response(reverse(f"{miz_site.name}:index"), user=self.super_user)
+        self.assertTrue("admintools" in response.context_data)
+        tools = response.context_data.get("admintools")
 
-        self.assertIn('tools:bulk_ausgabe', tools)
-        self.assertEqual(tools['tools:bulk_ausgabe'], 'Ausgaben Erstellung')
-        self.assertIn('tools:site_search', tools)
-        self.assertEqual(tools['tools:site_search'], 'Datenbank durchsuchen')
-        self.assertIn('tools:dupes_select', tools)
-        self.assertEqual(tools['tools:dupes_select'], 'Duplikate finden')
+        self.assertIn("tools:bulk_ausgabe", tools)
+        self.assertEqual(tools["tools:bulk_ausgabe"], "Ausgaben Erstellung")
+        self.assertIn("tools:site_search", tools)
+        self.assertEqual(tools["tools:site_search"], "Datenbank durchsuchen")
+        self.assertIn("tools:dupes_select", tools)
+        self.assertEqual(tools["tools:dupes_select"], "Duplikate finden")
 
     def test_index_tools_mitarbeiter(self):
         """
@@ -214,17 +205,17 @@ class TestMIZSite(RequestTestCase):
         tools.
         """
         ct = ContentType.objects.get_for_model(_models.Ausgabe)
-        perms = Permission.objects.filter(codename='add_ausgabe', content_type=ct)
+        perms = Permission.objects.filter(codename="add_ausgabe", content_type=ct)
         self.staff_user.user_permissions.set(perms)
 
-        response = self.get_response(reverse(f'{miz_site.name}:index'), user=self.staff_user)
-        self.assertTrue('admintools' in response.context_data)
-        tools = response.context_data.get('admintools').copy()
+        response = self.get_response(reverse(f"{miz_site.name}:index"), user=self.staff_user)
+        self.assertTrue("admintools" in response.context_data)
+        tools = response.context_data.get("admintools").copy()
 
-        self.assertIn('tools:bulk_ausgabe', tools)
-        self.assertEqual(tools.pop('tools:bulk_ausgabe'), 'Ausgaben Erstellung')
-        self.assertIn('tools:site_search', tools)
-        self.assertEqual(tools.pop('tools:site_search'), 'Datenbank durchsuchen')
+        self.assertIn("tools:bulk_ausgabe", tools)
+        self.assertEqual(tools.pop("tools:bulk_ausgabe"), "Ausgaben Erstellung")
+        self.assertIn("tools:site_search", tools)
+        self.assertEqual(tools.pop("tools:site_search"), "Datenbank durchsuchen")
         self.assertFalse(tools)
 
     def test_index_tools_view_only(self):
@@ -232,20 +223,16 @@ class TestMIZSite(RequestTestCase):
         Assert that view-only users (i.e. visitors) only see the site_search
         tool.
         """
-        visitor_user = User.objects.create_user(
-            username='visitor', password='besucher', is_staff=True
-        )
+        visitor_user = User.objects.create_user(username="visitor", password="besucher", is_staff=True)
         ct = ContentType.objects.get_for_model(_models.Ausgabe)
-        visitor_user.user_permissions.set(
-            [Permission.objects.get(codename='view_ausgabe', content_type=ct)]
-        )
+        visitor_user.user_permissions.set([Permission.objects.get(codename="view_ausgabe", content_type=ct)])
 
-        response = self.get_response(reverse(f'{miz_site.name}:index'), user=visitor_user)
-        self.assertTrue('admintools' in response.context_data)
-        tools = response.context_data.get('admintools').copy()
+        response = self.get_response(reverse(f"{miz_site.name}:index"), user=visitor_user)
+        self.assertTrue("admintools" in response.context_data)
+        tools = response.context_data.get("admintools").copy()
 
-        self.assertIn('tools:site_search', tools)
-        self.assertEqual(tools.pop('tools:site_search'), 'Datenbank durchsuchen')
+        self.assertIn("tools:site_search", tools)
+        self.assertEqual(tools.pop("tools:site_search"), "Datenbank durchsuchen")
         self.assertFalse(tools)
 
     def test_changelist_availability_superuser(self):
@@ -267,12 +254,8 @@ class TestMIZSite(RequestTestCase):
         Assert that the paths '/admin/dbentry/' and '/admin/' resolve to the
         expected index view functions.
         """
-        response = self.client.get('/admin/dbentry/')
-        self.assertEqual(
-            response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__
-        )
+        response = self.client.get("/admin/dbentry/")
+        self.assertEqual(response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__)
 
-        response = self.client.get('/admin/')
-        self.assertEqual(
-            response.resolver_match.func.__name__, MIZAdminSite.index.__name__
-        )
+        response = self.client.get("/admin/")
+        self.assertEqual(response.resolver_match.func.__name__, MIZAdminSite.index.__name__)

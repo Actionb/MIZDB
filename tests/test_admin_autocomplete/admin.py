@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from .models import Ausgabe
+from tests.test_admin_autocomplete.models import Ausgabe
 
-admin_site = admin.AdminSite(name='test_ac')
+admin_site = admin.AdminSite(name="test_admin_autocomplete")
 
 
 @admin.register(Ausgabe, site=admin_site)

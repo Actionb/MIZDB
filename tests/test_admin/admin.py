@@ -1,9 +1,9 @@
 from django.contrib import admin
 
 from dbentry.admin.base import MIZModelAdmin
-from .models import Audio, Band, Musiker, MusikerAudioM2M, Veranstaltung, Person
+from tests.test_admin.models import Audio, Band, Musiker, MusikerAudioM2M, Veranstaltung, Person
 
-admin_site = admin.AdminSite(name='test_base')
+admin_site = admin.AdminSite(name="test_admin")
 
 
 @admin.register(Audio, site=admin_site)
@@ -22,14 +22,14 @@ class MusikerAdmin(MIZModelAdmin):
 
 @admin.register(Band, site=admin_site)
 class BandAdmin(MIZModelAdmin):
-    list_display = ['band_name', 'alias_string']
+    list_display = ["band_name", "alias_string"]
     actions = None  # don't include action checkbox in the list_display
 
     def alias_string(self, obj) -> str:
         return ", ".join(obj.alias_list) or self.get_empty_value_display()
 
-    alias_string.short_description = 'Aliase'
-    alias_string.admin_order_field = 'alias_list'
+    alias_string.short_description = "Aliase"
+    alias_string.admin_order_field = "alias_list"
 
 
 @admin.register(Veranstaltung, site=admin_site)
