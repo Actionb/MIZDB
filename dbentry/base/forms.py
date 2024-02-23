@@ -1,12 +1,19 @@
 import re
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING, TypeAlias, TypeVar
+import sys
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING
+
+from django_stubs_ext import StrPromise
+
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 from django import forms
 from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import ValidationError
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
-from django.forms import Form
 from django.utils.translation import gettext_lazy
 
 from dbentry.utils.text import snake_case_to_spaces
@@ -18,13 +25,11 @@ ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
 if TYPE_CHECKING:
     # When type checking, have the form mixins extend the concrete base class
     # that they rely on.
-    FormMixin: TypeAlias = forms.Form
-    ModelFormMixin: TypeAlias = forms.ModelForm
+    FormMixin: TypeAlias = forms.BaseForm
+    ModelFormMixin: TypeAlias = forms.BaseModelForm
 else:
     FormMixin = object
     ModelFormMixin = object
-
-MinMaxForm = TypeVar("MinMaxForm", bound=Union["MinMaxRequiredFormMixin", forms.Form])
 
 
 class FieldGroup:
@@ -37,7 +42,7 @@ class FieldGroup:
 
     def __init__(
             self,
-            form: MinMaxForm,
+            form: "MinMaxRequiredFormMixin",
             *,
             fields: List[str],
             min_fields: Optional[int] = None,
@@ -47,7 +52,6 @@ class FieldGroup:
     ) -> None:
         """
         Constructor for the FieldGroup.
-
 
         Args:
             form: the form instance this FieldGroup belongs to
@@ -162,12 +166,8 @@ class MinMaxRequiredFormMixin(FormMixin):
     """
 
     minmax_required: List[dict]
-    min_error_message: str = gettext_lazy(
-        'Bitte mindestens {min!s} dieser Felder ausfüllen: {fields}.'
-    )
-    max_error_message: str = gettext_lazy(
-        'Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.'
-    )
+    min_error_message: StrPromise = gettext_lazy('Bitte mindestens {min!s} dieser Felder ausfüllen: {fields}.')
+    max_error_message: StrPromise = gettext_lazy('Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.')
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.default_error_messages = {
@@ -205,7 +205,7 @@ class MinMaxRequiredFormMixin(FormMixin):
         for group_kwargs in self._groups:
             yield FieldGroup(self, **group_kwargs)
 
-    def clean(self) -> dict:
+    def clean(self) -> Optional[dict[str, Any]]:
         for group in self.get_groups():
             min_error, max_error = group.check()
             if min_error:
@@ -228,7 +228,9 @@ class MinMaxRequiredFormMixin(FormMixin):
     def _get_message_field_names(self, group: FieldGroup) -> str:
         """Get a string of the verbose names of the group's fields."""
         return ", ".join(
-            self.fields[field_name].label or snake_case_to_spaces(field_name).title()
+            # The label can also be lazy or None. Force evaluation if it is not
+            # None.
+            str(self.fields[field_name].label or "") or snake_case_to_spaces(field_name).title()
             for field_name in group.fields
             if field_name in self.fields
         )
@@ -289,7 +291,7 @@ class MIZAdminFormMixin(FormMixin):
             'all': ('admin/css/forms.css',)
         }
 
-    def __iter__(self) -> Fieldset:
+    def __iter__(self) -> Iterator[Fieldset]:
         fieldsets = getattr(
             self, 'fieldsets',
             [(None, {'fields': list(self.fields.keys())})]
