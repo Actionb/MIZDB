@@ -15,7 +15,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext
 
 from dbentry import models as _models
-from dbentry.base.views import MIZAdminMixin
+from dbentry.admin.views import MIZAdminMixin
 from dbentry.tools.bulk.forms import BulkFormAusgabe
 from dbentry.tools.decorators import register_tool
 from dbentry.utils.admin import log_addition, log_change

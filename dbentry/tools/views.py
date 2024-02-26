@@ -16,15 +16,15 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
 
-from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
+from dbentry.admin.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.tools.decorators import register_tool
 from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
 from dbentry.utils.html import get_obj_link, create_hyperlink
 from dbentry.utils.models import get_model_from_string, get_model_relations
-from dbentry.utils.url import get_changelist_url
 from dbentry.utils.query import string_list
+from dbentry.utils.url import get_changelist_url
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 

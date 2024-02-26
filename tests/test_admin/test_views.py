@@ -4,7 +4,7 @@ from django import views
 from django.contrib.admin import AdminSite
 from django.core.exceptions import PermissionDenied
 
-from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
+from dbentry.admin.views import MIZAdminMixin, SuperUserOnlyMixin
 from tests.case import ViewTestCase
 
 

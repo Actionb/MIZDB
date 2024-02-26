@@ -30,7 +30,7 @@ from dbentry.actions.forms import (
     ReplaceForm,
     AdminMergeConflictsFormSet,
 )
-from dbentry.base.views import MIZAdminMixin
+from dbentry.admin.views import MIZAdminMixin
 from dbentry.models import Magazin
 from dbentry.utils.admin import create_logentry, log_addition, log_change, log_deletion
 from dbentry.utils.html import get_changelist_link, link_list, get_obj_link
