@@ -68,7 +68,7 @@ class ArtikelForm(AusgabeMagazinFieldForm, MIZEditForm):
         model = _models.Artikel
         fields = forms.ALL_FIELDS
         widgets = {
-            "schlagzeile": forms.Textarea(attrs={"class": "textarea-rows-1"}),
+            "schlagzeile": forms.Textarea(attrs={"class": "textarea-rows-2"}),
             "ausgabe": make_widget(_models.Ausgabe, tabular=True),
             "seitenumfang": forms.Select(choices=_models.Artikel.Umfang, attrs={"style": "max-width: 200px;"}),
         }
@@ -86,7 +86,7 @@ class AudioForm(DiscogsFormMixin, MIZEditForm):
 
     class Meta(MIZEditForm.Meta):
         model = _models.Audio
-        widgets = {"titel": forms.Textarea(attrs={"class": "textarea-rows-1"}), "original": boolean_select}
+        widgets = {"titel": forms.Textarea(attrs={"class": "textarea-rows-2"}), "original": boolean_select}
         fields = forms.ALL_FIELDS
 
 
@@ -105,7 +105,7 @@ class BuchForm(MinMaxRequiredFormMixin, MIZEditForm):
 
     class Meta(MIZEditForm.Meta):
         widgets = {
-            "titel": forms.Textarea(attrs={"class": "textarea-rows-1"}),
+            "titel": forms.Textarea(attrs={"class": "textarea-rows-2"}),
             "titel_orig": forms.Textarea(attrs={"class": "textarea-rows-1"}),
             "is_buchband": boolean_select,
             "buchband": make_widget(_models.Buch, url="autocomplete_buchband"),
@@ -122,7 +122,7 @@ class VideoForm(DiscogsFormMixin, MIZEditForm):
 
     class Meta(MIZEditForm.Meta):
         widgets = {
-            "titel": forms.Textarea(attrs={"class": "textarea-rows-1"}),
+            "titel": forms.Textarea(attrs={"class": "textarea-rows-2"}),
             "original": boolean_select,
         }
 
