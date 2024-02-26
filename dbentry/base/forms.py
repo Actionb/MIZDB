@@ -13,14 +13,14 @@ from dbentry.validators import DiscogsURLValidator
 # Default attrs for the TextArea form widget
 ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
 
-if TYPE_CHECKING:
-    # When type checking, have the form mixins extend the concrete base class
-    # that they rely on.
-    FormMixin: TypeAlias = forms.Form
-    ModelFormMixin: TypeAlias = forms.ModelForm
+if TYPE_CHECKING:  # pragma: no cover
+    # For static type checking purposes, have the mixins extend the concrete
+    # base class that they are designed to be used with.
+    FormMixinBase: TypeAlias = forms.Form
+    ModelFormMixinBase: TypeAlias = forms.ModelForm
 else:
-    FormMixin = object
-    ModelFormMixin = object
+    FormMixinBase = object
+    ModelFormMixinBase = object
 
 MinMaxForm = TypeVar("MinMaxForm", bound=Union["MinMaxRequiredFormMixin", forms.Form])
 
@@ -111,7 +111,7 @@ class FieldGroup:
         return min_error, max_error
 
 
-class MinMaxRequiredFormMixin(FormMixin):
+class MinMaxRequiredFormMixin(FormMixinBase):
     """
     A mixin that allows setting groups of fields to be required.
 
@@ -279,7 +279,7 @@ class MinMaxRequiredFormMixin(FormMixin):
         return messages
 
 
-class DynamicChoiceFormMixin(FormMixin):
+class DynamicChoiceFormMixin(FormMixinBase):
     """Set formfield choices after init from keyword arguments."""
 
     def __init__(self, *args: Any, choices: Optional[dict] = None, **kwargs: Any) -> None:
@@ -326,7 +326,7 @@ class DynamicChoiceFormMixin(FormMixin):
                 fld.choices = list(field_choices)
 
 
-class DeleteDuplicatesMixin(ModelFormMixin):
+class DeleteDuplicatesMixin(ModelFormMixinBase):
     """
     A model form mixin that flags forms for deletion when the form's model
     instance would violate uniqueness.
@@ -352,7 +352,7 @@ class InlineFormBase(DeleteDuplicatesMixin, forms.ModelForm):
     pass
 
 
-class DiscogsFormMixin(FormMixin):
+class DiscogsFormMixin(FormMixinBase):
     """
     A mixin for fields handling data from discogs.
 

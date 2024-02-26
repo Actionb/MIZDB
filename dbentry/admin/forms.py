@@ -4,17 +4,15 @@ from django import forms
 from django.contrib.admin.helpers import Fieldset
 from django.forms import Form
 
-if TYPE_CHECKING:
-    # When type checking, have the form mixins extend the concrete base class
-    # that they rely on.
-    FormMixin: TypeAlias = forms.Form
-    ModelFormMixin: TypeAlias = forms.ModelForm
+if TYPE_CHECKING:  # pragma: no cover
+    # For static type checking purposes, have the mixin extend the concrete
+    # base class that they are designed to be used with.
+    FormMixinBase: TypeAlias = forms.Form
 else:
-    FormMixin = object
-    ModelFormMixin = object
+    FormMixinBase = object
 
 
-class MIZAdminFormMixin(FormMixin):
+class MIZAdminFormMixin(FormMixinBase):
     """A form mixin that adds django admin media and fieldsets."""
 
     class Media:
