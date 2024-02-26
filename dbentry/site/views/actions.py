@@ -30,6 +30,7 @@ def action(permission_func=None, label="", description=""):
     return decorator
 
 
+# noinspection PyUnusedLocal
 @action(
     permission_func=has_delete_permission,
     label="Löschen",

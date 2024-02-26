@@ -36,7 +36,7 @@ if settings.DEBUG:
 if os.environ.get("DJANGO_DEVELOPMENT"):
     # Add django debug toolbar URLs:
     try:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyPackageRequirements
         import debug_toolbar
     except ModuleNotFoundError as e:
         warnings.warn(f"Could not import django debug toolbar when setting up URL configs: {e!s}")

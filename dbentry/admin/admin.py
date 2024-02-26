@@ -30,8 +30,8 @@ from dbentry.admin.base import (
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
 from dbentry.admin.changelist import AusgabeChangeList, BestandChangeList
-from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.admin.site import miz_site
+from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.utils.admin import log_change
 from dbentry.utils.copyrelated import copy_related_set
 from dbentry.utils.html import get_obj_link
@@ -1250,6 +1250,7 @@ class BestandAdmin(MIZModelAdmin):
         """
         field_names = [f.name for f in bestand_fields]
 
+        # noinspection PyAttributeOutsideInit
         self._cache = {}
         for obj in result_list.select_related(*field_names):
             relation_field = None
@@ -1469,16 +1470,17 @@ class KatalogAdmin(BaseBrochureAdmin):
         """
         # TODO: just declare the fieldsets attribute
         fieldsets = super().get_fieldsets(*args, **kwargs)
-        default_fieldset = dict(fieldsets).get(None, None)
+        default_fieldset = dict(fieldsets).get(None, {})
         if not default_fieldset:  # pragma: no cover
             return fieldsets
-        fields = default_fieldset['fields'].copy()
-        if all(f in fields for f in ('art', 'zusammenfassung')):
-            art = fields.index('art')
-            zusammenfassung = fields.index('zusammenfassung')
-            fields[art], fields[zusammenfassung] = fields[zusammenfassung], fields[art]
-            default_fieldset['fields'] = fields
-        return fieldsets
+        else:
+            fields = default_fieldset['fields'].copy()
+            if all(f in fields for f in ('art', 'zusammenfassung')):
+                art = fields.index('art')
+                zusammenfassung = fields.index('zusammenfassung')
+                fields[art], fields[zusammenfassung] = fields[zusammenfassung], fields[art]
+                default_fieldset['fields'] = fields
+            return fieldsets
 
 
 @admin.register(_models.Kalender, site=miz_site)

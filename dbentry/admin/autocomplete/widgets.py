@@ -86,6 +86,7 @@ class GenericURLWidgetMixin(object):
     def _set_url(self, url: Optional[str]) -> None:
         self._url = url
 
+    # noinspection PyTypeChecker
     url = property(_get_url, _set_url)
 
 
@@ -325,6 +326,7 @@ def make_widget(
                 )
             )
         if 'create_field' not in kwargs and can_add_related and model:
+            # noinspection PyUnresolvedReferences
             widget_opts['create_field'] = model.create_field
 
     if issubclass(

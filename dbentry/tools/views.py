@@ -280,7 +280,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     breadcrumbs_title = title = 'Unreferenzierte Datensätze'
 
     def get_form_kwargs(self) -> dict:
-        """Use request.GET as form data instead of request.POST."""
+        """Use request GET as form data instead of request POST."""
         kwargs = super().get_form_kwargs()
         if self.submit_name in self.request.GET:
             # Only include data when the search button has been pressed to

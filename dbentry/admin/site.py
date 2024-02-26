@@ -162,7 +162,7 @@ class MIZAdminSite(admin.AdminSite):
     def build_admintools_context(self, request: HttpRequest) -> OrderedDictType[str, str]:
         """
         Return a mapping of url_name: index_label of registered tools, ordered
-        by index_label, to be added to the index' context.
+        by index_label, to be added to the index's context.
         Exclude tool views the user does not have permission for.
         """
         result = OrderedDict()

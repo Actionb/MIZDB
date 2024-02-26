@@ -16,8 +16,8 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.admin.autocomplete.widgets import EXTRA_DATA_KEY
-from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.admin.site import miz_site
+from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string
@@ -218,6 +218,7 @@ class ACAusgabe(ACTabular):
     overview_annotations = ('num_list', 'lnum_list', 'jahr_list')
 
     def get_queryset(self) -> AusgabeQuerySet:
+        # noinspection PyUnresolvedReferences
         return super().get_queryset().chronological_order()
 
     def get_group_headers(self) -> list:
@@ -446,7 +447,7 @@ class GND(autocomplete.Select2QuerySetView):
 
     @staticmethod
     def get_query_string(q: str) -> str:
-        """Construct and return a SRU compliant query string."""
+        """Construct and return an SRU compliant query string."""
         if not q:
             return ""
         query = " and ".join("PER=%s" % w for w in q.split())
@@ -471,6 +472,7 @@ class GND(autocomplete.Select2QuerySetView):
         page_number = int(page)
         start = (page_number - 1) * self.paginate_by + 1
 
+        # noinspection PyAttributeOutsideInit
         results, self.total_count = searchgnd(
             query=self.get_query_string(self.q),
             startRecord=[str(start)],

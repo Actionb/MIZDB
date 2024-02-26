@@ -253,7 +253,7 @@ class PersonForm(forms.ModelForm):
                 gnd_id = gnd_id_from_url
                 self.cleaned_data['gnd_id'] = gnd_id
 
-        # Validate the gnd_id by checking that a SRU query with it returns
+        # Validate the gnd_id by checking that an SRU query with it returns
         # a single match.
         results, _c = searchgnd(query="nid=" + gnd_id)
         if len(results) != 1:

@@ -4,7 +4,7 @@ import datetime
 
 def leapdays(start: datetime.date, end: datetime.date) -> int:
     """
-    Count leap days between datetime.date instances.
+    Count leap days between date instances.
 
     calendar.leapdays only uses integer years to count leap days which can be
     inaccurate:
