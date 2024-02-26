@@ -2,11 +2,9 @@ import re
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING, TypeAlias, TypeVar
 
 from django import forms
-from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import ValidationError
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
-from django.forms import Form
 from django.utils.translation import gettext_lazy
 
 from dbentry.utils.text import snake_case_to_spaces
@@ -279,38 +277,6 @@ class MinMaxRequiredFormMixin(FormMixin):
             # noinspection PyUnresolvedReferences
             messages[error_type] = self.default_error_messages[error_type].format(**format_kwargs)
         return messages
-
-
-class MIZAdminFormMixin(FormMixin):
-    """A form mixin that adds django admin media and fieldsets."""
-
-    class Media:
-        css = {
-            'all': ('admin/css/forms.css',)
-        }
-
-    def __iter__(self) -> Fieldset:
-        fieldsets = getattr(
-            self, 'fieldsets',
-            [(None, {'fields': list(self.fields.keys())})]
-        )
-        for name, options in fieldsets:
-            yield Fieldset(self, name, **options)
-
-    @property
-    def media(self) -> forms.Media:
-        # Collect the media needed for all the widgets.
-        media = super().media
-        # Collect the media needed for all fieldsets.
-        # This will add collapse.js if necessary
-        # (from django.contrib.admin.options.helpers.Fieldset).
-        for fieldset in self.__iter__():
-            media += fieldset.media
-        return media
-
-
-class MIZAdminForm(MIZAdminFormMixin, Form):
-    pass
 
 
 class DynamicChoiceFormMixin(FormMixin):

@@ -6,7 +6,8 @@ from django.db.models import Model, QuerySet
 
 from dbentry import models as _models
 from dbentry.admin.autocomplete.widgets import make_widget
-from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminForm, MinMaxRequiredFormMixin
+from dbentry.admin.forms import MIZAdminForm
+from dbentry.base.forms import ATTRS_TEXTAREA, MinMaxRequiredFormMixin
 from dbentry.tools.bulk.fields import BaseSplitField, BulkField, BulkJahrField
 
 

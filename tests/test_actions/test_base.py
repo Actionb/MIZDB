@@ -18,7 +18,7 @@ from dbentry.actions.base import (
     AdminActionMixin,
     AdminActionConfirmationView,
 )
-from dbentry.base.forms import MIZAdminForm
+from dbentry.admin.forms import MIZAdminForm
 from tests.case import DataTestCase, RequestTestCase, AdminTestCase
 from tests.model_factory import make
 from tests.test_actions.case import ActionViewTestCase, AdminActionViewTestCase

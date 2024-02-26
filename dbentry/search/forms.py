@@ -8,8 +8,8 @@ from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 
 from dbentry.admin.autocomplete.widgets import make_widget as make_dal_widget
+from dbentry.admin.forms import MIZAdminFormMixin
 from dbentry.autocomplete.widgets import make_widget as make_mizselect_widget
-from dbentry.base.forms import MIZAdminFormMixin
 from dbentry.fields import PartialDate
 from dbentry.search import utils as search_utils
 

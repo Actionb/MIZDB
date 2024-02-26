@@ -7,7 +7,8 @@ from django.core.validators import MinValueValidator
 from django.urls import reverse_lazy
 
 from dbentry import models as _models
-from dbentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm
+from dbentry.admin.forms import MIZAdminForm
+from dbentry.base.forms import DynamicChoiceFormMixin
 
 
 class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):

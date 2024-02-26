@@ -1,12 +1,11 @@
 from unittest import mock
 
 from django import forms
-from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
 from dbentry.base.forms import (
-    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, MIZAdminFormMixin, DeleteDuplicatesMixin,
+    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, DeleteDuplicatesMixin,
     MinMaxRequiredFormMixin
 )
 from tests.case import MIZTestCase
@@ -176,32 +175,6 @@ class MinMaxRequiredFormMixinTest(MIZTestCase):
         msg_format_kwargs = {'fields': 'First Name, Last Name', 'min': 1, 'max': '0'}
         form.get_group_error_messages(group, {}, format_callback=callback_mock)
         callback_mock.assert_called_with(form, group, {}, msg_format_kwargs)
-
-
-class MIZAdminFormMixinTest(MIZTestCase):
-    class TestForm(MIZAdminFormMixin, forms.Form):
-        first_name = forms.CharField()
-        last_name = forms.CharField(required=True)
-
-    def test_iter(self):
-        """Assert that __iter__ returns Fieldset instances."""
-        for fs in self.TestForm().__iter__():
-            self.assertIsInstance(fs, Fieldset)
-
-    def test_media_adds_collapse_js(self):
-        """
-        The form's media should contain collapse.js if any of the fieldsets
-        have 'collapse' in their classes.
-        """
-        form = self.TestForm()
-        form.fieldsets = (
-            ['Name', {'fields': ['first_name', 'last_name'], 'classes': ()}],
-        )
-        self.assertNotIn('admin/js/collapse.js', form.media._js)
-        form.fieldsets = (
-            ['Name', {'fields': ['first_name', 'last_name'], 'classes': ('collapse',)}],
-        )
-        self.assertIn('admin/js/collapse.js', form.media._js)
 
 
 class DynamicChoiceFormMixinTest(MIZTestCase):
