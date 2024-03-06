@@ -59,7 +59,7 @@ def add_preserved_filters(context, base_url):
     MIZDB version of the django admin add_preserved_filters tag that appends
     previous changelist filter query parameters to URLs.
 
-    When navigating away from a changelist, the parameter "_changelist-filters"
+    When navigating away from a changelist, the parameter "_changelist_filters"
     will be added to the query string: '_changelist_filters=q%3DFoo%26q%3DBar'
 
     When navigating back to the changelist, the filters are recovered from the

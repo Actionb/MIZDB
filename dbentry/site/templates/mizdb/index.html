@@ -6,28 +6,46 @@
 
 {% block content %}
 <div class="row">
-<div class="col-8">{% include "mizdb/includes/model_list.html" %}</div>
+  <div class="col">{% include "mizdb/includes/model_list.html" %}</div>
 
-<aside class="col-4 secondary-bg-subtle">
-    {% if user.is_authenticated %}
-        {% get_admin_log 10 as admin_log for_user user %}
-        {% if admin_log %}
-            <div id="recent-actions-module" class="bg-secondary bg-opacity-10 pb-2">
-                <h3 class="p-3 border-bottom">Letzte Änderungen</h3>
-                <ul class="actionlist">
-                {% for entry in admin_log %}
-                    <li class="mb-2">
-                        {% get_actionlist_item entry as item %}
-                        <div title="{{ item.title }}">
-                            {{ item.image }} {{ item.change_link }}
-                            {% if entry.content_type %}<br><span class="small text-secondary ms-4">{{ entry.content_type.name|capfirst }}</span>{% endif %}
-                        </div>
-                    </li>
-                {% endfor %}
-                </ul>
+  {% if user.is_authenticated %}
+    <div class="col secondary-bg-subtle">
+      {% if last_edits %}
+        <div id="recentEdits" class="mb-3">
+          <h5 class="p-2 bg-primary text-bg-primary">Zuletzt bearbeitete Archivgüter</h5>
+          {% for log_entry, object_description, continue_url in last_edits %}
+            <div class="p-2{% if not forloop.last %} border-bottom{% endif %}">
+              {{ object_description }}
+              <div class="d-flex justify-content-between mt-1">
+                <span class="small text-secondary my-auto ms-3">(am {{ log_entry.action_time }})</span>
+                <a href="{{ continue_url }}" class="btn btn-outline-success text-nowrap me-3">
+                  <span class="me-2">Weiterbearbeiten</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-fast-forward"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+                </a>
+              </div>
             </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% get_admin_log 10 as admin_log for_user user %}
+      {% if admin_log %}
+        <div id="recentActions">
+          <h5 class="p-2 bg-primary text-bg-primary">Letzte Änderungen</h5>
+          <ul class="actionlist">
+            {% for entry in admin_log %}
+              <li class="mb-2">
+                {% get_actionlist_item entry as item %}
+                <div title="{{ item.title }}">
+                  {{ item.image }} {{ item.change_link }}
+                  {% if entry.content_type %}<br><span class="small text-secondary ms-4">{{ entry.content_type.name|capfirst }}</span>{% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
         {% endif %}
-    {% endif %}
-</aside>
+    </div>
+  {% endif %}
 </div>
 {% endblock content %}
