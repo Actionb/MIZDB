@@ -16,6 +16,7 @@
     - moved dal package `ac` to `dbentry/admin/autocomplete`
     - moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
 - changelist action refactor: make action base views compatible with non-admin views
+- re-enable "View on site" link in admin user links
 
 ## [0.14] - 2024-01-29
 

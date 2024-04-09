@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.core import checks
 from django.http import HttpRequest, HttpResponse
-from django.urls import reverse, NoReverseMatch
+from django.urls import reverse, NoReverseMatch, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
@@ -31,8 +31,7 @@ class MIZAdminSite(admin.AdminSite):
     # TODO: move tools/index.html stuff into the base admin index.html
     index_template = 'tools/index.html'
 
-    # Do not display the “View on site” link in the header:
-    site_url = None
+    site_url = reverse_lazy("index")
     # Disable the nav sidebar:
     enable_nav_sidebar = False
 

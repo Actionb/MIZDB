@@ -30,7 +30,11 @@ class ArtikelAdmin(MIZModelAdmin):
 
 
 class URLConf:
-    urlpatterns = [path("admin/", miz_admin_site.urls), path("dummy_tool/", DummyTool.as_view(), name="dummy_tool")]
+    urlpatterns = [
+        path("admin/", miz_admin_site.urls),
+        path("dummy_tool/", DummyTool.as_view(), name="dummy_tool"),
+        path("", View.as_view(), name="index")
+    ]
 
 
 class TestMIZAdminSite(RequestTestCase):
