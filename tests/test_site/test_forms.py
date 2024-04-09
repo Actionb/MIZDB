@@ -8,13 +8,13 @@ from tests.test_site.models import Band
 
 
 class BandEditForm(MIZEditForm):
-    class Meta:
+    class Meta(InlineForm.Meta):
         model = Band
         fields = forms.ALL_FIELDS
 
 
 class BandInlineForm(InlineForm):
-    class Meta:
+    class Meta(InlineForm.Meta):
         model = Band
         fields = forms.ALL_FIELDS
 

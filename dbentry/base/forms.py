@@ -1,12 +1,10 @@
 import re
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING, TypeAlias, TypeVar
 
 from django import forms
-from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import ValidationError
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
-from django.forms import Form
 from django.utils.translation import gettext_lazy
 
 from dbentry.utils.text import snake_case_to_spaces
@@ -14,6 +12,17 @@ from dbentry.validators import DiscogsURLValidator
 
 # Default attrs for the TextArea form widget
 ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
+
+if TYPE_CHECKING:  # pragma: no cover
+    # For static type checking purposes, have the mixins extend the concrete
+    # base class that they are designed to be used with.
+    FormMixinBase: TypeAlias = forms.Form
+    ModelFormMixinBase: TypeAlias = forms.ModelForm
+else:
+    FormMixinBase = object
+    ModelFormMixinBase = object
+
+MinMaxForm = TypeVar("MinMaxForm", bound=Union["MinMaxRequiredFormMixin", forms.Form])
 
 
 class FieldGroup:
@@ -26,7 +35,7 @@ class FieldGroup:
 
     def __init__(
             self,
-            form: Form,
+            form: MinMaxForm,
             *,
             fields: List[str],
             min_fields: Optional[int] = None,
@@ -77,14 +86,20 @@ class FieldGroup:
         Return True, if a minimum is set and the number of fields with values
         is below that minimum.
         """
-        return bool(self.min and fields_with_values < self.min)  # mypy complains without bool
+        if self.min:
+            return fields_with_values < self.min
+        else:
+            return False
 
     def has_max_error(self, fields_with_values: int) -> bool:
         """
         Return True, if a maximum is set and the number of fields with values
         exceeds that maximum.
         """
-        return bool(self.max and fields_with_values > self.max)  # mypy complains without bool
+        if self.max:
+            return fields_with_values > self.max
+        else:
+            return False
 
     def check(self) -> Tuple[bool, bool]:
         """Check whether the limits were exceeded."""
@@ -96,7 +111,7 @@ class FieldGroup:
         return min_error, max_error
 
 
-class MinMaxRequiredFormMixin(object):
+class MinMaxRequiredFormMixin(FormMixinBase):
     """
     A mixin that allows setting groups of fields to be required.
 
@@ -144,7 +159,7 @@ class MinMaxRequiredFormMixin(object):
             "Too much spam!"
     """
 
-    minmax_required: List[dict] = None  # type: ignore[assignment]
+    minmax_required: List[dict]
     min_error_message: str = gettext_lazy(
         'Bitte mindestens {min!s} dieser Felder ausfüllen: {fields}.'
     )
@@ -152,13 +167,13 @@ class MinMaxRequiredFormMixin(object):
         'Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.'
     )
 
-    def __init__(self: Form, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.default_error_messages = {
             'min': self.min_error_message,
             'max': self.max_error_message
         }
 
-        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
+        super().__init__(*args, **kwargs)
 
         self._groups = []
         # Check that field names specified in the group_kwargs are present
@@ -183,7 +198,7 @@ class MinMaxRequiredFormMixin(object):
             #  (remember to update the docstrings (f.ex. of get_group_error_messages))
             self._groups.append(group_kwargs)
 
-    def get_groups(self: Form) -> Iterator[FieldGroup]:
+    def get_groups(self) -> Iterator[FieldGroup]:
         """Instantiate and yield the helper objects."""
         for group_kwargs in self._groups:
             yield FieldGroup(self, **group_kwargs)
@@ -195,9 +210,9 @@ class MinMaxRequiredFormMixin(object):
                 self.add_group_error('min', group)
             if max_error:
                 self.add_group_error('max', group)
-        return super().clean()  # type: ignore[misc]
+        return super().clean()
 
-    def add_group_error(self: Form, error_type: str, group: FieldGroup) -> None:
+    def add_group_error(self, error_type: str, group: FieldGroup) -> None:
         self.add_error(None, group.error_messages[error_type])
 
     def get_error_message_format_kwargs(self, group: FieldGroup) -> dict:
@@ -208,7 +223,7 @@ class MinMaxRequiredFormMixin(object):
             'max': group.max or '0',
         }
 
-    def _get_message_field_names(self: Form, group: FieldGroup) -> str:
+    def _get_message_field_names(self, group: FieldGroup) -> str:
         """Get a string of the verbose names of the group's fields."""
         return ", ".join(
             self.fields[field_name].label or snake_case_to_spaces(field_name).title()
@@ -264,47 +279,15 @@ class MinMaxRequiredFormMixin(object):
         return messages
 
 
-class MIZAdminFormMixin(object):
-    """A form mixin that adds django admin media and fieldsets."""
-
-    class Media:
-        css = {
-            'all': ('admin/css/forms.css',)
-        }
-
-    def __iter__(self: Form) -> Fieldset:
-        fieldsets = getattr(
-            self, 'fieldsets',
-            [(None, {'fields': list(self.fields.keys())})]
-        )
-        for name, options in fieldsets:
-            yield Fieldset(self, name, **options)
-
-    @property
-    def media(self) -> forms.Media:
-        # Collect the media needed for all the widgets.
-        media = super().media  # type: ignore[misc]
-        # Collect the media needed for all fieldsets.
-        # This will add collapse.js if necessary
-        # (from django.contrib.admin.options.helpers.Fieldset).
-        for fieldset in self.__iter__():
-            media += fieldset.media
-        return media
-
-
-class MIZAdminForm(MIZAdminFormMixin, Form):
-    pass
-
-
-class DynamicChoiceFormMixin(object):
+class DynamicChoiceFormMixin(FormMixinBase):
     """Set formfield choices after init from keyword arguments."""
 
     def __init__(self, *args: Any, choices: Optional[dict] = None, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
+        super().__init__(*args, **kwargs)
         if choices:  # pragma: no cover
             self.set_choices(choices)
 
-    def set_choices(self: Form, choices: dict) -> None:
+    def set_choices(self, choices: dict) -> None:
         """
         Set choices for choice fields that do not already have choices.
 
@@ -343,19 +326,18 @@ class DynamicChoiceFormMixin(object):
                 fld.choices = list(field_choices)
 
 
-class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: could make this a mixin
+class DeleteDuplicatesMixin(ModelFormMixinBase):
     """
-    A model form class that flags forms for deletion when the form's model
+    A model form mixin that flags forms for deletion when the form's model
     instance would violate uniqueness.
 
-    Intended to be used as base form class for inline formsets such as
-    model admin inlines.
+    Intended to be used with inline formsets such as model admin inlines.
     """
 
     def validate_unique(self) -> None:
         """
-        Call the instance's validate_unique() method and, if unique validity is
-        violated, plan the deletion of this inline formset form.
+        Call the instance's validate_unique() method and plan the deletion of
+        this inline formset form, if unique constraints are violated.
         """
         exclude = self._get_validation_exclusions()
         try:
@@ -365,7 +347,12 @@ class MIZAdminInlineFormBase(forms.ModelForm):  # TODO: could make this a mixin
             self.cleaned_data['DELETE'] = True
 
 
-class DiscogsFormMixin(object):
+class InlineFormBase(DeleteDuplicatesMixin, forms.ModelForm):
+    """Base model form class to be used in inline formsets."""
+    pass
+
+
+class DiscogsFormMixin(FormMixinBase):
     """
     A mixin for fields handling data from discogs.
 
@@ -382,16 +369,16 @@ class DiscogsFormMixin(object):
     url_field_name: str = ''
     release_id_field_name: str = ''
 
-    def __init__(self: Form, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
         if self.url_field_name in self.fields:
             self.fields[self.url_field_name].validators.append(
                 DiscogsURLValidator()
             )
 
-    def clean(self: Form) -> dict:
+    def clean(self) -> dict:
         """Validate and clean release_id and discogs_url."""
-        if self.url_field_name in self._errors or self.release_id_field_name in self._errors:  # pragma: no cover  # noqa
+        if self.url_field_name in self._errors or self.release_id_field_name in self._errors:  # pragma: no cover
             return self.cleaned_data
 
         # Reminder: cleaned_data['release_id'] could also be integer 0 or None:

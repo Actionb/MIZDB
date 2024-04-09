@@ -29,32 +29,32 @@ class TestReplace(DataTestCase):
             replacements=[self.replacement1, self.replacement2]
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.band1.genre.order_by('genre'),
             [self.replacement1, self.replacement2]
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.band2.genre.order_by('genre'),
             [self.extra, self.replacement1, self.replacement2]
         )
-        self.assertQuerysetEqual(self.band3.genre.order_by('genre'), [self.extra])
+        self.assertQuerySetEqual(self.band3.genre.order_by('genre'), [self.extra])
 
         self.assertCountEqual(changes, [self.band1, self.band2])
 
     def test_replace(self):
         changes = replace(obj=self.initial, replacements=[self.replacement1, self.replacement2])
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.band1.genre.order_by('genre'),
             [self.replacement1, self.replacement2]
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.band2.genre.order_by('genre'),
             [self.extra, self.replacement1, self.replacement2]
         )
-        self.assertQuerysetEqual(self.band3.genre.order_by('genre'), [self.extra])
+        self.assertQuerySetEqual(self.band3.genre.order_by('genre'), [self.extra])
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.musiker.genre.order_by('genre'),
             [self.replacement1, self.replacement2]
         )
@@ -68,7 +68,7 @@ class TestReplace(DataTestCase):
         (i.e. a 'forward' ManyToMany)
         """
         changes = replace(self.band1, [self.band2, self.band3])
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.audio.band.order_by('band_name'),
             [self.band2, self.band3]
         )
@@ -88,5 +88,5 @@ class TestReplace(DataTestCase):
         self.assertTrue(Genre.objects.filter(pk=self.initial.pk).exists())
         self.assertTrue(Genre.objects.filter(pk=self.replacement1.pk).exists())
         self.assertTrue(Genre.objects.filter(pk=self.replacement2.pk).exists())
-        self.assertQuerysetEqual(self.band1.genre.order_by('genre'), [self.initial])
-        self.assertQuerysetEqual(self.band2.genre.order_by('genre'), [self.extra, self.initial])
+        self.assertQuerySetEqual(self.band1.genre.order_by('genre'), [self.initial])
+        self.assertQuerySetEqual(self.band2.genre.order_by('genre'), [self.extra, self.initial])

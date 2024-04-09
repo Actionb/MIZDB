@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Iterable
 
 from django.core import checks, exceptions
 from django.db import models
@@ -87,7 +87,7 @@ class BaseModel(models.Model):
         return {}
 
     @classmethod
-    def overview(cls, queryset, *annotations):
+    def overview(cls, queryset: models.QuerySet, *annotations: Iterable) -> models.QuerySet:
         """
         Add annotations and optimizations useful for an overview over objects
         of this model to the given queryset.

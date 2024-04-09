@@ -16,8 +16,10 @@ from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
 from dbentry.query import AusgabeQuerySet
 from dbentry.utils.models import get_model_fields, get_model_relations
-from dbentry.utils.text import concat_limit
 from dbentry.utils.query import to_array, array_to_string, limit, string_list
+from dbentry.utils.text import concat_limit
+
+BESTAND_MODEL_NAME = 'dbentry.Bestand'  # TODO: move to models.py
 
 
 # TODO: use Func(<concatenated array>, Value(50), function="left") in place of "concat_limit()"

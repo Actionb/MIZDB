@@ -41,7 +41,6 @@ from dbentry.utils.models import get_model_relations
 from dbentry.utils.permission import (
     has_view_permission,
     get_perm,
-    has_delete_permission,
     has_change_permission,
     has_add_permission,
 )
@@ -596,6 +595,7 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
           the initial request for a changelist.
         - prioritize_search_ordering (bool): if True, do not override the
           ordering set by queryset.search()
+        - actions (list): a list of changelist action callables
     """
 
     template_name = "mizdb/changelist.html"
@@ -607,6 +607,7 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
 
     order_unfiltered_results = True
     prioritize_search_ordering = True
+    actions = []
 
     def has_permission(self):
         return has_view_permission(self.request.user, self.opts)
@@ -715,9 +716,22 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         paginator = ctx["paginator"]
-        actions = []
+
+        # Collect the actions. Single out the delete and merge action;
+        # they are by default rendered as a button while the rest is rendered
+        # in a submenu.
+        delete_action = merge_action = None
+        other_actions = []
         for name, (_func, text, title) in self.get_actions().items():
-            actions.append({"value": name, "text": text, "title": title})
+            action = {"value": name, "text": text, "title": title}
+            if name == "delete":
+                delete_action = action
+            elif name == "merge_records":
+                merge_action = action
+            else:
+                other_actions.append(action)
+        actions = {"delete_action": delete_action, "merge_action": merge_action, "other_actions": other_actions}
+
         ctx.update(
             {
                 "title": self.opts.verbose_name_plural,
@@ -735,6 +749,12 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
                 "actions": actions,
             }
         )
+        # Provide the template with the URL for the view that syncs the
+        # changelist selection:
+        try:
+            ctx["cls_sync_url"] = reverse("changelist_selection_sync")
+        except NoReverseMatch:
+            pass
         return ctx
 
     def get_empty_value_display(self):
@@ -938,17 +958,26 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
         return result_items
 
     def get_actions(self):
-        actions = {}
-        if has_delete_permission(self.request.user, self.opts):
-            from dbentry.site.views.delete import DeleteSelectedView
+        """
+        Return a dictionary of the changelist actions available to the user.
 
-            def delete(view, request, queryset):
-                return DeleteSelectedView.as_view(model=view.model, queryset=queryset)(request)
+        The dictionary's keys are the "internal names" of the actions.
+        The values are 3-tuples of (view function, label text, description).
+        """
+        from dbentry.site.views import actions as _actions
 
-            actions["delete"] = (delete, "Löschen", "Ausgewählte Objekte löschen")
+        actions = OrderedDict()
+        for action in [_actions.delete, _actions.merge_records] + self.actions:
+            name = action.__name__
+            has_permission = getattr(action, "has_permission", None)
+            label = getattr(action, "label", name)
+            description = getattr(action, "description", "")
+            if callable(has_permission) and not has_permission(self.request.user, self.opts):
+                continue
+            actions[name] = (action, label, description)
         return actions
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *_args, **_kwargs):
         """Handle a changelist action."""
         try:
             selected_action = request.POST["changelist_action"]

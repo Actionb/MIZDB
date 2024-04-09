@@ -129,7 +129,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
             result[pk] = item_dict
         return result
 
-    def overview(self, *annotations) -> 'MIZQuerySet':
+    def overview(self, *annotations: Iterable) -> QuerySet:
         """Return a queryset that provides a comprehensive overview of the objects."""
         return self.model.overview(self, *annotations)
 
@@ -202,7 +202,7 @@ def build_date(
 ) -> Optional[datetime.date]:
     """
     Helper function for AusgabeQuerySet.increment_jahrgang to build a
-    datetime.date instance out of lists of years and month ordinals.
+    datetime.date() instance out of lists of years and month ordinals.
     """
     # Filter out None values that may have been returned by a values_list call.
     years = list(filter(None, years))
@@ -230,8 +230,8 @@ def build_date(
 class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
 
-    def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
-        clone = super()._chain(**kwargs)
+    def _chain(self) -> 'AusgabeQuerySet':
+        clone = super()._chain()
         clone.chronologically_ordered = self.chronologically_ordered
         return clone
 

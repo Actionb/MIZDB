@@ -36,7 +36,7 @@ span.id-container {
 $input-max-width: 644px;
 $number-input-max-width: 200px;
 $textarea-height: 110px;  // textarea height to display roughly 4 rows
-$textarea-height-one-row: 38px;  // textarea height to display only a single row
+$textarea-height-one-row: 31px;  // textarea height to display only a single row
 
 .required > label {
     font-weight: $font-weight-bold;
@@ -48,6 +48,10 @@ textarea {
 
 .textarea-rows-1 {
     height: $textarea-height-one-row;
+}
+
+.textarea-rows-2 {
+    height: $textarea-height-one-row * 2;
 }
 
 // Limit the width of form controls.
@@ -95,7 +99,7 @@ form.search-form div.ts-wrapper {
     position: fixed;
     bottom: 0;
     right: 15%;
-    width: 350px;
+    width: 450px;
 }
 
 #selected-items-container {

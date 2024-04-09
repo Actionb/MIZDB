@@ -2,15 +2,14 @@ from collections import OrderedDict
 from typing import Any, List, Optional, Type, Union
 
 from django import forms
-from django.conf import settings
 from django.core import exceptions
 from django.db.models import Field, Model, lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 
-from dbentry.ac.widgets import make_widget as make_dal_widget
+from dbentry.admin.autocomplete.widgets import make_widget as make_dal_widget
+from dbentry.admin.forms import MIZAdminFormMixin
 from dbentry.autocomplete.widgets import make_widget as make_mizselect_widget
-from dbentry.base.forms import MIZAdminFormMixin
 from dbentry.fields import PartialDate
 from dbentry.search import utils as search_utils
 
@@ -23,7 +22,7 @@ class RangeWidget(forms.MultiWidget):
 
     class Media:
         css = {
-            'all': ('admin/css/rangewidget.css',)
+            'all': ('mizdb/css/rangewidget.css',)
         }
 
     template_name = 'rangewidget.html'

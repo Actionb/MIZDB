@@ -3,7 +3,7 @@ from django.urls import path, include
 
 from dbentry.site.registry import miz_site
 from dbentry.site.views.auth import LoginView, PasswordChangeView, PasswordChangeDoneView
-from dbentry.site.views.list import Index
+from dbentry.site.views.list import Index, changelist_selection_sync
 from dbentry.site.views.search import SearchbarSearch, SiteSearchView
 
 urlpatterns = [
@@ -17,4 +17,6 @@ urlpatterns = [
     # Search
     path("searchbar/", SearchbarSearch.as_view(), name="searchbar_search"),
     path("search/", SiteSearchView.as_view(), name="site_search"),
+    # Changelist selection
+    path("cls_sync/", changelist_selection_sync, name="changelist_selection_sync"),
 ]

@@ -15,7 +15,8 @@
     <div id="object-info" class="col">
         {% block content_title %}
             {% if object.pk %}
-                <h1>{{ title }}: {{ object|truncatechars:50 }}<span class="ms-2 fs-6 text-nowrap">(id: <span class="id-container">{{ object.pk }}</span>)</span></h1>
+                <h1>{{ title }}<span class="ms-2 fs-6 text-nowrap">(id: <span class="id-container">{{ object.pk }}</span>)</span></h1>
+                <h2>{{ object|truncatechars:50 }}</h2>
             {% else %}
                 {{ block.super }}
             {% endif %}

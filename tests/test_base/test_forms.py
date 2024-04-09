@@ -1,12 +1,11 @@
 from unittest import mock
 
 from django import forms
-from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
 from dbentry.base.forms import (
-    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, MIZAdminFormMixin, MIZAdminInlineFormBase,
+    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, DeleteDuplicatesMixin,
     MinMaxRequiredFormMixin
 )
 from tests.case import MIZTestCase
@@ -178,32 +177,6 @@ class MinMaxRequiredFormMixinTest(MIZTestCase):
         callback_mock.assert_called_with(form, group, {}, msg_format_kwargs)
 
 
-class MIZAdminFormMixinTest(MIZTestCase):
-    class TestForm(MIZAdminFormMixin, forms.Form):
-        first_name = forms.CharField()
-        last_name = forms.CharField(required=True)
-
-    def test_iter(self):
-        """Assert that __iter__ returns Fieldset instances."""
-        for fs in self.TestForm().__iter__():
-            self.assertIsInstance(fs, Fieldset)
-
-    def test_media_adds_collapse_js(self):
-        """
-        The form's media should contain collapse.js if any of the fieldsets
-        have 'collapse' in their classes.
-        """
-        form = self.TestForm()
-        form.fieldsets = (
-            ['Name', {'fields': ['first_name', 'last_name'], 'classes': ()}],
-        )
-        self.assertNotIn('admin/js/collapse.js', form.media._js)
-        form.fieldsets = (
-            ['Name', {'fields': ['first_name', 'last_name'], 'classes': ('collapse',)}],
-        )
-        self.assertIn('admin/js/collapse.js', form.media._js)
-
-
 class DynamicChoiceFormMixinTest(MIZTestCase):
     class TestForm(DynamicChoiceFormMixin, forms.Form):
         good = forms.ChoiceField(choices=[])
@@ -267,7 +240,9 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
             form.set_choices(choices=[1, 2, 3])
 
 
-class MIZAdminInlineFormBaseTest(MIZTestCase):
+class TestDeleteDuplicatesMixin(MIZTestCase):
+    class InlineFormClass(DeleteDuplicatesMixin, forms.ModelForm):
+        pass
 
     @classmethod
     def setUpTestData(cls):
@@ -276,7 +251,7 @@ class MIZAdminInlineFormBaseTest(MIZTestCase):
         cls.m2m = MusikerAudioM2M.objects.create(audio=cls.audio, musiker=cls.musiker)  # noqa
 
     def test_validate_unique(self):
-        """Assert that MIZAdminInlineFormBase flags duplicates for deletion."""
+        """Assert that DeleteDuplicatesMixin flags duplicates for deletion."""
         data = {
             'musikeraudiom2m_set-INITIAL_FORMS': '1',
             'musikeraudiom2m_set-TOTAL_FORMS': '2',
@@ -289,7 +264,7 @@ class MIZAdminInlineFormBaseTest(MIZTestCase):
         }
         formset_class = forms.inlineformset_factory(
             parent_model=Audio, model=MusikerAudioM2M,
-            form=MIZAdminInlineFormBase, fields=forms.ALL_FIELDS, extra=1,
+            form=self.InlineFormClass, fields=forms.ALL_FIELDS, extra=1,
         )
         formset = formset_class(instance=self.audio, data=data)
         original, duplicate = formset.forms

@@ -20,6 +20,16 @@ def changelist(page):
 
 
 @pytest.fixture
+def changelist_results():
+    """Return the table rows of the changelist results."""
+
+    def inner(changelist):
+        return changelist.locator("#result_list tbody tr")
+
+    return inner
+
+
+@pytest.fixture
 def artikel_data():
     magazin = make(_models.Magazin, magazin_name="Testmagazin")
     ausgabe = make(_models.Ausgabe, magazin=magazin, ausgabejahr__jahr="2023", ausgabemonat__monat__monat="Oktober")
@@ -166,6 +176,22 @@ def selected_object(selected_pk):
 
 
 @pytest.fixture
+def delete_action_button(changelist):
+    """Return the button for the 'delete' action."""
+    elem = changelist.get_by_title(re.compile("Ausgewählte Objekte löschen"))
+    elem.wait_for(state="attached")
+    return elem
+
+
+@pytest.fixture
+def merge_action_button(changelist):
+    """Return the button for the 'merge' action."""
+    elem = changelist.get_by_title(re.compile("ausgewählten Objekte in einziges Objekt zusammenfügen"))
+    elem.wait_for(state="attached")
+    return elem
+
+
+@pytest.fixture
 def action_selection_button(changelist):
     """Return the button that opens the action selection dropdown."""
     elem = changelist.get_by_text(re.compile("Aktion"))
@@ -209,6 +235,7 @@ def test_selection(
     select_all_checkbox,
     clear_all,
 ):
+    """Test selecting rows and using the selection container/panel."""
     # Select the first row.
     cb = selection_checkboxes.first
     cb.click()
@@ -294,7 +321,14 @@ def test_no_view_perms(login_noperms_user, changelist, selection_checkbox_locato
 
 
 @pytest.mark.usefixtures("test_data", "login_superuser")
-def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_panel, get_action_button):
+def test_delete_action(
+    changelist,
+    selection_checkboxes,
+    selected_pk,
+    selection_panel,
+    delete_action_button,
+    selected_items,
+):
     """
     Assert that the deletion confirmation page is shown for the selected items
     and that they will be deleted if confirmed.
@@ -308,8 +342,7 @@ def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_
 
     # Select the delete action:
     selection_panel(changelist).click()
-    with changelist.expect_request_finished():
-        get_action_button("Löschen").click()
+    delete_action_button.click()
 
     # Should be on the delete confirmation page now. Confirm the deletion:
     expect(changelist).to_have_title(re.compile("Löschen"))
@@ -318,9 +351,20 @@ def test_delete_action(changelist, selection_checkboxes, selected_pk, selection_
     expect(changelist).to_have_title(re.compile("Übersicht"))
     assert not _models.Artikel.objects.filter(pk__in=selected_pks).exists()
 
+    # The deleted items should not be in the selection:
+    expect(selection_panel(changelist)).not_to_be_visible()
+    expect(selected_items(changelist)).to_have_count(0)
+
 
 @pytest.mark.usefixtures("test_data", "login_superuser")
-def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, selection_panel, get_action_button):
+def test_delete_action_abort(
+    changelist,
+    selection_checkboxes,
+    selected_pk,
+    selection_panel,
+    delete_action_button,
+    selected_items,
+):
     """
     Assert that clicking the abort button on the confirmation page does not
     delete the selected items.
@@ -334,12 +378,123 @@ def test_delete_action_abort(changelist, selection_checkboxes, selected_pk, sele
 
     # Select the delete action:
     selection_panel(changelist).click()
-    with changelist.expect_request_finished():
-        get_action_button("Löschen").click()
+    delete_action_button.click()
 
-    # Should be on the delete confirmation page now. Confirm the deletion:
+    # Should be on the delete confirmation page now. Abort:
     expect(changelist).to_have_title(re.compile("Löschen"))
     with changelist.expect_request_finished():
         changelist.get_by_role("button", name=re.compile("Nein")).click()
     expect(changelist).to_have_title(re.compile("Übersicht"))
     assert _models.Artikel.objects.filter(pk__in=selected_pks).exists()
+
+    # The selected items should still be in the selection:
+    expect(selection_panel(changelist)).to_be_visible()
+    expect(selected_items(changelist)).to_have_count(2)
+
+
+@pytest.fixture
+def merge_data():
+    """Test data for the merge action tests."""
+    magazin = make(_models.Magazin)
+    ausgabe = make(_models.Ausgabe, magazin=magazin)
+    primary = make(_models.Artikel, schlagzeile="Primary", ausgabe=ausgabe)
+    secondary1 = make(_models.Artikel, schlagzeile="Secondary1", beschreibung="foo", ausgabe=ausgabe)
+    secondary2 = make(_models.Artikel, schlagzeile="Secondary2", beschreibung="bar", ausgabe=ausgabe)
+    return primary, secondary1, secondary2
+
+
+@pytest.mark.usefixtures("login_superuser")
+def test_merge_action(
+    merge_data,
+    changelist,
+    select_all_checkbox,
+    selection_panel,
+    merge_action_button,
+    selection_checkboxes,
+    selected_items,
+    changelist_results,
+):
+    """User merges three objects."""
+    primary, secondary1, _secondary2 = merge_data
+    select_all_checkbox.click()
+    selection_panel(changelist).click()
+    merge_action_button.click()
+
+    # Should be on page for step 1 now:
+    expect(changelist).to_have_title(re.compile("Merge.*step 1"))
+
+    # Select the primary and proceed:
+    changelist.get_by_role("row", name=re.compile(primary.schlagzeile)).get_by_role("checkbox").check()
+    with changelist.expect_request_finished():
+        changelist.get_by_role("button", name=re.compile("Weiter")).click()
+
+    # Should be on the step 2 (conflict resolution) now:
+    expect(changelist).to_have_title(re.compile("Merge.*step 2"))
+
+    # Select a value to use for the 'beschreibung' field, and proceed:
+    changelist.get_by_label(secondary1.beschreibung).check()
+    with changelist.expect_request_finished():
+        changelist.get_by_role("button", name=re.compile("Weiter")).click()
+
+    # Should be back on the changelist, with the updated primary as the only
+    # result:
+    expect(changelist).to_have_title(re.compile("Übersicht"))
+    results = changelist_results(changelist)
+    expect(results).to_have_count(1)
+    expect(results.first.get_by_role("link")).to_have_text(re.compile(primary.schlagzeile))
+
+    # Check that the secondary instances have been removed from the selection
+    # panel:
+    expect(selection_panel(changelist)).to_be_visible()
+    selection_panel(changelist).click()
+    items = selected_items(changelist)
+    expect(items).to_have_count(1)
+    expect(items.get_by_role("link", name=re.compile(primary.schlagzeile))).to_be_visible()
+
+    # Check the model instance:
+    assert _models.Artikel.objects.filter(pk=primary.pk).exists()
+    primary.refresh_from_db()
+    assert primary.schlagzeile == "Primary"
+    assert primary.beschreibung == "foo"
+
+
+@pytest.mark.usefixtures("login_superuser")
+def test_merge_action_no_expand(
+    merge_data,
+    changelist,
+    select_all_checkbox,
+    selection_panel,
+    merge_action_button,
+    selection_checkboxes,
+    selected_items,
+    changelist_results,
+):
+    """User merges three objects, without 'expanding the primary'."""
+    primary, *_ = merge_data
+    select_all_checkbox.click()
+    selection_panel(changelist).click()
+    merge_action_button.click()
+
+    # Should be on page for step 1 now:
+    expect(changelist).to_have_title(re.compile("Merge.*step 1"))
+    changelist.get_by_label(re.compile("erweitern")).uncheck()
+
+    # Select the primary and proceed:
+    changelist.get_by_role("row", name=re.compile(primary.schlagzeile)).get_by_role("checkbox").check()
+    with changelist.expect_request_finished():
+        changelist.get_by_role("button", name=re.compile("Weiter")).click()
+
+    # Should be back on the changelist (there cannot be conflicts with
+    # expand_primary=False), with the updated primary as the only result:
+    expect(changelist).to_have_title(re.compile("Übersicht"))
+    results = changelist_results(changelist)
+    expect(results).to_have_count(1)
+    expect(results.first.get_by_role("link")).to_have_text(re.compile(primary.schlagzeile))
+
+    # Check that the secondary instances have been removed from the selection
+    # panel:
+    expect(selection_panel(changelist)).to_be_visible()
+    selection_panel(changelist).click()
+    items = selected_items(changelist)
+    expect(items).to_have_count(1)
+    expect(items.get_by_role("link", name=re.compile(primary.schlagzeile))).to_be_visible()

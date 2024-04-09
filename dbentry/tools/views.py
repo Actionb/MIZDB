@@ -16,15 +16,15 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
 
-from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
+from dbentry.admin.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.tools.decorators import register_tool
 from dbentry.tools.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
 from dbentry.utils.html import get_obj_link, create_hyperlink
 from dbentry.utils.models import get_model_from_string, get_model_relations
-from dbentry.utils.url import get_changelist_url
 from dbentry.utils.query import string_list
+from dbentry.utils.url import get_changelist_url
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 
@@ -157,19 +157,24 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         kwargs['data'] = self.request.GET
         return kwargs
 
-    def build_duplicates_items(self, form: Form) -> list:
+    def build_duplicates_items(self, form: Form) -> list[tuple[Model, str, list]]:
         """
         Prepare the content of the table that lists the duplicates.
 
-        Returns a list of 2-tuples. The first item of that 2-tuple contains
-        table date for the duplicate instances. The second item is a link to the
-        changelist of those instances. Example:
-        [
-            (
+        Returns a list of 2-tuples for each group of duplicates found.
+
+        The first item of that 2-tuple is a list of 3-tuples, one for each
+        duplicate of that group, and the second item is a link to a changelist
+        filtered to display the group.
+
+        The 3-tuple contains a reference to the model instance, a link to the
+        change page, and the values to display for a given duplicate.
+
+        Example:
+            [(
                 [(model instance, change page URL, display values), ...],
                 <link to the changelist of the duplicate instances>
-            ), ...
-        ]
+            ), ...]
         """
         # Optimize the query by using StringAgg on values for many_to_many and
         # many_to_one relations. Use select_related for many_to_one relations.
@@ -275,7 +280,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     breadcrumbs_title = title = 'Unreferenzierte Datensätze'
 
     def get_form_kwargs(self) -> dict:
-        """Use request.GET as form data instead of request.POST."""
+        """Use request GET as form data instead of request POST."""
         kwargs = super().get_form_kwargs()
         if self.submit_name in self.request.GET:
             # Only include data when the search button has been pressed to
@@ -401,7 +406,7 @@ class SiteSearchView(views.generic.TemplateView):
             context['results'] = self.get_result_list(q)
         return self.render_to_response(context)
 
-    def _get_models(self, app_label: str = '') -> List[Model]:
+    def _get_models(self, app_label: str = '') -> List[Type[Model]]:
         """
         Return a list of models to be queried.
 
@@ -412,7 +417,7 @@ class SiteSearchView(views.generic.TemplateView):
             app_label (str): name of the app whose models should be queried
         """
 
-        def has_permission(user, model):
+        def has_permission(user, model):  # type: ignore[no-untyped-def]
             opts = model._meta
             codename_view = get_permission_codename('view', opts)
             codename_change = get_permission_codename('change', opts)
@@ -427,7 +432,7 @@ class SiteSearchView(views.generic.TemplateView):
             if has_permission(self.request.user, model)
         ]
 
-    def _search(self, model: Model, q: str) -> Any:
+    def _search(self, model: Type[Model], q: str) -> Any:
         """Search the given model for the search term ``q``."""
         raise NotImplementedError("The view class must implement the search.")  # pragma: no cover
 
@@ -453,12 +458,14 @@ class SiteSearchView(views.generic.TemplateView):
         return results
 
 
+# TODO: MIZSiteSearch requires a permission check
 @register_tool(
     url_name='tools:site_search',
     index_label='Datenbank durchsuchen',
     superuser_only=False
 )
 class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
+    """Site search for the admin page."""
     app_label = 'dbentry'
 
     title = 'Datenbank durchsuchen'
@@ -478,6 +485,7 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
         return model.objects.search(q, ranked=False)  # pragma: no cover
 
 
+# TODO: remove SearchbarSearch - not used
 class SearchbarSearch(MIZSiteSearch):
 
     def get(self, request: HttpRequest, **kwargs: Any) -> JsonResponse:

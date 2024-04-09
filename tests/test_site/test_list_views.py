@@ -1,10 +1,138 @@
 """Tests for the (change)list views."""
+import json
+from unittest.mock import patch, Mock
 
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
+from django.utils.http import urlencode
+from django.views import View
 
+from dbentry import models as _models
+from dbentry.site.registry import Registry, register_changelist, ModelType
 from dbentry.site.views import list
-from tests.case import ViewTestCase
+from dbentry.site.views.list import _get_continue_url
+from tests.case import ViewTestCase, RequestTestCase, DataTestCase
 from tests.model_factory import make
+from tests.test_site.models import Band, Musician, Genre
+
+
+class TestChangelistSelectionSync(DataTestCase, RequestTestCase):
+    model = Band
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model)
+        super().setUpTestData()
+
+    def test_changelist_selection_sync(self):
+        selected = json.dumps([str(self.obj.pk), "-1"])
+        opts = self.model._meta
+        request = self.get_request(data={"model": f"{opts.app_label}.{opts.model_name}", "ids": selected})
+        response = list.changelist_selection_sync(request)
+        data = json.loads(response.content)
+        self.assertEqual(data["remove"], ["-1"])
+
+
+@patch("dbentry.site.views.list.get_change_url")
+class TestIndexFuncs(RequestTestCase):
+    """Test functions that the IndexView is using."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.band = make(_models.Band)
+        cls.artikel = make(_models.Artikel)
+
+    def test_get_continue_url(self, get_url_mock):
+        get_url_mock.return_value = "Band URL"
+        self.assertEqual(_get_continue_url(self.get_request(), self.band), "Band URL")
+        get_url_mock.assert_called()
+
+    @patch("dbentry.site.views.list.add_preserved_filters")
+    def test_get_continue_url_artikel(self, add_filters_mock, get_url_mock):
+        get_url_mock.return_value = "Artikel URL"
+        _get_continue_url(self.get_request(), self.artikel)
+        add_filters_mock.assert_called()
+        _, kwargs = add_filters_mock.call_args
+        filters = f"ausgabe__magazin={self.artikel.ausgabe.magazin.pk}&ausgabe={self.artikel.ausgabe.pk}"
+        expected_context = {
+            "opts": self.artikel._meta,
+            "preserved_filters": urlencode({"_changelist_filters": filters}),
+        }
+        self.assertEqual(kwargs["base_url"], "Artikel URL")
+        self.assertEqual(kwargs["context"], expected_context)
+
+
+test_site = Registry()
+
+
+@register_changelist([Band, Musician], category=ModelType.ARCHIVGUT, site=test_site)
+class ChangelistView(View):
+    pass
+
+
+class TestIndex(ViewTestCase):
+    view_class = list.Index
+
+    @classmethod
+    def add_log(cls, obj, action_flag):
+        return LogEntry.objects.log_action(
+            user_id=cls.super_user.pk,
+            content_type_id=ContentType.objects.get_for_model(obj).pk,
+            object_id=obj.pk,
+            object_repr="Band 1",
+            action_flag=action_flag,
+        )
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.band1 = band1 = make(Band, name="Band 1")
+        cls.band2 = band2 = make(Band, name="Band 2")
+        deleted = make(Musician, name="Deleted")
+        # Model Genre is not registered as category 'Archivgut', so logs for
+        # that should not show up in 'last edits'
+        genre = make(Genre)
+
+        cls.add_log(band1, ADDITION)
+        cls.band1_log = cls.add_log(band1, CHANGE)
+        cls.band2_log = cls.add_log(band2, ADDITION)
+
+        cls.add_log(deleted, ADDITION)
+        cls.add_log(deleted, DELETION)
+        deleted.delete()
+
+        cls.add_log(genre, ADDITION)
+
+    def get_descriptions(self):
+        """
+        Return the object description strings of the tuples in the 'last_edits'
+        context item list.
+        """
+        view = self.get_view(self.get_request(), site=test_site)
+        with patch("dbentry.site.views.list.super") as super_mock:
+            with patch("dbentry.site.views.list._get_continue_url", new=Mock(return_value="")):
+                super_mock.return_value.get_context_data.return_value = {}
+                last_edits = view.get_context_data()["last_edits"]
+        return [e[1] for e in last_edits]
+
+    def test_get_context_data_last_edits(self):
+        """Assert that the last edits contain the expected descriptions."""
+        descriptions = self.get_descriptions()
+        for expected_descr in ["Band: Band 2", "Band: Band 1"]:
+            with self.subTest(expected_descr=expected_descr):
+                self.assertIn(expected_descr, descriptions)
+                descriptions.pop(descriptions.index(expected_descr))
+        self.assertFalse(descriptions, msg="last edits contains unexpected additional items")
+
+    def test_get_context_data_last_edits_no_duplicates(self):
+        """Assert that last edits does not contain duplicates."""
+        self.assertEqual(self.get_descriptions().count("Band: Band 1"), 1)
+
+    def test_get_context_data_last_edits_no_deleted(self):
+        """Assert that deleted objects do not appear in the last edits."""
+        self.assertNotIn("Musician: Deleted", self.get_descriptions())
 
 
 class ListViewTestCase(ViewTestCase):

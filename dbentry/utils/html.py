@@ -1,4 +1,4 @@
-from typing import Union, Type, Optional, Iterable, Any
+from typing import Union, Type, Optional, Any, Callable, Sequence
 
 from django.db.models import Model
 from django.http import HttpRequest
@@ -29,7 +29,11 @@ def create_hyperlink(url: str, content: str, **attrs: Any) -> SafeText:
 
 
 def _get_link_for_object(
-    url_func: callable, request: HttpRequest, obj: Model, namespace: str = "", blank: bool = False
+    url_func: Callable,
+    request: HttpRequest,
+    obj: Model,
+    namespace: str = "",
+    blank: bool = False,
 ) -> Union[SafeText, str]:
     """
     Return a hyperlink for the URL returned by the url_func. Used by the
@@ -71,12 +75,12 @@ def get_view_link(request: HttpRequest, obj: Model, namespace: str = "", blank: 
 
 
 def get_changelist_link(
-        request: HttpRequest,
-        model: Union[Model, Type[Model]],
-        obj_list: Optional[Iterable[Model]] = None,
-        content: str = 'Liste',
-        namespace: str = '',
-        blank: bool = False
+    request: HttpRequest,
+    model: Union[Model, Type[Model]],
+    obj_list: Optional[Sequence[Model]] = None,
+    content: str = "Liste",
+    namespace: str = "",
+    blank: bool = False,
 ) -> SafeText:
     """
     Return a safe link to the changelist of ``model``.
@@ -87,7 +91,7 @@ def get_changelist_link(
     Args:
         request (HttpRequest): the current request
         model (model class or instance): the model of the desired changelist
-        obj_list (Iterable): an iterable of model instances. If given, the url
+        obj_list (Sequence): a sequence of model instances. If given, the url
           to the changelist will include a query parameter to filter to records
           in that list.
         content (str): the text of the link
@@ -101,18 +105,18 @@ def get_changelist_link(
 
 
 def link_list(
-        request: HttpRequest,
-        obj_list: Iterable[Model],
-        sep: str = ", ",
-        namespace: str = '',
-        blank: bool = False
+    request: HttpRequest,
+    obj_list: Sequence[Model],
+    sep: str = ", ",
+    namespace: str = "",
+    blank: bool = False,
 ) -> SafeText:
     """
     Return links to the change page of each object in ``obj_list``.
 
     Args:
         request (HttpRequest): the current request
-        obj_list (Iterable): an iterable of the model instances
+        obj_list (Sequence): a sequence of the model instances
         sep (str): the string used to separate the links
         namespace (str): namespace of the site/app
         blank (bool): if True, the links will have a target="_blank" attribute

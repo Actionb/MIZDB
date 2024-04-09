@@ -25,28 +25,114 @@ Use SearchableListView to add a search form to the changelist:
             "fields": ["name", "field_2"]
         }
 """
+import json
+
+from django.apps import apps
+from django.contrib.admin.models import LogEntry, DELETION
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
+from django.utils.decorators import method_decorator
+from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
+from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from dbentry import models as _models
-from dbentry.site.forms import boolean_select, null_boolean_select
+from dbentry.site.forms import null_boolean_select
 from dbentry.site.registry import register_changelist, ModelType
-from dbentry.site.views.base import BaseViewMixin, BaseListView
+from dbentry.site.templatetags.mizdb import add_preserved_filters
+from dbentry.site.views.base import BaseViewMixin
 from dbentry.site.views.base import SearchableListView
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
+from dbentry.utils.url import get_change_url
 
 BOOLEAN_TRUE = mark_safe(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>'  # noqa
 )
 BOOLEAN_FALSE = mark_safe(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'  # noqa
 )
 
 
+def changelist_selection_sync(request):
+    """
+    A view called by the changelist selection script that returns a JsonResponse
+    with ids of selected items that are not found in the database.
+    The script will then remove these items from the selection.
+    """
+    model = apps.get_model(request.GET["model"])
+    selection_ids = set(json.loads(request.GET.get("ids", [])))
+    existing_ids = [str(pk) for pk in model.objects.filter(pk__in=selection_ids).values_list("pk", flat=True)]
+    return JsonResponse({"remove": list(selection_ids.difference(existing_ids))})
+
+
+def _get_continue_url(request, obj):
+    """
+    Return the URL to the change page of the given object. If the object is an
+    Artikel instance, add changelist filters.
+    """
+    url = get_change_url(request, obj)
+    if not url:  # pragma: no cover
+        return ""
+    if isinstance(obj, _models.Artikel):
+        # Add useful changelist filters query parameters to the link URL
+        filters = f"ausgabe__magazin={obj.ausgabe.magazin.pk}&ausgabe={obj.ausgabe.pk}"
+        context = {"opts": obj._meta, "preserved_filters": urlencode({"_changelist_filters": filters})}
+        url = add_preserved_filters(context=context, base_url=url)
+    return url
+
+
+@method_decorator(never_cache, name="dispatch")
 class Index(BaseViewMixin, TemplateView):
     title = "Index"
     template_name = "mizdb/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Add links that allow a user to continue editing the last 'Archivgut'
+        # objects edited:
+        def get_archivgut_content_types(site):
+            """
+            Return the content type objects of the models that are categorized
+            as 'Archivgut' under the given site.
+            """
+            model_options = None
+            for category, _model_options in site.model_list:
+                if category == ModelType.ARCHIVGUT.value:
+                    model_options = _model_options
+                    break
+            if model_options is None:  # pragma: no cover
+                return None
+            return [ContentType.objects.get_for_model(opts.model) for opts in model_options]
+
+        logs = (
+            LogEntry.objects.filter(
+                user_id=self.request.user.pk, content_type__in=get_archivgut_content_types(self.site)
+            )
+            .exclude(action_flag=DELETION)
+            .order_by("-action_time")
+        )
+        seen_objects = set()
+        edits = []
+        for log_entry in logs:
+            try:
+                obj = log_entry.get_edited_object()
+            except ObjectDoesNotExist:
+                # The object has since been deleted.
+                continue
+            if obj in seen_objects:
+                continue
+
+            edits.append((log_entry, f"{obj._meta.verbose_name}: {obj}", _get_continue_url(self.request, obj)))
+            seen_objects.add(obj)
+            if len(edits) == 5:
+                break
+
+        context["last_edits"] = edits
+        return context
 
 
 ################################################################################

@@ -256,7 +256,7 @@ https://stackoverflow.com/a/30186603
 @total_ordering
 class PartialDate(datetime.date):
     """
-    A datetime.date that allows constructor arguments to be optional.
+    A datetime.date() that allows constructor arguments to be optional.
 
     Additional attribute:
         date_format (str): format code (C89 standard) string of the date;
@@ -276,8 +276,8 @@ class PartialDate(datetime.date):
         """
         Create a new PartialDate instance.
 
-        Missing arguments for year, month, day to the datetime.date constructor
-        will be substituted with minimum values (4 for year, 1 for month/day).
+        Missing arguments for year, month, day for the date constructor will be
+        substituted with minimum values (4 for year, 1 for month/day).
         The original arguments to PartialDate will be stored in the instance
         attributes ``__year``, ``__month``, ``__day``.
         """
@@ -308,6 +308,7 @@ class PartialDate(datetime.date):
             setattr(date, '__' + k, v)
 
         date.date_format = '-'.join(date_format)
+        # noinspection PyTypeChecker
         return date
 
     @classmethod
@@ -328,7 +329,7 @@ class PartialDate(datetime.date):
 
     @classmethod
     def from_date(cls, date: datetime.date) -> 'PartialDate':
-        """Create a PartialDate from a datetime.date instance."""
+        """Create a PartialDate from a datetime.date() instance."""
         year, month, day, *_ = date.timetuple()
         return cls.__new__(cls, year, month, day)
 
@@ -419,7 +420,7 @@ class PartialDateWidget(forms.MultiWidget):
                 widgets.append(forms.NumberInput(attrs={'placeholder': placeholder}))
         super().__init__(widgets=widgets, attrs=attrs)
 
-    def get_context(self, name, value, attrs):
+    def get_context(self, name: str, value: Any, attrs: Any) -> dict:
         ctx = super().get_context(name, value, attrs)
 
         # For django bootstrap to render the error message of an invalid field,
@@ -446,7 +447,7 @@ class PartialDateWidget(forms.MultiWidget):
         return [None, None, None]
 
     class Media:
-        css = {"all": ["admin/css/partialdate.css"]}
+        css = {"all": ["mizdb/css/partialdate.css"]}
 
 
 class PartialDateFormField(forms.MultiValueField):

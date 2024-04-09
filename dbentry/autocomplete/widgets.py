@@ -32,15 +32,15 @@ class MIZMediaMixin:
 
 
 def make_widget(
-        model,
-        tabular=False,
-        multiple=False,
-        namespace="",
-        can_add=True,
-        can_list=True,
-        can_edit=True,
-        **kwargs,
-    ):
+    model,
+    tabular=False,
+    multiple=False,
+    namespace="",
+    can_add=True,
+    can_list=True,
+    can_edit=True,
+    **kwargs,
+):
     """
     Factory function that creates MIZSelect autocomplete widgets.
 

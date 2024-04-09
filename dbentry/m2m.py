@@ -79,7 +79,7 @@ class m2m_datei_quelle(BaseM2MModel):
         verbose_name_plural = 'Datei-Quellen'
 
     # noinspection PyUnusedLocal,PyUnreachableCode
-    def get_quelle_art(self, as_field=True):
+    def get_quelle_art(self, as_field=True):  # type: ignore[no-untyped-def]
         return None
         foreignkey_fields = get_model_fields(
             m2m_datei_quelle, base=False, foreign=True, m2m=False
@@ -92,7 +92,7 @@ class m2m_datei_quelle(BaseM2MModel):
                     return fld.name
         return ''
 
-    def __str__(self):
+    def __str__(self):  # type: ignore[no-untyped-def]
         art = self.get_quelle_art()
         if art:
             return '{} ({})'.format(
@@ -103,6 +103,6 @@ class m2m_datei_quelle(BaseM2MModel):
 
     # noinspection PyUnusedLocal
     @classmethod
-    def _check_has_m2m_field(cls, **kwargs):
+    def _check_has_m2m_field(cls, **kwargs):  # type: ignore[no-untyped-def]
         # This is one wacky model, ignore that check for now...
         return []

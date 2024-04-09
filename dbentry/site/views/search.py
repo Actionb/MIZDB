@@ -107,6 +107,7 @@ class SearchbarSearch(SearchViewMixin, View):
     def _get_changelist_link_label(self, queryset, opts):
         return super()._get_changelist_link_label(queryset, opts).upper()
 
+    # noinspection PyUnusedLocal
     def get(self, request, **kwargs):
         data = {"results": [], "total_count": 0}
         if q := request.GET.get("q", ""):

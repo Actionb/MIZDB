@@ -30,7 +30,7 @@ def merge_records(
         original (model instance): the record that other records will be merged
             into
         queryset (QuerySet): the queryset containing the other records
-        update_data (dict): data to update (via queryset.update) original with
+        update_data (dict): data to update (via queryset.update()) original with
         expand_original (bool): whether to update the original with update_data
         user_id (int): the id of the user who prompted the merger; needed to
             log the changes in django's admin log/history

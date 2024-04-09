@@ -6,7 +6,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import override as translation_override
 
 from dbentry import models as _models
-from dbentry.ac.widgets import RemoteModelWidgetWrapper, TabularResultsMixin
+from dbentry.admin.autocomplete.widgets import RemoteModelWidgetWrapper, TabularResultsMixin
 from dbentry.forms import (ArtikelForm, AusgabeMagazinFieldForm, AutorForm, BuchForm, PersonForm)
 from dbentry.validators import DNBURLValidator
 from tests.case import ModelFormTestCase

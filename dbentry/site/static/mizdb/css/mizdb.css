@@ -31,7 +31,11 @@ textarea {
 }
 
 .textarea-rows-1 {
-  height: 38px;
+  height: 31px;
+}
+
+.textarea-rows-2 {
+  height: 62px;
 }
 
 input.form-control:not(.dropdown-input) {
@@ -71,7 +75,7 @@ form.search-form div.ts-wrapper {
   position: fixed;
   bottom: 0;
   right: 15%;
-  width: 350px;
+  width: 450px;
 }
 
 #selected-items-container {

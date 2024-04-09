@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from django.views import defaults
 
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 
 urlpatterns = [
     path("admin/", include("dbentry.urls")),  # TODO: tool views should be accessible outside of admin/
@@ -36,7 +36,7 @@ if settings.DEBUG:
 if os.environ.get("DJANGO_DEVELOPMENT"):
     # Add django debug toolbar URLs:
     try:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyPackageRequirements
         import debug_toolbar
     except ModuleNotFoundError as e:
         warnings.warn(f"Could not import django debug toolbar when setting up URL configs: {e!s}")

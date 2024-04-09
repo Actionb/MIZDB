@@ -9,7 +9,7 @@
 {% endblock extrahead %}
 
 {% block confirmation_form %}
-<form method="post" enctype="multipart/form-data">
+<form method="post">
     
     {% if wizard.steps.prev %}
         {% if wizard.steps.prev != wizard.steps.first %}

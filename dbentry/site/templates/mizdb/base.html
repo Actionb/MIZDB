@@ -20,7 +20,7 @@
     {% block extrastyle %}{% endblock extrastyle %}
     {% block extrahead %}{% endblock extrahead %}
 </head>
-<body class="{% block bodyclass %}{% endblock %}" {% if opts %}data-model="{{ opts.model_name }}"{% endif %}>
+<body class="{% block bodyclass %}{% endblock %}" {% if opts %}data-model="{{ opts.app_label }}.{{ opts.model_name }}"{% endif %}{% if cls_sync_url %} data-cls-sync-url="{{ cls_sync_url }}"{% endif %}>
 
 <!-- Header -->
 {% block header %}
@@ -109,7 +109,7 @@
     {% if messages %}
     <div id="messages-container" class="messages">
         {% for message in messages %}
-            <div class="alert alert-dismissible alert-{{ message.tags }}" role="alert">
+            <div class="alert alert-dismissible{% if message.tags == 'error' %} alert-danger{% else %} alert-{{ message.tags }}{% endif %}" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>

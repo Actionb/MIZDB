@@ -82,7 +82,7 @@ class TestFullTextSearch(DataTestCase):
             self.model, band_name='Toten Hosen',
             beschreibung='Sie gehen gerne zum Arzt.'
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             [exact, startsw, self.obj1, another],
             self.model.objects.search('Ärzte', ranked=True)
         )
@@ -98,7 +98,7 @@ class TestFullTextSearch(DataTestCase):
         """Assert that the primary key matches come first before other matches."""
         pk_match = make(self.model)
         exact = make(self.model, band_name=str(pk_match.pk))
-        self.assertQuerysetEqual([pk_match, exact], self.model.objects.search(str(pk_match.pk)))
+        self.assertQuerySetEqual([pk_match, exact], self.model.objects.search(str(pk_match.pk)))
 
     def test_ordering_not_ranked(self):
         """Assert that the results are ordered as expected with ranked=False."""
@@ -115,7 +115,7 @@ class TestFullTextSearch(DataTestCase):
             self.model, band_name='Toten Hosen',
             beschreibung='Sie gehen gerne zum Arzt.'
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             [self.obj1, other, another],
             self.queryset.search('Die Ärzte', ranked=False).order_by('-rank')
         )
@@ -211,15 +211,15 @@ class TestFullTextSearch(DataTestCase):
     def test_search_id(self):
         """Assert that instances can be found using their id."""
         q = str(self.obj1.pk)
-        self.assertQuerysetEqual(self.queryset.search(q), [self.obj1])
+        self.assertQuerySetEqual(self.queryset.search(q), [self.obj1])
 
         # A comma-separated list of ids should be allowed:
         q = f"{self.obj1.pk},{self.obj2.pk}"
-        self.assertQuerysetEqual(self.queryset.search(q), [self.obj1, self.obj2])
+        self.assertQuerySetEqual(self.queryset.search(q), [self.obj1, self.obj2])
 
         # Whitespaces should not influence the search and should be stripped:
         q = f"{self.obj1.pk}  ,     {self.obj2.pk} "
-        self.assertQuerysetEqual(self.queryset.search(q), [self.obj1, self.obj2])
+        self.assertQuerySetEqual(self.queryset.search(q), [self.obj1, self.obj2])
 
     def test_search_id_not_all_numerical_values(self):
         """

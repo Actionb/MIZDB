@@ -224,7 +224,7 @@ class TestDuplicateObjectsView(ViewTestCase):
         with self.assertRaises(TypeError):
             self.view_class().setup(self.get_request())
 
-    @patch('dbentry.base.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
+    @patch('dbentry.admin.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
     def test_headers(self):
         """Assert that the headers for the overview table are added to the template context."""
         request_data = {
@@ -241,7 +241,7 @@ class TestDuplicateObjectsView(ViewTestCase):
                 self.assertEqual(context['headers'], ['Künstlername', 'Genres'])
                 self.assertEqual(context['headers_width'], '40')
 
-    @patch('dbentry.base.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
+    @patch('dbentry.admin.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
     def test_get_context_data(self):
         view = self.get_view(self.get_request(), kwargs={'model_name': 'test_tools.musiker'})
         context = view.get_context_data()

@@ -5,10 +5,6 @@ from django.db.models import F
 from dbentry.base.models import BaseM2MModel, BaseModel, ComputedNameModel
 
 
-# Audio, Band, Bestand, Musiker, MusikerAudioM2M, Person,
-# Veranstaltung
-
-
 class Person(ComputedNameModel):
     vorname = models.CharField(max_length=100, blank=True)
     nachname = models.CharField(max_length=100)

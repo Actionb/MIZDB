@@ -3,9 +3,11 @@ from django.template import loader
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.response import TemplateResponse
 
-from dbentry.sites import miz_site
+from dbentry.admin.site import miz_site
 
 
+# TODO: remove MIZ_permission_denied_view: not used anymore since
+#  5cc2d7 (site-app) added another view for 403
 # noinspection PyPep8Naming
 def MIZ_permission_denied_view(
         request: HttpRequest,
