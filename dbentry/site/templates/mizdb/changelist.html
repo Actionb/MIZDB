@@ -60,7 +60,7 @@
 <table id="result_list" class="table table-hover">
 <thead>
     <tr class="table-primary">
-        {% if user_has_module_perms %}<th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input" type="checkbox" title="Alle auswählen"></th>{% endif %}
+        <th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input" type="checkbox" title="Alle auswählen"></th>
         {% for header in result_headers %}
             <th scope="col" class="sticky-top z-999">
                <div class="text d-flex justify-content-between">
@@ -87,7 +87,7 @@
 <tbody>
     {% for result_object, result_row in result_rows %}
         <tr>
-            {% if user_has_module_perms %}<td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" title="Zur Auswahl hinzufügen"></td>{% endif %}
+            <td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" title="Zur Auswahl hinzufügen"></td>
             {% for item in result_row %}<td class="text-body">{{ item }}</td>{% endfor %}
         </tr>
     {% endfor %}
