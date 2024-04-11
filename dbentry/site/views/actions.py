@@ -1,3 +1,6 @@
+from django.contrib import messages
+from mizdb_watchlist.manager import get_manager
+
 from dbentry.actions.views import MergeView
 from dbentry.site.views.delete import DeleteSelectedView
 from dbentry.utils import permission as perms
@@ -51,3 +54,11 @@ def has_merge_permission(user, opts):
 )
 def merge_records(view, request, queryset):
     return MergeView.as_view(view=view, queryset=queryset)(request)
+
+
+@action(label="Merkliste", description="Ausgewählte Objekte zur Merkliste hinzufügen")
+def watchlist(view, request, queryset):
+    manager = get_manager(request)
+    manager.bulk_add(queryset)
+    messages.add_message(request, level=messages.SUCCESS, message="Erfolgreich zu meiner Merkliste hinzugefügt.")
+    return None

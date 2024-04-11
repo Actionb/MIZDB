@@ -1,6 +1,9 @@
 {% extends "mizdb/change_form.html" %}
+{% load static %}
 
-{% block extrahead %}{# Do not load the change form extra scripts #}{% endblock extrahead %}
+{% block extrahead %}
+    <script src="{% static 'mizdb_watchlist/js/watchlist.js' %}"></script>
+{% endblock extrahead %}
 
 {% block content %}
 <div class="bg-light-subtle p-3 rounded">

@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+- watchlist feature for keeping user lists of model objects
+ 
 ## [0.15] - 2024-04-09
 
 ### Changed

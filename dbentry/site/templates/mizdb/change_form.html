@@ -1,5 +1,5 @@
 {% extends "mizdb/base.html" %}
-{% load static django_bootstrap5 mizdb mizdb_inlines %}
+{% load static django_bootstrap5 mizdb mizdb_inlines mizdb_watchlist %}
 
 {% block title %}{% if not add %}{{ object }} | {% endif %}{{ block.super }}{% endblock title %}
 
@@ -7,6 +7,7 @@
 {{ block.super }}
 <script src="{% static 'mizdb/js/dirty.js' %}"></script>
 <script src="{% static 'mizdb_inlines/js/mizdb_inlines.js' %}"></script>
+<script src="{% static 'mizdb_watchlist/js/watchlist.js' %}"></script>
 {{ combined_media }}
 {% endblock extrahead %}
 
@@ -15,7 +16,11 @@
     <div id="object-info" class="col">
         {% block content_title %}
             {% if object.pk %}
-                <h1>{{ title }}<span class="ms-2 fs-6 text-nowrap">(id: <span class="id-container">{{ object.pk }}</span>)</span></h1>
+                <h1>
+                    {{ title }}
+                    <span class="ms-2 fs-6 text-nowrap">(id: <span class="id-container">{{ object.pk }}</span>)</span>
+                    {% toggle_button view.request object %}
+                </h1>
                 <h2>{{ object|truncatechars:50 }}</h2>
             {% else %}
                 {{ block.super }}

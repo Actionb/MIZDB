@@ -5,6 +5,7 @@ from dbentry.site.registry import miz_site
 from dbentry.site.views.auth import LoginView, PasswordChangeView, PasswordChangeDoneView
 from dbentry.site.views.list import Index, changelist_selection_sync
 from dbentry.site.views.search import SearchbarSearch, SiteSearchView
+from dbentry.site.views.watchlist import WatchlistView
 
 urlpatterns = [
     path("", Index.as_view(), name="index"),
@@ -19,4 +20,5 @@ urlpatterns = [
     path("search/", SiteSearchView.as_view(), name="site_search"),
     # Changelist selection
     path("cls_sync/", changelist_selection_sync, name="changelist_selection_sync"),
+    path("watchlist/", WatchlistView.as_view(), name="watchlist"),
 ]

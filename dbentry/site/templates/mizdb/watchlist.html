@@ -1,0 +1,10 @@
+{% extends "mizdb/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+  <script src="{% static 'mizdb_watchlist/js/watchlist.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+  {% include "mizdb_watchlist/watchlist.html" %}
+{% endblock content %}

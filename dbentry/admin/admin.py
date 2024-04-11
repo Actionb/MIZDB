@@ -19,6 +19,8 @@ from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
 from django_admin_logs.admin import LogEntryAdmin
+from mizdb_watchlist.admin import WatchlistAdmin
+from mizdb_watchlist.models import Watchlist
 
 import dbentry.admin.actions as _actions
 import dbentry.forms as _forms
@@ -1718,3 +1720,8 @@ class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
     @display(description="Datenbank-Darstellung")
     def change_message_raw(self, obj: LogEntry) -> str:
         return obj.change_message
+
+
+@admin.register(Watchlist, site=miz_site)
+class WatchlistAdmin(WatchlistAdmin, MIZModelAdmin):
+    superuser_only = True

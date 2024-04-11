@@ -63,28 +63,30 @@ class AdminTestMethodsMixin(object):
         Assert that the number of queries needed for the changelist remains
         constant and doesn't depend on the number of records fetched.
         """
-        # Request with 'all=1' to set changelist.show_all to True which should
-        # stop hiding/filtering results - which might affect the # of queries.
-        with CaptureQueriesContext(connections["default"]) as queries:
-            self.client.get(self.changelist_path, data={ALL_VAR: "1"})
-        n = len(queries.captured_queries)
-        make(self.model)
-        with CaptureQueriesContext(connections["default"]) as queries:
-            self.client.get(self.changelist_path, data={ALL_VAR: "1"})
-        self.assertEqual(
-            n,
-            len(queries.captured_queries),
-            msg="Number of queries for changelist depends on number of records! "
-            f"Unoptimized query / no prefetching?",
-        )
-        if self.num_queries_changelist:
+        # watchlist annotations adds more queries that we are not interested in
+        with patch.object(self.model_admin_class, "add_watchlist_annotations", new=False):
+            # Request with 'all=1' to set changelist.show_all to True which should
+            # stop hiding/filtering results - which might affect the # of queries.
+            with CaptureQueriesContext(connections["default"]) as queries:
+                self.client.get(self.changelist_path, data={ALL_VAR: "1"})
+            n = len(queries.captured_queries)
+            make(self.model)
+            with CaptureQueriesContext(connections["default"]) as queries:
+                self.client.get(self.changelist_path, data={ALL_VAR: "1"})
             self.assertEqual(
                 n,
-                self.num_queries_changelist,
-                msg="Number of queries required for a changelist request differs "
-                f"from the expected value: got '{n}' expected '{self.num_queries_changelist}'. "
-                "Check 'list_select_related'.",
+                len(queries.captured_queries),
+                msg="Number of queries for changelist depends on number of records! "
+                f"Unoptimized query / no prefetching?",
             )
+            if self.num_queries_changelist:
+                self.assertEqual(
+                    n,
+                    self.num_queries_changelist,
+                    msg="Number of queries required for a changelist request differs "
+                    f"from the expected value: got '{n}' expected '{self.num_queries_changelist}'. "
+                    "Check 'list_select_related'.",
+                )
 
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -228,29 +230,31 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         Assert that the number of queries needed for the changelist remains
         constant and doesn't depend on the number of records fetched.
         """
-        # Request with 'all=1' to set changelist.show_all to True which should
-        # stop hiding/filtering results - which might affect the # of queries.
-        # Add ORDER_VAR parameter to suppress chronological ordering.
-        with CaptureQueriesContext(connections["default"]) as queries:
-            self.client.get(self.changelist_path, data={ALL_VAR: "1", ORDER_VAR: "1"})
-        n = len(queries.captured_queries)
-        make(self.model)
-        with CaptureQueriesContext(connections["default"]) as queries:
-            self.client.get(self.changelist_path, data={ALL_VAR: "1", ORDER_VAR: "1"})
-        self.assertEqual(
-            n,
-            len(queries.captured_queries),
-            msg="Number of queries for changelist depends on number of records! "
-            f"Unoptimized query / no prefetching?",
-        )
-        if self.num_queries_changelist:
+        # watchlist annotations adds more queries that we are not interested in
+        with patch.object(self.model_admin_class, "add_watchlist_annotations", new=False):
+            # Request with 'all=1' to set changelist.show_all to True which should
+            # stop hiding/filtering results - which might affect the # of queries.
+            # Add ORDER_VAR parameter to suppress chronological ordering.
+            with CaptureQueriesContext(connections["default"]) as queries:
+                self.client.get(self.changelist_path, data={ALL_VAR: "1", ORDER_VAR: "1"})
+            n = len(queries.captured_queries)
+            make(self.model)
+            with CaptureQueriesContext(connections["default"]) as queries:
+                self.client.get(self.changelist_path, data={ALL_VAR: "1", ORDER_VAR: "1"})
             self.assertEqual(
                 n,
-                self.num_queries_changelist,
-                msg="Number of queries required for a changelist request differs "
-                f"from the expected value: got '{n}' expected '{self.num_queries_changelist}'. "
-                "Check 'list_select_related'.",
+                len(queries.captured_queries),
+                msg="Number of queries for changelist depends on number of records! "
+                f"Unoptimized query / no prefetching?",
             )
+            if self.num_queries_changelist:
+                self.assertEqual(
+                    n,
+                    self.num_queries_changelist,
+                    msg="Number of queries required for a changelist request differs "
+                    f"from the expected value: got '{n}' expected '{self.num_queries_changelist}'. "
+                    "Check 'list_select_related'.",
+                )
 
     def test_get_changelist(self):
         """Assert that AusgabenAdmin uses the AusgabeChangeList changelist class."""
