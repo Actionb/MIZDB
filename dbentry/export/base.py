@@ -90,14 +90,15 @@ class %(model_name)sResource(MIZResource):
 """
 
 
-def print_model_resource(model):
+def print_model_resource(model, file=None):
     """Print a ModelResource declaration for the given model."""
     fields, annotations, annotated_fields = get_resource_attributes_for_model(model)
     print(
         template % {
             "model_name": model.__name__,
-            "fields": ", ".join(f'"{field}"' for field in fields) + ",",
-            "annotations": ", ".join(f'"{name}": {annotation}' for name, annotation in annotations.items()) + ",",
-            "annotation_fields": "\n\t".join(annotated_fields),
-        }
+            "fields": ", ".join(f'"{field}"' for field in fields),
+            "annotations": ", ".join(f'"{name}": {annotation}' for name, annotation in annotations.items()),
+            "annotation_fields": f"\n{' ' * 4}".join(annotated_fields),
+        },
+        file=file
     )
