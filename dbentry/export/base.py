@@ -1,7 +1,8 @@
-from collections import OrderedDict
-
 from dbentry import models as _models
 from dbentry.site.registry import miz_site
+
+
+# TODO: ForeignKeys only have the id in the dataset
 
 
 def get_resource_attributes_for_model(model):
@@ -24,56 +25,57 @@ def get_resource_attributes_for_model(model):
     form_fields = [f for f in form_class.base_fields if f not in ("beschreibung", "bemerkungen")]
     fields = ["id", *form_fields]
 
-    # relations with annotations
-    annotations = {}
-    annotated_fields = []
-    inlines = edit_view.get_inline_instances()
-    inlines_by_model = {inline.model: inline for inline in inlines}
-    annotations_by_inline = OrderedDict((inline, None) for inline in inlines)
-    for field in model._meta.many_to_many:
-        print(field)
-        inline_model = field.remote_field.through if field.concrete else field.through
-        if inline_model not in inlines_by_model:
-            # No inline for this model - assume this isn't for end-users.
-            continue
-        inline = inlines_by_model[inline_model]
-        path = f"{field.name}__{field.related_model.name_field}"
-        name = f"{field.name}_list"
-        annotations_by_inline[inline] = (name, path, inline.verbose_name_plural)
-
-    for field in model._meta.get_fields():
-        if not field.one_to_many:
-            continue
-        inline_model = field.related_model
-        if inline_model not in inlines_by_model:
-            continue
-        inline = inlines_by_model[inline_model]
-        if annotations_by_inline[inline] is not None:
-            # Already done for this inline (used a m2m relation).
-            continue
-        if inline_model == _models.Bestand:
-            # Bestand does not have a name_field
-            target_field = "lagerort"
-        else:
-            target_field = field.related_model.name_field
-
-        path = f"{field.name}__{target_field}"
-        name = f"{field.name}_list"
-        annotations_by_inline[inline] = (name, path, inline.verbose_name_plural)
-
-    for inline, data in annotations_by_inline.items():
-        if data is None:
-            print(f"No data for inline: '{inline}'")
-            continue
-        name, path, verbose_name = data
-        fields.append(name)
-        annotations[name] = f'string_list("{path}")'
-        annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{verbose_name}")')
+    annotations, annotated_fields = get_resource_annotations(model, edit_view.get_inline_instances())
+    fields.extend(annotations.keys())
 
     if "beschreibung" in form_class.base_fields:
         fields.append("beschreibung")
-    # TODO: order annotations according to the order of inlines
     return fields, annotations, annotated_fields
+
+
+def get_resource_annotations(model, inlines):
+    annotations = {}
+    annotated_fields = []
+    for inline in inlines:
+        formset_class = inline.get_formset_class()
+        fk = formset_class.fk
+        # Assume that if an inline manages a m2m relation with a 'through'
+        # table, then the inline will also declare a verbose_model to set the
+        # labels to the verbose names of the related model of that m2m relation.
+        # If the inline does not have a verbose_model, then assume it's just a
+        # m2o relation.
+        field = None
+        if inline.verbose_model is None:
+            # m2o relation
+            field = fk.remote_field
+        else:
+            # m2m relation.
+            # fk.remote_field would return the ManyToOneRel towards the 'through'
+            # table, but we want the M2M field of the relation.
+            for f in model._meta.get_fields():
+                if not f.many_to_many:
+                    continue
+                remote_field = f.remote_field if f.concrete else f
+                if remote_field.through == fk.model:
+                    field = f
+                    break
+        if field is None:
+            print(f"Could not find relation field for inline '{inline}'")
+            continue
+        if inline.model == _models.Bestand:
+            # Bestand does not have a name_field
+            # TODO: declare 'OVERRIDES' at module level:
+            #  OVERRIDES = {_models.Bestand: "lagerort___name"}
+            target_field = "lagerort___name"
+        else:
+            target_field = field.related_model.name_field
+
+        name = f"{field.name}_list"
+        path = f"{field.name}__{target_field}"
+        annotations[name] = f'string_list("{path}")'
+        annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{inline.verbose_name_plural}")')
+
+    return annotations, annotated_fields
 
 
 template = """
