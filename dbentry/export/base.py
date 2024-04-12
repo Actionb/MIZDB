@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from dbentry import models as _models
 from dbentry.site.registry import miz_site
 
@@ -27,25 +29,27 @@ def get_resource_attributes_for_model(model):
     annotated_fields = []
     inlines = edit_view.get_inline_instances()
     inlines_by_model = {inline.model: inline for inline in inlines}
-    for field in model._meta.get_fields():
-        if not field.is_relation or field.many_to_one:
-            continue
-
-        if field.many_to_many:
-            if not field.concrete:
-                # Only include m2m relations declared on this model.
-                continue
-            inline_model = field.remote_field.through
-        else:  # field.one_to_many
-            inline_model = field.related_model
-            if not inline_model._meta.auto_created:
-                # FK back from the manual through table of a m2m relation
-                # declared on this model. Ignore, since we will use the m2m
-                # relation instead.
-                continue
+    annotations_by_inline = OrderedDict((inline, None) for inline in inlines)
+    for field in model._meta.many_to_many:
+        print(field)
+        inline_model = field.remote_field.through if field.concrete else field.through
         if inline_model not in inlines_by_model:
-            # No inline for this model. Assume that this is a relation
-            # that users should not see.
+            # No inline for this model - assume this isn't for end-users.
+            continue
+        inline = inlines_by_model[inline_model]
+        path = f"{field.name}__{field.related_model.name_field}"
+        name = f"{field.name}_list"
+        annotations_by_inline[inline] = (name, path, inline.verbose_name_plural)
+
+    for field in model._meta.get_fields():
+        if not field.one_to_many:
+            continue
+        inline_model = field.related_model
+        if inline_model not in inlines_by_model:
+            continue
+        inline = inlines_by_model[inline_model]
+        if annotations_by_inline[inline] is not None:
+            # Already done for this inline (used a m2m relation).
             continue
         if inline_model == _models.Bestand:
             # Bestand does not have a name_field
@@ -53,15 +57,18 @@ def get_resource_attributes_for_model(model):
         else:
             target_field = field.related_model.name_field
 
-        inline = inlines_by_model[inline_model]
-
         path = f"{field.name}__{target_field}"
         name = f"{field.name}_list"
+        annotations_by_inline[inline] = (name, path, inline.verbose_name_plural)
+
+    for inline, data in annotations_by_inline.items():
+        if data is None:
+            print(f"No data for inline: '{inline}'")
+            continue
+        name, path, verbose_name = data
         fields.append(name)
         annotations[name] = f'string_list("{path}")'
-        annotated_fields.append(
-            f'{name} = Field(attribute="{name}", column_name="{inlines_by_model[inline_model].verbose_name_plural}")'
-        )
+        annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{verbose_name}")')
 
     if "beschreibung" in form_class.base_fields:
         fields.append("beschreibung")
