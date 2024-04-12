@@ -2,7 +2,8 @@ from dbentry import models as _models
 from dbentry.site.registry import miz_site
 
 
-# TODO: ForeignKeys only have the id in the dataset
+# TODO: ForeignKeys need to present an actual human-readable value to the
+#  dataset. Currently, it's just an id.
 
 
 def get_resource_attributes_for_model(model):
