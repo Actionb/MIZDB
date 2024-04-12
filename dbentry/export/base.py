@@ -33,35 +33,33 @@ def get_resource_attributes_for_model(model):
     return fields, annotations, annotated_fields
 
 
+def get_m2m_field(fk, model):
+    """
+    Return the ManyToManyField that uses the given ForeignKey's model as a
+    m2m 'through' table.
+
+    Returns None if no ManyToManyField could be found (probably because the fk
+    does not implement a m2m relation).
+    """
+    for f in model._meta.get_fields():
+        if not f.many_to_many or f.one_to_many:
+            continue
+        remote_field = f.remote_field if f.concrete else f
+        if remote_field.through == fk.model:
+            return f
+
+
 def get_resource_annotations(model, inlines):
+    """Derive annotations for the model resource from the inlines."""
     annotations = {}
     annotated_fields = []
     for inline in inlines:
         formset_class = inline.get_formset_class()
         fk = formset_class.fk
-        # Assume that if an inline manages a m2m relation with a 'through'
-        # table, then the inline will also declare a verbose_model to set the
-        # labels to the verbose names of the related model of that m2m relation.
-        # If the inline does not have a verbose_model, then assume it's just a
-        # m2o relation.
-        field = None
-        if inline.verbose_model is None:
-            # m2o relation
-            field = fk.remote_field
-        else:
-            # m2m relation.
-            # fk.remote_field would return the ManyToOneRel towards the 'through'
-            # table, but we want the M2M field of the relation.
-            for f in model._meta.get_fields():
-                if not f.many_to_many:
-                    continue
-                remote_field = f.remote_field if f.concrete else f
-                if remote_field.through == fk.model:
-                    field = f
-                    break
+        field = get_m2m_field(fk, model)
         if field is None:
-            print(f"Could not find relation field for inline '{inline}'")
-            continue
+            # Just a M2O field pointing at model.
+            field = fk.remote_field
         if inline.model == _models.Bestand:
             # Bestand does not have a name_field
             # TODO: declare 'OVERRIDES' at module level:
