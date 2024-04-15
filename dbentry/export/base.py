@@ -209,6 +209,37 @@ class MIZResource(ModelResource):
                 headers.append(force_str(verbose_name))
         return headers
 
+    def as_string(self):
+        indent = " " * 4
+        r = f"class {self.__class__.__name__}(MIZResource):\n"
+        if self._meta._declared_fields:
+            for name, field in self._meta._declared_fields.items():
+                r += f'{indent}{name} = Field(attribute="{field.attribute}", column_name="{field.column_name}")\n'
+            r += "\n"
+        r += f"{indent}class Meta:\n"
+        indent *= 2
+        fields = str(self._meta.fields).replace("'", '"')
+        r += f'{indent}fields = {fields}\n{indent}export_order = {fields}\n'
+        if self._meta.annotations:
+            _annotations = OrderedDict()
+            for name, expr in self._meta.annotations.items():
+                # string_list expressions: limit(array_to_string(array_agg(...)))
+                array_to_string = expr.source_expressions[0]
+                array_agg, sep_expr, default_expr = array_to_string.source_expressions
+                path = array_agg.source_expressions[0].name
+                sep = sep_expr.value
+                if sep != ", ":
+                    annotation = f'string_list("{path}", sep="{sep}")'
+                else:
+                    annotation = f'string_list("{path}")'
+                _annotations[name] = annotation
+            _annotations = ', '.join(f'"{name}": {expr}' for name, expr in _annotations.items())
+            r += f"{indent}annotations = {{{_annotations}}}\n"
+        if self._meta.widgets:
+            widgets = str(self._meta.widgets).replace("'", '"')
+            r += f"{indent}widgets = {widgets}\n"
+        return r
+
 
 def resource_factory(model):
     fields, annotations, widgets, field_declarations = get_resource_attributes_for_model(model)
