@@ -1,6 +1,10 @@
+from collections import OrderedDict
 from typing import Optional
 
 from django.db.models import Model
+from django.utils.encoding import force_str
+from import_export.fields import Field
+from import_export.resources import ModelDeclarativeMetaclass, ModelResource
 
 from dbentry import models as _models
 from dbentry.site.registry import miz_site
@@ -40,12 +44,14 @@ def get_resource_attributes_for_model(model):
         if model_field.is_relation and model_field.many_to_one:
             widgets[model_field.name] = {"field": model_field.related_model.name_field}
 
-    annotations, annotated_fields = get_resource_annotations(model, edit_view.get_inline_instances())
+    annotations, annotated_fields, field_declarations = get_resource_annotations(
+        model, edit_view.get_inline_instances()
+    )
     fields.extend(annotations.keys())
 
     if "beschreibung" in form_class.base_fields:
         fields.append("beschreibung")
-    return fields, annotations, annotated_fields, widgets
+    return fields, annotations, annotated_fields, widgets, field_declarations
 
 
 def get_m2m_field(fk, model):
@@ -64,10 +70,11 @@ def get_m2m_field(fk, model):
             return f
 
 
-def get_resource_annotations(model, inlines) -> tuple[dict, list]:
+def get_resource_annotations(model, inlines) -> tuple[dict, list, list]:
     """Derive annotations for the model resource from the inlines."""
     annotations = {}
     annotated_fields = []
+    fields = []
     for inline in inlines:
         formset_class = inline.get_formset_class()
         fk = formset_class.fk
@@ -87,28 +94,37 @@ def get_resource_annotations(model, inlines) -> tuple[dict, list]:
         path = f"{field.name}__{target_field}"
         annotations[name] = f'string_list("{path}")'
         annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{inline.verbose_name_plural}")')
+        fields.append((name, Field(attribute=name, column_name=inline.verbose_name_plural)))
 
-    return annotations, annotated_fields
+    return annotations, annotated_fields, fields
 
 
 def get_resource_template(model):
     """Generate a ResourceTemplate for the given model for easy printing."""
-    fields, annotations, annotated_fields, widgets = get_resource_attributes_for_model(model)
+    fields, annotations, annotated_fields, widgets, _ = get_resource_attributes_for_model(model)
 
     meta = ResourceMeta(
-        fields=str(fields),
-        export_order=str(fields),
-        annotations=str(annotations),
-        widgets=str(widgets)
+        fields=str(fields), export_order=str(fields), annotations=str(annotations), widgets=str(widgets)
     )
     resource = ResourceTemplate(model, meta, annotated_fields)
     return resource
 
 
+def print_resource(resource):
+    fields, annotations, annotated_fields, widgets, _ = get_resource_attributes_for_model(resource._meta.model)
+    meta = ResourceMeta(
+        fields=str(resource._meta.fields),
+        export_order=str(resource._meta.export_order),
+        annotations=str(resource._meta.annotations),
+        widgets=str(resource._meta.widgets),
+    )
+    return ResourceTemplate(resource._meta.model, meta, annotated_fields)
+
+
 class ResourceTemplate:
     """Helper class for printing a resource."""
 
-    def __init__(self, model: type[Model], meta: 'ResourceMeta', extra_fields: Optional[list[str]] = None):
+    def __init__(self, model: type[Model], meta: "ResourceMeta", extra_fields: Optional[list[str]] = None):
         self.model = model
         self.meta = meta
         self.extra_fields = extra_fields
@@ -144,6 +160,55 @@ class ResourceMeta:
         return r
 
 
-def resource_factory(model):
-    meta_attrs = {"model": model}
+class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
+    def __new__(cls, name, bases, attrs):
+        _declared_fields = OrderedDict()
+        for name, attr in attrs.items():
+            if isinstance(attr, Field):
+                _declared_fields[name] = attr
+        new_class = super().__new__(cls, name, bases, attrs)
 
+        new_class._declared_fields = _declared_fields
+
+        return new_class
+
+
+class MIZResource(ModelResource):
+    add_annotations = True
+
+    def _add_annotations(self, queryset):
+        """Add the annotations declared in Meta.annotations to the queryset."""
+        if self.add_annotations:
+            return queryset.annotate(**self._meta.annotations)
+        else:
+            return queryset
+
+    def filter_export(self, queryset, *args, **kwargs):
+        return self._add_annotations(queryset)
+
+    def get_export_headers(self):
+        # For fields derived from the model fields, use the field's
+        # verbose_name, unless column_name was set:
+        headers = []
+        for field in self.get_export_fields():
+            try:
+                model_field = self._meta.model._meta.get_field(field.attribute)
+                verbose_name = model_field.verbose_name.capitalize()
+            except self._meta.model.FieldDoesNotExist:
+                verbose_name = field.column_name
+            if field.column_name != field.attribute:
+                # Not the default column_name
+                headers.append(force_str(field.column_name))
+            else:
+                headers.append(force_str(verbose_name))
+        return headers
+
+
+def resource_factory(model):
+    fields, annotations, _, widgets, field_declarations = get_resource_attributes_for_model(model)
+    meta_attrs = {"model": model, "fields": fields, "export_order": fields, "widgets": widgets}
+    class_attrs = {"Meta": type(str("Meta"), (object,), meta_attrs)}
+    for name, field in field_declarations:
+        class_attrs[name] = field
+
+    return MIZDeclarativeMetaclass(model.__name__ + str("Resource"), (MIZResource,), class_attrs)
