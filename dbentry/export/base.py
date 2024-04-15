@@ -13,6 +13,7 @@ from dbentry.utils.query import string_list
 
 class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
     def __new__(cls, name, bases, attrs):
+        # Keep a record of the fields that were declared on this model:
         _declared_fields = OrderedDict()
         for _name, attr in attrs.items():
             if isinstance(attr, Field):
@@ -56,6 +57,9 @@ class MIZResource(ModelResource):
         return headers
 
     def as_string(self):
+        """Return a string representation of this model resource class."""
+        # This is used to write a generated class to a file.
+
         indent = " " * 4
         r = f"class {self.__class__.__name__}(MIZResource):\n"
 
