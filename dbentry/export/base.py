@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from typing import Optional
 
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 from django.utils.encoding import force_str
 from import_export.fields import Field
@@ -39,7 +40,7 @@ def get_resource_attributes_for_model(model):
     for field in fields:
         try:
             model_field = model._meta.get_field(field)
-        except model.FieldDoesNotExist:
+        except FieldDoesNotExist:
             continue
         if model_field.is_relation and model_field.many_to_one:
             widgets[model_field.name] = {"field": model_field.related_model.name_field}
@@ -195,7 +196,7 @@ class MIZResource(ModelResource):
             try:
                 model_field = self._meta.model._meta.get_field(field.attribute)
                 verbose_name = model_field.verbose_name.capitalize()
-            except self._meta.model.FieldDoesNotExist:
+            except FieldDoesNotExist:
                 verbose_name = field.column_name
             if field.column_name != field.attribute:
                 # Not the default column_name
