@@ -9,6 +9,7 @@ from import_export.resources import ModelDeclarativeMetaclass, ModelResource
 
 from dbentry import models as _models
 from dbentry.site.registry import miz_site
+from dbentry.utils.query import string_list
 
 
 # TODO: ForeignKeys need to present an actual human-readable value to the
@@ -91,7 +92,12 @@ def get_resource_annotations(model, inlines) -> tuple[dict, list]:
 
         name = f"{field.name}_list"
         path = f"{field.name}__{target_field}"
-        annotations[name] = f'string_list("{path}")'
+        # TODO: orte_list needs ; as string_list separator
+        string_list_kwargs = {}
+        if field.related_model == _models.Ort:
+            string_list_kwargs["sep"] = "; "
+        annotations[name] = string_list(path, **string_list_kwargs)
+
         annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{inline.verbose_name_plural}")')
         fields.append((name, Field(attribute=name, column_name=inline.verbose_name_plural)))
 
