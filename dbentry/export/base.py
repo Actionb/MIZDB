@@ -69,7 +69,7 @@ def get_m2m_field(fk, model):
             return f
 
 
-def get_resource_annotations(model, inlines) -> tuple[dict, list, list]:
+def get_resource_annotations(model, inlines) -> tuple[dict, list]:
     """Derive annotations for the model resource from the inlines."""
     annotations = {}
     annotated_fields = []
@@ -95,7 +95,7 @@ def get_resource_annotations(model, inlines) -> tuple[dict, list, list]:
         annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{inline.verbose_name_plural}")')
         fields.append((name, Field(attribute=name, column_name=inline.verbose_name_plural)))
 
-    return annotations, annotated_fields, fields
+    return annotations, fields
 
 
 def get_resource_template(model):
