@@ -211,8 +211,14 @@ class MIZResource(ModelResource):
 
 
 def resource_factory(model):
-    fields, annotations, _, widgets, field_declarations = get_resource_attributes_for_model(model)
-    meta_attrs = {"model": model, "fields": fields, "export_order": fields, "widgets": widgets}
+    fields, annotations, widgets, field_declarations = get_resource_attributes_for_model(model)
+    meta_attrs = {
+        "model": model,
+        "fields": fields,
+        "export_order": fields,
+        "annotations": annotations,
+        "widgets": widgets,
+    }
     class_attrs = {"Meta": type(str("Meta"), (object,), meta_attrs)}
     for name, field in field_declarations:
         class_attrs[name] = field
