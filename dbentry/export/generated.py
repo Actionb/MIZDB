@@ -502,6 +502,7 @@ class MusikerResource(MIZResource):
             "orte_list": string_list("orte___name", sep="; "),
             "instrument_list": string_list("instrument__instrument"),
         }
+        widgets = {"person": {"field": "_name"}}
 
 
 class PersonResource(MIZResource):
