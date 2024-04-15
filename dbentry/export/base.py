@@ -22,8 +22,8 @@ def get_resource_attributes_for_model(model):
     Returns a 4-tuple of:
         - a list of field names for the `field` meta attribute
         - a dictionary of annotations for the `annotations` meta attribute
-        - a list of Field declarations for the resource class body
         - a dictionary of widget kwargs for the `widgets` meta attribute
+        - a list of Field declarations for the resource class body
     """
     try:
         edit_view = miz_site.views[model](extra_context={"add": True})
@@ -45,14 +45,12 @@ def get_resource_attributes_for_model(model):
         if model_field.is_relation and model_field.many_to_one:
             widgets[model_field.name] = {"field": model_field.related_model.name_field}
 
-    annotations, annotated_fields, field_declarations = get_resource_annotations(
-        model, edit_view.get_inline_instances()
-    )
+    annotations, field_declarations = get_resource_annotations(model, edit_view.get_inline_instances())
     fields.extend(annotations.keys())
 
     if "beschreibung" in form_class.base_fields:
         fields.append("beschreibung")
-    return fields, annotations, annotated_fields, widgets, field_declarations
+    return fields, annotations, widgets, field_declarations
 
 
 def get_m2m_field(fk, model):
