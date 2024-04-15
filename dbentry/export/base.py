@@ -1,8 +1,6 @@
 from collections import OrderedDict
-from typing import Optional
 
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Model
 from django.utils.encoding import force_str
 from import_export.fields import Field
 from import_export.resources import ModelDeclarativeMetaclass, ModelResource
@@ -102,67 +100,6 @@ def get_resource_annotations(model, inlines) -> tuple[dict, list]:
         fields.append((name, Field(attribute=name, column_name=inline.verbose_name_plural)))
 
     return annotations, fields
-
-
-def get_resource_template(model):
-    """Generate a ResourceTemplate for the given model for easy printing."""
-    fields, annotations, annotated_fields, widgets, _ = get_resource_attributes_for_model(model)
-
-    meta = ResourceMeta(
-        fields=str(fields), export_order=str(fields), annotations=str(annotations), widgets=str(widgets)
-    )
-    resource = ResourceTemplate(model, meta, annotated_fields)
-    return resource
-
-
-def print_resource(resource):
-    fields, annotations, annotated_fields, widgets, _ = get_resource_attributes_for_model(resource._meta.model)
-    meta = ResourceMeta(
-        fields=str(resource._meta.fields),
-        export_order=str(resource._meta.export_order),
-        annotations=str(resource._meta.annotations),
-        widgets=str(resource._meta.widgets),
-    )
-    return ResourceTemplate(resource._meta.model, meta, annotated_fields)
-
-
-class ResourceTemplate:
-    """Helper class for printing a resource."""
-
-    def __init__(self, model: type[Model], meta: "ResourceMeta", extra_fields: Optional[list[str]] = None):
-        self.model = model
-        self.meta = meta
-        self.extra_fields = extra_fields
-
-    def __str__(self):
-        indent = " " * 4
-        r = f"class {self.model.__name__}:\n"
-        if self.extra_fields:
-            for field in self.extra_fields:
-                r += f"{indent}{field}\n"
-            r += "\n"
-        for line in str(self.meta).split("\n"):
-            r += f"{indent}{line}\n"
-        return r + "\n"
-
-
-class ResourceMeta:
-    """Helper class for printing the Meta class of a resource."""
-
-    def __init__(self, fields: str, export_order: str, annotations: str = "", widgets: str = ""):
-        self.fields = fields
-        self.export_order = export_order
-        self.annotations = annotations
-        self.widgets = widgets
-
-    def __str__(self):
-        indent = " " * 4
-        r = f"class Meta:\n{indent}fields = {self.fields}\n{indent}export_order = {self.export_order}\n"
-        if self.annotations:
-            r += f"{indent}annotations = {self.annotations}\n"
-        if self.widgets:
-            r += f"{indent}widgets = {self.widgets}\n"
-        return r
 
 
 class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
