@@ -14,10 +14,11 @@ def get_resource_attributes_for_model(model):
     """
     Return required attributes for the ModelResource for the given model.
 
-    Returns a 3-tuple of:
+    Returns a 4-tuple of:
         - a list of field names for the `field` meta attribute
         - a dictionary of annotations for the `annotations` meta attribute
         - a list of Field declarations for the resource class body
+        - a dictionary of widget kwargs for the `widgets` meta attribute
     """
     try:
         edit_view = miz_site.views[model](extra_context={"add": True})
@@ -30,12 +31,21 @@ def get_resource_attributes_for_model(model):
     form_fields = [f for f in form_class.base_fields if f not in ("beschreibung", "bemerkungen")]
     fields = ["id", *form_fields]
 
+    widgets = {}
+    for field in fields:
+        try:
+            model_field = model._meta.get_field(field)
+        except model.FieldDoesNotExist:
+            continue
+        if model_field.is_relation and model_field.many_to_one:
+            widgets[model_field.name] = {"field": model_field.related_model.name_field}
+
     annotations, annotated_fields = get_resource_annotations(model, edit_view.get_inline_instances())
     fields.extend(annotations.keys())
 
     if "beschreibung" in form_class.base_fields:
         fields.append("beschreibung")
-    return fields, annotations, annotated_fields
+    return fields, annotations, annotated_fields, widgets
 
 
 def get_m2m_field(fk, model):
@@ -83,31 +93,7 @@ def get_resource_annotations(model, inlines) -> tuple[dict, list]:
 
 def get_resource_template(model):
     """Generate a ResourceTemplate for the given model for easy printing."""
-    try:
-        edit_view = miz_site.views[model](extra_context={"add": True})
-    except KeyError:
-        print(f"No view for model '{model}'.")
-        return
-
-    # base fields
-    form_class = edit_view.get_form_class()
-    form_fields = [f for f in form_class.base_fields if f not in ("beschreibung", "bemerkungen")]
-    fields = ["id", *form_fields]
-
-    widgets = {}
-    for field in fields:
-        try:
-            model_field = model._meta.get_field(field)
-        except model.FieldDoesNotExist:
-            continue
-        if model_field.is_relation and model_field.many_to_one:
-            widgets[model_field.name] = {"field": model_field.related_model.name_field}
-
-    annotations, annotated_fields = get_resource_annotations(model, edit_view.get_inline_instances())
-    fields.extend(annotations.keys())
-
-    if "beschreibung" in form_class.base_fields:
-        fields.append("beschreibung")
+    fields, annotations, annotated_fields, widgets = get_resource_attributes_for_model(model)
 
     meta = ResourceMeta(
         fields=str(fields),
@@ -156,3 +142,8 @@ class ResourceMeta:
         if self.widgets:
             r += f"{indent}widgets = {self.widgets}\n"
         return r
+
+
+def resource_factory(model):
+    meta_attrs = {"model": model}
+
