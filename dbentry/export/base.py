@@ -81,20 +81,8 @@ def get_resource_annotations(model, inlines) -> tuple[dict, list]:
     return annotations, annotated_fields
 
 
-template = """
-class %(model_name)sResource(MIZResource):
-    %(annotation_fields)s
-
-    class Meta:
-        model = _models.%(model_name)s
-        fields = [%(fields)s]
-        export_order = [%(fields)s]
-        annotations = {%(annotations)s}
-
-"""
-
-
 def get_resource_template(model):
+    """Generate a ResourceTemplate for the given model for easy printing."""
     try:
         edit_view = miz_site.views[model](extra_context={"add": True})
     except KeyError:
@@ -121,7 +109,6 @@ def get_resource_template(model):
     if "beschreibung" in form_class.base_fields:
         fields.append("beschreibung")
 
-    # fields = ", ".join(fields)
     meta = ResourceMeta(
         fields=str(fields),
         export_order=str(fields),
@@ -133,6 +120,7 @@ def get_resource_template(model):
 
 
 class ResourceTemplate:
+    """Helper class for printing a resource."""
 
     def __init__(self, model: type[Model], meta: 'ResourceMeta', extra_fields: Optional[list[str]] = None):
         self.model = model
@@ -152,6 +140,7 @@ class ResourceTemplate:
 
 
 class ResourceMeta:
+    """Helper class for printing the Meta class of a resource."""
 
     def __init__(self, fields: str, export_order: str, annotations: str = "", widgets: str = ""):
         self.fields = fields
@@ -167,17 +156,3 @@ class ResourceMeta:
         if self.widgets:
             r += f"{indent}widgets = {self.widgets}\n"
         return r
-
-
-def print_model_resource(model, file=None):
-    """Print a ModelResource declaration for the given model."""
-    fields, annotations, annotated_fields = get_resource_attributes_for_model(model)
-    print(
-        template % {
-            "model_name": model.__name__,
-            "fields": ", ".join(f'"{field}"' for field in fields),
-            "annotations": ", ".join(f'"{name}": {annotation}' for name, annotation in annotations.items()),
-            "annotation_fields": f"\n{' ' * 4}".join(annotated_fields),
-        },
-        file=file
-    )
