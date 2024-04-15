@@ -7,17 +7,17 @@ import dbentry.models as _models
 
 
 class MIZResource(resources.ModelResource):
-    _use_overview = True
+    add_annotations = True
 
-    def _add_overview(self, queryset):
-        """Add 'overview' annotations to the queryset."""
-        if self._use_overview and hasattr(queryset, "overview"):
-            return queryset.overview()
+    def _add_annotations(self, queryset):
+        """Add the annotations declared in Meta.annotations to the queryset."""
+        if self.add_annotations:
+            return queryset.annotate(**self._meta.annotations)
         else:
             return queryset
 
     def filter_export(self, queryset, *args, **kwargs):
-        return self._add_overview(queryset)
+        return self._add_annotations(queryset)
 
     def get_export_headers(self):
         # For fields derived from the model fields, use the field's
