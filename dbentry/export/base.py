@@ -163,12 +163,13 @@ class ResourceMeta:
 class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
     def __new__(cls, name, bases, attrs):
         _declared_fields = OrderedDict()
-        for name, attr in attrs.items():
+        for _name, attr in attrs.items():
             if isinstance(attr, Field):
-                _declared_fields[name] = attr
+                _declared_fields[_name] = attr
+
         new_class = super().__new__(cls, name, bases, attrs)
 
-        new_class._declared_fields = _declared_fields
+        new_class._meta._declared_fields = _declared_fields
 
         return new_class
 
