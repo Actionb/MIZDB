@@ -1,3 +1,7 @@
+from typing import Optional
+
+from django.db.models import Model
+
 from dbentry import models as _models
 from dbentry.site.registry import miz_site
 
@@ -88,6 +92,43 @@ class %(model_name)sResource(MIZResource):
         annotations = {%(annotations)s}
 
 """
+
+
+class ResourceTemplate:
+
+    def __init__(self, model: type[Model], meta: 'ResourceMeta', extra_fields: Optional[list[str]] = None):
+        self.model = model
+        self.meta = meta
+        self.extra_fields = extra_fields
+
+    def __str__(self):
+        indent = " " * 4
+        r = f"class {self.model.__name__}:\n"
+        if self.extra_fields:
+            for field in self.extra_fields:
+                r += f"{indent}{field}\n"
+            r += "\n"
+        for line in str(self.meta).split("\n"):
+            r += f"{indent}{line}\n"
+        return r + "\n"
+
+
+class ResourceMeta:
+
+    def __init__(self, fields: str, export_order: str, annotations: str = "", widgets: str = ""):
+        self.fields = fields
+        self.export_order = export_order
+        self.annotations = annotations
+        self.widgets = widgets
+
+    def __str__(self):
+        indent = " " * 4
+        r = f"class Meta:\n{indent}fields = {self.fields}\n{indent}export_order = {self.export_order}\n"
+        if self.annotations:
+            r += f"{indent}annotations = {self.annotations}\n"
+        if self.widgets:
+            r += f"{indent}widgets = {self.widgets}\n"
+        return r
 
 
 def print_model_resource(model, file=None):
