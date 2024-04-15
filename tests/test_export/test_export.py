@@ -1,7 +1,7 @@
 import pytest
 
 from dbentry import models as _models
-from dbentry.export.generated import MusikerResource
+from dbentry.export.base import resource_factory
 from tests.model_factory import make
 
 pytestmark = [pytest.mark.django_db]
@@ -71,7 +71,7 @@ def musiker(person, urls, genres, aliase, bands, orte):
 
 @pytest.fixture
 def resource():
-    return MusikerResource()
+    return resource_factory(_models.Musiker)()
 
 
 @pytest.fixture
