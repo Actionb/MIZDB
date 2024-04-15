@@ -11,98 +11,6 @@ from dbentry.site.views.edit import *  # register the views with miz_site # noqa
 from dbentry.utils.query import string_list
 
 
-# TODO: ForeignKeys need to present an actual human-readable value to the
-#  dataset. Currently, it's just an id.
-
-
-def get_resource_attributes_for_model(model):
-    """
-    Return required attributes for the ModelResource for the given model.
-
-    Returns a 4-tuple of:
-        - a list of field names for the `field` meta attribute
-        - a dictionary of annotations for the `annotations` meta attribute
-        - a dictionary of widget kwargs for the `widgets` meta attribute
-        - a list of Field declarations for the resource class body
-    """
-    try:
-        edit_view = miz_site.views[model](extra_context={"add": True})
-    except KeyError:
-        print(f"No view for model '{model}'.")
-        return
-
-    # base fields
-    form_class = edit_view.get_form_class()
-    form_fields = [f for f in form_class.base_fields if f not in ("beschreibung", "bemerkungen")]
-    fields = ["id", *form_fields]
-
-    widgets = {}
-    for field in fields:
-        try:
-            model_field = model._meta.get_field(field)
-        except FieldDoesNotExist:
-            continue
-        if model_field.is_relation and model_field.many_to_one:
-            widgets[model_field.name] = {"field": model_field.related_model.name_field}
-
-    annotations, field_declarations = get_resource_annotations(model, edit_view.get_inline_instances())
-    fields.extend(annotations.keys())
-
-    if "beschreibung" in form_class.base_fields:
-        fields.append("beschreibung")
-    return fields, annotations, widgets, field_declarations
-
-
-def get_m2m_field(fk, model):
-    """
-    Return the ManyToManyField that uses the given ForeignKey's model as a
-    m2m 'through' table.
-
-    Returns None if no ManyToManyField could be found (probably because the fk
-    does not implement a m2m relation).
-    """
-    for f in model._meta.get_fields():
-        if not f.many_to_many or f.one_to_many:
-            continue
-        remote_field = f.remote_field if f.concrete else f
-        if remote_field.through == fk.model:
-            return f
-
-
-def get_resource_annotations(model, inlines) -> tuple[dict, list]:
-    """Derive annotations for the model resource from the inlines."""
-    annotations = {}
-    annotated_fields = []
-    fields = []
-    for inline in inlines:
-        formset_class = inline.get_formset_class()
-        fk = formset_class.fk
-        field = get_m2m_field(fk, model)
-        if field is None:
-            # Just a M2O field pointing at model.
-            field = fk.remote_field
-        if inline.model == _models.Bestand:
-            # Bestand does not have a name_field
-            # TODO: declare 'OVERRIDES' at module level:
-            #  OVERRIDES = {_models.Bestand: "lagerort___name"}
-            target_field = "lagerort___name"
-        else:
-            target_field = field.related_model.name_field
-
-        name = f"{field.name}_list"
-        path = f"{field.name}__{target_field}"
-        # TODO: orte_list needs ; as string_list separator
-        string_list_kwargs = {}
-        if field.related_model == _models.Ort:
-            string_list_kwargs["sep"] = "; "
-        annotations[name] = string_list(path, **string_list_kwargs)
-
-        annotated_fields.append(f'{name} = Field(attribute="{name}", column_name="{inline.verbose_name_plural}")')
-        fields.append((name, Field(attribute=name, column_name=inline.verbose_name_plural)))
-
-    return annotations, fields
-
-
 class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
     def __new__(cls, name, bases, attrs):
         _declared_fields = OrderedDict()
@@ -190,8 +98,87 @@ class MIZResource(ModelResource):
         return r
 
 
+def get_m2m_field(fk, model):
+    """
+    Return the ManyToManyField that uses the given ForeignKey's model as a
+    m2m 'through' table.
+
+    Returns None if no ManyToManyField could be found (probably because the fk
+    does not implement a m2m relation).
+    """
+    for f in model._meta.get_fields():
+        if not f.many_to_many or f.one_to_many:
+            continue
+        remote_field = f.remote_field if f.concrete else f
+        if remote_field.through == fk.model:
+            return f
+
+
 def resource_factory(model):
-    fields, annotations, widgets, field_declarations = get_resource_attributes_for_model(model)
+    """
+    Create a ModelResource class for the given model.
+
+    This uses the model's edit view to collect fields (from the view's form)
+    and to create the right annotations (from the view's inlines).
+    """
+    try:
+        edit_view = miz_site.views[model](extra_context={"add": True})
+    except KeyError:
+        print(f"No view for model '{model}'.")
+        return
+
+    # Collect the meta attributes and field declarations.
+    # Base fields:
+    form_class = edit_view.get_form_class()
+    form_fields = []
+    for field_name in form_class.base_fields:
+        try:
+            model._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            # Do not add fields that are not part of the model
+            continue
+        if field_name not in ("beschreibung", "bemerkungen"):
+            form_fields.append(field_name)
+    fields = ["id", *form_fields]
+
+    # Widget overrides:
+    widgets = {}
+    for field in fields:
+        try:
+            model_field = model._meta.get_field(field)
+        except FieldDoesNotExist:
+            continue
+        if model_field.is_relation and model_field.many_to_one:
+            # Set the widget field to the name_field of the related model:
+            widgets[model_field.name] = {"field": model_field.related_model.name_field}
+
+    # Additional fields and their annotations:
+    annotations = OrderedDict()
+    field_declarations = []
+    for inline in edit_view.get_inline_instances():
+        fk = inline.get_formset_class().fk
+        field = get_m2m_field(fk, model) or fk.remote_field
+        if inline.model == _models.Bestand:
+            # NOTE: Bestand does not have a name_field set
+            target_field = "lagerort___name"
+        else:
+            target_field = field.related_model.name_field
+
+        name = f"{field.name}_list"
+        path = f"{field.name}__{target_field}"
+
+        string_list_kwargs = {}
+        if field.related_model == _models.Ort:
+            string_list_kwargs["sep"] = "; "
+        annotations[name] = string_list(path, **string_list_kwargs)
+        fields.append(name)
+
+        field_declarations.append((name, Field(attribute=name, column_name=inline.verbose_name_plural)))
+
+    if "beschreibung" in form_class.base_fields:
+        fields.append("beschreibung")
+
+    # Create the class:
     meta_attrs = {
         "model": model,
         "fields": fields,
