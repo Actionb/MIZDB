@@ -252,7 +252,7 @@ class BandResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "bandalias_list": string_list("bandalias__alias"),
             "musiker_list": string_list("musiker__kuenstler_name"),
-            "orte_list": string_list("orte___name"),
+            "orte_list": string_list("orte___name", sep="; "),
         }
 
 
@@ -456,7 +456,7 @@ class MagazinResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "verlag_list": string_list("verlag__verlag_name"),
             "herausgeber_list": string_list("herausgeber__herausgeber"),
-            "orte_list": string_list("orte___name"),
+            "orte_list": string_list("orte___name", sep="; "),
         }
 
 
@@ -499,7 +499,7 @@ class MusikerResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "musikeralias_list": string_list("musikeralias__alias"),
             "band_list": string_list("band__band_name"),
-            "orte_list": string_list("orte___name"),
+            "orte_list": string_list("orte___name", sep="; "),
             "instrument_list": string_list("instrument__instrument"),
         }
 
@@ -512,7 +512,7 @@ class PersonResource(MIZResource):
         model = _models.Person
         fields = ["id", "vorname", "nachname", "urls_list", "orte_list", "beschreibung"]
         export_order = ["id", "vorname", "nachname", "urls_list", "orte_list", "beschreibung"]
-        annotations = {"urls_list": string_list("urls__url"), "orte_list": string_list("orte___name")}
+        annotations = {"urls_list": string_list("urls__url"), "orte_list": string_list("orte___name", sep="; ")}
 
 
 class SchlagwortResource(MIZResource):
