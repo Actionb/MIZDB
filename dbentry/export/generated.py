@@ -79,7 +79,7 @@ class AudioResource(MIZResource):
             "band_list": string_list("band__band_name"),
             "schlagwort_list": string_list("schlagwort__schlagwort"),
             "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name"),
+            "ort_list": string_list("ort___name", sep="; "),
             "spielort_list": string_list("spielort__name"),
             "veranstaltung_list": string_list("veranstaltung__name"),
             "person_list": string_list("person___name"),
@@ -87,6 +87,7 @@ class AudioResource(MIZResource):
             "ausgabe_list": string_list("ausgabe___name"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"land_pressung": {"field": "land_name"}, "medium": {"field": "medium"}}
 
 
 class AusgabeResource(MIZResource):
@@ -141,6 +142,7 @@ class AusgabeResource(MIZResource):
             "video_list": string_list("video__titel"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"magazin": {"field": "magazin_name"}}
 
 
 class AutorResource(MIZResource):
@@ -152,6 +154,7 @@ class AutorResource(MIZResource):
         fields = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
         export_order = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
         annotations = {"urls_list": string_list("urls__url"), "magazin_list": string_list("magazin__magazin_name")}
+        widgets = {"person": {"field": "_name"}}
 
 
 class ArtikelResource(MIZResource):
@@ -169,7 +172,6 @@ class ArtikelResource(MIZResource):
         model = _models.Artikel
         fields = [
             "id",
-            "ausgabe__magazin",
             "ausgabe",
             "schlagzeile",
             "seite",
@@ -188,7 +190,6 @@ class ArtikelResource(MIZResource):
         ]
         export_order = [
             "id",
-            "ausgabe__magazin",
             "ausgabe",
             "schlagzeile",
             "seite",
@@ -211,11 +212,12 @@ class ArtikelResource(MIZResource):
             "band_list": string_list("band__band_name"),
             "schlagwort_list": string_list("schlagwort__schlagwort"),
             "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name"),
+            "ort_list": string_list("ort___name", sep="; "),
             "spielort_list": string_list("spielort__name"),
             "veranstaltung_list": string_list("veranstaltung__name"),
             "person_list": string_list("person___name"),
         }
+        widgets = {"ausgabe": {"field": "_name"}}
 
 
 class BandResource(MIZResource):
@@ -272,7 +274,6 @@ class PlakatResource(MIZResource):
         fields = [
             "id",
             "titel",
-            "plakat_id",
             "size",
             "datum",
             "reihe",
@@ -290,7 +291,6 @@ class PlakatResource(MIZResource):
         export_order = [
             "id",
             "titel",
-            "plakat_id",
             "size",
             "datum",
             "reihe",
@@ -310,12 +310,13 @@ class PlakatResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "musiker_list": string_list("musiker__kuenstler_name"),
             "band_list": string_list("band__band_name"),
-            "ort_list": string_list("ort___name"),
+            "ort_list": string_list("ort___name", sep="; "),
             "spielort_list": string_list("spielort__name"),
             "veranstaltung_list": string_list("veranstaltung__name"),
             "person_list": string_list("person___name"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"reihe": {"field": "name"}}
 
 
 class BuchResource(MIZResource):
@@ -396,7 +397,7 @@ class BuchResource(MIZResource):
             "band_list": string_list("band__band_name"),
             "schlagwort_list": string_list("schlagwort__schlagwort"),
             "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name"),
+            "ort_list": string_list("ort___name", sep="; "),
             "spielort_list": string_list("spielort__name"),
             "veranstaltung_list": string_list("veranstaltung__name"),
             "person_list": string_list("person___name"),
@@ -404,6 +405,7 @@ class BuchResource(MIZResource):
             "verlag_list": string_list("verlag__verlag_name"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"schriftenreihe": {"field": "name"}, "buchband": {"field": "titel"}}
 
 
 class GenreResource(MIZResource):
@@ -535,6 +537,7 @@ class SpielortResource(MIZResource):
         fields = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
         export_order = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
         annotations = {"urls_list": string_list("urls__url"), "spielortalias_list": string_list("spielortalias__alias")}
+        widgets = {"ort": {"field": "_name"}}
 
 
 class VeranstaltungResource(MIZResource):
@@ -587,6 +590,7 @@ class VeranstaltungResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "person_list": string_list("person___name"),
         }
+        widgets = {"spielort": {"field": "name"}, "reihe": {"field": "name"}}
 
 
 class VerlagResource(MIZResource):
@@ -594,7 +598,7 @@ class VerlagResource(MIZResource):
         model = _models.Verlag
         fields = ["id", "verlag_name", "sitz"]
         export_order = ["id", "verlag_name", "sitz"]
-        annotations = {}
+        widgets = {"sitz": {"field": "_name"}}
 
 
 class VideoResource(MIZResource):
@@ -662,13 +666,14 @@ class VideoResource(MIZResource):
             "band_list": string_list("band__band_name"),
             "schlagwort_list": string_list("schlagwort__schlagwort"),
             "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name"),
+            "ort_list": string_list("ort___name", sep="; "),
             "spielort_list": string_list("spielort__name"),
             "veranstaltung_list": string_list("veranstaltung__name"),
             "person_list": string_list("person___name"),
             "ausgabe_list": string_list("ausgabe___name"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"medium": {"field": "medium"}}
 
 
 class OrtResource(MIZResource):
@@ -676,7 +681,7 @@ class OrtResource(MIZResource):
         model = _models.Ort
         fields = ["id", "stadt", "land", "bland"]
         export_order = ["id", "stadt", "land", "bland"]
-        annotations = {}
+        widgets = {"land": {"field": "land_name"}, "bland": {"field": "bland_name"}}
 
 
 class BestandResource(MIZResource):
@@ -714,7 +719,20 @@ class BestandResource(MIZResource):
             "technik",
             "video",
         ]
-        annotations = {}
+        widgets = {
+            "lagerort": {"field": "_name"},
+            "provenienz": {"field": "geber__name"},
+            "audio": {"field": "titel"},
+            "ausgabe": {"field": "_name"},
+            "brochure": {"field": "titel"},
+            "buch": {"field": "titel"},
+            "dokument": {"field": "titel"},
+            "foto": {"field": "titel"},
+            "memorabilien": {"field": "titel"},
+            "plakat": {"field": "titel"},
+            "technik": {"field": "titel"},
+            "video": {"field": "titel"},
+        }
 
 
 class InstrumentResource(MIZResource):
@@ -722,7 +740,6 @@ class InstrumentResource(MIZResource):
         model = _models.Instrument
         fields = ["id", "instrument", "kuerzel"]
         export_order = ["id", "instrument", "kuerzel"]
-        annotations = {}
 
 
 class HerausgeberResource(MIZResource):
@@ -730,7 +747,6 @@ class HerausgeberResource(MIZResource):
         model = _models.Herausgeber
         fields = ["id", "herausgeber"]
         export_order = ["id", "herausgeber"]
-        annotations = {}
 
 
 class BrochureResource(MIZResource):
@@ -746,7 +762,6 @@ class BrochureResource(MIZResource):
             "id",
             "titel",
             "zusammenfassung",
-            "ausgabe__magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -759,7 +774,6 @@ class BrochureResource(MIZResource):
             "id",
             "titel",
             "zusammenfassung",
-            "ausgabe__magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -775,6 +789,7 @@ class BrochureResource(MIZResource):
             "schlagwort_list": string_list("schlagwort__schlagwort"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"ausgabe": {"field": "_name"}}
 
 
 class KatalogResource(MIZResource):
@@ -790,7 +805,6 @@ class KatalogResource(MIZResource):
             "titel",
             "art",
             "zusammenfassung",
-            "ausgabe__magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -803,7 +817,6 @@ class KatalogResource(MIZResource):
             "titel",
             "art",
             "zusammenfassung",
-            "ausgabe__magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -817,6 +830,7 @@ class KatalogResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"ausgabe": {"field": "_name"}}
 
 
 class KalenderResource(MIZResource):
@@ -833,7 +847,6 @@ class KalenderResource(MIZResource):
             "id",
             "titel",
             "zusammenfassung",
-            "ausgabe__magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -847,7 +860,6 @@ class KalenderResource(MIZResource):
             "id",
             "titel",
             "zusammenfassung",
-            "ausgabe__magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -865,6 +877,7 @@ class KalenderResource(MIZResource):
             "veranstaltung_list": string_list("veranstaltung__name"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"ausgabe": {"field": "_name"}}
 
 
 class FotoResource(MIZResource):
@@ -883,7 +896,6 @@ class FotoResource(MIZResource):
         fields = [
             "id",
             "titel",
-            "foto_id",
             "size",
             "typ",
             "farbe",
@@ -904,7 +916,6 @@ class FotoResource(MIZResource):
         export_order = [
             "id",
             "titel",
-            "foto_id",
             "size",
             "typ",
             "farbe",
@@ -927,12 +938,13 @@ class FotoResource(MIZResource):
             "genre_list": string_list("genre__genre"),
             "musiker_list": string_list("musiker__kuenstler_name"),
             "band_list": string_list("band__band_name"),
-            "ort_list": string_list("ort___name"),
+            "ort_list": string_list("ort___name", sep="; "),
             "spielort_list": string_list("spielort__name"),
             "veranstaltung_list": string_list("veranstaltung__name"),
             "person_list": string_list("person___name"),
             "bestand_list": string_list("bestand__lagerort___name"),
         }
+        widgets = {"reihe": {"field": "name"}}
 
 
 class PlattenfirmaResource(MIZResource):
@@ -940,7 +952,6 @@ class PlattenfirmaResource(MIZResource):
         model = _models.Plattenfirma
         fields = ["id", "name"]
         export_order = ["id", "name"]
-        annotations = {}
 
 
 class LagerortResource(MIZResource):
@@ -948,7 +959,6 @@ class LagerortResource(MIZResource):
         model = _models.Lagerort
         fields = ["id", "ort", "raum", "regal", "fach", "ordner"]
         export_order = ["id", "ort", "raum", "regal", "fach", "ordner"]
-        annotations = {}
 
 
 class GeberResource(MIZResource):
@@ -956,7 +966,6 @@ class GeberResource(MIZResource):
         model = _models.Geber
         fields = ["id", "name"]
         export_order = ["id", "name"]
-        annotations = {}
 
 
 class ProvenienzResource(MIZResource):
@@ -964,7 +973,7 @@ class ProvenienzResource(MIZResource):
         model = _models.Provenienz
         fields = ["id", "typ", "geber"]
         export_order = ["id", "typ", "geber"]
-        annotations = {}
+        widgets = {"geber": {"field": "name"}}
 
 
 class SchriftenreiheResource(MIZResource):
@@ -972,7 +981,6 @@ class SchriftenreiheResource(MIZResource):
         model = _models.Schriftenreihe
         fields = ["id", "name"]
         export_order = ["id", "name"]
-        annotations = {}
 
 
 class BildreiheResource(MIZResource):
@@ -980,7 +988,6 @@ class BildreiheResource(MIZResource):
         model = _models.Bildreihe
         fields = ["id", "name"]
         export_order = ["id", "name"]
-        annotations = {}
 
 
 class VeranstaltungsreiheResource(MIZResource):
@@ -988,7 +995,6 @@ class VeranstaltungsreiheResource(MIZResource):
         model = _models.Veranstaltungsreihe
         fields = ["id", "name"]
         export_order = ["id", "name"]
-        annotations = {}
 
 
 class VideoMediumResource(MIZResource):
@@ -996,7 +1002,6 @@ class VideoMediumResource(MIZResource):
         model = _models.VideoMedium
         fields = ["id", "medium"]
         export_order = ["id", "medium"]
-        annotations = {}
 
 
 class AudioMediumResource(MIZResource):
@@ -1004,4 +1009,3 @@ class AudioMediumResource(MIZResource):
         model = _models.AudioMedium
         fields = ["id", "medium"]
         export_order = ["id", "medium"]
-        annotations = {}
