@@ -46,7 +46,7 @@ def bands():
 
 @pytest.fixture
 def orte():
-    de = make(_models.Land, land_name="Deutschland", code="de")
+    de = make(_models.Land, land_name="Deutschland", code="DE")
     return (
         make(_models.Ort, stadt="Alice Town", land=de),
         make(_models.Ort, stadt="Bob City", land=de),
@@ -84,6 +84,10 @@ def datadict(dataset):
     return dataset.dict[0]
 
 
+def sort(_list):
+    return sorted(str(i) for i in _list)
+
+
 def test_can_export(dataset):
     # FIXME: _models.Musiker.objects.count() is '5' here (musiker + four unknowns)?
     assert len(dataset) == 1
@@ -114,24 +118,24 @@ def test_person_data(datadict, person):
 
 
 def test_url_data(datadict, urls):
-    assert datadict["Webseiten"] == ", ".join(str(i) for i in urls)
+    assert datadict["Webseiten"] == ", ".join(str(i) for i in sort(urls))
 
 
 def test_genre_data(datadict, genres):
-    assert datadict["Genres"] == ", ".join(str(i) for i in genres)
+    assert datadict["Genres"] == ", ".join(str(i) for i in sort(genres))
 
 
 def test_alias_data(datadict, aliase):
-    assert datadict["Alias"] == ", ".join(str(i) for i in aliase)
+    assert datadict["Alias"] == ", ".join(str(i) for i in sort(aliase))
 
 
 def test_band_data(datadict, bands):
-    assert datadict["Bands (Mitglied)"] == ", ".join(str(i) for i in bands)
+    assert datadict["Bands (Mitglied)"] == ", ".join(str(i) for i in sort(bands))
 
 
 def test_ort_data(datadict, orte):
-    assert datadict["Assoziierte Orte"] == "; ".join(str(i) for i in orte)
+    assert datadict["Assoziierte Orte"] == "; ".join(str(i) for i in sort(orte))
 
 
 def test_instrument_data(datadict):
-    assert datadict["Instrumente"] == ""
+    assert datadict["Instrumente"] == "-"
