@@ -54,7 +54,7 @@ def get_m2m_field(fk, model):
             return f
 
 
-def get_resource_annotations(model, inlines):
+def get_resource_annotations(model, inlines) -> tuple[dict, list]:
     """Derive annotations for the model resource from the inlines."""
     annotations = {}
     annotated_fields = []
@@ -92,6 +92,44 @@ class %(model_name)sResource(MIZResource):
         annotations = {%(annotations)s}
 
 """
+
+
+def get_resource_template(model):
+    try:
+        edit_view = miz_site.views[model](extra_context={"add": True})
+    except KeyError:
+        print(f"No view for model '{model}'.")
+        return
+
+    # base fields
+    form_class = edit_view.get_form_class()
+    form_fields = [f for f in form_class.base_fields if f not in ("beschreibung", "bemerkungen")]
+    fields = ["id", *form_fields]
+
+    widgets = {}
+    for field in fields:
+        try:
+            model_field = model._meta.get_field(field)
+        except model.FieldDoesNotExist:
+            continue
+        if model_field.is_relation and model_field.many_to_one:
+            widgets[model_field.name] = {"field": model_field.related_model.name_field}
+
+    annotations, annotated_fields = get_resource_annotations(model, edit_view.get_inline_instances())
+    fields.extend(annotations.keys())
+
+    if "beschreibung" in form_class.base_fields:
+        fields.append("beschreibung")
+
+    # fields = ", ".join(fields)
+    meta = ResourceMeta(
+        fields=str(fields),
+        export_order=str(fields),
+        annotations=str(annotations),
+        widgets=str(widgets)
+    )
+    resource = ResourceTemplate(model, meta, annotated_fields)
+    return resource
 
 
 class ResourceTemplate:
