@@ -7,6 +7,7 @@ from import_export.resources import ModelDeclarativeMetaclass, ModelResource
 
 from dbentry import models as _models
 from dbentry.site.registry import miz_site
+from dbentry.site.views.edit import *  # register the views with miz_site # noqa
 from dbentry.utils.query import string_list
 
 
