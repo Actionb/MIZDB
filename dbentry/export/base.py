@@ -45,6 +45,7 @@ class MIZResource(ModelResource):
             return queryset
 
     def filter_export(self, queryset, *args, **kwargs):
+        queryset = queryset.defer("_fts")
         queryset = self._add_annotations(queryset)
         if select_related := getattr(self._meta, "select_related", None):
             queryset = queryset.select_related(*select_related)
