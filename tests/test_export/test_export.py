@@ -108,6 +108,17 @@ def test_headers(dataset):
     ]
 
 
+def test_annotations(resource):
+    annotations = resource.get_annotations()
+    assert annotations
+    assert "urls_list" in annotations
+    assert "genre_list" in annotations
+    assert "musikeralias_list" in annotations
+    assert "band_list" in annotations
+    assert "orte_list" in annotations
+    assert "instrument_list" in annotations
+
+
 def test_musiker_data(datadict, musiker):
     assert datadict["Id"] == musiker.pk
     assert datadict["Künstlername"] == "Alicia Testy"
