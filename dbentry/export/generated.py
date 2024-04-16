@@ -4,15 +4,15 @@ from dbentry.utils.query import string_list
 
 
 class AudioResource(MIZResource):
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Audio.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Audio.objects.annotate(band_list=string_list("band__band_name")),
     )
     schlagwort_list = AnnotationField(
         attribute="schlagwort_list",
@@ -320,10 +320,10 @@ class BandResource(MIZResource):
         column_name="Alias",
         expr=string_list("bandalias__alias"),
     )
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Band-Mitglieder",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Band.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
     orte_list = AnnotationField(
         attribute="orte_list",
@@ -366,15 +366,15 @@ class PlakatResource(MIZResource):
         column_name="Genres",
         expr=string_list("genre__genre"),
     )
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Plakat.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Plakat.objects.annotate(band_list=string_list("band__band_name")),
     )
     ort_list = AnnotationField(
         attribute="ort_list",
@@ -451,7 +451,7 @@ class BuchResource(MIZResource):
     musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        queryset=_models.Buch.objects.annotate(musiker_lits=string_list("musiker__kuenstler_name")),
+        queryset=_models.Buch.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
     band_list = CachedQuerysetField(
         attribute="band_list",
@@ -652,10 +652,10 @@ class MusikerResource(MIZResource):
         column_name="Alias",
         expr=string_list("musikeralias__alias"),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands (Mitglied)",
-        expr=string_list("band__band_name"),
+        queryset=_models.Musiker.objects.annotate(band_list=string_list("band__band_name")),
     )
     orte_list = AnnotationField(
         attribute="orte_list",
@@ -760,15 +760,15 @@ class VeranstaltungResource(MIZResource):
         column_name="Alias",
         expr=string_list("veranstaltungalias__alias"),
     )
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Veranstaltung.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Veranstaltung.objects.annotate(band_list=string_list("band__band_name")),
     )
     schlagwort_list = AnnotationField(
         attribute="schlagwort_list",
@@ -832,15 +832,15 @@ class VerlagResource(MIZResource):
 
 
 class VideoResource(MIZResource):
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Video.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Video.objects.annotate(band_list=string_list("band__band_name")),
     )
     schlagwort_list = AnnotationField(
         attribute="schlagwort_list",
@@ -1207,15 +1207,15 @@ class FotoResource(MIZResource):
         column_name="Genres",
         expr=string_list("genre__genre"),
     )
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Foto.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Foto.objects.annotate(band_list=string_list("band__band_name")),
     )
     ort_list = AnnotationField(
         attribute="ort_list",
