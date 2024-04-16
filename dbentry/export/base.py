@@ -124,7 +124,7 @@ class MIZResource(ModelResource):
                     field_kwargs = f"{field_kwargs}, expr={string_list_from_expr(field.expr)},"
                 elif isinstance(field, CachedQuerysetField):
                     expr = string_list_from_expr(field.queryset.query.annotations[name])
-                    queryset = f'_models.{self._meta.model.__name__}.objects.annotate({name}={expr})'
+                    queryset = f"_models.{self._meta.model.__name__}.objects.annotate({name}={expr})"
                     field_kwargs = f"{field_kwargs}, queryset={queryset},"
 
                 r += f"{indent}{name} = {field.__class__.__name__}({field_kwargs})\n"
@@ -178,7 +178,7 @@ NAME_FIELDS = {
     _models.AusgabeNum: "num",
     _models.AusgabeLnum: "lnum",
     _models.AusgabeJahr: "jahr",
-    _models.AusgabeMonat: "monat__abk"
+    _models.AusgabeMonat: "monat__abk",
 }
 
 
