@@ -1,22 +1,65 @@
-from import_export.fields import Field
-
 from dbentry import models as _models
-from dbentry.export.models import MIZResource
+from dbentry.export.base import AnnotationField
+from dbentry.export.base import MIZResource
 from dbentry.utils.query import string_list
 
 
 class AudioResource(MIZResource):
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    ort_list = Field(attribute="ort_list", column_name="Orte")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    person_list = Field(attribute="person_list", column_name="Personen")
-    plattenfirma_list = Field(attribute="plattenfirma_list", column_name="Plattenfirmen")
-    ausgabe_list = Field(attribute="ausgabe_list", column_name="Ausgaben")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    ort_list = AnnotationField(
+        attribute="ort_list",
+        column_name="Orte",
+        expr=string_list("ort___name", sep="; "),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
+    plattenfirma_list = AnnotationField(
+        attribute="plattenfirma_list",
+        column_name="Plattenfirmen",
+        expr=string_list("plattenfirma__name"),
+    )
+    ausgabe_list = AnnotationField(
+        attribute="ausgabe_list",
+        column_name="Ausgaben",
+        expr=string_list("ausgabe___name"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Audio
@@ -74,30 +117,45 @@ class AudioResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name", sep="; "),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "person_list": string_list("person___name"),
-            "plattenfirma_list": string_list("plattenfirma__name"),
-            "ausgabe_list": string_list("ausgabe___name"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"land_pressung": {"field": "land_name"}, "medium": {"field": "medium"}}
 
 
 class AusgabeResource(MIZResource):
-    ausgabenum_list = Field(attribute="ausgabenum_list", column_name="Ausgabennummern")
-    ausgabemonat_list = Field(attribute="ausgabemonat_list", column_name="Monate")
-    ausgabelnum_list = Field(attribute="ausgabelnum_list", column_name="Laufende Nummer")
-    ausgabejahr_list = Field(attribute="ausgabejahr_list", column_name="erschienen im Jahr")
-    audio_list = Field(attribute="audio_list", column_name="Audio Materialien")
-    video_list = Field(attribute="video_list", column_name="Video Materialien")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    ausgabenum_list = AnnotationField(
+        attribute="ausgabenum_list",
+        column_name="Ausgabennummern",
+        expr=string_list("ausgabenum__"),
+    )
+    ausgabemonat_list = AnnotationField(
+        attribute="ausgabemonat_list",
+        column_name="Monate",
+        expr=string_list("ausgabemonat__"),
+    )
+    ausgabelnum_list = AnnotationField(
+        attribute="ausgabelnum_list",
+        column_name="Laufende Nummer",
+        expr=string_list("ausgabelnum__"),
+    )
+    ausgabejahr_list = AnnotationField(
+        attribute="ausgabejahr_list",
+        column_name="erschienen im Jahr",
+        expr=string_list("ausgabejahr__"),
+    )
+    audio_list = AnnotationField(
+        attribute="audio_list",
+        column_name="Audio Materialien",
+        expr=string_list("audio__titel"),
+    )
+    video_list = AnnotationField(
+        attribute="video_list",
+        column_name="Video Materialien",
+        expr=string_list("video__titel"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Ausgabe
@@ -133,40 +191,74 @@ class AusgabeResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "ausgabenum_list": string_list("ausgabenum__"),
-            "ausgabemonat_list": string_list("ausgabemonat__"),
-            "ausgabelnum_list": string_list("ausgabelnum__"),
-            "ausgabejahr_list": string_list("ausgabejahr__"),
-            "audio_list": string_list("audio__titel"),
-            "video_list": string_list("video__titel"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"magazin": {"field": "magazin_name"}}
 
 
 class AutorResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    magazin_list = Field(attribute="magazin_list", column_name="Magazine")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    magazin_list = AnnotationField(
+        attribute="magazin_list",
+        column_name="Magazine",
+        expr=string_list("magazin__magazin_name"),
+    )
 
     class Meta:
         model = _models.Autor
         fields = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
         export_order = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
-        annotations = {"urls_list": string_list("urls__url"), "magazin_list": string_list("magazin__magazin_name")}
         widgets = {"person": {"field": "_name"}}
 
 
 class ArtikelResource(MIZResource):
-    autor_list = Field(attribute="autor_list", column_name="Autoren")
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    ort_list = Field(attribute="ort_list", column_name="Orte")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    person_list = Field(attribute="person_list", column_name="Personen")
+    autor_list = AnnotationField(
+        attribute="autor_list",
+        column_name="Autoren",
+        expr=string_list("autor___name"),
+    )
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    ort_list = AnnotationField(
+        attribute="ort_list",
+        column_name="Orte",
+        expr=string_list("ort___name", sep="; "),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
 
     class Meta:
         model = _models.Artikel
@@ -206,26 +298,35 @@ class ArtikelResource(MIZResource):
             "person_list",
             "beschreibung",
         ]
-        annotations = {
-            "autor_list": string_list("autor___name"),
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name", sep="; "),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "person_list": string_list("person___name"),
-        }
         widgets = {"ausgabe": {"field": "_name"}}
 
 
 class BandResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    bandalias_list = Field(attribute="bandalias_list", column_name="Alias")
-    musiker_list = Field(attribute="musiker_list", column_name="Band-Mitglieder")
-    orte_list = Field(attribute="orte_list", column_name="Assoziierte Orte")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    bandalias_list = AnnotationField(
+        attribute="bandalias_list",
+        column_name="Alias",
+        expr=string_list("bandalias__alias"),
+    )
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Band-Mitglieder",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    orte_list = AnnotationField(
+        attribute="orte_list",
+        column_name="Assoziierte Orte",
+        expr=string_list("orte___name", sep="; "),
+    )
 
     class Meta:
         model = _models.Band
@@ -249,25 +350,54 @@ class BandResource(MIZResource):
             "orte_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "genre_list": string_list("genre__genre"),
-            "bandalias_list": string_list("bandalias__alias"),
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "orte_list": string_list("orte___name", sep="; "),
-        }
 
 
 class PlakatResource(MIZResource):
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    ort_list = Field(attribute="ort_list", column_name="Orte")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    person_list = Field(attribute="person_list", column_name="Personen")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    ort_list = AnnotationField(
+        attribute="ort_list",
+        column_name="Orte",
+        expr=string_list("ort___name", sep="; "),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Plakat
@@ -305,33 +435,70 @@ class PlakatResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "ort_list": string_list("ort___name", sep="; "),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "person_list": string_list("person___name"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"reihe": {"field": "name"}}
 
 
 class BuchResource(MIZResource):
-    autor_list = Field(attribute="autor_list", column_name="Autoren")
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    ort_list = Field(attribute="ort_list", column_name="Orte")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    person_list = Field(attribute="person_list", column_name="Personen")
-    herausgeber_list = Field(attribute="herausgeber_list", column_name="Herausgeber")
-    verlag_list = Field(attribute="verlag_list", column_name="Verlage")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    autor_list = AnnotationField(
+        attribute="autor_list",
+        column_name="Autoren",
+        expr=string_list("autor___name"),
+    )
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    ort_list = AnnotationField(
+        attribute="ort_list",
+        column_name="Orte",
+        expr=string_list("ort___name", sep="; "),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
+    herausgeber_list = AnnotationField(
+        attribute="herausgeber_list",
+        column_name="Herausgeber",
+        expr=string_list("herausgeber__herausgeber"),
+    )
+    verlag_list = AnnotationField(
+        attribute="verlag_list",
+        column_name="Verlage",
+        expr=string_list("verlag__verlag_name"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Buch
@@ -391,39 +558,48 @@ class BuchResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "autor_list": string_list("autor___name"),
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name", sep="; "),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "person_list": string_list("person___name"),
-            "herausgeber_list": string_list("herausgeber__herausgeber"),
-            "verlag_list": string_list("verlag__verlag_name"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"schriftenreihe": {"field": "name"}, "buchband": {"field": "titel"}}
 
 
 class GenreResource(MIZResource):
-    genrealias_list = Field(attribute="genrealias_list", column_name="Alias")
+    genrealias_list = AnnotationField(
+        attribute="genrealias_list",
+        column_name="Alias",
+        expr=string_list("genrealias__alias"),
+    )
 
     class Meta:
         model = _models.Genre
         fields = ["id", "genre", "genrealias_list"]
         export_order = ["id", "genre", "genrealias_list"]
-        annotations = {"genrealias_list": string_list("genrealias__alias")}
 
 
 class MagazinResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    verlag_list = Field(attribute="verlag_list", column_name="Verlage")
-    herausgeber_list = Field(attribute="herausgeber_list", column_name="Herausgeber")
-    orte_list = Field(attribute="orte_list", column_name="Assoziierte Orte")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    verlag_list = AnnotationField(
+        attribute="verlag_list",
+        column_name="Verlage",
+        expr=string_list("verlag__verlag_name"),
+    )
+    herausgeber_list = AnnotationField(
+        attribute="herausgeber_list",
+        column_name="Herausgeber",
+        expr=string_list("herausgeber__herausgeber"),
+    )
+    orte_list = AnnotationField(
+        attribute="orte_list",
+        column_name="Assoziierte Orte",
+        expr=string_list("orte___name", sep="; "),
+    )
 
     class Meta:
         model = _models.Magazin
@@ -453,22 +629,39 @@ class MagazinResource(MIZResource):
             "orte_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "genre_list": string_list("genre__genre"),
-            "verlag_list": string_list("verlag__verlag_name"),
-            "herausgeber_list": string_list("herausgeber__herausgeber"),
-            "orte_list": string_list("orte___name", sep="; "),
-        }
 
 
 class MusikerResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    musikeralias_list = Field(attribute="musikeralias_list", column_name="Alias")
-    band_list = Field(attribute="band_list", column_name="Bands (Mitglied)")
-    orte_list = Field(attribute="orte_list", column_name="Assoziierte Orte")
-    instrument_list = Field(attribute="instrument_list", column_name="Instrumente")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    musikeralias_list = AnnotationField(
+        attribute="musikeralias_list",
+        column_name="Alias",
+        expr=string_list("musikeralias__alias"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands (Mitglied)",
+        expr=string_list("band__band_name"),
+    )
+    orte_list = AnnotationField(
+        attribute="orte_list",
+        column_name="Assoziierte Orte",
+        expr=string_list("orte___name", sep="; "),
+    )
+    instrument_list = AnnotationField(
+        attribute="instrument_list",
+        column_name="Instrumente",
+        expr=string_list("instrument__instrument"),
+    )
 
     class Meta:
         model = _models.Musiker
@@ -496,58 +689,95 @@ class MusikerResource(MIZResource):
             "instrument_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "genre_list": string_list("genre__genre"),
-            "musikeralias_list": string_list("musikeralias__alias"),
-            "band_list": string_list("band__band_name"),
-            "orte_list": string_list("orte___name", sep="; "),
-            "instrument_list": string_list("instrument__instrument"),
-        }
         widgets = {"person": {"field": "_name"}}
 
 
 class PersonResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    orte_list = Field(attribute="orte_list", column_name="Assoziierte Orte")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    orte_list = AnnotationField(
+        attribute="orte_list",
+        column_name="Assoziierte Orte",
+        expr=string_list("orte___name", sep="; "),
+    )
 
     class Meta:
         model = _models.Person
         fields = ["id", "vorname", "nachname", "urls_list", "orte_list", "beschreibung"]
         export_order = ["id", "vorname", "nachname", "urls_list", "orte_list", "beschreibung"]
-        annotations = {"urls_list": string_list("urls__url"), "orte_list": string_list("orte___name", sep="; ")}
 
 
 class SchlagwortResource(MIZResource):
-    schlagwortalias_list = Field(attribute="schlagwortalias_list", column_name="Alias")
+    schlagwortalias_list = AnnotationField(
+        attribute="schlagwortalias_list",
+        column_name="Alias",
+        expr=string_list("schlagwortalias__alias"),
+    )
 
     class Meta:
         model = _models.Schlagwort
         fields = ["id", "schlagwort", "schlagwortalias_list"]
         export_order = ["id", "schlagwort", "schlagwortalias_list"]
-        annotations = {"schlagwortalias_list": string_list("schlagwortalias__alias")}
 
 
 class SpielortResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    spielortalias_list = Field(attribute="spielortalias_list", column_name="Alias")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    spielortalias_list = AnnotationField(
+        attribute="spielortalias_list",
+        column_name="Alias",
+        expr=string_list("spielortalias__alias"),
+    )
 
     class Meta:
         model = _models.Spielort
         fields = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
         export_order = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
-        annotations = {"urls_list": string_list("urls__url"), "spielortalias_list": string_list("spielortalias__alias")}
         widgets = {"ort": {"field": "_name"}}
 
 
 class VeranstaltungResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    veranstaltungalias_list = Field(attribute="veranstaltungalias_list", column_name="Alias")
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    person_list = Field(attribute="person_list", column_name="Personen")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    veranstaltungalias_list = AnnotationField(
+        attribute="veranstaltungalias_list",
+        column_name="Alias",
+        expr=string_list("veranstaltungalias__alias"),
+    )
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
 
     class Meta:
         model = _models.Veranstaltung
@@ -581,15 +811,6 @@ class VeranstaltungResource(MIZResource):
             "person_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "veranstaltungalias_list": string_list("veranstaltungalias__alias"),
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "person_list": string_list("person___name"),
-        }
         widgets = {"spielort": {"field": "name"}, "reihe": {"field": "name"}}
 
 
@@ -602,16 +823,56 @@ class VerlagResource(MIZResource):
 
 
 class VideoResource(MIZResource):
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    ort_list = Field(attribute="ort_list", column_name="Orte")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    person_list = Field(attribute="person_list", column_name="Personen")
-    ausgabe_list = Field(attribute="ausgabe_list", column_name="Ausgaben")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    ort_list = AnnotationField(
+        attribute="ort_list",
+        column_name="Orte",
+        expr=string_list("ort___name", sep="; "),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
+    ausgabe_list = AnnotationField(
+        attribute="ausgabe_list",
+        column_name="Ausgaben",
+        expr=string_list("ausgabe___name"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Video
@@ -661,18 +922,6 @@ class VideoResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "ort_list": string_list("ort___name", sep="; "),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "person_list": string_list("person___name"),
-            "ausgabe_list": string_list("ausgabe___name"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"medium": {"field": "medium"}}
 
 
@@ -750,11 +999,31 @@ class HerausgeberResource(MIZResource):
 
 
 class BrochureResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    jahre_list = Field(attribute="jahre_list", column_name="Jahre")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    jahre_list = AnnotationField(
+        attribute="jahre_list",
+        column_name="Jahre",
+        expr=string_list("jahre__jahr"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Brochure
@@ -782,21 +1051,30 @@ class BrochureResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "jahre_list": string_list("jahre__jahr"),
-            "genre_list": string_list("genre__genre"),
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"ausgabe": {"field": "_name"}}
 
 
 class KatalogResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    jahre_list = Field(attribute="jahre_list", column_name="Jahre")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    jahre_list = AnnotationField(
+        attribute="jahre_list",
+        column_name="Jahre",
+        expr=string_list("jahre__jahr"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Katalog
@@ -824,22 +1102,40 @@ class KatalogResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "jahre_list": string_list("jahre__jahr"),
-            "genre_list": string_list("genre__genre"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"ausgabe": {"field": "_name"}}
 
 
 class KalenderResource(MIZResource):
-    urls_list = Field(attribute="urls_list", column_name="Webseiten")
-    jahre_list = Field(attribute="jahre_list", column_name="Jahre")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    urls_list = AnnotationField(
+        attribute="urls_list",
+        column_name="Webseiten",
+        expr=string_list("urls__url"),
+    )
+    jahre_list = AnnotationField(
+        attribute="jahre_list",
+        column_name="Jahre",
+        expr=string_list("jahre__jahr"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Kalender
@@ -869,27 +1165,55 @@ class KalenderResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "urls_list": string_list("urls__url"),
-            "jahre_list": string_list("jahre__jahr"),
-            "genre_list": string_list("genre__genre"),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"ausgabe": {"field": "_name"}}
 
 
 class FotoResource(MIZResource):
-    schlagwort_list = Field(attribute="schlagwort_list", column_name="Schlagwörter")
-    genre_list = Field(attribute="genre_list", column_name="Genres")
-    musiker_list = Field(attribute="musiker_list", column_name="Musiker")
-    band_list = Field(attribute="band_list", column_name="Bands")
-    ort_list = Field(attribute="ort_list", column_name="Orte")
-    spielort_list = Field(attribute="spielort_list", column_name="Spielorte")
-    veranstaltung_list = Field(attribute="veranstaltung_list", column_name="Veranstaltungen")
-    person_list = Field(attribute="person_list", column_name="Personen")
-    bestand_list = Field(attribute="bestand_list", column_name="Bestände")
+    schlagwort_list = AnnotationField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        expr=string_list("schlagwort__schlagwort"),
+    )
+    genre_list = AnnotationField(
+        attribute="genre_list",
+        column_name="Genres",
+        expr=string_list("genre__genre"),
+    )
+    musiker_list = AnnotationField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        expr=string_list("musiker__kuenstler_name"),
+    )
+    band_list = AnnotationField(
+        attribute="band_list",
+        column_name="Bands",
+        expr=string_list("band__band_name"),
+    )
+    ort_list = AnnotationField(
+        attribute="ort_list",
+        column_name="Orte",
+        expr=string_list("ort___name", sep="; "),
+    )
+    spielort_list = AnnotationField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        expr=string_list("spielort__name"),
+    )
+    veranstaltung_list = AnnotationField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        expr=string_list("veranstaltung__name"),
+    )
+    person_list = AnnotationField(
+        attribute="person_list",
+        column_name="Personen",
+        expr=string_list("person___name"),
+    )
+    bestand_list = AnnotationField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        expr=string_list("bestand__lagerort___name"),
+    )
 
     class Meta:
         model = _models.Foto
@@ -933,17 +1257,6 @@ class FotoResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        annotations = {
-            "schlagwort_list": string_list("schlagwort__schlagwort"),
-            "genre_list": string_list("genre__genre"),
-            "musiker_list": string_list("musiker__kuenstler_name"),
-            "band_list": string_list("band__band_name"),
-            "ort_list": string_list("ort___name", sep="; "),
-            "spielort_list": string_list("spielort__name"),
-            "veranstaltung_list": string_list("veranstaltung__name"),
-            "person_list": string_list("person___name"),
-            "bestand_list": string_list("bestand__lagerort___name"),
-        }
         widgets = {"reihe": {"field": "name"}}
 
 
