@@ -1,6 +1,5 @@
 from dbentry import models as _models
-from dbentry.export.base import AnnotationField
-from dbentry.export.base import MIZResource
+from dbentry.export.base import AnnotationField, MIZResource
 from dbentry.utils.query import string_list
 
 
@@ -118,6 +117,7 @@ class AudioResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"land_pressung": {"field": "land_name"}, "medium": {"field": "medium"}}
+        select_related = ["land_pressung", "medium"]
 
 
 class AusgabeResource(MIZResource):
@@ -192,6 +192,7 @@ class AusgabeResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"magazin": {"field": "magazin_name"}}
+        select_related = ["magazin"]
 
 
 class AutorResource(MIZResource):
@@ -211,6 +212,7 @@ class AutorResource(MIZResource):
         fields = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
         export_order = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
         widgets = {"person": {"field": "_name"}}
+        select_related = ["person"]
 
 
 class ArtikelResource(MIZResource):
@@ -299,6 +301,7 @@ class ArtikelResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
+        select_related = ["ausgabe"]
 
 
 class BandResource(MIZResource):
@@ -436,6 +439,7 @@ class PlakatResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"reihe": {"field": "name"}}
+        select_related = ["reihe"]
 
 
 class BuchResource(MIZResource):
@@ -559,6 +563,7 @@ class BuchResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"schriftenreihe": {"field": "name"}, "buchband": {"field": "titel"}}
+        select_related = ["schriftenreihe", "buchband"]
 
 
 class GenreResource(MIZResource):
@@ -690,6 +695,7 @@ class MusikerResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"person": {"field": "_name"}}
+        select_related = ["person"]
 
 
 class PersonResource(MIZResource):
@@ -740,6 +746,7 @@ class SpielortResource(MIZResource):
         fields = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
         export_order = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
         widgets = {"ort": {"field": "_name"}}
+        select_related = ["ort"]
 
 
 class VeranstaltungResource(MIZResource):
@@ -812,6 +819,7 @@ class VeranstaltungResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"spielort": {"field": "name"}, "reihe": {"field": "name"}}
+        select_related = ["spielort", "reihe"]
 
 
 class VerlagResource(MIZResource):
@@ -820,6 +828,7 @@ class VerlagResource(MIZResource):
         fields = ["id", "verlag_name", "sitz"]
         export_order = ["id", "verlag_name", "sitz"]
         widgets = {"sitz": {"field": "_name"}}
+        select_related = ["sitz"]
 
 
 class VideoResource(MIZResource):
@@ -923,6 +932,7 @@ class VideoResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"medium": {"field": "medium"}}
+        select_related = ["medium"]
 
 
 class OrtResource(MIZResource):
@@ -931,6 +941,7 @@ class OrtResource(MIZResource):
         fields = ["id", "stadt", "land", "bland"]
         export_order = ["id", "stadt", "land", "bland"]
         widgets = {"land": {"field": "land_name"}, "bland": {"field": "bland_name"}}
+        select_related = ["land", "bland"]
 
 
 class BestandResource(MIZResource):
@@ -982,6 +993,20 @@ class BestandResource(MIZResource):
             "technik": {"field": "titel"},
             "video": {"field": "titel"},
         }
+        select_related = [
+            "lagerort",
+            "provenienz",
+            "audio",
+            "ausgabe",
+            "brochure",
+            "buch",
+            "dokument",
+            "foto",
+            "memorabilien",
+            "plakat",
+            "technik",
+            "video",
+        ]
 
 
 class InstrumentResource(MIZResource):
@@ -1052,6 +1077,7 @@ class BrochureResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
+        select_related = ["ausgabe"]
 
 
 class KatalogResource(MIZResource):
@@ -1103,6 +1129,7 @@ class KatalogResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
+        select_related = ["ausgabe"]
 
 
 class KalenderResource(MIZResource):
@@ -1166,6 +1193,7 @@ class KalenderResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
+        select_related = ["ausgabe"]
 
 
 class FotoResource(MIZResource):
@@ -1258,6 +1286,7 @@ class FotoResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"reihe": {"field": "name"}}
+        select_related = ["reihe"]
 
 
 class PlattenfirmaResource(MIZResource):
@@ -1287,6 +1316,7 @@ class ProvenienzResource(MIZResource):
         fields = ["id", "typ", "geber"]
         export_order = ["id", "typ", "geber"]
         widgets = {"geber": {"field": "name"}}
+        select_related = ["geber"]
 
 
 class SchriftenreiheResource(MIZResource):
