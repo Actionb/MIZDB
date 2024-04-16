@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from functools import cached_property
 
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.encoding import force_str
@@ -17,6 +18,32 @@ class AnnotationField(Field):
     def __init__(self, *args, expr=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.expr = expr
+
+
+class CachedQuerysetField(Field):
+    """A Resource Field that returns its export value from a cached queryset."""
+    # After a certain amount of joins (from AnnotationField), it is faster to
+    # make additional queries instead. Using this field on fields with lots of
+    # data (f.ex. musiker or band) speeds up the exporting tremendously: from
+    # ~4 minutes for all Artikel objects to 3 secs.
+
+    def __init__(self, *args, queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queryset = queryset
+
+    @cached_property
+    def cache(self):
+        cache = {}
+        for values_dict in self.queryset.values():
+            pk = values_dict.pop(self.queryset.model._meta.pk.name)
+            cache[pk] = values_dict
+        return cache
+
+    def export(self, obj):
+        try:
+            return self.cache[obj.pk][self.attribute]
+        except KeyError:
+            return ""
 
 
 class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):

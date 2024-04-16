@@ -1,5 +1,5 @@
 from dbentry import models as _models
-from dbentry.export.base import AnnotationField, MIZResource
+from dbentry.export.base import AnnotationField, MIZResource, CachedQuerysetField
 from dbentry.utils.query import string_list
 
 
@@ -221,15 +221,15 @@ class ArtikelResource(MIZResource):
         column_name="Autoren",
         expr=string_list("autor___name"),
     )
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Artikel.objects.annotate(musiker_list=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Artikel.objects.annotate(band_list=string_list("band__band_name")),
     )
     schlagwort_list = AnnotationField(
         attribute="schlagwort_list",
@@ -448,15 +448,15 @@ class BuchResource(MIZResource):
         column_name="Autoren",
         expr=string_list("autor___name"),
     )
-    musiker_list = AnnotationField(
+    musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
-        expr=string_list("musiker__kuenstler_name"),
+        queryset=_models.Buch.objects.annotate(musiker_lits=string_list("musiker__kuenstler_name")),
     )
-    band_list = AnnotationField(
+    band_list = CachedQuerysetField(
         attribute="band_list",
         column_name="Bands",
-        expr=string_list("band__band_name"),
+        queryset=_models.Buch.objects.annotate(band_list=string_list("band__band_name")),
     )
     schlagwort_list = AnnotationField(
         attribute="schlagwort_list",
