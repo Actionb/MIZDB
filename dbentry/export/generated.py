@@ -144,22 +144,22 @@ class AusgabeResource(MIZResource):
     ausgabenum_list = AnnotationField(
         attribute="ausgabenum_list",
         column_name="Ausgabennummern",
-        expr=string_list("ausgabenum__"),
+        expr=string_list("ausgabenum__num"),
     )
     ausgabemonat_list = AnnotationField(
         attribute="ausgabemonat_list",
         column_name="Monate",
-        expr=string_list("ausgabemonat__"),
+        expr=string_list("ausgabemonat__monat__abk"),
     )
     ausgabelnum_list = AnnotationField(
         attribute="ausgabelnum_list",
         column_name="Laufende Nummer",
-        expr=string_list("ausgabelnum__"),
+        expr=string_list("ausgabelnum__lnum"),
     )
     ausgabejahr_list = AnnotationField(
         attribute="ausgabejahr_list",
         column_name="erschienen im Jahr",
-        expr=string_list("ausgabejahr__"),
+        expr=string_list("ausgabejahr__jahr"),
     )
     audio_list = AnnotationField(
         attribute="audio_list",
