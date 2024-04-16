@@ -114,7 +114,7 @@ def test_annotations(resource):
     assert "urls_list" in annotations
     assert "genre_list" in annotations
     assert "musikeralias_list" in annotations
-    assert "band_list" in annotations
+    assert "band_list" not in annotations
     assert "orte_list" in annotations
     assert "instrument_list" in annotations
 
