@@ -45,7 +45,10 @@ class MIZResource(ModelResource):
             return queryset
 
     def filter_export(self, queryset, *args, **kwargs):
-        return self._add_annotations(queryset)
+        queryset = self._add_annotations(queryset)
+        if select_related := getattr(self._meta, "select_related", None):
+            queryset = queryset.select_related(*select_related)
+        return queryset
 
     def get_export_headers(self):
         # For fields derived from the model fields, use the field's
@@ -103,7 +106,9 @@ class MIZResource(ModelResource):
         if self._meta.widgets:
             widgets = str(self._meta.widgets).replace("'", '"')
             r += f"{indent}widgets = {widgets}\n"
-
+        if self._meta.select_related:
+            select_related = str(self._meta.select_related).replace("'", '"')
+            r += f"{indent}select_related = {select_related}\n"
         return r
 
     def get_annotations(self):
@@ -158,8 +163,9 @@ def resource_factory(model):
             form_fields.append(field_name)
     fields = ["id", *form_fields]
 
-    # Widget overrides:
+    # Widget overrides and select_related:
     widgets = {}
+    select_related = []
     for field in fields:
         try:
             model_field = model._meta.get_field(field)
@@ -168,6 +174,7 @@ def resource_factory(model):
         if model_field.is_relation and model_field.many_to_one:
             # Set the widget field to the name_field of the related model:
             widgets[model_field.name] = {"field": model_field.related_model.name_field}
+            select_related.append(model_field.name)
 
     # Add AnnotationFields:
     field_declarations = []
@@ -201,8 +208,11 @@ def resource_factory(model):
         "model": model,
         "fields": fields,
         "export_order": fields,
-        "widgets": widgets,
     }
+    if widgets:
+        meta_attrs["widgets"] = widgets
+    if select_related:
+        meta_attrs["select_related"] = select_related
     class_attrs = {"Meta": type(str("Meta"), (object,), meta_attrs)}
     for name, field in field_declarations:
         class_attrs[name] = field

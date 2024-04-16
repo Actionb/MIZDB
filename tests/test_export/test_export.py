@@ -119,6 +119,13 @@ def test_annotations(resource):
     assert "instrument_list" in annotations
 
 
+def test_queryset_select_related(resource):
+    export_queryset = resource.filter_export(resource.get_queryset())
+    select_related = export_queryset.query.select_related
+    assert select_related
+    assert "person" in select_related
+
+
 def test_musiker_data(datadict, musiker):
     assert datadict["Id"] == musiker.pk
     assert datadict["Künstlername"] == "Alicia Testy"
