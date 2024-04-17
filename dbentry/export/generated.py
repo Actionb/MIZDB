@@ -968,7 +968,7 @@ class BestandResource(MIZResource):
     class Meta:
         model = _models.Bestand
         fields = [
-            "id",
+            "signatur",
             "lagerort",
             "anmerkungen",
             "provenienz",
@@ -984,7 +984,7 @@ class BestandResource(MIZResource):
             "video",
         ]
         export_order = [
-            "id",
+            "signatur",
             "lagerort",
             "anmerkungen",
             "provenienz",
@@ -1073,7 +1073,7 @@ class BrochureResource(MIZResource):
     class Meta:
         model = _models.Brochure
         fields = [
-            "id",
+            "basebrochure_ptr",
             "titel",
             "zusammenfassung",
             "ausgabe",
@@ -1085,7 +1085,7 @@ class BrochureResource(MIZResource):
             "beschreibung",
         ]
         export_order = [
-            "id",
+            "basebrochure_ptr",
             "titel",
             "zusammenfassung",
             "ausgabe",
@@ -1125,7 +1125,7 @@ class KatalogResource(MIZResource):
     class Meta:
         model = _models.Katalog
         fields = [
-            "id",
+            "basebrochure_ptr",
             "titel",
             "art",
             "zusammenfassung",
@@ -1137,7 +1137,7 @@ class KatalogResource(MIZResource):
             "beschreibung",
         ]
         export_order = [
-            "id",
+            "basebrochure_ptr",
             "titel",
             "art",
             "zusammenfassung",
@@ -1187,7 +1187,7 @@ class KalenderResource(MIZResource):
     class Meta:
         model = _models.Kalender
         fields = [
-            "id",
+            "basebrochure_ptr",
             "titel",
             "zusammenfassung",
             "ausgabe",
@@ -1200,7 +1200,7 @@ class KalenderResource(MIZResource):
             "beschreibung",
         ]
         export_order = [
-            "id",
+            "basebrochure_ptr",
             "titel",
             "zusammenfassung",
             "ausgabe",

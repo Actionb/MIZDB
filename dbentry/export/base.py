@@ -211,7 +211,7 @@ def resource_factory(model):
             continue
         if field_name not in ("beschreibung", "bemerkungen"):
             form_fields.append(field_name)
-    fields = ["id", *form_fields]
+    fields = [model._meta.pk.name, *form_fields]
 
     # Widget overrides and select_related:
     widgets = {}
