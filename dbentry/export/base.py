@@ -115,9 +115,9 @@ class MIZResource(ModelResource):
             path = array_agg.source_expressions[0].name
             sep = sep_expr.value
             if sep != ", ":
-                return f'string_list("{path}", sep="{sep}")'
+                return f'string_list("{path}", sep="{sep}", length=1024)'
             else:
-                return f'string_list("{path}")'
+                return f'string_list("{path}", length=1024)'
 
         field_declarations = []
         if self._meta._declared_fields:
@@ -252,7 +252,7 @@ def resource_factory(model):
         string_list_kwargs = {}
         if field.related_model == _models.Ort:
             string_list_kwargs["sep"] = "; "
-        expression = string_list(path, **string_list_kwargs)
+        expression = string_list(path, **string_list_kwargs, length=1024)
 
         field_kwargs = {"attribute": name, "column_name": inline.verbose_name_plural}
         if field.related_model in (_models.Band, _models.Musiker):
