@@ -67,7 +67,7 @@ class MIZResource(ModelResource):
     add_annotations = True
 
     def _add_annotations(self, queryset):
-        """Add the annotations declared in Meta.annotations to the queryset."""
+        """Add the annotations declared in `Meta.annotations` to the queryset."""
         if self.add_annotations:
             return queryset.annotate(**self.get_annotations())
         else:
