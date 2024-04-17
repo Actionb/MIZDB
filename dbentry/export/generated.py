@@ -17,6 +17,7 @@ if __name__ == '__main__':
             f.write(resource_class().as_string())
             f.write("\n\n")
 """
+from import_export.fields import Field
 
 from dbentry import models as _models
 from dbentry.export.base import AnnotationField, MIZResource, CachedQuerysetField
@@ -236,6 +237,7 @@ class AutorResource(MIZResource):
 
 
 class ArtikelResource(MIZResource):
+    magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     autor_list = AnnotationField(
         attribute="autor_list",
         column_name="Autoren",
@@ -286,6 +288,7 @@ class ArtikelResource(MIZResource):
         model = _models.Artikel
         fields = [
             "id",
+            "magazin",
             "ausgabe",
             "schlagzeile",
             "seite",
@@ -304,6 +307,7 @@ class ArtikelResource(MIZResource):
         ]
         export_order = [
             "id",
+            "magazin",
             "ausgabe",
             "schlagzeile",
             "seite",
@@ -321,7 +325,7 @@ class ArtikelResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
-        select_related = ["ausgabe"]
+        select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class BandResource(MIZResource):
