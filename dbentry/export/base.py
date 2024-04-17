@@ -73,7 +73,11 @@ class MIZResource(ModelResource):
             return queryset
 
     def filter_export(self, queryset, *args, **kwargs):
-        queryset = queryset.defer("_fts")
+        try:
+            if queryset.model._meta.get_field("_fts"):
+                queryset = queryset.defer("_fts")
+        except FieldDoesNotExist:
+            pass
         queryset = self._add_annotations(queryset)
         if select_related := getattr(self._meta, "select_related", None):
             queryset = queryset.select_related(*select_related)
