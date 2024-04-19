@@ -56,6 +56,8 @@ class AudioResource(MIZResource):
         column_name="Ausgaben",
         expr=string_list("ausgabe___name", length=1024),
     )
+    # TODO: data only includes ausgabe names, but not the names of magazines,
+    #  which makes the column rather useless
     bestand_list = AnnotationField(
         attribute="bestand_list",
         column_name="Bestände",
@@ -616,7 +618,6 @@ class MagazinResource(MIZResource):
         fields = [
             "id",
             "magazin_name",
-            "ausgaben_merkmal",
             "fanzine",
             "issn",
             "urls_list",
@@ -629,7 +630,6 @@ class MagazinResource(MIZResource):
         export_order = [
             "id",
             "magazin_name",
-            "ausgaben_merkmal",
             "fanzine",
             "issn",
             "urls_list",
@@ -884,6 +884,8 @@ class VideoResource(MIZResource):
         column_name="Ausgaben",
         expr=string_list("ausgabe___name", length=1024),
     )
+    # TODO: data only includes ausgabe names, but not the names of magazines,
+    #  which makes the column rather useless
     bestand_list = AnnotationField(
         attribute="bestand_list",
         column_name="Bestände",
@@ -952,6 +954,8 @@ class OrtResource(MIZResource):
 
 
 class BestandResource(MIZResource):
+    magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
+
     class Meta:
         model = _models.Bestand
         fields = [
@@ -960,6 +964,7 @@ class BestandResource(MIZResource):
             "anmerkungen",
             "provenienz",
             "audio",
+            "magazin",
             "ausgabe",
             "brochure",
             "buch",
@@ -976,6 +981,7 @@ class BestandResource(MIZResource):
             "anmerkungen",
             "provenienz",
             "audio",
+            "magazin",
             "ausgabe",
             "brochure",
             "buch",
@@ -1005,6 +1011,7 @@ class BestandResource(MIZResource):
             "provenienz",
             "audio",
             "ausgabe",
+            "ausgabe__magazin",
             "brochure",
             "buch",
             "dokument",
@@ -1031,6 +1038,8 @@ class HerausgeberResource(MIZResource):
 
 
 class BrochureResource(MIZResource):
+    basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
+    magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = AnnotationField(
         attribute="urls_list",
         column_name="Webseiten",
@@ -1063,6 +1072,7 @@ class BrochureResource(MIZResource):
             "basebrochure_ptr",
             "titel",
             "zusammenfassung",
+            "magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -1075,6 +1085,7 @@ class BrochureResource(MIZResource):
             "basebrochure_ptr",
             "titel",
             "zusammenfassung",
+            "magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -1084,10 +1095,12 @@ class BrochureResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
-        select_related = ["ausgabe"]
+        select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class KatalogResource(MIZResource):
+    basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
+    magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = AnnotationField(
         attribute="urls_list",
         column_name="Webseiten",
@@ -1116,6 +1129,7 @@ class KatalogResource(MIZResource):
             "titel",
             "art",
             "zusammenfassung",
+            "magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -1128,6 +1142,7 @@ class KatalogResource(MIZResource):
             "titel",
             "art",
             "zusammenfassung",
+            "magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -1136,10 +1151,12 @@ class KatalogResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
-        select_related = ["ausgabe"]
+        select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class KalenderResource(MIZResource):
+    basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
+    magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = AnnotationField(
         attribute="urls_list",
         column_name="Webseiten",
@@ -1177,6 +1194,7 @@ class KalenderResource(MIZResource):
             "basebrochure_ptr",
             "titel",
             "zusammenfassung",
+            "magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -1190,6 +1208,7 @@ class KalenderResource(MIZResource):
             "basebrochure_ptr",
             "titel",
             "zusammenfassung",
+            "magazin",
             "ausgabe",
             "urls_list",
             "jahre_list",
@@ -1200,7 +1219,7 @@ class KalenderResource(MIZResource):
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
-        select_related = ["ausgabe"]
+        select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class FotoResource(MIZResource):
