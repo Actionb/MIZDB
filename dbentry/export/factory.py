@@ -1,0 +1,142 @@
+"""Generate and write resource classes with this:
+
+import os
+
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MIZDB.settings.development")
+django.setup()
+
+from dbentry.site.views.edit import *  # noqa
+from dbentry.export.base import *  # noqa
+
+if __name__ == '__main__':
+    with open("/tmp/mizdb_exports/generated.py", "w") as f:
+        for model in miz_site.views:
+            resource_class = resource_factory(model)
+            f.write(resource_class().as_string())
+            f.write("\n\n")
+"""
+from django.core.exceptions import FieldDoesNotExist
+
+from dbentry import models as _models
+from dbentry.export.base import CachedQuerysetField, AnnotationField, MIZDeclarativeMetaclass, MIZResource
+from dbentry.site.registry import miz_site
+from dbentry.site.views.edit import *  # register the views with miz_site # noqa
+from dbentry.utils.query import string_list
+
+
+def get_m2m_field(fk, model):
+    """
+    Return the ManyToManyField that uses the given ForeignKey's model as a
+    m2m 'through' table.
+
+    Returns None if no ManyToManyField could be found (probably because the fk
+    does not implement a m2m relation).
+    """
+    for f in model._meta.get_fields():
+        if not f.many_to_many or f.one_to_many:
+            continue
+        remote_field = f.remote_field if f.concrete else f
+        if remote_field.through == fk.model:
+            return f
+
+
+# TODO: set "name_field" attribute on the models in NAME_FIELD
+NAME_FIELDS = {
+    _models.Bestand: "lagerort___name",
+    _models.AusgabeNum: "num",
+    _models.AusgabeLnum: "lnum",
+    _models.AusgabeJahr: "jahr",
+    _models.AusgabeMonat: "monat__abk",
+}
+
+
+def resource_factory(model):
+    """
+    Create a ModelResource class for the given model.
+
+    This uses the model's edit view to collect fields (from the view's form)
+    and to create the right annotations (from the view's inlines).
+    """
+    try:
+        edit_view = miz_site.views[model](extra_context={"add": True})
+    except KeyError:
+        print(f"No view for model '{model}'.")
+        return
+
+    # Collect the meta attributes and field declarations.
+    # Base fields:
+    form_class = edit_view.get_form_class()
+    form_fields = []
+    for field_name in form_class.base_fields:
+        try:
+            model._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            # Do not add fields that are not part of the model
+            continue
+        if field_name not in ("beschreibung", "bemerkungen"):
+            form_fields.append(field_name)
+    fields = [model._meta.pk.name, *form_fields]
+
+    # Widget overrides and select_related:
+    widgets = {}
+    select_related = []
+    for field in fields:
+        try:
+            model_field = model._meta.get_field(field)
+        except FieldDoesNotExist:
+            continue
+        if model_field.is_relation and model_field.many_to_one:
+            # Set the widget field to the name_field of the related model:
+            widgets[model_field.name] = {"field": model_field.related_model.name_field}
+            select_related.append(model_field.name)
+
+    # Add AnnotationFields:
+    field_declarations = []
+    for inline in edit_view.get_inline_instances():
+        fk = inline.get_formset_class().fk
+        field = get_m2m_field(fk, model) or fk.remote_field
+        if inline.model in NAME_FIELDS:
+            # Some models do not have name_field set
+            target_field = NAME_FIELDS[inline.model]
+        else:
+            target_field = field.related_model.name_field
+
+        name = f"{field.name}_list"
+        path = f"{field.name}__{target_field}"
+        string_list_kwargs = {}
+        if field.related_model == _models.Ort:
+            string_list_kwargs["sep"] = "; "
+        expression = string_list(path, **string_list_kwargs, length=1024)
+
+        field_kwargs = {"attribute": name, "column_name": inline.verbose_name_plural}
+        if field.related_model in (_models.Band, _models.Musiker):
+            field_class = CachedQuerysetField
+            field_kwargs["queryset"] = model.objects.annotate(**{name: expression})
+        else:
+            field_class = AnnotationField
+            field_kwargs["expr"] = expression
+
+        resource_field = field_class(**field_kwargs)
+        field_declarations.append((name, resource_field))
+        fields.append(name)
+
+    if "beschreibung" in form_class.base_fields:
+        fields.append("beschreibung")
+
+    # Create the class:
+    meta_attrs = {
+        "model": model,
+        "fields": fields,
+        "export_order": fields,
+    }
+    if widgets:
+        meta_attrs["widgets"] = widgets
+    if select_related:
+        meta_attrs["select_related"] = select_related
+    class_attrs = {"Meta": type(str("Meta"), (object,), meta_attrs)}
+    for name, field in field_declarations:
+        class_attrs[name] = field
+
+    return MIZDeclarativeMetaclass(model.__name__ + str("Resource"), (MIZResource,), class_attrs)
