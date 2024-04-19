@@ -53,6 +53,8 @@
     <p class="ps-2 mb-0">{% if result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
     {% reset_ordering_link cl %}
     <a href="{% add_preserved_filters add_url %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+    {% url opts|urlname:'export' as export_url %}
+    {% if export_url%}<a href="{{ export_url }}" class="btn btn-info ms-auto">Exportieren</a>{% endif %}
 </div>
 {% if result_rows %}
 {% has_module_perms user opts as user_has_module_perms %}
