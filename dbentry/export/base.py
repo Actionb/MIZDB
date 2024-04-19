@@ -4,8 +4,11 @@ from functools import cached_property
 
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.encoding import force_str
+from import_export import widgets
 from import_export.fields import Field
 from import_export.resources import ModelDeclarativeMetaclass, ModelResource
+
+from dbentry.export.widgets import YesNoBooleanWidget
 
 
 class AnnotationField(Field):
@@ -164,4 +167,9 @@ class MIZResource(ModelResource):
                 annotations[field.attribute] = field.expr
         return annotations
 
-
+    @classmethod
+    def widget_from_django_field(cls, f, default=widgets.Widget):
+        boolean_fields = ("BooleanField", "NullBooleanField")
+        if callable(getattr(f, "get_internal_type", None)) and f.get_internal_type() in boolean_fields:
+            return YesNoBooleanWidget
+        return super().widget_from_django_field(f, default)
