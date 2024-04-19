@@ -1,22 +1,3 @@
-"""Resources generated with this:
-
-import os
-
-import django
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MIZDB.settings.development")
-django.setup()
-
-from dbentry.site.views.edit import *  # noqa
-from dbentry.export.base import *  # noqa
-
-if __name__ == '__main__':
-    with open("/tmp/mizdb_exports/generated.py", "w") as f:
-        for model in miz_site.views:
-            resource_class = resource_factory(model)
-            f.write(resource_class().as_string())
-            f.write("\n\n")
-"""
 from import_export.fields import Field
 
 from dbentry import models as _models
