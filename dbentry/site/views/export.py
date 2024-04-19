@@ -1,9 +1,14 @@
+from django.contrib.auth.mixins import UserPassesTestMixin
 from import_export.mixins import ExportViewFormMixin
 
 from dbentry.site.views.base import ModelViewMixin, ACTION_SELECTED_ITEM
 
 
-class BaseExportView(ModelViewMixin, ExportViewFormMixin):
+def has_export_permission(user, opts):
+    return user.is_superuser
+
+
+class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
     queryset = None
 
     title = "Export"
@@ -22,6 +27,10 @@ class BaseExportView(ModelViewMixin, ExportViewFormMixin):
         ctx = super().get_context_data(**kwargs)
         ctx["queryset"] = self.get_queryset()
         return ctx
+
+    def test_func(self) -> bool:
+        """test_func for UserPassesTestMixin."""
+        return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
 
 class ExportActionView(BaseExportView):
