@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'django_bootstrap5',
     'mizdb_inlines',
     'mizdb_watchlist',
+    "import_export",
 ]
 
 MIDDLEWARE = [
