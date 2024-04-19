@@ -1,7 +1,7 @@
 import pytest
 
 from dbentry import models as _models
-from dbentry.export.base import resource_factory
+from dbentry.export.factory import resource_factory
 from tests.model_factory import make
 
 pytestmark = [pytest.mark.django_db]
