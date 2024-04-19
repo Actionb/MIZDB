@@ -3,6 +3,7 @@ from mizdb_watchlist.manager import get_manager
 
 from dbentry.actions.views import MergeView
 from dbentry.site.views.delete import DeleteSelectedView
+from dbentry.site.views.export import ExportActionView
 from dbentry.utils import permission as perms
 from dbentry.utils.permission import has_delete_permission
 
@@ -62,3 +63,8 @@ def watchlist(view, request, queryset):
     manager.bulk_add(queryset)
     messages.add_message(request, level=messages.SUCCESS, message="Erfolgreich zu meiner Merkliste hinzugefügt.")
     return None
+
+
+@action(label="Exportieren", description="Die ausgewählten Objekte exportieren")
+def export(view, request, queryset):
+    return ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_class=view.resource_class)(request)
