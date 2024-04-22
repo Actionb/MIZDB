@@ -108,6 +108,7 @@ class MIZResource(ModelResource):
 
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
+        # Override the default for BooleanFields to be a YesNoBooleanWidget:
         boolean_fields = ("BooleanField", "NullBooleanField")
         if callable(getattr(f, "get_internal_type", None)) and f.get_internal_type() in boolean_fields:
             return YesNoBooleanWidget
