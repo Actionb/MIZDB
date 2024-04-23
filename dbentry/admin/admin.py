@@ -33,6 +33,7 @@ from dbentry.admin.base import (
 )
 from dbentry.admin.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.admin.site import miz_site
+from dbentry.export import resources
 from dbentry.search.mixins import MIZAdminSearchFormMixin
 from dbentry.utils.admin import log_change
 from dbentry.utils.copyrelated import copy_related_set
@@ -166,6 +167,7 @@ class AudioAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
+    resource_class = resources.AudioResource
 
     @display(description="Künstler")
     def kuenstler_list(self, obj: _models.Audio) -> str:
@@ -241,6 +243,7 @@ class AusgabenAdmin(MIZModelAdmin):
         'change_status_inbearbeitung', 'change_status_abgeschlossen',
         _actions.summarize
     ]
+    resource_class = resources.AusgabeResource
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[AusgabeChangeList]:
         return AusgabeChangeList
@@ -369,6 +372,7 @@ class AutorAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['magazin', 'person']}
     ordering = ['_name']
     require_confirmation = True
+    resource_class = resources.AutorResource
 
     @display(description="Autor", ordering="_name")
     def autor_name(self, obj: _models.Autor) -> str:
@@ -450,6 +454,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'forwards': {'ausgabe': 'ausgabe__magazin'},
         'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
+    resource_class = resources.ArtikelResource
 
     @display(description="Ausgabe", ordering="ausgabe___name")
     def ausgabe_name(self, obj: _models.Artikel) -> str:
@@ -512,6 +517,7 @@ class BandAdmin(MIZModelAdmin):
         'labels': {'musiker': 'Mitglied'},
         'tabular': ['musiker']
     }
+    resource_class = resources.BandResource
 
     @display(description="Genres", ordering="genre_list")
     def genre_string(self, obj: _models.Band) -> str:
@@ -600,6 +606,7 @@ class PlakatAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'},
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
+    resource_class = resources.PlakatResource
 
     @display(description="Datum", ordering="datum")
     def datum_localized(self, obj: _models.Plakat) -> str:
@@ -734,6 +741,7 @@ class BuchAdmin(MIZModelAdmin):
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
     }
+    resource_class = resources.BuchResource
 
     @display(description="Autoren", ordering="autor_list")
     def autoren_string(self, obj: _models.Buch) -> str:
@@ -778,6 +786,7 @@ class GenreAdmin(MIZModelAdmin):
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
     require_confirmation = True
+    resource_class = resources.GenreResource
 
     @display(description="Aliase")
     def alias_string(self, obj: _models.Genre) -> str:
@@ -828,6 +837,7 @@ class MagazinAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
+    resource_class = resources.MagazinResource
 
     @display(description="Anz. Ausgaben", ordering="anz_ausgaben")
     def anz_ausgaben(self, obj: _models.Magazin) -> int:
@@ -902,6 +912,7 @@ class MusikerAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
     ordering = ['kuenstler_name']
     require_confirmation = True
+    resource_class = resources.MusikerResource
 
     @display(description="Bands", ordering="band_list")
     def band_string(self, obj: _models.Musiker) -> str:
@@ -953,6 +964,7 @@ class PersonAdmin(MIZModelAdmin):
         'fields': ['orte', 'orte__land', 'orte__bland', 'gnd_id'],
         'forwards': {'orte__bland': 'orte__land'}
     }
+    resource_class = resources.PersonResource
 
     @display(description="Ist Musiker", boolean=True)
     def is_musiker(self, obj: _models.Person) -> bool:
@@ -989,6 +1001,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
     require_confirmation = True
+    resource_class = resources.SchlagwortResource
 
     @display(description="Aliase", ordering="alias_list")
     def alias_string(self, obj: _models.Schlagwort) -> str:
@@ -1011,6 +1024,7 @@ class SpielortAdmin(MIZModelAdmin):
     ordering = ['name', 'ort']
     list_select_related = ['ort']
     require_confirmation = True
+    resource_class = resources.SpielortResource
 
 
 @admin.register(_models.Technik, site=miz_site)
@@ -1067,6 +1081,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band'],
     }
     require_confirmation = True
+    resource_class = resources.VeranstaltungResource
 
     @display(description="Künstler")
     def kuenstler_list(self, obj: _models.Veranstaltung) -> str:
@@ -1088,6 +1103,7 @@ class VerlagAdmin(MIZModelAdmin):
     }
     list_select_related = ['sitz']
     ordering = ['verlag_name', 'sitz']
+    resource_class = resources.VerlagResource
 
 
 @admin.register(_models.Video, site=miz_site)
@@ -1176,6 +1192,7 @@ class VideoAdmin(MIZModelAdmin):
         ],
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
+    resource_class = resources.VideoResource
 
     @display(description="Künstler")
     def kuenstler_list(self, obj: _models.Video) -> str:
@@ -1208,6 +1225,7 @@ class OrtAdmin(MIZModelAdmin):
     ordering = ['land', 'bland', 'stadt']
     list_select_related = ['land', 'bland']
     require_confirmation = True
+    resource_class = resources.OrtResource
 
     def formfield_for_foreignkey(
             self, db_field: ModelField, request: HttpRequest, **kwargs: Any
@@ -1229,6 +1247,7 @@ class BestandAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['lagerort', 'provenienz', 'signatur']}
     superuser_only = True
     require_confirmation = True
+    resource_class = resources.BestandResource
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[BestandChangeList]:
         return BestandChangeList
@@ -1362,12 +1381,14 @@ class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
     ordering = ['instrument']
     require_confirmation = True
+    resource_class = resources.InstrumentResource
 
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
     ordering = ['herausgeber']
     require_confirmation = True
+    resource_class = resources.HerausgeberResource
 
 
 class BaseBrochureAdmin(MIZModelAdmin):
@@ -1458,12 +1479,14 @@ class BrochureAdmin(BaseBrochureAdmin):
         'tabular': ['ausgabe']
     }
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
+    resource_class = resources.BrochureResource
 
 
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_list']
+    resource_class = resources.KatalogResource
 
     def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
         """
@@ -1519,6 +1542,7 @@ class KalenderAdmin(BaseBrochureAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe', 'spielort', 'veranstaltung']
     }
+    resource_class = resources.KalenderResource
 
 
 @admin.register(_models.Foto, site=miz_site)
@@ -1583,6 +1607,7 @@ class FotoAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'},
         'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
+    resource_class = resources.FotoResource
 
     @display(description="Foto ID", ordering="id")
     def foto_id(self, obj: _models.Foto) -> str:
@@ -1606,6 +1631,7 @@ class FotoAdmin(MIZModelAdmin):
 class PlattenfirmaAdmin(MIZModelAdmin):
     search_fields = ['__ANY__']
     require_confirmation = True
+    resource_class = resources.PlattenfirmaResource
 
 
 @admin.register(
