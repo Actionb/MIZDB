@@ -66,7 +66,7 @@ def watchlist(view, request, queryset):
 
 
 @action(
-    permission_func=has_export_permission,
+    permission_func=has_export_permission,  # TODO: set to has_view_permission to enable export action for all users
     label="Exportieren",
     description="Die ausgewählten Objekte exportieren",
 )
