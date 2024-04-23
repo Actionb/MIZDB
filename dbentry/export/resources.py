@@ -2,7 +2,7 @@ from import_export.fields import Field
 
 from dbentry import models as _models
 from dbentry.export.base import MIZResource
-from dbentry.export.fields import CachedQuerysetField
+from dbentry.export.fields import CachedQuerysetField, ChoiceField
 from dbentry.utils.query import string_list
 
 
@@ -1109,6 +1109,7 @@ class BrochureResource(MIZResource):
 
 class KatalogResource(MIZResource):
     basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
+    art = ChoiceField(attribute="art")
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
@@ -1232,6 +1233,7 @@ class KalenderResource(MIZResource):
 
 
 class FotoResource(MIZResource):
+    typ = ChoiceField(attribute="typ")
     schlagwort_list = CachedQuerysetField(
         attribute="schlagwort_list",
         column_name="Schlagwörter",
