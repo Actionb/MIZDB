@@ -169,7 +169,6 @@ class AusgabeResource(MIZResource):
         fields = [
             "id",
             "magazin",
-            "status",
             "sonderausgabe",
             "e_datum",
             "jahrgang",
@@ -185,7 +184,6 @@ class AusgabeResource(MIZResource):
         export_order = [
             "id",
             "magazin",
-            "status",
             "sonderausgabe",
             "e_datum",
             "jahrgang",
