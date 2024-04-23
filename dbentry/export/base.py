@@ -21,11 +21,6 @@ class AnnotationField(Field):
 class CachedQuerysetField(Field):
     """A Resource Field that returns its export value from a cached queryset."""
 
-    # After a certain amount of joins (from AnnotationField), it is faster to
-    # make additional queries instead. Using this field on fields with lots of
-    # data (f.ex. musiker or band) speeds up the exporting tremendously: from
-    # ~4 minutes for all Artikel objects to 3 secs.
-
     def __init__(self, *args, queryset=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.queryset = queryset
@@ -33,8 +28,9 @@ class CachedQuerysetField(Field):
     @cached_property
     def cache(self):
         cache = {}
-        for values_dict in self.queryset.values():
-            pk = values_dict.pop(self.queryset.model._meta.pk.name)
+        pk_name = self.queryset.model._meta.pk.name
+        for values_dict in self.queryset.values(pk_name, self.attribute):
+            pk = values_dict.pop(pk_name)
             cache[pk] = values_dict
         return cache
 
