@@ -24,7 +24,7 @@ from django.core.exceptions import FieldDoesNotExist
 
 from dbentry import models as _models
 from dbentry.export.base import MIZDeclarativeMetaclass, MIZResource
-from dbentry.export.fields import AnnotationField, CachedQuerysetField
+from dbentry.export.fields import AnnotationField, CachedQuerysetField, ChoiceField
 from dbentry.site.registry import miz_site
 from dbentry.site.views.edit import *  # register the views with miz_site # noqa
 from dbentry.utils.query import string_list
@@ -83,9 +83,10 @@ def resource_factory(model):
             form_fields.append(field_name)
     fields = [model._meta.pk.name, *form_fields]
 
-    # Widget overrides and select_related:
+    # Widget overrides, select_related and ChoiceFields:
     widgets = {}
     select_related = []
+    field_declarations = []
     for field in fields:
         try:
             model_field = model._meta.get_field(field)
@@ -95,9 +96,11 @@ def resource_factory(model):
             # Set the widget field to the name_field of the related model:
             widgets[model_field.name] = {"field": model_field.related_model.name_field}
             select_related.append(model_field.name)
+        if getattr(model_field, "choices", None):
+            resource_field = ChoiceField(attribute=model_field.name, column_name=model_field.verbose_name)
+            field_declarations.append((model_field.name, resource_field))
 
     # Add AnnotationFields:
-    field_declarations = []
     for inline in edit_view.get_inline_instances():
         fk = inline.get_formset_class().fk
         field = get_m2m_field(fk, model) or fk.remote_field
