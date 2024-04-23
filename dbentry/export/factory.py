@@ -23,7 +23,8 @@ import textwrap
 from django.core.exceptions import FieldDoesNotExist
 
 from dbentry import models as _models
-from dbentry.export.base import CachedQuerysetField, AnnotationField, MIZDeclarativeMetaclass, MIZResource
+from dbentry.export.base import MIZDeclarativeMetaclass, MIZResource
+from dbentry.export.fields import AnnotationField, CachedQuerysetField
 from dbentry.site.registry import miz_site
 from dbentry.site.views.edit import *  # register the views with miz_site # noqa
 from dbentry.utils.query import string_list

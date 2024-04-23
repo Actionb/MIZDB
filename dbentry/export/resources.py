@@ -1,7 +1,8 @@
 from import_export.fields import Field
 
 from dbentry import models as _models
-from dbentry.export.base import CachedQuerysetField, MIZResource
+from dbentry.export.base import MIZResource
+from dbentry.export.fields import CachedQuerysetField
 from dbentry.utils.query import string_list
 
 
