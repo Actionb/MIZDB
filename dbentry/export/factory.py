@@ -117,15 +117,11 @@ def resource_factory(model):
             string_list_kwargs["sep"] = "; "
         expression = string_list(path, **string_list_kwargs, length=1024)
 
-        field_kwargs = {"attribute": name, "column_name": inline.verbose_name_plural}
-        if field.related_model in (_models.Band, _models.Musiker):
-            field_class = CachedQuerysetField
-            field_kwargs["queryset"] = model.objects.annotate(**{name: expression})
-        else:
-            field_class = AnnotationField
-            field_kwargs["expr"] = expression
-
-        resource_field = field_class(**field_kwargs)
+        resource_field = CachedQuerysetField(
+            attribute=name,
+            column_name=inline.verbose_name_plural,
+            queryset=model.objects.annotate(**{name: expression})
+        )
         field_declarations.append((name, resource_field))
         fields.append(name)
 
