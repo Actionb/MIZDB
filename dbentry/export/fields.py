@@ -2,6 +2,8 @@ from functools import cached_property
 
 from import_export.fields import Field
 
+from dbentry.export.widgets import ChoiceLabelWidget
+
 
 class AnnotationField(Field):
     """A Resource Field with an annotation expression for the export queryset."""
@@ -32,3 +34,15 @@ class CachedQuerysetField(Field):
             return self.cache[obj.pk][self.attribute]
         except KeyError:
             return ""
+
+
+class ChoiceField(Field):
+    """
+    A Resource Field for fields with choices that exports the human-readable
+    label of the selected choice.
+    """
+
+    def __init__(self, attribute=None, widget=None, **kwargs):
+        if widget is None and attribute is not None:
+            widget = ChoiceLabelWidget(field_name=attribute)
+        super().__init__(attribute=attribute, widget=widget, **kwargs)
