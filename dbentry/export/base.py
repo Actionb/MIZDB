@@ -1,28 +1,10 @@
-from collections import OrderedDict
-
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.encoding import force_str
 from import_export import widgets
-from import_export.fields import Field
-from import_export.resources import ModelDeclarativeMetaclass, ModelResource
+from import_export.resources import ModelResource
 
 from dbentry.export.fields import AnnotationField
 from dbentry.export.widgets import YesNoBooleanWidget
-
-
-class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
-    def __new__(cls, name, bases, attrs):
-        # Keep a record of the fields that were declared on this model:
-        _declared_fields = OrderedDict()
-        for _name, attr in attrs.items():
-            if isinstance(attr, Field):
-                _declared_fields[_name] = attr
-
-        new_class = super().__new__(cls, name, bases, attrs)
-
-        new_class._meta._declared_fields = _declared_fields
-
-        return new_class
 
 
 class MIZResource(ModelResource):

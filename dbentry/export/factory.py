@@ -19,15 +19,33 @@ if __name__ == '__main__':
 """
 
 import textwrap
+from collections import OrderedDict
 
 from django.core.exceptions import FieldDoesNotExist
+from import_export.fields import Field
+from import_export.resources import ModelDeclarativeMetaclass
 
 from dbentry import models as _models
-from dbentry.export.base import MIZDeclarativeMetaclass, MIZResource
+from dbentry.export.base import MIZResource
 from dbentry.export.fields import AnnotationField, CachedQuerysetField, ChoiceField
 from dbentry.site.registry import miz_site
 from dbentry.site.views.edit import *  # register the views with miz_site # noqa
 from dbentry.utils.query import string_list
+
+
+class MIZDeclarativeMetaclass(ModelDeclarativeMetaclass):
+    def __new__(cls, name, bases, attrs):
+        # Keep a record of the fields that were declared on this model:
+        _declared_fields = OrderedDict()
+        for _name, attr in attrs.items():
+            if isinstance(attr, Field):
+                _declared_fields[_name] = attr
+
+        new_class = super().__new__(cls, name, bases, attrs)
+
+        new_class._meta._declared_fields = _declared_fields
+
+        return new_class
 
 
 def get_m2m_field(fk, model):
@@ -120,7 +138,7 @@ def resource_factory(model):
         resource_field = CachedQuerysetField(
             attribute=name,
             column_name=inline.verbose_name_plural,
-            queryset=model.objects.annotate(**{name: expression})
+            queryset=model.objects.annotate(**{name: expression}),
         )
         field_declarations.append((name, resource_field))
         fields.append(name)
