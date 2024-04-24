@@ -17,15 +17,23 @@ class MIZResource(ModelResource):
         else:
             return queryset
 
-    def filter_export(self, queryset, *args, **kwargs):
+    def _defer_fts(self, queryset):
+        """Defer the ``_fts`` (text search) field from the queryset."""
         try:
             if queryset.model._meta.get_field("_fts"):
                 queryset = queryset.defer("_fts")
         except FieldDoesNotExist:
             pass
-        queryset = self._add_annotations(queryset)
+        return queryset
+
+    def _select_related(self, queryset):
+        """Add select_related to the given queryset."""
         if select_related := getattr(self._meta, "select_related", None):
             queryset = queryset.select_related(*select_related)
+        return queryset
+
+    def filter_export(self, queryset, *args, **kwargs):
+        queryset = self._defer_fts(self._add_annotations(self._select_related(queryset)))
         return queryset.order_by(queryset.model._meta.pk.name)
 
     def get_export_headers(self):
@@ -38,7 +46,7 @@ class MIZResource(ModelResource):
                 verbose_name = model_field.verbose_name.capitalize()
             except FieldDoesNotExist:
                 verbose_name = field.column_name
-            if field.column_name != field.attribute:
+            if field.column_name is not None and field.column_name != field.attribute:
                 # Not the default column_name
                 headers.append(force_str(field.column_name))
             else:
