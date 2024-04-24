@@ -16,6 +16,8 @@ class ChoiceLabelWidget(CharWidget):
         super().__init__()
 
     def render(self, value, obj=None):
+        # Use get_FOO_display method to get the human-readable labels:
+        # https://docs.djangoproject.com/en/5.0/ref/models/instances/#django.db.models.Model.get_FOO_display
         try:
             return getattr(obj, f"get_{self.field_name}_display")()
         except (AttributeError, TypeError):
