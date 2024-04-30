@@ -9,6 +9,7 @@ def has_export_permission(user, opts):  # pragma: no cover
 
 
 class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
+    """Base view for exporting model objects."""
     queryset = None
 
     title = "Export"
@@ -37,7 +38,6 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
         return request.POST.get("post") is not None
 
     def get_form_kwargs(self):
-        """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
         if not self.action_confirmed(self.request):
