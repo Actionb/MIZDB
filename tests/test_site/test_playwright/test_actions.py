@@ -510,4 +510,4 @@ def test_export_action(
     expect(changelist).to_have_title(re.compile("Export", re.IGNORECASE))
     changelist.get_by_label("Dateiformat").select_option("csv")
     with changelist.expect_download():
-        changelist.get_by_role("button", name="Weiter").click()
+        changelist.get_by_role("button", name="Exportieren").click()
