@@ -13,8 +13,8 @@
 {% endblock extrahead %}
 
 {% block content_head %}
-<div id="content-head" class="row{% if not changelist_links %} mb-3{% endif %}">
-    <div id="object-info" class="col">
+<div id="content-head" class="d-flex justify-content-between{% if not changelist_links %} mb-3{% endif %}">
+    <div id="object-info">
         {% block content_title %}
             {% if object.pk %}
                 <h1>
@@ -28,7 +28,7 @@
         {% endblock content_title %}
     </div>
     {% if object.pk and not view_only %}
-        <div id="object-tools" class="col-2 text-center">
+        <div id="object-tools">
             <div id="history-link-container" class="mb-1">
                 <a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary w-100 mx-auto">Änderungsgeschichte</a>
             </div>
@@ -52,14 +52,14 @@
             {% endif %}
         </div>
     {% endif %}
-    {% if changelist_links %}
-    <div id="related-objects">
-        {% for url, label in changelist_links %}
-            <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
-        {% endfor %}
-    </div>
-    {% endif %}
 </div>
+{% if changelist_links %}
+<div id="related-objects">
+    {% for url, label in changelist_links %}
+        <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock content_head %}
 
 {% block content %}
