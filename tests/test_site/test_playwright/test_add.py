@@ -101,7 +101,7 @@ def get_data_for_model(model):
         _models.Ort: {
             "stadt": "Teststadt",
             "land": "Deutschland",
-            "bland": "NRW",
+            "bland": "Nordrhein",
         },
         _models.Land: {
             "land_name": "Testland",
@@ -188,7 +188,7 @@ def test_data():
     }
 
 
-@pytest.mark.parametrize("model", [_models.Ort])
+@pytest.mark.parametrize("model", CRUD_MODELS)
 @pytest.mark.parametrize("view_name", [ADD_VIEW])
 @pytest.mark.usefixtures("login_superuser")
 @pytest.mark.usefixtures("test_data")
@@ -199,5 +199,6 @@ def test_can_add(page, view_name, model, fill_value):
     count = model.objects.count()
     for field_name, value in model_data.items():
         fill_value(field_name, value)
-    page.get_by_role("button", name="Sichern", exact=True).click()
+    with page.expect_request_finished():
+        page.get_by_role("button", name="Sichern", exact=True).click()
     assert count + 1 == model.objects.count(), "Model object was not added"

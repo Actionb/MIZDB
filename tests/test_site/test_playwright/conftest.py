@@ -3,7 +3,7 @@ import os
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from playwright.sync_api import Error
+from playwright.sync_api import Error, expect
 
 from dbentry.site.registry import miz_site
 from dbentry.site.views import *  # import to register views # noqa
@@ -200,10 +200,11 @@ def fill_value(page, change_form):
             # element. Tomselect elements need some special handling.
             ts_wrapper = element.locator(":scope ~ div.ts-wrapper")
             ts_wrapper.click()
-            dropdown_input = ts_wrapper.locator("input.dropdown-input")
+            dropdown_input = ts_wrapper.get_by_role("textbox")
             with page.expect_request_finished():
                 dropdown_input.fill(value)
-            selectable_options = ts_wrapper.locator("[data-selectable][role=option]")
+            selectable_options = ts_wrapper.get_by_role("option", name=value)
+            expect(selectable_options.first, f"No selectable options for value: '{value}'").to_be_visible()
             selectable_options.first.click()
         else:
             if isinstance(value, bool):

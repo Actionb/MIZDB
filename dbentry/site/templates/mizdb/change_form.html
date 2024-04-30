@@ -1,5 +1,5 @@
 {% extends "mizdb/base.html" %}
-{% load static django_bootstrap5 mizdb mizdb_inlines mizdb_watchlist %}
+{% load static django_bootstrap5 mizdb mizdb_inlines %}
 
 {% block title %}{% if not add %}{{ object }} | {% endif %}{{ block.super }}{% endblock title %}
 
@@ -8,18 +8,18 @@
 <script src="{% static 'mizdb/js/dirty.js' %}"></script>
 <script src="{% static 'mizdb_inlines/js/mizdb_inlines.js' %}"></script>
 <script src="{% static 'mizdb_watchlist/js/watchlist.js' %}"></script>
+<script src="{% static 'mizdb/js/watchlist_toggle_init.js' %}"></script>
 {{ combined_media }}
 {% endblock extrahead %}
 
 {% block content_head %}
-<div id="content-head" class="row{% if not changelist_links %} mb-3{% endif %}">
-    <div id="object-info" class="col">
+<div id="content-head" class="d-flex justify-content-between{% if not changelist_links %} mb-3{% endif %}">
+    <div id="object-info">
         {% block content_title %}
             {% if object.pk %}
                 <h1>
                     {{ title }}
                     <span class="ms-2 fs-6 text-nowrap">(id: <span class="id-container">{{ object.pk }}</span>)</span>
-                    {% toggle_button view.request object %}
                 </h1>
                 <h2>{{ object|truncatechars:50 }}</h2>
             {% else %}
@@ -28,25 +28,38 @@
         {% endblock content_title %}
     </div>
     {% if object.pk and not view_only %}
-        <div id="object-tools" class="col-2 text-center">
+        <div id="object-tools">
             <div id="history-link-container" class="mb-1">
-                <a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary">Änderungsgeschichte</a>
+                <a href="{% url opts|urlname:'history' object.pk %}" class="btn btn-primary w-100 mx-auto">Änderungsgeschichte</a>
+            </div>
+            <div id="watchlist-toggle-container" class="mb-1">
+                {% url 'watchlist:toggle' as toggle_url %}
+                {% if toggle_url %}
+                    <button type="button"
+                            class="watchlist-btn watchlist-toggle-btn btn w-100 mx-auto {% if object.on_watchlist %}on-watchlist btn-success{% else %}btn-primary{% endif %}"
+                            title="Zu Merkliste hinzufügen/entfernen"
+                            data-url="{{ toggle_url }}" data-object-id="{{ object.pk }}" data-model-label="{{ opts.label_lower }}"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bookmark"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                        Merkliste
+                    </button>
+                {% endif %}
             </div>
             {% if is_popup %}
                 <div id="unpop-link-container" class="mb-1">
-                    <a id="unpop" class="btn btn-primary" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
+                    <a id="unpop" class="btn btn-primary w-100 mx-auto" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
                 </div>
             {% endif %}
         </div>
     {% endif %}
-    {% if changelist_links %}
-    <div id="related-objects">
-        {% for url, label in changelist_links %}
-            <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
-        {% endfor %}
-    </div>
-    {% endif %}
 </div>
+{% if changelist_links %}
+<div id="related-objects">
+    {% for url, label in changelist_links %}
+        <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock content_head %}
 
 {% block content %}
