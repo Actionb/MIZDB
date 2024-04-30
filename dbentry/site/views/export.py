@@ -32,6 +32,23 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
         """test_func for UserPassesTestMixin."""
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
+    def action_confirmed(self, request):
+        # TODO: move this to a 'BaseActionView'/'ActionConfirmationView'
+        return request.POST.get("post") is not None
+
+    def get_form_kwargs(self):
+        """Return the keyword arguments for instantiating the form."""
+        kwargs = super().get_form_kwargs()
+
+        if not self.action_confirmed(self.request):
+            # Only include data and files if the action was confirmed.
+            # This is to avoid the form from being treated as a bound form (and
+            # thus undergo validation) when the user first lands on the
+            # confirmation page.
+            kwargs.pop("data", None)
+            kwargs.pop("files", None)
+        return kwargs
+
 
 class ExportActionView(BaseExportView):
     """Export a queryset."""
@@ -43,7 +60,7 @@ class ExportActionView(BaseExportView):
         return ctx
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("post"):
+        if self.action_confirmed(request):
             # User confirmed the export.
             return super().post(request, *args, **kwargs)
         else:
