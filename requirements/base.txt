@@ -12,4 +12,4 @@ nameparser==1.1.3
 requests==2.31.0
 psycopg2==2.9.9
 python-stdnum==1.19
-mizdb-watchlist==0.1.8
+mizdb-watchlist==1.0.1

@@ -1,6 +1,7 @@
 """
 Base views for the other views of the site app.
 """
+
 import logging
 from collections import OrderedDict
 from urllib.parse import parse_qsl
@@ -201,7 +202,13 @@ class Inline:
 
 
 class BaseEditView(
-    PopupResponseMixin, InlineFormsetMixin, SuccessMessageMixin, PermissionRequiredMixin, ModelViewMixin, UpdateView
+    WatchlistMixin,
+    PopupResponseMixin,
+    InlineFormsetMixin,
+    SuccessMessageMixin,
+    PermissionRequiredMixin,
+    ModelViewMixin,
+    UpdateView,
 ):
     """
     Base class for 'add' or 'change' views.
