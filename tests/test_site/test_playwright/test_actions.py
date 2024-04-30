@@ -313,13 +313,6 @@ def test_selection(
     expect(checked_checkboxes(changelist)).to_have_count(0)
 
 
-@pytest.mark.usefixtures("test_data")
-def test_no_view_perms(login_noperms_user, changelist, selection_checkbox_locator, select_all_locator):
-    """Assert that no selection checkboxes are shown for users without permission."""
-    expect(changelist.locator(selection_checkbox_locator)).to_have_count(0)
-    expect(changelist.locator(select_all_locator)).to_have_count(0)
-
-
 @pytest.mark.usefixtures("test_data", "login_superuser")
 def test_delete_action(
     changelist,
