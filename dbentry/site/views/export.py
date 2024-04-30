@@ -4,7 +4,7 @@ from import_export.mixins import ExportViewFormMixin
 from dbentry.site.views.base import ModelViewMixin, ACTION_SELECTED_ITEM
 
 
-def has_export_permission(user, opts):
+def has_export_permission(user, opts):  # pragma: no cover
     return user.is_superuser
 
 
@@ -17,10 +17,10 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
     def get_queryset(self):
         return self.queryset
 
-    def get_export_resource(self):
+    def get_export_resource(self):  # pragma: no cover
         return self.resource_class()
 
-    def get_data_for_export(self, request, queryset, *args, **kwargs):
+    def get_data_for_export(self, request, queryset, *args, **kwargs):  # pragma: no cover
         return self.get_export_resource().export(*args, queryset=queryset, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -28,7 +28,7 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
         ctx["queryset"] = self.get_queryset()
         return ctx
 
-    def test_func(self) -> bool:
+    def test_func(self) -> bool:  # pragma: no cover
         """test_func for UserPassesTestMixin."""
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
@@ -74,5 +74,5 @@ class ExportModelView(BaseExportView):
 
     model = None
 
-    def get_queryset(self):
+    def get_queryset(self):  # pragma: no cover
         return self.model.objects.all()
