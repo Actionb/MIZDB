@@ -24,7 +24,8 @@ def changelist_results():
     """Return the table rows of the changelist results."""
 
     def inner(changelist):
-        return changelist.locator("#result_list tbody tr")
+        # select all rows, except those in the table header:
+        return changelist.get_by_role("row").filter(has_not=changelist.get_by_role("columnheader"))
 
     return inner
 
@@ -47,25 +48,25 @@ def test_data(artikel_data, band_data):
 
 
 @pytest.fixture
-def selection_checkbox_locator():
-    return "tr input.selection-cb"
+def get_selection_checkboxes(changelist_results):
+    """Return the selection checkbox element for the given changelist."""
+    def inner(changelist):
+        return changelist_results(changelist).get_by_role("checkbox")
+    return inner
 
 
 @pytest.fixture
-def selection_checkboxes(changelist, selection_checkbox_locator):
+def selection_checkboxes(changelist, get_selection_checkboxes):
     """Return all selection checkbox elements."""
-    checkboxes = changelist.locator(selection_checkbox_locator)
-    for cb in checkboxes.all():
-        cb.wait_for(state="attached")
-    return checkboxes
+    return get_selection_checkboxes(changelist)
 
 
 @pytest.fixture
-def checked_checkboxes():
+def checked_checkboxes(get_selection_checkboxes):
     """Return all selection checkboxes that are checked."""
 
     def inner(changelist):
-        checkboxes = changelist.locator("tr input.selection-cb:checked")
+        checkboxes = get_selection_checkboxes(changelist).locator(":scope:checked")
         for cb in checkboxes.all():
             cb.wait_for(state="attached")
         return checkboxes
@@ -74,16 +75,9 @@ def checked_checkboxes():
 
 
 @pytest.fixture
-def select_all_locator():
-    return "#select-all-cb"
-
-
-@pytest.fixture
-def select_all_checkbox(changelist, select_all_locator):
+def select_all_checkbox(changelist):
     """Return the "select all" checkbox element."""
-    elem = changelist.locator(select_all_locator)
-    elem.wait_for(state="attached")
-    return elem
+    return changelist.get_by_label("Alle auswählen")
 
 
 @pytest.fixture
