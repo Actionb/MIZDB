@@ -24,25 +24,23 @@
 
 <!-- Header -->
 {% block header %}
-<header class="navbar navbar-dark bg-primary px-4">
-<div id="branding-user-links" class="container-fluid">
-    {% block branding %}<a class="navbar-brand" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
+<header class="navbar navbar-dark bg-primary px-4 container-fluid justify-content-between">
+    <div id="branding-navigation" class="col ps-3">
+        {% block branding %}<a class="navbar-brand" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
 
-    {% block nav %}
-        <button class="btn btn-primary border-dark p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
-            <span class="navbar-toggler-icon"></span>
-            <span class="nav-text">Navigation</span>
-        </button>
-    {% endblock nav %}
-
+        {% block nav %}
+            <button class="btn btn-primary border-dark p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
+                <span class="navbar-toggler-icon"></span>
+                <span class="nav-text">Navigation</span>
+            </button>
+        {% endblock nav %}
+    </div>
     {% block searchbar %}
-        <div id="search" class="me-auto ms-auto">
-            {% include "mizdb/includes/searchbar.html" %}
-        </div>
+        {% include "mizdb/includes/searchbar.html" %}
     {% endblock searchbar %}
 
     {% block user-links %}
-        <div id="user-links" class="d-flex gap-2">
+        <div id="user-links" class="d-flex gap-2 col justify-content-end px-3">
             <button id="color-mode-toggle" type="button" class="btn btn-primary border-dark" title="Farbschema umschalten (hell/dunkel)">
                 <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                 <svg id="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon d-none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -93,7 +91,6 @@
             {% endblock account %}
         </div>
     {% endblock user-links %}
-</div>
 </header>
 {% endblock header %}
 <!-- END Header -->
