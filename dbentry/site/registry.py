@@ -3,6 +3,7 @@ from enum import Enum
 
 from django.db.models.base import ModelBase
 from django.urls import path, include
+
 from dbentry.utils.url import urlname
 
 
@@ -41,12 +42,20 @@ class Registry:
     def get_urls(self):
         from dbentry.site.views.delete import DeleteView
         from dbentry.site.views.history import HistoryView
+        from dbentry.site.views.export import ExportModelView
 
         urlpatterns = []
         for model, view in self.changelists.items():
             opts = model._meta
             urlpatterns.append(path(f"{opts.model_name}/", view.as_view(), name=urlname("changelist", opts)))
-
+            if getattr(view, "resource_class", None):
+                urlpatterns.append(
+                    path(
+                        f"{opts.model_name}/export",
+                        ExportModelView.as_view(model=model, resource_class=view.resource_class),
+                        name=urlname("export", opts)
+                    )
+                )
         for model, view in self.views.items():
             opts = model._meta
             patterns = [

@@ -34,6 +34,7 @@ ALWAYS_INSTALLED_APPS = [
     "mizdb_inlines",
     "mizdb_tomselect",
     "mizdb_watchlist",
+    "import_export",
 ]
 
 TEST_APPS = [

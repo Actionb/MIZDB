@@ -485,3 +485,29 @@ def test_merge_action_no_expand(
     items = selected_items(changelist)
     expect(items).to_have_count(1)
     expect(items.get_by_role("link", name=re.compile(primary.schlagzeile))).to_be_visible()
+
+
+@pytest.fixture
+def export_action_button(changelist):
+    return changelist.get_by_title("Die ausgewählten Objekte exportieren")
+
+
+@pytest.mark.usefixtures("artikel_data", "login_superuser")
+def test_export_action(
+    get_url,
+    changelist,
+    view_name,
+    selection_checkboxes,
+    panel_header,
+    export_action_button,
+):
+    """User exports an Artikel object via the changelist export action."""
+    selection_checkboxes.first.click()
+    panel_header(changelist).click()
+    expect(export_action_button).to_be_visible()
+    export_action_button.click()
+    changelist.wait_for_url("**")
+    expect(changelist).to_have_title(re.compile("Export", re.IGNORECASE))
+    changelist.get_by_label("Dateiformat").select_option("csv")
+    with changelist.expect_download():
+        changelist.get_by_role("button", name="Exportieren").click()

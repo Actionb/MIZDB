@@ -5,6 +5,12 @@
 ### Added
 
 - watchlist feature for keeping user lists of model objects
+- enable exporting records
+
+### Changed
+
+- disallow empty URLs
+- allow anonymous users to use changelist selection
  
 ## [0.15] - 2024-04-09
 

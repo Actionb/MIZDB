@@ -725,10 +725,10 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         ctx = super().get_context_data(**kwargs)
         paginator = ctx["paginator"]
 
-        # Collect the actions. Single out the delete and merge action;
-        # they are by default rendered as a button while the rest is rendered
-        # in a submenu.
-        delete_action = merge_action = watchlist_action = None
+        # Collect the actions.
+        # Differentiate between the standard actions (delete, merge, watchlist
+        # export) and other, additional actions.
+        delete_action = merge_action = watchlist_action = export_action = None
         other_actions = []
         for name, (_func, text, title) in self.get_actions().items():
             action = {"value": name, "text": text, "title": title}
@@ -738,12 +738,15 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 merge_action = action
             elif name == "watchlist":
                 watchlist_action = action
+            elif name == "export":
+                export_action = action
             else:
                 other_actions.append(action)
         actions = {
             "delete_action": delete_action,
             "merge_action": merge_action,
             "watchlist_action": watchlist_action,
+            "export_action": export_action,
             "other_actions": other_actions,
         }
 
@@ -982,7 +985,10 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         from dbentry.site.views import actions as _actions
 
         actions = OrderedDict()
-        for action in [_actions.delete, _actions.merge_records, _actions.watchlist] + self.actions:
+        base_actions = [_actions.delete, _actions.merge_records, _actions.watchlist]
+        if getattr(self, "resource_class", None):
+            base_actions.append(_actions.export)
+        for action in base_actions + self.actions:
             name = action.__name__
             has_permission = getattr(action, "has_permission", None)
             label = getattr(action, "label", name)
