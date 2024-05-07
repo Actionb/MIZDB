@@ -6,6 +6,7 @@
 
 - watchlist feature for keeping user lists of model objects
 - enable exporting records
+- add "Monat" column to Ausgabe autocomplete
 
 ### Changed
 
