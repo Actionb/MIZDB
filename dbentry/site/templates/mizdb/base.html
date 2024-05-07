@@ -26,7 +26,7 @@
 {% block header %}
 <header class="navbar navbar-dark bg-primary px-4 container-fluid justify-content-between">
     <div id="branding-navigation" class="col ps-3">
-        {% block branding %}<a class="navbar-brand" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
+        {% block branding %}<a class="navbar-brand align-middle" href="{% url 'index' %}" title="Hauptseite">MIZDB</a>{% endblock branding %}
 
         {% block nav %}
             <button class="btn btn-primary border-dark p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#nav-sidebar" aria-controls="nav-sidebar" aria-label="Navigation anzeigen" title="Navigation">
