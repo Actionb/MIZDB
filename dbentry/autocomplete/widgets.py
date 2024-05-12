@@ -9,7 +9,7 @@ from dbentry import models as _models
 DEFAULTS = {
     _models.Ausgabe: {
         "url": "autocomplete_ausgabe",
-        "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "lnum_list": "lfd.Nummer"},
+        "extra_columns": {"jahr_list": "Jahr", "num_list": "Nummer", "monat_list": "Monat", "lnum_list": "lfd.Nummer"},
         "filter_by": ("ausgabe__magazin", "magazin_id"),
         "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
     },

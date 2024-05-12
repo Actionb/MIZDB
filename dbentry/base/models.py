@@ -334,7 +334,7 @@ class AbstractJahrModel(BaseModel):
 class AbstractURLModel(BaseModel):
     """Abstract model that adds an URLField."""
 
-    url = models.URLField(verbose_name='Webpage', blank=True)
+    url = models.URLField(verbose_name='Webpage')
 
     name_field = 'url'
 

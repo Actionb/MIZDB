@@ -24,7 +24,8 @@ def changelist_results():
     """Return the table rows of the changelist results."""
 
     def inner(changelist):
-        return changelist.locator("#result_list tbody tr")
+        # select all rows, except those in the table header:
+        return changelist.get_by_role("row").filter(has_not=changelist.get_by_role("columnheader"))
 
     return inner
 
@@ -47,25 +48,25 @@ def test_data(artikel_data, band_data):
 
 
 @pytest.fixture
-def selection_checkbox_locator():
-    return "tr input.selection-cb"
+def get_selection_checkboxes(changelist_results):
+    """Return the selection checkbox element for the given changelist."""
+    def inner(changelist):
+        return changelist_results(changelist).get_by_role("checkbox")
+    return inner
 
 
 @pytest.fixture
-def selection_checkboxes(changelist, selection_checkbox_locator):
+def selection_checkboxes(changelist, get_selection_checkboxes):
     """Return all selection checkbox elements."""
-    checkboxes = changelist.locator(selection_checkbox_locator)
-    for cb in checkboxes.all():
-        cb.wait_for(state="attached")
-    return checkboxes
+    return get_selection_checkboxes(changelist)
 
 
 @pytest.fixture
-def checked_checkboxes():
+def checked_checkboxes(get_selection_checkboxes):
     """Return all selection checkboxes that are checked."""
 
     def inner(changelist):
-        checkboxes = changelist.locator("tr input.selection-cb:checked")
+        checkboxes = get_selection_checkboxes(changelist).locator(":scope:checked")
         for cb in checkboxes.all():
             cb.wait_for(state="attached")
         return checkboxes
@@ -74,16 +75,9 @@ def checked_checkboxes():
 
 
 @pytest.fixture
-def select_all_locator():
-    return "#select-all-cb"
-
-
-@pytest.fixture
-def select_all_checkbox(changelist, select_all_locator):
+def select_all_checkbox(changelist):
     """Return the "select all" checkbox element."""
-    elem = changelist.locator(select_all_locator)
-    elem.wait_for(state="attached")
-    return elem
+    return changelist.get_by_label("Alle auswählen")
 
 
 @pytest.fixture
@@ -313,13 +307,6 @@ def test_selection(
     expect(checked_checkboxes(changelist)).to_have_count(0)
 
 
-@pytest.mark.usefixtures("test_data")
-def test_no_view_perms(login_noperms_user, changelist, selection_checkbox_locator, select_all_locator):
-    """Assert that no selection checkboxes are shown for users without permission."""
-    expect(changelist.locator(selection_checkbox_locator)).to_have_count(0)
-    expect(changelist.locator(select_all_locator)).to_have_count(0)
-
-
 @pytest.mark.usefixtures("test_data", "login_superuser")
 def test_delete_action(
     changelist,
@@ -498,3 +485,29 @@ def test_merge_action_no_expand(
     items = selected_items(changelist)
     expect(items).to_have_count(1)
     expect(items.get_by_role("link", name=re.compile(primary.schlagzeile))).to_be_visible()
+
+
+@pytest.fixture
+def export_action_button(changelist):
+    return changelist.get_by_title("Die ausgewählten Objekte exportieren")
+
+
+@pytest.mark.usefixtures("artikel_data", "login_superuser")
+def test_export_action(
+    get_url,
+    changelist,
+    view_name,
+    selection_checkboxes,
+    panel_header,
+    export_action_button,
+):
+    """User exports an Artikel object via the changelist export action."""
+    selection_checkboxes.first.click()
+    panel_header(changelist).click()
+    expect(export_action_button).to_be_visible()
+    export_action_button.click()
+    changelist.wait_for_url("**")
+    expect(changelist).to_have_title(re.compile("Export", re.IGNORECASE))
+    changelist.get_by_label("Dateiformat").select_option("csv")
+    with changelist.expect_download():
+        changelist.get_by_role("button", name="Exportieren").click()

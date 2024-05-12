@@ -163,3 +163,8 @@ def remove_popup_param(request):
     if IS_POPUP_VAR in params:
         del params[IS_POPUP_VAR]
     return f"?{urlencode(sorted(params.items()))}"
+
+
+@register.simple_tag
+def has_export_permission(user, opts):
+    return user.is_superuser

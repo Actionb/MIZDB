@@ -39,6 +39,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from dbentry import models as _models
+from dbentry.export import resources
 from dbentry.site.forms import null_boolean_select
 from dbentry.site.registry import register_changelist, ModelType
 from dbentry.site.templatetags.mizdb import add_preserved_filters
@@ -171,6 +172,7 @@ class ArtikelList(SearchableListView):
         ],
         "tabular": ["ausgabe", "musiker", "band", "spielort", "veranstaltung"],
     }
+    resource_class = resources.ArtikelResource
 
     @add_attrs(description="Zusammenfassung", ordering="zusammenfassung")
     def zusammenfassung_short(self, obj: _models.Artikel) -> str:
@@ -225,6 +227,7 @@ class AudioList(SearchableListView):
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
+    resource_class = resources.AudioResource
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Audio):
@@ -272,6 +275,7 @@ class AusgabeList(SearchableListView):
         },
         "widgets": {"sonderausgabe": null_boolean_select},
     }
+    resource_class = resources.AusgabeResource
 
     @add_attrs(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
@@ -322,6 +326,7 @@ class BrochureList(SearchableListView):
         "tabular": ["ausgabe"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
+    resource_class = resources.BrochureResource
 
     @add_attrs(description="Jahre", ordering="jahr_min")
     def jahr_list(self, obj: _models.BaseBrochure):
@@ -357,6 +362,7 @@ class BuchList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
         "help_texts": {"autor": None},
     }
+    resource_class = resources.BuchResource
 
     @add_attrs(description="Autoren", ordering="autor_list")
     def autoren_string(self, obj: _models.Buch):
@@ -398,6 +404,7 @@ class FotoList(SearchableListView):
         "labels": {"reihe": "Bildreihe"},
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
+    resource_class = resources.FotoResource
 
     @add_attrs(description="Foto ID", ordering="id")
     def foto_id(self, obj: _models.Foto):
@@ -439,6 +446,7 @@ class PlakatList(SearchableListView):
         "labels": {"reihe": "Bildreihe"},
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
+    resource_class = resources.PlakatResource
 
     @add_attrs(description="Plakat ID", ordering="id")
     def plakat_id(self, obj: _models.Plakat):
@@ -468,6 +476,7 @@ class ProgrammheftList(SearchableListView):
         "tabular": ["ausgabe", "spielort", "veranstaltung"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
+    resource_class = resources.KalenderResource
 
     @add_attrs(description="Jahre", ordering="jahr_min")
     def jahr_list(self, obj: _models.BaseBrochure):
@@ -496,6 +505,7 @@ class VideoList(SearchableListView):
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
+    resource_class = resources.VideoResource
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Video):
@@ -514,6 +524,7 @@ class WarenkatalogList(SearchableListView):
         "tabular": ["ausgabe"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
+    resource_class = resources.KatalogResource
 
     @add_attrs(description="Jahre", ordering="jahr_min")
     def jahr_list(self, obj: _models.BaseBrochure):
@@ -533,6 +544,7 @@ class AutorList(SearchableListView):
     ordering = ["_name"]
     list_display = ["autor_name", "person", "kuerzel", "magazin_string"]
     search_form_kwargs = {"fields": ["magazin", "person"]}
+    resource_class = resources.AutorResource
 
     @add_attrs(description="Autor", ordering="_name")
     def autor_name(self, obj: _models.Autor):
@@ -555,6 +567,7 @@ class BandList(SearchableListView):
         "labels": {"musiker": "Mitglied"},
         "tabular": ["musiker"],
     }
+    resource_class = resources.BandResource
 
     @add_attrs(description="Genres", ordering="genre_list")
     def genre_string(self, obj: _models.Band):
@@ -579,6 +592,7 @@ class BandList(SearchableListView):
 class GenreList(SearchableListView):
     model = _models.Genre
     list_display = ["genre", "alias_string"]
+    resource_class = resources.GenreResource
 
     @add_attrs(description="Aliase")
     def alias_string(self, obj: _models.Genre):
@@ -596,6 +610,7 @@ class MagazinList(SearchableListView):
         "fields": ["verlag", "herausgeber", "orte", "genre", "issn", "fanzine"],
         "widgets": {"fanzine": null_boolean_select},
     }
+    resource_class = resources.MagazinResource
 
     @add_attrs(description="Beschreibung", ordering="beschreibung")
     def short_beschreibung(self, obj: _models.Magazin):
@@ -620,6 +635,7 @@ class MusikerList(SearchableListView):
     ordering = ["kuenstler_name"]
     list_display = ["kuenstler_name", "genre_string", "band_string", "orte_string"]
     search_form_kwargs = {"fields": ["person", "genre", "instrument", "orte__land", "orte"]}
+    resource_class = resources.MusikerResource
 
     @add_attrs(description="Genres", ordering="genre_list")
     def genre_string(self, obj: _models.Musiker):
@@ -650,6 +666,7 @@ class OrtList(SearchableListView):
         "fields": ["land", "bland"],
         "filter_by": {"bland": ("land", "land_id")},
     }
+    resource_class = resources.OrtResource
 
 
 @register_changelist(_models.Person, category=ModelType.STAMMDATEN)
@@ -662,6 +679,7 @@ class PersonList(SearchableListView):
         "fields": ["orte", "orte__land", "orte__bland", "gnd_id"],
         "filter_by": {"orte__bland": ("orte__land", "land_id")},
     }
+    resource_class = resources.PersonResource
 
     @add_attrs(description="Orte", ordering="orte_list")
     def orte_string(self, obj: _models.Person):
@@ -691,6 +709,7 @@ class SchlagwortList(SearchableListView):
     model = _models.Schlagwort
     ordering = ["schlagwort"]
     list_display = ["schlagwort", "alias_string"]
+    resource_class = resources.SchlagwortResource
 
     @add_attrs(description="Aliase", ordering="alias_list")
     def alias_string(self, obj: _models.Schlagwort):
@@ -708,6 +727,7 @@ class SchlagwortList(SearchableListView):
 class HerausgeberList(SearchableListView):
     model = _models.Herausgeber
     ordering = ["herausgeber"]
+    resource_class = resources.HerausgeberResource
 
 
 @register_changelist(_models.Instrument, category=ModelType.SONSTIGE)
@@ -715,11 +735,13 @@ class InstrumentList(SearchableListView):
     model = _models.Instrument
     ordering = ["instrument"]
     list_display = ["instrument", "kuerzel"]
+    resource_class = resources.InstrumentResource
 
 
 @register_changelist(_models.Plattenfirma, category=ModelType.SONSTIGE)
 class PlattenfirmaList(SearchableListView):
     model = _models.Plattenfirma
+    resource_class = resources.PlattenfirmaResource
 
 
 @register_changelist(_models.Spielort, category=ModelType.SONSTIGE)
@@ -728,6 +750,7 @@ class SpielortList(SearchableListView):
     ordering = ["name", "ort"]
     list_display = ["name", "ort"]
     search_form_kwargs = {"fields": ["ort", "ort__land"]}
+    resource_class = resources.SpielortResource
 
 
 @register_changelist(_models.Veranstaltung, category=ModelType.SONSTIGE)
@@ -739,6 +762,7 @@ class VeranstaltungList(SearchableListView):
         "fields": ["musiker", "band", "schlagwort", "genre", "person", "spielort", "reihe", "datum__range"],
         "tabular": ["musiker", "band", "spielort"],
     }
+    resource_class = resources.VeranstaltungResource
 
     @add_attrs(description="Datum", ordering="datum")
     def datum_localized(self, obj: _models.Veranstaltung):
@@ -761,47 +785,56 @@ class VerlagList(SearchableListView):
         "labels": {"sitz": "Sitz"},
         "filter_by": {"sitz__bland": ("sitz__land", "land_id")},
     }
+    resource_class = resources.VerlagResource
 
 
 @register_changelist(_models.Lagerort, category=ModelType.SONSTIGE)
 class LagerortList(SearchableListView):
     model = _models.Lagerort
     list_display = ["ort", "raum", "regal", "fach", "ordner"]
+    resource_class = resources.LagerortResource
 
 
 @register_changelist(_models.Geber, category=ModelType.SONSTIGE)
 class GeberList(SearchableListView):
     model = _models.Geber
+    resource_class = resources.GeberResource
 
 
 @register_changelist(_models.Provenienz, category=ModelType.SONSTIGE)
 class ProvenienzList(SearchableListView):
     model = _models.Provenienz
+    resource_class = resources.ProvenienzResource
 
 
 @register_changelist(_models.Schriftenreihe, category=ModelType.SONSTIGE)
 class SchriftenreiheList(SearchableListView):
     model = _models.Schriftenreihe
+    resource_class = resources.SchriftenreiheResource
 
 
 @register_changelist(_models.Bildreihe, category=ModelType.SONSTIGE)
 class BildreiheList(SearchableListView):
     model = _models.Bildreihe
+    resource_class = resources.BildreiheResource
 
 
 @register_changelist(_models.Veranstaltungsreihe, category=ModelType.SONSTIGE)
 class VeranstaltungsreiheList(SearchableListView):
     model = _models.Veranstaltungsreihe
+    resource_class = resources.VeranstaltungsreiheResource
 
 
 @register_changelist(_models.VideoMedium, category=ModelType.SONSTIGE)
 class VideoMediumList(SearchableListView):
     model = _models.VideoMedium
+    resource_class = resources.VideoMediumResource
 
 
 @register_changelist(_models.AudioMedium, category=ModelType.SONSTIGE)
 class AudioMediumList(SearchableListView):
     model = _models.AudioMedium
+    resource_class = resources.AudioMediumResource
 
 
 @register_changelist(_models.Bestand, category=ModelType.SONSTIGE)
@@ -809,6 +842,7 @@ class BestandList(SearchableListView):
     model = _models.Bestand
     list_display = ["signatur", "lagerort", "provenienz", "anmerkungen", "bestand_object_string"]
     search_form_kwargs = {"fields": ["lagerort", "provenienz", "signatur"]}
+    resource_class = resources.BestandResource
 
     @add_attrs(description="Archivgut")
     def bestand_object_string(self, obj):

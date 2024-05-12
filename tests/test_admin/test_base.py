@@ -1,7 +1,6 @@
 from unittest import mock
 from unittest.mock import patch
 
-from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -132,9 +131,9 @@ class MIZModelAdminTest(AdminTestCase):
     def test_get_queryset(self):
         """Assert that get_queryset calls the queryset's overview method."""
         mock_overview = mock.Mock()
-        with mock.patch.object(admin.ModelAdmin, "get_queryset") as super_mock:
+        with mock.patch("dbentry.admin.base.super") as super_mock:
             for mock_queryset in [mock.Mock(spec_set=True), mock.Mock(overview=mock_overview)]:
-                super_mock.return_value = mock_queryset
+                super_mock.return_value.get_queryset.return_value = mock_queryset
                 has_overview = hasattr(mock_queryset, "overview")
                 with self.subTest(has_overview_attr=has_overview):
                     self.model_admin.get_queryset(self.get_request())

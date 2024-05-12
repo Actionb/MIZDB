@@ -9,6 +9,7 @@ from django.urls import reverse, NoReverseMatch, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
+from mizdb_watchlist.actions import add_to_watchlist
 
 from dbentry.utils.admin import get_model_admin_for_model
 
@@ -178,3 +179,4 @@ class MIZAdminSite(admin.AdminSite):
 
 
 miz_site = MIZAdminSite()
+miz_site.add_action(add_to_watchlist)

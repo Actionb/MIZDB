@@ -65,7 +65,9 @@ INSTALLED_APPS = [
     'mod_wsgi.server',
     'dbentry.site',  # required for finding dbentry/site/static files
     'django_bootstrap5',
-    'mizdb_inlines'
+    'mizdb_inlines',
+    'mizdb_watchlist',
+    "import_export",
 ]
 
 MIDDLEWARE = [

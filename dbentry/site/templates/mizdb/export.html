@@ -1,0 +1,25 @@
+{% extends "mizdb/base.html" %}
+{% load django_bootstrap5 %}
+
+
+{% block content %}
+<form method="POST">
+  {% csrf_token %}
+  {# Sentinel field that signals the view that the user has confirmed the export #}
+  <input type="hidden" name="post" value="yes">
+  {% if is_changelist_action %}
+      {# This tells the changelist view what kind of action this is: #}
+      <input type="hidden" name="changelist_action" value="export">
+
+      {% for obj in queryset %}
+          <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk }}">
+      {% endfor %}
+  {% endif %}
+
+  <p>Export von {{ queryset.count }} Datensätzen.</p>
+  <p>Bitte wählen Sie das Dateiformat:</p>
+  {% bootstrap_field form.file_format layout="horizontal" %}
+  <input class="btn btn-success" type="submit" value="Exportieren">
+
+</form>
+{% endblock %}

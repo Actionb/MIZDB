@@ -1,6 +1,7 @@
 """
 Base views for the other views of the site app.
 """
+
 import logging
 from collections import OrderedDict
 from urllib.parse import parse_qsl
@@ -26,6 +27,7 @@ from django.views.generic import UpdateView, ListView
 from django.views.generic.base import ContextMixin
 from mizdb_inlines.views import InlineFormsetMixin
 from mizdb_tomselect.views import PopupResponseMixin, IS_POPUP_VAR
+from mizdb_watchlist.views import WatchlistMixin
 
 from dbentry.base.models import ComputedNameModel
 from dbentry.csrf import _restore_formset, CSRF_FORM_DATA_KEY
@@ -200,7 +202,13 @@ class Inline:
 
 
 class BaseEditView(
-    PopupResponseMixin, InlineFormsetMixin, SuccessMessageMixin, PermissionRequiredMixin, ModelViewMixin, UpdateView
+    WatchlistMixin,
+    PopupResponseMixin,
+    InlineFormsetMixin,
+    SuccessMessageMixin,
+    PermissionRequiredMixin,
+    ModelViewMixin,
+    UpdateView,
 ):
     """
     Base class for 'add' or 'change' views.
@@ -581,7 +589,7 @@ class BaseEditView(
         return data
 
 
-class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
+class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, ListView):
     """
     Base view for displaying a list of model objects ("changelist").
 
@@ -717,10 +725,10 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         paginator = ctx["paginator"]
 
-        # Collect the actions. Single out the delete and merge action;
-        # they are by default rendered as a button while the rest is rendered
-        # in a submenu.
-        delete_action = merge_action = None
+        # Collect the actions.
+        # Differentiate between the standard actions (delete, merge, watchlist
+        # export) and other, additional actions.
+        delete_action = merge_action = watchlist_action = export_action = None
         other_actions = []
         for name, (_func, text, title) in self.get_actions().items():
             action = {"value": name, "text": text, "title": title}
@@ -728,9 +736,19 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
                 delete_action = action
             elif name == "merge_records":
                 merge_action = action
+            elif name == "watchlist":
+                watchlist_action = action
+            elif name == "export":
+                export_action = action
             else:
                 other_actions.append(action)
-        actions = {"delete_action": delete_action, "merge_action": merge_action, "other_actions": other_actions}
+        actions = {
+            "delete_action": delete_action,
+            "merge_action": merge_action,
+            "watchlist_action": watchlist_action,
+            "export_action": export_action,
+            "other_actions": other_actions,
+        }
 
         ctx.update(
             {
@@ -967,7 +985,10 @@ class BaseListView(PermissionRequiredMixin, ModelViewMixin, ListView):
         from dbentry.site.views import actions as _actions
 
         actions = OrderedDict()
-        for action in [_actions.delete, _actions.merge_records] + self.actions:
+        base_actions = [_actions.delete, _actions.merge_records, _actions.watchlist]
+        if getattr(self, "resource_class", None):
+            base_actions.append(_actions.export)
+        for action in base_actions + self.actions:
             name = action.__name__
             has_permission = getattr(action, "has_permission", None)
             label = getattr(action, "label", name)

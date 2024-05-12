@@ -1,5 +1,13 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_urls admin_modify %}
+{% load static i18n admin_urls admin_modify mizdb_watchlist %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'mizdb_watchlist/css/watchlist.css' %}">
+  <link rel="stylesheet" href="{% static 'mizdb_watchlist/css/watchlist_toggle.css' %}">
+  <script src="{% static 'mizdb_watchlist/js/watchlist.js' %}"></script>
+  <script src="{% static 'mizdb_watchlist/js/watchlist_init.js' %}"></script>
+{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
@@ -26,7 +34,7 @@
   </ul>
 {% endif %}
 {% endblock %}
-{% block content_subtitle %}{% endblock %}
+{% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}{% toggle_button request original %}</h2>{% endif %}{% endblock %}
 
 {% block after_field_sets %}
     {% include "admin/includes/changelist_links.html"%}

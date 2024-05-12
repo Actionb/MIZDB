@@ -28,6 +28,7 @@ urlpatterns = [
     path("admin/", include("dbentry.urls")),  # TODO: tool views should be accessible outside of admin/
     path("admin/", miz_site.urls),
     path("", include("dbentry.site.urls")),
+    path("mizdb_watchlist/", include("mizdb_watchlist.urls")),
 ]
 
 if settings.DEBUG:

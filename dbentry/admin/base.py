@@ -15,6 +15,8 @@ from django.template.response import TemplateResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
+from import_export.admin import ExportMixin as BaseExportMixin
+from mizdb_watchlist.admin import WatchlistMixin
 
 from dbentry import models as _models
 from dbentry.admin.actions import merge_records
@@ -57,7 +59,13 @@ class AutocompleteMixin(object):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
 
 
-class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin):
+class ExportMixin(BaseExportMixin):
+
+    def has_export_permission(self, request):
+        return request.user.is_superuser
+
+
+class MIZModelAdmin(ExportMixin, WatchlistMixin, AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin):
     """
     Base ModelAdmin for this app.
 
