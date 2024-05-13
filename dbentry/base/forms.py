@@ -1,5 +1,5 @@
 import re
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING, TypeAlias, TypeVar
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TypeVar
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -13,14 +13,17 @@ from dbentry.validators import DiscogsURLValidator
 # Default attrs for the TextArea form widget
 ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
 
-if TYPE_CHECKING:  # pragma: no cover
-    # For static type checking purposes, have the mixins extend the concrete
-    # base class that they are designed to be used with.
-    FormMixinBase: TypeAlias = forms.Form
-    ModelFormMixinBase: TypeAlias = forms.ModelForm
-else:
-    FormMixinBase = object
-    ModelFormMixinBase = object
+# Hotfix 0.16.1
+# if TYPE_CHECKING:  # pragma: no cover
+#     # For static type checking purposes, have the mixins extend the concrete
+#     # base class that they are designed to be used with.
+#     FormMixinBase: TypeAlias = forms.Form
+#     ModelFormMixinBase: TypeAlias = forms.ModelForm
+# else:
+#     FormMixinBase = object
+#     ModelFormMixinBase = object
+FormMixinBase = object
+ModelFormMixinBase = object
 
 MinMaxForm = TypeVar("MinMaxForm", bound=Union["MinMaxRequiredFormMixin", forms.Form])
 
