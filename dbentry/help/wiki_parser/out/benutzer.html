@@ -1,31 +1,38 @@
-
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-        <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
-    </head>
-    <body class="container"><h1>Benutzer</h1>
-<p>Zunächst muss ein Benutzername eingegeben werden. Der Benutzername wird hauptsächlich in der <a class="new" href="/mediawiki/index.php?title=%C3%84nderungsgeschichte&amp;action=edit&amp;redlink=1" title="Änderungsgeschichte (Seite nicht vorhanden)">Änderungsgeschichte</a> eines Datensatzes verwendet; d.h. Änderungen an Datensätzen werden mit dem Benutzernamen vermerkt.
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
+</head>
+<body class="container">
+<h1>Benutzer</h1>
+<p>Zunächst muss ein Benutzername eingegeben werden. Der Benutzername wird hauptsächlich in der
+  <a class="new" href="/mediawiki/index.php?title=%C3%84nderungsgeschichte&amp;action=edit&amp;redlink=1" title="Änderungsgeschichte (Seite nicht vorhanden)">Änderungsgeschichte</a> eines Datensatzes verwendet; d.h. Änderungen an Datensätzen werden mit dem Benutzernamen vermerkt.
 </p>
 <p>
-Es ist also sinnvoll, wenn der Benutzername direkt einem Mitarbeiter zugeordnet werden kann. Darüber hinaus muss jeder Benutzername einzigartig sein. Daher bietet sich eine Kombination von Vor- und Nachname gut als Benutzername an. Da Leerzeichen im Benutzernamen nicht zulässig sind, könnte ein Benutzername z.B. so aussehen: <code>max.mustermann</code> oder <code>max_mustermann</code>. </p>
+  Es ist also sinnvoll, wenn der Benutzername direkt einem Mitarbeiter zugeordnet werden kann. Darüber hinaus muss jeder Benutzername einzigartig sein. Daher bietet sich eine Kombination von Vor- und Nachname gut als Benutzername an. Da Leerzeichen im Benutzernamen nicht zulässig sind, könnte ein Benutzername z.B. so aussehen:
+  <code>max.mustermann</code> oder <code>max_mustermann</code>. </p>
 <p> Das Passwort zum Benutzerkonto kann von dem Benutzer nachher frei geändert werden. Daher ist ein vorläufiges, eher generisches Passwort ausreichend.
 </p>
-<p>Durch einen Klick auf <b>Sichern</b> wird man auf das nächste Formular weitergeleitet. Hier können  Vor- und Nachname noch einmal eingetragen werden. Dies kann nützlich sein, wenn der Benutzername nicht vom Namen abgeleitet ist.
+<p>Durch einen Klick auf
+  <b>Sichern</b> wird man auf das nächste Formular weitergeleitet. Hier können Vor- und Nachname noch einmal eingetragen werden. Dies kann nützlich sein, wenn der Benutzername nicht vom Namen abgeleitet ist.
 </p>
 <p>Sofern der Benutzer aktiv an der Datenbank mitarbeiten sollen, so muss ein Häkchen bei Mitarbeiter-Status gesetzt werden. Ohne diesen Status schlägt die Anmeldung an die Adminoberfläche (mit welcher letztlich Bearbeitung der Datensätze durchgeführt wird) mit dieser Fehlermeldung fehl:
 </p>
-<blockquote style="color:#ba2121;"><p>Bitte Benutzername und Passwort für einen Staff-Account eingeben. Beide Felder berücksichtigen die Groß-/Kleinschreibung. </p></blockquote>
+<blockquote style="color:#ba2121;">
+  <p>Bitte Benutzername und Passwort für einen Staff-Account eingeben. Beide Felder berücksichtigen die Groß-/Kleinschreibung. </p>
+</blockquote>
 <p>Danach müssen dem Benutzer Berechtigungen für die einzelnen Bereiche der Datenbank zugewiesen werden. Zu diesem Zweck gibt es Gruppen, die eine Vielzahl von Berechtigungen enthalten; wird dem Benutzer eine Gruppe zugewiesen, so bekommt der Benutzer alle Berechtigungen dieser Gruppen.
 </p>
 <p>Eine "Mitarbeiter" Gruppe sollte vorhanden sein: mit Doppelklick kann diese in die Auswahl verschoben werden.
-Für eine Erklärung des Bedienelementes siehe <a href="/help/Bedienelement#gefilterte_Mehrfachauswahl" title="Bedienelement">Bedienelement#gefilterte_Mehrfachauswahl</a>.
-</p></body>
+  Für eine Erklärung des Bedienelementes siehe
+  <a href="/help/Bedienelement#gefilterte_Mehrfachauswahl" title="Bedienelement">Bedienelement#gefilterte_Mehrfachauswahl</a>.
+</p>
+</body>
 </html>

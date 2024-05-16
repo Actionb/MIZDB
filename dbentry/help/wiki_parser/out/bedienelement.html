@@ -1,179 +1,275 @@
-
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-        <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
-    </head>
-    <body class="container"><h1>Bedienelement</h1>
-<p>Die Seiten und Formulare der Datenbank verwenden verschiedene <a class="extiw" href="https://en.wikipedia.org/wiki/de:Steuerelement" title="wikipedia:de:Steuerelement">Steuer- oder Bedienelemente</a>, deren Funktionsweisen hier kurz erklärt wird.
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
+</head>
+<body class="container">
+<h1>Bedienelement</h1>
+<p>Die Seiten und Formulare der Datenbank verwenden verschiedene
+  <a class="extiw" href="https://en.wikipedia.org/wiki/de:Steuerelement" title="wikipedia:de:Steuerelement">Steuer- oder Bedienelemente</a>, deren Funktionsweisen hier kurz erklärt wird.
 </p>
-<div aria-labelledby="mw-toc-heading" id="toc" role="navigation"><input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/><div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
-<ul>
-<li class="toclevel-1 tocsection-1"><a href="#Einfache_Felder"><span class="tocnumber">1</span> <span class="toctext">Einfache Felder</span></a>
-<ul>
-<li class="toclevel-2 tocsection-2"><a href="#Textfeld"><span class="tocnumber">1.1</span> <span class="toctext">Textfeld</span></a></li>
-<li class="toclevel-2 tocsection-3"><a href="#Textfeld_mit_variabler_Gr.C3.B6sse"><span class="tocnumber">1.2</span> <span class="toctext">Textfeld mit variabler Grösse</span></a></li>
-<li class="toclevel-2 tocsection-4"><a href="#Zahlenfeld"><span class="tocnumber">1.3</span> <span class="toctext">Zahlenfeld</span></a></li>
-<li class="toclevel-2 tocsection-5"><a href="#Checkbox"><span class="tocnumber">1.4</span> <span class="toctext">Checkbox</span></a></li>
-</ul>
-</li>
-<li class="toclevel-1 tocsection-6"><a href="#Auswahlfelder"><span class="tocnumber">2</span> <span class="toctext">Auswahlfelder</span></a>
-<ul>
-<li class="toclevel-2 tocsection-7"><a href="#Einfaches_Auswahlfeld.2FDrop-Down"><span class="tocnumber">2.1</span> <span class="toctext">Einfaches Auswahlfeld/Drop-Down</span></a></li>
-<li class="toclevel-2 tocsection-8"><a href="#Kombinationsfeld.2FCombobox"><span class="tocnumber">2.2</span> <span class="toctext">Kombinationsfeld/Combobox</span></a></li>
-<li class="toclevel-2 tocsection-9"><a href="#Combobox_mit_Mehrfachauswahl"><span class="tocnumber">2.3</span> <span class="toctext">Combobox mit Mehrfachauswahl</span></a></li>
-<li class="toclevel-2 tocsection-10"><a href="#gefilterte_Mehrfachauswahl"><span class="tocnumber">2.4</span> <span class="toctext">gefilterte Mehrfachauswahl</span></a></li>
-</ul>
-</li>
-<li class="toclevel-1 tocsection-11"><a href="#Spezialfelder"><span class="tocnumber">3</span> <span class="toctext">Spezialfelder</span></a>
-<ul>
-<li class="toclevel-2 tocsection-12"><a href="#Datumsfeld"><span class="tocnumber">3.1</span> <span class="toctext">Datumsfeld</span></a></li>
-<li class="toclevel-2 tocsection-13"><a href="#Feld_f.C3.BCr_partielles_Datum"><span class="tocnumber">3.2</span> <span class="toctext">Feld für partielles Datum</span></a></li>
-<li class="toclevel-2 tocsection-14"><a href="#Laufzeitfeld"><span class="tocnumber">3.3</span> <span class="toctext">Laufzeitfeld</span></a></li>
-<li class="toclevel-2 tocsection-15"><a href="#ISSN.2FISBN.2FEAN"><span class="tocnumber">3.4</span> <span class="toctext">ISSN/ISBN/EAN</span></a></li>
-</ul>
-</li>
-<li class="toclevel-1 tocsection-16"><a href="#.C3.84ndern.2FHinzuf.C3.BCgen.2FL.C3.B6schen"><span class="tocnumber">4</span> <span class="toctext">Ändern/Hinzufügen/Löschen</span></a></li>
-<li class="toclevel-1 tocsection-17"><a href="#Inlines"><span class="tocnumber">5</span> <span class="toctext">Inlines</span></a></li>
-</ul>
+<div aria-labelledby="mw-toc-heading" id="toc" role="navigation">
+  <input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/>
+  <div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2>
+    <span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
+  <ul>
+    <li class="toclevel-1 tocsection-1"><a href="#Einfache_Felder"><span class="tocnumber">1</span>
+      <span class="toctext">Einfache Felder</span></a>
+      <ul>
+        <li class="toclevel-2 tocsection-2"><a href="#Textfeld"><span class="tocnumber">1.1</span>
+          <span class="toctext">Textfeld</span></a></li>
+        <li class="toclevel-2 tocsection-3">
+          <a href="#Textfeld_mit_variabler_Gr.C3.B6sse"><span class="tocnumber">1.2</span>
+            <span class="toctext">Textfeld mit variabler Grösse</span></a></li>
+        <li class="toclevel-2 tocsection-4"><a href="#Zahlenfeld"><span class="tocnumber">1.3</span>
+          <span class="toctext">Zahlenfeld</span></a></li>
+        <li class="toclevel-2 tocsection-5"><a href="#Checkbox"><span class="tocnumber">1.4</span>
+          <span class="toctext">Checkbox</span></a></li>
+      </ul>
+    </li>
+    <li class="toclevel-1 tocsection-6"><a href="#Auswahlfelder"><span class="tocnumber">2</span>
+      <span class="toctext">Auswahlfelder</span></a>
+      <ul>
+        <li class="toclevel-2 tocsection-7">
+          <a href="#Einfaches_Auswahlfeld.2FDrop-Down"><span class="tocnumber">2.1</span>
+            <span class="toctext">Einfaches Auswahlfeld/Drop-Down</span></a></li>
+        <li class="toclevel-2 tocsection-8"><a href="#Kombinationsfeld.2FCombobox"><span class="tocnumber">2.2</span>
+          <span class="toctext">Kombinationsfeld/Combobox</span></a></li>
+        <li class="toclevel-2 tocsection-9"><a href="#Combobox_mit_Mehrfachauswahl"><span class="tocnumber">2.3</span>
+          <span class="toctext">Combobox mit Mehrfachauswahl</span></a></li>
+        <li class="toclevel-2 tocsection-10"><a href="#gefilterte_Mehrfachauswahl"><span class="tocnumber">2.4</span>
+          <span class="toctext">gefilterte Mehrfachauswahl</span></a></li>
+      </ul>
+    </li>
+    <li class="toclevel-1 tocsection-11"><a href="#Spezialfelder"><span class="tocnumber">3</span>
+      <span class="toctext">Spezialfelder</span></a>
+      <ul>
+        <li class="toclevel-2 tocsection-12"><a href="#Datumsfeld"><span class="tocnumber">3.1</span>
+          <span class="toctext">Datumsfeld</span></a></li>
+        <li class="toclevel-2 tocsection-13">
+          <a href="#Feld_f.C3.BCr_partielles_Datum"><span class="tocnumber">3.2</span>
+            <span class="toctext">Feld für partielles Datum</span></a></li>
+        <li class="toclevel-2 tocsection-14"><a href="#Laufzeitfeld"><span class="tocnumber">3.3</span>
+          <span class="toctext">Laufzeitfeld</span></a></li>
+        <li class="toclevel-2 tocsection-15"><a href="#ISSN.2FISBN.2FEAN"><span class="tocnumber">3.4</span>
+          <span class="toctext">ISSN/ISBN/EAN</span></a></li>
+      </ul>
+    </li>
+    <li class="toclevel-1 tocsection-16">
+      <a href="#.C3.84ndern.2FHinzuf.C3.BCgen.2FL.C3.B6schen"><span class="tocnumber">4</span>
+        <span class="toctext">Ändern/Hinzufügen/Löschen</span></a></li>
+    <li class="toclevel-1 tocsection-17"><a href="#Inlines"><span class="tocnumber">5</span>
+      <span class="toctext">Inlines</span></a></li>
+  </ul>
 </div>
 <h2><span class="mw-headline" id="Einfache_Felder">Einfache Felder</span></h2>
 <h5><span class="mw-headline" id="Textfeld">Textfeld</span></h5>
-<dl><dd>Ein Element, dass jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements und die erlaubte  Länge des Textes stehen in keinem Zusammenhang.</dd>
-<dd></dd></dl>
-<h5><span id="Textfeld_mit_variabler_Grösse"></span><span class="mw-headline" id="Textfeld_mit_variabler_Gr.C3.B6sse">Textfeld mit variabler Grösse</span></h5>
-<dl><dd>Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.</dd>
-<dd></dd></dl>
+<dl>
+  <dd>Ein Element, dass jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements und die erlaubte Länge des Textes stehen in keinem Zusammenhang.</dd>
+  <dd></dd>
+</dl>
+<h5>
+  <span id="Textfeld_mit_variabler_Grösse"></span><span class="mw-headline" id="Textfeld_mit_variabler_Gr.C3.B6sse">Textfeld mit variabler Grösse</span>
+</h5>
+<dl>
+  <dd>Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.</dd>
+  <dd></dd>
+</dl>
 <h5><span class="mw-headline" id="Zahlenfeld">Zahlenfeld</span></h5>
-<dl><dd>Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manche Werte nicht zu (z.B. negative Zahlen für Jahrgang). Mit den kleinen Knöpfchen an der rechten Seite des Elementes lässt sich durch den zulässigen Wertebereich scrollen. Wenn der Fokus im Element liegt (also wenn der <a class="extiw" href="https://en.wikipedia.org/wiki/de:Cursor" title="wikipedia:de:Cursor">Cursor</a> im Element zu sehen ist), kann auch mit dem Mausrad gescrollt werden.</dd>
-<dd></dd>
-<dd></dd></dl>
+<dl>
+  <dd>Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manche Werte nicht zu (z.B. negative Zahlen für Jahrgang). Mit den kleinen Knöpfchen an der rechten Seite des Elementes lässt sich durch den zulässigen Wertebereich scrollen. Wenn der Fokus im Element liegt (also wenn der
+    <a class="extiw" href="https://en.wikipedia.org/wiki/de:Cursor" title="wikipedia:de:Cursor">Cursor</a> im Element zu sehen ist), kann auch mit dem Mausrad gescrollt werden.
+  </dd>
+  <dd></dd>
+  <dd></dd>
+</dl>
 <h5><span class="mw-headline" id="Checkbox">Checkbox</span></h5>
-<dl><dd>Ein Element für Wahrheitswerte. Wenn die Beschriftung des Elementes zutrifft, dann mit Mausklick ein Häkchen setzen.</dd>
-<dd></dd>
-<dd></dd></dl>
+<dl>
+  <dd>Ein Element für Wahrheitswerte. Wenn die Beschriftung des Elementes zutrifft, dann mit Mausklick ein Häkchen setzen.</dd>
+  <dd></dd>
+  <dd></dd>
+</dl>
 <h2><span class="mw-headline" id="Auswahlfelder">Auswahlfelder</span></h2>
-<h5><span id="Einfaches_Auswahlfeld/Drop-Down"></span><span class="mw-headline" id="Einfaches_Auswahlfeld.2FDrop-Down">Einfaches Auswahlfeld/Drop-Down</span></h5>
-<dl><dd>Beim Klicken auf dieses Feld klappt sich ein Menü auf ("drop down"), aus dem man eine der Optionen wählen kann.</dd>
-<dd></dd>
-<dd></dd></dl>
-<h5><span id="Kombinationsfeld/Combobox"></span><span class="mw-headline" id="Kombinationsfeld.2FCombobox">Kombinationsfeld/Combobox</span></h5>
-<dl><dd>Kombination aus einem Textfeld und einem Auswahlfeld/Listenfeld, das mittels Texteingabe das Durchsuchen der Listeneinträge möglich macht. Im oberen Bereich kann der Suchtext eingegeben werden, im unteren Bereich werden Suchergebnisse angezeigt, von denen dann ein Eintrag per Mausklick ausgewählt werden kann. Per Mausrad lässt sich durch die Ergebnisse scrollen.</dd>
-<dd></dd>
-<dd><br/></dd>
-<dd>Die Auswahl kann aufgehoben werden, indem man auf das kleine "<b>x</b>" am rechten Ende des Elementes klickt.</dd>
-<dd><a class="image" href="/help/Datei:Widget_autocomplete_selected.png" title="Combobox mit Auswahl"><img alt="Combobox mit Auswahl" data-file-height="40" data-file-width="471" decoding="async" height="40" src="/mediawiki/images/2/25/Widget_autocomplete_selected.png" width="471"/></a></dd>
-<dd><br/></dd>
-<dd>Manche Combobox Elemente lassen auch die Erstellung von neuen <a href="/help/Datensatz" title="Datensatz">Datensätzen</a> zu, sofern zu dem Suchbegriff kein <i>exakter</i> Eintrag gefunden werden konnte. Am unteren Ende des Elementes erscheint ein Eintrag mit dem Text "Erstelle &lt;Suchtext&gt;". Klickt man auf diesen Eintrag wird ein entsprechender Datensatz zu der Datenbank hinzugefügt.</dd>
-<dd><a class="image" href="/help/Datei:Widget_autocomplete_create.png" title="Schnellerstellung"><img alt="Schnellerstellung" data-file-height="138" data-file-width="267" decoding="async" height="138" src="/mediawiki/images/8/88/Widget_autocomplete_create.png" width="267"/></a></dd></dl>
+<h5>
+  <span id="Einfaches_Auswahlfeld/Drop-Down"></span><span class="mw-headline" id="Einfaches_Auswahlfeld.2FDrop-Down">Einfaches Auswahlfeld/Drop-Down</span>
+</h5>
+<dl>
+  <dd>Beim Klicken auf dieses Feld klappt sich ein Menü auf ("drop down"), aus dem man eine der Optionen wählen kann.</dd>
+  <dd></dd>
+  <dd></dd>
+</dl>
+<h5>
+  <span id="Kombinationsfeld/Combobox"></span><span class="mw-headline" id="Kombinationsfeld.2FCombobox">Kombinationsfeld/Combobox</span>
+</h5>
+<dl>
+  <dd>Kombination aus einem Textfeld und einem Auswahlfeld/Listenfeld, das mittels Texteingabe das Durchsuchen der Listeneinträge möglich macht. Im oberen Bereich kann der Suchtext eingegeben werden, im unteren Bereich werden Suchergebnisse angezeigt, von denen dann ein Eintrag per Mausklick ausgewählt werden kann. Per Mausrad lässt sich durch die Ergebnisse scrollen.</dd>
+  <dd></dd>
+  <dd><br/></dd>
+  <dd>Die Auswahl kann aufgehoben werden, indem man auf das kleine "<b>x</b>" am rechten Ende des Elementes klickt.</dd>
+  <dd>
+    <a class="image" href="/help/Datei:Widget_autocomplete_selected.png" title="Combobox mit Auswahl"><img alt="Combobox mit Auswahl" data-file-height="40" data-file-width="471" decoding="async" height="40" src="/mediawiki/images/2/25/Widget_autocomplete_selected.png" width="471"/></a>
+  </dd>
+  <dd><br/></dd>
+  <dd>Manche Combobox Elemente lassen auch die Erstellung von neuen
+    <a href="/help/Datensatz" title="Datensatz">Datensätzen</a> zu, sofern zu dem Suchbegriff kein
+    <i>exakter</i> Eintrag gefunden werden konnte. Am unteren Ende des Elementes erscheint ein Eintrag mit dem Text "Erstelle &lt;Suchtext&gt;". Klickt man auf diesen Eintrag wird ein entsprechender Datensatz zu der Datenbank hinzugefügt.
+  </dd>
+  <dd>
+    <a class="image" href="/help/Datei:Widget_autocomplete_create.png" title="Schnellerstellung"><img alt="Schnellerstellung" data-file-height="138" data-file-width="267" decoding="async" height="138" src="/mediawiki/images/8/88/Widget_autocomplete_create.png" width="267"/></a>
+  </dd>
+</dl>
 <h5><span class="mw-headline" id="Combobox_mit_Mehrfachauswahl">Combobox mit Mehrfachauswahl</span></h5>
-<dl><dd>Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewählt werden. Ausgewählte Einträge können durch einen Klick auf das kleine "<b>x</b>" in der  <i><b>linken</b></i> Ecke des Eintrages wieder entfernt werden. Wie auch bei der Combobox lässt sich die <i>gesamte</i> Auswahl durch einen Klick auf das "<b>x</b>" am rechten Ende aufheben.</dd>
-<dd></dd></dl>
+<dl>
+  <dd>Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewählt werden. Ausgewählte Einträge können durch einen Klick auf das kleine "<b>x</b>" in der
+    <i><b>linken</b></i> Ecke des Eintrages wieder entfernt werden. Wie auch bei der Combobox lässt sich die
+    <i>gesamte</i> Auswahl durch einen Klick auf das "<b>x</b>" am rechten Ende aufheben.
+  </dd>
+  <dd></dd>
+</dl>
 <h5><span class="mw-headline" id="gefilterte_Mehrfachauswahl">gefilterte Mehrfachauswahl</span></h5>
-<dl><dd>Dieses Bedienelement erfüllt denselben Zweck wie die Combobox mit Mehrfachauswahl, unterscheidet sich jedoch etwas in der Funktionsweise. In das Textfeld neben dem Lupensymbol kann ein Suchbegriff eingegeben werden, mit welchem die Liste gefiltert wird.</dd>
-<dd>Auf der linken Seite befinden sich die Ergebnisse, auf der rechten Seite die vorgenommene Auswahl. Einzelne Einträge können mittels Doppelklick in die jeweils andere Liste verschoben werden. Um mehrere Einträge auszuwählen, muss die Strg-Taste während des Klickens gedrückt gehalten werden. Alternativ dazu können mehrere nebeneinander liegende Einträge auch durch Festhalten der linken Maustaste ausgewählt werden. Die Auswahl kann dann mithilfe der Pfeil-Knöpfe verschoben werden.</dd>
-<dd></dd></dl>
+<dl>
+  <dd>Dieses Bedienelement erfüllt denselben Zweck wie die Combobox mit Mehrfachauswahl, unterscheidet sich jedoch etwas in der Funktionsweise. In das Textfeld neben dem Lupensymbol kann ein Suchbegriff eingegeben werden, mit welchem die Liste gefiltert wird.</dd>
+  <dd>Auf der linken Seite befinden sich die Ergebnisse, auf der rechten Seite die vorgenommene Auswahl. Einzelne Einträge können mittels Doppelklick in die jeweils andere Liste verschoben werden. Um mehrere Einträge auszuwählen, muss die Strg-Taste während des Klickens gedrückt gehalten werden. Alternativ dazu können mehrere nebeneinander liegende Einträge auch durch Festhalten der linken Maustaste ausgewählt werden. Die Auswahl kann dann mithilfe der Pfeil-Knöpfe verschoben werden.</dd>
+  <dd></dd>
+</dl>
 <h2><span class="mw-headline" id="Spezialfelder">Spezialfelder</span></h2>
 <h5><span class="mw-headline" id="Datumsfeld">Datumsfeld</span></h5>
-<dl><dd>Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.JJJJ (Tag.Monat.Jahr) und JJJJ-MM-TT (Jahr-Monat-Tag, <a class="extiw" href="https://en.wikipedia.org/wiki/de:ISO_8601" title="wikipedia:de:ISO 8601">ISO 8601</a>). Daneben befinden sich zwei Hilfswerkzeuge; das erste fügt das heutige Datum direkt in das Feld ein, das zweite öffnet einen Kalender zur Auswahl des Tages.</dd>
-<dd></dd></dl>
-<h5><span id="Feld_für_partielles_Datum"></span><span class="mw-headline" id="Feld_f.C3.BCr_partielles_Datum">Feld für partielles Datum</span></h5>
-<dl><dd>Ein Feld mit dem Datumsangaben gemacht werden können, die nicht unbedingt vollständig sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.</dd>
-<dd></dd></dl>
+<dl>
+  <dd>Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.JJJJ (Tag.Monat.Jahr) und JJJJ-MM-TT (Jahr-Monat-Tag,
+    <a class="extiw" href="https://en.wikipedia.org/wiki/de:ISO_8601" title="wikipedia:de:ISO 8601">ISO 8601</a>). Daneben befinden sich zwei Hilfswerkzeuge; das erste fügt das heutige Datum direkt in das Feld ein, das zweite öffnet einen Kalender zur Auswahl des Tages.
+  </dd>
+  <dd></dd>
+</dl>
+<h5>
+  <span id="Feld_für_partielles_Datum"></span><span class="mw-headline" id="Feld_f.C3.BCr_partielles_Datum">Feld für partielles Datum</span>
+</h5>
+<dl>
+  <dd>Ein Feld mit dem Datumsangaben gemacht werden können, die nicht unbedingt vollständig sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.</dd>
+  <dd></dd>
+</dl>
 <h5><span class="mw-headline" id="Laufzeitfeld">Laufzeitfeld</span></h5>
-<dl><dd>Dieses Feld rechnet Angaben in ein zeitliches Format hh:mm:ss (Stunden:Minuten:Sekunden) um.</dd>
-<dd></dd>
-<dd><br/></dd>
-<dd>Angaben, die dem Format nicht vollständig entsprechen, werden akzeptiert und ggf. umgerechnet:</dd></dl>
-<dl><dd><table class="wikitable" style="text-align:right;">
-<tbody><tr>
-<th>Eingabetext</th>
-<th colspan="4">Entspricht</th>
-<th>Ergebnis
-</th></tr>
-<tr>
-<th></th>
-<th>Stunden</th>
-<th>Minuten</th>
-<th>Sekunden</th>
-<th>Anmerkung
-</th></tr>
-<tr>
-<td>20</td>
-<td>00</td>
-<td>00</td>
-<td>20</td>
-<td>20 Sekunden</td>
-<td>00:00:20
-</td></tr>
-<tr>
-<td>120</td>
-<td>00</td>
-<td>02</td>
-<td>00</td>
-<td>120 Sekunden</td>
-<td>00:02:00
-</td></tr>
-<tr>
-<td>1:20</td>
-<td>00</td>
-<td>01</td>
-<td>20</td>
-<td>1 Minute und 20 Sekunden</td>
-<td>00:01:20
-</td></tr>
-<tr>
-<td>1:80</td>
-<td>00</td>
-<td>02</td>
-<td>20</td>
-<td>1 Minute und 80 Sekunden</td>
-<td>00:02:20
-</td></tr>
-<tr>
-<td>90:10</td>
-<td>01</td>
-<td>30</td>
-<td>10</td>
-<td>90 Minuten und 10 Sekunden</td>
-<td>01:30:10
-</td></tr>
-<tr>
-<td>1:30:10</td>
-<td>01</td>
-<td>30</td>
-<td>10</td>
-<td>1 Stunde, 30 Minuten und 10 Sekunden</td>
-<td>01:30:10
-</td></tr></tbody></table></dd></dl>
+<dl>
+  <dd>Dieses Feld rechnet Angaben in ein zeitliches Format hh:mm:ss (Stunden:Minuten:Sekunden) um.</dd>
+  <dd></dd>
+  <dd><br/></dd>
+  <dd>Angaben, die dem Format nicht vollständig entsprechen, werden akzeptiert und ggf. umgerechnet:</dd>
+</dl>
+<dl>
+  <dd>
+    <table class="wikitable" style="text-align:right;">
+      <tbody>
+      <tr>
+        <th>Eingabetext</th>
+        <th colspan="4">Entspricht</th>
+        <th>Ergebnis
+        </th>
+      </tr>
+      <tr>
+        <th></th>
+        <th>Stunden</th>
+        <th>Minuten</th>
+        <th>Sekunden</th>
+        <th>Anmerkung
+        </th>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td>00</td>
+        <td>00</td>
+        <td>20</td>
+        <td>20 Sekunden</td>
+        <td>00:00:20
+        </td>
+      </tr>
+      <tr>
+        <td>120</td>
+        <td>00</td>
+        <td>02</td>
+        <td>00</td>
+        <td>120 Sekunden</td>
+        <td>00:02:00
+        </td>
+      </tr>
+      <tr>
+        <td>1:20</td>
+        <td>00</td>
+        <td>01</td>
+        <td>20</td>
+        <td>1 Minute und 20 Sekunden</td>
+        <td>00:01:20
+        </td>
+      </tr>
+      <tr>
+        <td>1:80</td>
+        <td>00</td>
+        <td>02</td>
+        <td>20</td>
+        <td>1 Minute und 80 Sekunden</td>
+        <td>00:02:20
+        </td>
+      </tr>
+      <tr>
+        <td>90:10</td>
+        <td>01</td>
+        <td>30</td>
+        <td>10</td>
+        <td>90 Minuten und 10 Sekunden</td>
+        <td>01:30:10
+        </td>
+      </tr>
+      <tr>
+        <td>1:30:10</td>
+        <td>01</td>
+        <td>30</td>
+        <td>10</td>
+        <td>1 Stunde, 30 Minuten und 10 Sekunden</td>
+        <td>01:30:10
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </dd>
+</dl>
 <h5><span id="ISSN/ISBN/EAN"></span><span class="mw-headline" id="ISSN.2FISBN.2FEAN">ISSN/ISBN/EAN</span></h5>
-<dl><dd>Ein Feld, welches Angaben für Standardnummern wie ISSN, ISBN oder EAN akzeptiert, validiert und in ein gut lesbares Format umwandelt.</dd>
-<dd>Aus einer ISBN ohne Formatierung:</dd>
-<dd></dd>
-<dd>... wird automatisch nach Speicherung eine ISBN mit Bindestrichen:</dd>
-<dd><a class="image" href="/help/Datei:Widget_isbn_formatted.png" title="ISBN Feld mit formatiertem Text"><img alt="ISBN Feld mit formatiertem Text" data-file-height="36" data-file-width="345" decoding="async" height="36" src="/mediawiki/images/9/97/Widget_isbn_formatted.png" width="345"/></a></dd>
-<dd><br/></dd>
-<dd>Anmerkung: Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automatisch vorgenommen.</dd></dl>
-<h2><span id="Ändern/Hinzufügen/Löschen"></span><span class="mw-headline" id=".C3.84ndern.2FHinzuf.C3.BCgen.2FL.C3.B6schen">Ändern/Hinzufügen/Löschen</span></h2>
-<p>Der Kern der Datenbank sind die <a class="extiw" href="https://en.wikipedia.org/wiki/de:Relationale_Datenbank" title="wikipedia:de:Relationale Datenbank">Beziehungen</a> zwischen den Tabellen. Ein Musiker kommt aus Dortmund, weil im <a href="/help/Datensatz" title="Datensatz">Datensatz</a> des Musikers aus der Musiker Tabelle eine Beziehung zum Datensatz Dortmund aus der Tabelle der Orte existiert. Steuerelemente wie das Auswahlfeld oder die Combobox dienen dazu, die Herstellung und Verwaltung dieser Beziehungen zu vereinfachen. Zu diesem Zweck findet man neben diesen Elementen meist weitere Elemente, die das Hinzufügen eines neuen oder das Bearbeiten/<a href="/help/L%C3%B6schen" title="Löschen">Löschen</a> eines bereits existierenden "fremden" Datensatzes ermöglichen. 
-<br/>
-Für die ausgewählte Ausgabe "2000-1", von links nach rechts: Ausgabe bearbeiten, neue Ausgabe hinzufügen, Ausgabe löschen.
+<dl>
+  <dd>Ein Feld, welches Angaben für Standardnummern wie ISSN, ISBN oder EAN akzeptiert, validiert und in ein gut lesbares Format umwandelt.</dd>
+  <dd>Aus einer ISBN ohne Formatierung:</dd>
+  <dd></dd>
+  <dd>... wird automatisch nach Speicherung eine ISBN mit Bindestrichen:</dd>
+  <dd>
+    <a class="image" href="/help/Datei:Widget_isbn_formatted.png" title="ISBN Feld mit formatiertem Text"><img alt="ISBN Feld mit formatiertem Text" data-file-height="36" data-file-width="345" decoding="async" height="36" src="/mediawiki/images/9/97/Widget_isbn_formatted.png" width="345"/></a>
+  </dd>
+  <dd><br/></dd>
+  <dd>Anmerkung: Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automatisch vorgenommen.</dd>
+</dl>
+<h2>
+  <span id="Ändern/Hinzufügen/Löschen"></span><span class="mw-headline" id=".C3.84ndern.2FHinzuf.C3.BCgen.2FL.C3.B6schen">Ändern/Hinzufügen/Löschen</span>
+</h2>
+<p>Der Kern der Datenbank sind die
+  <a class="extiw" href="https://en.wikipedia.org/wiki/de:Relationale_Datenbank" title="wikipedia:de:Relationale Datenbank">Beziehungen</a> zwischen den Tabellen. Ein Musiker kommt aus Dortmund, weil im
+  <a href="/help/Datensatz" title="Datensatz">Datensatz</a> des Musikers aus der Musiker Tabelle eine Beziehung zum Datensatz Dortmund aus der Tabelle der Orte existiert. Steuerelemente wie das Auswahlfeld oder die Combobox dienen dazu, die Herstellung und Verwaltung dieser Beziehungen zu vereinfachen. Zu diesem Zweck findet man neben diesen Elementen meist weitere Elemente, die das Hinzufügen eines neuen oder das Bearbeiten/<a href="/help/L%C3%B6schen" title="Löschen">Löschen</a> eines bereits existierenden "fremden" Datensatzes ermöglichen.
+  <br/>
+  Für die ausgewählte Ausgabe "2000-1", von links nach rechts: Ausgabe bearbeiten, neue Ausgabe hinzufügen, Ausgabe löschen.
 </p>
 <p>
 </p>
 <h2><span class="mw-headline" id="Inlines">Inlines</span></h2>
 <p>Die meisten Formulare enthalten Inlines. Kurz und knapp gesagt, sind das Formulare von verwandten Datensätzen, die in dem Hauptformular eingebettet sind. Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die Artikel-Musiker Beziehung.
 </p>
-<p>Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular. Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des Inlines hinzugefügt werden. Diese zusätzlichen, neu hinzugefügten Formulare können mit dem Knopf "<b>x</b>" am rechten Ende der Zeile wieder entfernt werden (nicht zu verwechseln mit dem <b>x</b> der <a href="#Kombinationsfeld.2FCombobox">Combobox Elemente</a>!).
+<p>Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular. Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des Inlines hinzugefügt werden. Diese zusätzlichen, neu hinzugefügten Formulare können mit dem Knopf "<b>x</b>" am rechten Ende der Zeile wieder entfernt werden (nicht zu verwechseln mit dem
+  <b>x</b> der <a href="#Kombinationsfeld.2FCombobox">Combobox Elemente</a>!).
 </p>
-<p>Um <i>abgespeicherte</i> Beziehungen zu entfernen, muss unter "<b>Löschen</b>" in der jeweiligen Zeile ein Häkchen gesetzt und der Artikel abgespeichert werden.<br/>
-Anmerkung: das x in der Combobox hebt nur die Auswahl des Bedienelementes auf. Das führt nicht nur <i>nicht</i> zur Löschung der Beziehung, sondern sogar direkt zu folgender Fehlermeldung, da das Element nicht leer - also ohne Auswahl - bleiben darf: "<span style="color:#ba2121;">Dieses Feld ist zwingend erforderlich.</span>"
-</p></body>
+<p>Um
+  <i>abgespeicherte</i> Beziehungen zu entfernen, muss unter "<b>Löschen</b>" in der jeweiligen Zeile ein Häkchen gesetzt und der Artikel abgespeichert werden.<br/>
+  Anmerkung: das x in der Combobox hebt nur die Auswahl des Bedienelementes auf. Das führt nicht nur
+  <i>nicht</i> zur Löschung der Beziehung, sondern sogar direkt zu folgender Fehlermeldung, da das Element nicht leer - also ohne Auswahl - bleiben darf: "<span style="color:#ba2121;">Dieses Feld ist zwingend erforderlich.</span>"
+</p>
+</body>
 </html>
