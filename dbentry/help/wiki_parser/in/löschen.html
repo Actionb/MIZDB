@@ -1,0 +1,41 @@
+<div class="mw-parser-output"><p>Beim Löschen wird der jeweilige <a href="/wiki/Datensatz" title="Datensatz">Datensatz</a> aus der Datenbank entfernt. </p><div class="thumb tright"><div class="thumbinner" style="width:302px;"><a href="/wiki/Datei:Delete_summary.png" class="image"><img alt="" src="/mediawiki/images/2/26/Delete_summary.png" decoding="async" width="300" height="134" class="thumbimage" data-file-width="950" data-file-height="425" /></a>  <div class="thumbcaption"><div class="magnify"><a href="/wiki/Datei:Delete_summary.png" class="internal" title="vergrößern"></a></div>Der Musiker "Testmusiker" wird in Audio- und Videomaterialien erwähnt: diese <i>Verweise</i> auf den Musiker werden gelöscht werden.</div></div></div><p> Eine Wiederherstellung ist nicht möglich. Verweise von anderen Datensätzen auf diesen gelöschten Datensatz werden ebenfalls entfernt: löscht man ein Genre, so wird auch bei jedem Musiker der Verweis auf jenes Genre gelöscht.
+</p><p>Alle von der Löschung betroffenen Objekte und Verweise (Beziehungen) werden in der Zusammenfassung auf der Seite, die die Löschung einleitet, aufgelistet.
+</p><p><br />
+</p>
+<h2><span id="Geschützte_Objekte"></span><span class="mw-headline" id="Gesch.C3.BCtzte_Objekte">Geschützte Objekte</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/mediawiki/index.php?title=L%C3%B6schen&amp;action=edit&amp;section=1" title="Abschnitt bearbeiten: Geschützte Objekte">Bearbeiten</a><span class="mw-editsection-bracket">]</span></span></h2>
+<p>Manche Datensätze können nur unter bestimmten Umständen gelöscht werden. Versucht man, einen Datensatz mit geschützten Objekten zu löschen, so warnt die Datenbank:  
+</p>
+<pre>Kann Ausgabe nicht löschen
+Das Löschen von Ausgabe „2000-1“ würde ein Löschen der folgenden geschützten verwandte Objekte erfordern: Artikel: Testartikel
+</pre>
+<p>Um das zu erklären, hier eine Beispiel mit <a href="/wiki/Artikel" title="Artikel">Artikeln</a> und <a href="/wiki/Ausgabe" title="Ausgabe">Ausgaben</a>:
+</p><p>Ein Artikel erfordert immer eine Angabe zu der Ausgabe einer Zeitschrift, aus der der Artikel stammt. Dementsprechend ist Ausgabe ein notwendig erforderliches Feld (das nicht leer bleiben darf) für jeden Datensatz eines Artikels.
+</p><p>Wird die Ausgabe eines Artikels gelöscht, würde auch der Verweis auf die Ausgabe aus dem Datensatz des Artikels verschwinden; das Feld Ausgabe würde für den Artikel leer bleiben - dies ist aber nicht erlaubt (<a href="https://en.wikipedia.org/wiki/de:Referentielle_Integrit%C3%A4t" class="extiw" title="wikipedia:de:Referentielle Integrität">Referentielle Integrität</a>).  
+</p><p>Die Datenbank würde dieses Beziehungsproblem dadurch lösen, dass sie <b>den Artikel ebenfalls löscht</b>. In manchen Fällen ist dieses Verhalten durchaus erwünscht. Bei Ausgaben könnte dies jedoch zur Löschung von vielen Artikeln auf einen Schlag führen.
+Um eine Löschung mit drastischen Folgen vorzubeugen, ist die Löschung von manchen Arten von Datensätzen (Ausgaben, Magazine) nur dann erlaubt, wenn es keine verwandten Datensätzen gibt, die von dem zu löschenden Datensatz abhängig sind und dementsprechend dann ebenfalls gelöscht werden würden.
+</p><p>Die Beziehung von Artikel zu Ausgabe gilt als geschützt: eine Ausgabe <i>ohne</i> Artikel kann gelöscht werden. Eine <i>mit</i> Artikeln jedoch nicht.
+</p>
+<!-- 
+NewPP limit report
+Cached time: 20240513105654
+Cache expiry: 86400
+Dynamic content: false
+Complications: []
+CPU time usage: 0.015 seconds
+Real time usage: 0.039 seconds
+Preprocessor visited node count: 5/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 0/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 -total
+-->
+
+<!-- Saved in parser cache with key mizdb_wiki-mediawiki-:pcache:idhash:4-0!canonical and timestamp 20240513105654 and revision id 10
+ -->
+</div>

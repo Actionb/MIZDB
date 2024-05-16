@@ -1,0 +1,63 @@
+<div class="mw-parser-output"><p><a href="/wiki/%C3%84nderungsliste" title="Änderungsliste">Änderungslisten</a> bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann. </p><div class="thumb tright"><div class="thumbinner" style="width:302px;"><a href="/wiki/Datei:Searchform_ausgabe.png" class="image"><img alt="" src="/mediawiki/images/5/5b/Searchform_ausgabe.png" decoding="async" width="300" height="225" class="thumbimage" data-file-width="942" data-file-height="706" /></a>  <div class="thumbcaption"><div class="magnify"><a href="/wiki/Datei:Searchform_ausgabe.png" class="internal" title="vergrößern"></a></div>Das Suchformular für Ausgaben. Textsuche unten.</div></div></div>
+<p>Das Formular ist gegebenenfalls ausgeblendet: um es einzublenden, klickt auf das blaue Element mit der Aufschrift "Suchoptionen" (das Formular kann so auch wieder ausgeblendet werden).
+Eine Reihe von <a href="/wiki/Bedienelement" title="Bedienelement">Bedienelementen</a> bzw. <a href="#Felder">Feldern</a> werden angezeigt - der Aufbau des Suchformulars orientiert sich an der Art der <a href="/wiki/Datensatz" title="Datensatz">Datensätze</a>, die durchsucht werden sollen.
+Die Felder benutzt ihr, um Suchparameter festzulegen. Um die Suche zu starten, klickt weiter unten auf den "Suche" Knopf.
+</p><p>Suchparameter werden logisch mit UND verknüpft: ein Datensatz muss alle Suchparameter erfüllen, damit er in der Ergebnisliste auftaucht.
+Zum Beispiel: wählt man die Parameter Band "Rolling Stones" und Ort "Dortmund", so wird die Datenbank nach Datensätzen suchen, welche mit den "Rolling Stones" <b>und</b> dem Ort "Dortmund" verbunden sind. Erfüllt ein Datensatz nur einen der Parameter (also: entweder "Rolling Stones" oder "Dortmund"), wird er nicht in der Ergebnisliste auftauchen.
+</p>
+<div id="toc" class="toc" role="navigation" aria-labelledby="mw-toc-heading"><input type="checkbox" role="button" id="toctogglecheckbox" class="toctogglecheckbox" style="display:none" /><div class="toctitle" lang="de" dir="ltr"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Textsuche"><span class="tocnumber">1</span> <span class="toctext">Textsuche</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Felder"><span class="tocnumber">2</span> <span class="toctext">Felder</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#von_-_bis_Felder"><span class="tocnumber">2.1</span> <span class="toctext">von - bis Felder</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#partielles_Datum"><span class="tocnumber">2.2</span> <span class="toctext">partielles Datum</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#ID"><span class="tocnumber">2.3</span> <span class="toctext">ID</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Textsuche">Textsuche</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/mediawiki/index.php?title=Suchformular&amp;action=edit&amp;section=1" title="Abschnitt bearbeiten: Textsuche">Bearbeiten</a><span class="mw-editsection-bracket">]</span></span></h2>
+<p>Das Formular beinhaltet ein Element zur Textsuche, zu erkennen an dem Icon mit der Lupe.
+</p><p><a href="/wiki/Datei:Textsearchfield.png" class="image" title="Feld für die Textsuche"><img alt="Feld für die Textsuche" src="/mediawiki/images/8/89/Textsearchfield.png" decoding="async" width="413" height="43" data-file-width="413" data-file-height="43" /></a>
+</p><p>Ihr gebt den Suchtext in das Textfeld ein und klickt dann auf "Suche". Alle <i><a href="https://en.wikipedia.org/wiki/de:Textfeld" class="extiw" title="wikipedia:de:Textfeld">Eingabefelder</a></i> der Datensätze werden daraufhin nach dem Suchtext durchsucht. Bei <a href="/wiki/Artikel" title="Artikel">Artikeln</a> werden beispielsweise Felder wie "Zusammenfassung" oder "Beschreibung" durchsucht, aber nicht Felder wie "Musiker" oder "Autoren" - diese Felder sind nicht wirklich Eingabefelder, sondern eher <a href="https://en.wikipedia.org/wiki/de:Schl%C3%BCssel_(Datenbank)#Fremdschl.C3.BCssel" class="extiw" title="wikipedia:de:Schlüssel (Datenbank)">Beziehungsfelder</a>.
+</p><p>Grundsätzlich gilt: nur Felder, in denen ihr Werte (also Texte, Zahlen, usw.) eingebt und hinterlegt, können mit der Textsuche durchsucht werden. Dazu kommt, dass nur Felder, die <i>nicht</i> separat im Suchformular auftauchen, von der allgemeinen Textsuche erfasst werden: Suchparameter aus Feldern des Suchformulars haben Priorität gegenüber dem Suchtext der Textsuche.
+</p>
+<h2><span class="mw-headline" id="Felder">Felder</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/mediawiki/index.php?title=Suchformular&amp;action=edit&amp;section=2" title="Abschnitt bearbeiten: Felder">Bearbeiten</a><span class="mw-editsection-bracket">]</span></span></h2>
+<p>Neben den gewöhnlichen aus den Änderungsformularen bekannten <a href="/wiki/Bedienelement" title="Bedienelement">Bedienelementen</a>, tauchen in Suchformularen auch noch Felder mit Besonderheiten auf.
+</p>
+<h6><span class="mw-headline" id="von_-_bis_Felder">von - bis Felder</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/mediawiki/index.php?title=Suchformular&amp;action=edit&amp;section=3" title="Abschnitt bearbeiten: von - bis Felder">Bearbeiten</a><span class="mw-editsection-bracket">]</span></span></h6>
+<dl><dd>Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also: "größer gleich X und kleiner gleich Y") angegeben werden. Wird nur in dem ersten Feld ein Wert eingetragen, so wird stattdessen nach genau diesem Wert gesucht (also: "gleich X").</dd></dl>
+<p><a href="/wiki/Datei:Searchform_range.png" class="image" title="Von X bis Y"><img alt="Von X bis Y" src="/mediawiki/images/d/da/Searchform_range.png" decoding="async" width="591" height="41" data-file-width="591" data-file-height="41" /></a>
+</p>
+<h6><span class="mw-headline" id="partielles_Datum">partielles Datum</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/mediawiki/index.php?title=Suchformular&amp;action=edit&amp;section=4" title="Abschnitt bearbeiten: partielles Datum">Bearbeiten</a><span class="mw-editsection-bracket">]</span></span></h6>
+<dl><dd>Ähnlich wie das "von bis Feld", nur mit teilweisen Datumsangaben.</dd></dl>
+<p><a href="/wiki/Datei:Searchform_partialdate.png" class="image" title="Partielles Datum"><img alt="Partielles Datum" src="/mediawiki/images/6/6a/Searchform_partialdate.png" decoding="async" width="681" height="43" data-file-width="681" data-file-height="43" /></a>
+</p>
+<h6><span class="mw-headline" id="ID">ID</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/mediawiki/index.php?title=Suchformular&amp;action=edit&amp;section=5" title="Abschnitt bearbeiten: ID">Bearbeiten</a><span class="mw-editsection-bracket">]</span></span></h6>
+<dl><dd>Ermöglicht es, Datensätze mittels ihrer <a href="/wiki/ID" title="ID">ID</a>-Nummer zu finden. Mehrere Nummern mit Kommas trennen.</dd></dl>
+<!-- 
+NewPP limit report
+Cached time: 20240513105656
+Cache expiry: 86400
+Dynamic content: false
+Complications: []
+CPU time usage: 0.026 seconds
+Real time usage: 0.049 seconds
+Preprocessor visited node count: 26/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 0/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 -total
+-->
+
+<!-- Saved in parser cache with key mizdb_wiki-mediawiki-:pcache:idhash:5-0!canonical and timestamp 20240513105656 and revision id 12
+ -->
+</div>
