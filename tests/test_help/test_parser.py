@@ -1,0 +1,69 @@
+import pathlib
+
+import pytest
+from bs4 import BeautifulSoup
+
+from dbentry.help.wiki_parser.parser import WikiParser
+
+
+class TestWikiParser:
+
+    @pytest.fixture
+    def html(self):
+        return ""
+
+    @pytest.fixture
+    def file_html(self):
+        path = pathlib.Path(__file__).parent / "wiki_html.html"
+        with open(path, "r") as f:
+            return f.read()
+
+    @pytest.fixture
+    def parser(self, html):
+        return WikiParser("Test", html)
+
+    @pytest.fixture
+    def file_parser(self, file_html):
+        return WikiParser("File Test", file_html)
+
+    @pytest.fixture
+    def make_tag(self):
+        def inner(html):
+            return BeautifulSoup(html, "html.parser").contents[0]
+
+        return inner
+
+    def test_parse(self, file_parser):
+        elements = file_parser.parse()
+        assert elements[0].name == "h1"
+        assert elements[1].name == "p"
+
+    def test_strip_class(self, parser, make_tag):
+        html = """<p id="p1" class="foo">Foo</p>"""
+        tag = make_tag(html)
+        parser._strip_class(tag)
+        assert str(tag) == """<p id="p1">Foo</p>"""
+
+    def test_strip_edit_link_sections(self, parser, make_tag):
+        html = """<div><span class="foo">Foo</span><span class="mw-editsection">Bar</span></div>"""
+        tag = make_tag(html)
+        parser._strip_edit_link_sections(tag)
+        assert str(tag) == """<div><span class="foo">Foo</span></div>"""
+
+    def test_update_links(self, parser, make_tag):
+        html = """<p>Text <a href="#foo">foo</a> text <a href="/wiki/bar">bar</a>.</p>"""
+        tag = make_tag(html)
+        parser._update_links(tag)
+        assert str(tag) == """<p>Text <a href="#foo">foo</a> text <a href="/help/bar">bar</a>.</p>"""
+
+    def test_strip_self_links(self, parser, make_tag):
+        html = """<dl><dt>Foo <a class="selflink">Bar</a> Baz</dt></dl>"""
+        tag = make_tag(html)
+        parser._strip_self_links(tag)
+        assert str(tag) == """<dl><dt>Foo Bar Baz</dt></dl>"""
+
+    def test_strip_image_links(self, parser, make_tag):
+        html = """<p><a href="" class="image"><img></img></a></p>"""
+        tag = make_tag(html)
+        parser._strip_image_links(tag)
+        assert str(tag) == "<p></p>"
