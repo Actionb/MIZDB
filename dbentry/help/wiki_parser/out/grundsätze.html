@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
+    </head>
+    <body class="container"><h1>Grundsätze</h1>
+<p>Für die Arbeit an der Datenbank gelten folgende Richtlinien:
+</p>
+<ul><li><b>Korrektheit der Angaben prüfen</b></li></ul>
+<dl><dd>Es ist wichtig, dass man sich auf die Richtigkeit der Informationen in der Datenbank verlassen kann. Trifft man beim Recherchieren mit der Datenbank auf falsche Informationen, trübt das das Vertrauen in die Datenbank insgesamt. Wenn ihr euch also bei einer Angabe nicht völlig sicher seid, schaut oder fragt lieber noch einmal nach.</dd></dl>
+<ul><li><b>So nahe wie möglich am Material arbeiten<span>:</span> nichts erfinden, nichts hineininterpretieren</b></li></ul>
+<dl><dd>Formularfelder leer zu lassen ist okay. Gibt das zu erfassende Archivmaterial keine Informationen zu einem Feld her, dann darf auch nichts eingetragen werden. Fehlt beispielsweise einer Ausgabe eine Monatsangabe, so dürft ihr eine solche Angabe nicht erfinden oder von der Ausgabennummer ableiten (siehe hierzu die Anmerkung: <a href="/help/Ausgabe#Ausgabennummer_entspricht_nicht_gleich_Monatszahl" title="Ausgabe">Ausgabennummer und Monatszahl</a>).</dd></dl>
+<ul><li><b><a href="/help/Datensatz" title="Datensatz">Datensätze</a> müssen aufschlussreich sein</b></li></ul>
+<dl><dd>Einfach nur einen Haufen Daten in der Datenbank zu haben, ist nicht besonders hilfreich. Man muss anhand der der Daten auf wirkliche, reale Gegebenheiten, Objekte oder Personenschaften schließen können. Besitzt ein Datensatz jedoch zu wenig Informationen, dann ist dies kaum möglich.</dd>
+<dd>Beispiel: wenn ihr einen <a href="/help/Person" title="Person">Personen</a>-Datensatz mit Vorname "A." und Nachname "B." erstellt, dann ist es praktisch unmöglich, anhand des Datensatzes zu erkennen, welche Person denn jetzt eigentlich gemeint ist. Der Datensatz ist somit nutzlos.</dd></dl>
+<ul><li><b>So viel Informationen wie nötig (und so wenig wie möglich)</b></li></ul>
+<dl><dd>Um die Datensätze, die einem Suchbegriff entsprechen, zu finden, werden die Angaben (Daten) des Datensatzes mit dem Suchbegriff verglichen. Das heißt, dass Angaben zum "Wiederfinden" eines Datensatzes dienen. Besitzt ein Datensatz kaum bis keine Angaben, so kann er auch kaum bis gar nicht gefunden werden. Je mehr Angaben ein Datensatz besitzt, um so leichter ist es, diesen Datensatz wiederzufinden, weil eine größere Auswahl an Suchbegriffen zum Datensatz führen würden.</dd>
+<dd>Es wäre also erst einmal ideal, zu jedem Datensatz möglichst viele Angaben zu machen. Leider gibt es bei der Erfassung von Daten aber auch eine zeitliche Komponente: wenn ihr für die Erfassung der <a href="/help/Artikel" title="Artikel">Artikel</a> einer <a href="/help/Ausgabe" title="Ausgabe">Ausgabe</a> mehrere Wochen braucht, dann könnt ihr insgesamt weniger Ausgaben erfassen. Hier sei erwähnt, dass diese Datenbank nicht als Nachschlagewerk oder Lexikon herhalten soll - sie ist stattdessen dazu gedacht, Material zu vordefinierten Themen zu finden. Demnach ist ein <i>ausgewogene</i> Detailverliebtheit angebracht.</dd>
+<dd>Beispiel: werden in einem Artikel die Mitglieder einer Band besprochen, so ist es sinnvoll bei der Band diese Mitglieder auch anzugeben. Damit könnte der Artikel über den Datensatz eines Bandmitglieds gefunden werden. Dagegen wäre eine Auflistung aller Mitglieder, die je an der Band beteiligt gewesen waren, unnötig viel Arbeit.</dd></dl>
+<ul><li><b>Nicht an Datenbank-Limitierungen vorbei arbeiten</b></li></ul>
+<dl><dd>Wenn die Datenbank meckert und einen Fehler anzeigt, dann geschieht dies (meistens) aus gutem Grund: gemachte Angaben könnten problematisch, unzureichend oder fehlerhaft sein. Beispiel: ihr wollt einen <a href="/help/Person" title="Person">Personen</a>-Datensatz erstellen, obwohl ihr nur den Vornamen der Person kennt. Die Datenbank lässt dies aber nicht zu, ein Nachname sei zwingend erforderlich. Um den Datensatz abspeichern zu können, könntet ihr den Vornamen in das Feld für den Nachnamen eintragen - dies wäre jedoch falsch: eine Angabe zum Nachnamen ist nötig, um von den Daten des Datensatzes auf eine tatsächliche Person schließen zu können. Umgeht ihr diese Limitierung und fehlt demnach dann ein Angabe zum Nachnamen, macht der Datensatz insgesamt keinen Sinn.</dd>
+<dd>Selbstverständlich ist die Datenbank nicht perfekt; Fehler können mal auftreten.</dd></dl></body>
+</html>
