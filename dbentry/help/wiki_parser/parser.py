@@ -64,7 +64,8 @@ class WikiParser:
         tag.attrs.pop("class", None)
 
     def _add_class(self, tag: Tag):
-        pass
+        if tag.name == "table":
+            tag["class"] = ["table"]
 
     def _strip_edit_link_sections(self, tag: Tag):
         try:

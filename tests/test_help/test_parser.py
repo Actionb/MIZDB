@@ -67,3 +67,9 @@ class TestWikiParser:
         tag = make_tag(html)
         parser._strip_image_links(tag)
         assert str(tag) == "<p></p>"
+
+    def test_adds_table_class_to_tables(self, parser, make_tag):
+        html = "<table><tbody></tbody></table>"
+        tag = make_tag(html)
+        parser.clean_tag(tag)
+        assert str(tag) == """<table class="table"><tbody></tbody></table>"""
