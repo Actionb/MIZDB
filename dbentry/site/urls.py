@@ -21,4 +21,5 @@ urlpatterns = [
     # Changelist selection
     path("cls_sync/", changelist_selection_sync, name="changelist_selection_sync"),
     path("watchlist/", WatchlistView.as_view(), name="watchlist"),
+    path("help/", include("dbentry.help.urls")),
 ]

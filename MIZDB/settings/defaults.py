@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'mizdb_inlines',
     'mizdb_watchlist',
     "import_export",
+    "dbentry.help",
 ]
 
 MIDDLEWARE = [
