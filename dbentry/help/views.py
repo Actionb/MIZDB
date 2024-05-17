@@ -8,7 +8,7 @@ from dbentry.site.views import BaseViewMixin
 
 class HelpIndex(BaseViewMixin, TemplateView):
     title = "Hilfe"
-    template_name = "help/index.html"
+    template_name = "help/hauptseite.html"
 
 
 class HelpView(BaseViewMixin, TemplateView):
