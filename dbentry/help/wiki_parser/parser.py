@@ -1,5 +1,6 @@
 """Parse the content of a WIKI page and create a stripped-down HTML version of it."""
 import re
+import sys
 import textwrap
 from functools import partial, cached_property
 from pathlib import Path
@@ -119,6 +120,19 @@ def parse_main_page():
         out.write(parser.as_html())
 
 
+def parse_wiki_pages():
+    out_path = Path(__file__).parent / "out"
+    in_path = Path(__file__).parent / "in"
+    for html_file in in_path.iterdir():
+        if html_file.suffix == ".html" and html_file.stem != "hauptseite":
+            with open(html_file, "r") as f:
+                parser = WikiParser(html_file.stem.title(), f.read())
+            parser.parse()
+            with open(out_path / html_file.name, "w") as out:
+                out.write(parser.as_html())
+    parse_main_page()
+
+
 def create_templates():
     out_path = Path(__file__).parent / "out"
     templates_path = Path(__file__).parent.parent / "templates" / "help"
@@ -133,13 +147,8 @@ def create_templates():
 
 
 if __name__ == '__main__':
-    out_path = Path(__file__).parent / "out"
-    in_path = Path(__file__).parent / "in"
-    for html_file in in_path.iterdir():
-        if html_file.suffix == ".html":
-            with open(html_file, "r") as f:
-                parser = WikiParser(html_file.stem.title(), f.read())
-            parser.parse()
-            with open(out_path / html_file.name, "w") as out:
-                out.write(parser.as_html())
-    parse_main_page()
+    cmd = sys.argv[-1]
+    if cmd == "wiki":
+        parse_wiki_pages()
+    elif cmd == "templates":
+        create_templates()
