@@ -1,5 +1,4 @@
-from django.contrib import messages
-from django.shortcuts import redirect
+from django.http import Http404
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.views.generic import TemplateView
@@ -21,15 +20,10 @@ class HelpView(BaseViewMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         try:
-            # Test if the template exists. If it doesn't, redirect to the index.
+            # Test if the template exists. If it doesn't, raise 404.
             get_template(self.get_help_template_name(self.help_title))
         except TemplateDoesNotExist:
-            messages.add_message(
-                request,
-                level=messages.WARNING,
-                message=f"Hilfe Seite für '{self.help_title.title()}' nicht gefunden",
-            )
-            return redirect("help_index")
+            raise Http404(f"Hilfe Seite für '{self.help_title.title()}' nicht gefunden")
         else:
             return super().dispatch(request, *args, **kwargs)
 
