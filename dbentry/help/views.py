@@ -16,7 +16,7 @@ class HelpView(BaseViewMixin, TemplateView):
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.help_title = self.kwargs["title"]
+        self.help_title = self.kwargs["title"].lower()
 
     def dispatch(self, request, *args, **kwargs):
         try:
