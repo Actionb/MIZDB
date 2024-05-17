@@ -119,6 +119,19 @@ def parse_main_page():
         out.write(parser.as_html())
 
 
+def create_templates():
+    out_path = Path(__file__).parent / "out"
+    templates_path = Path(__file__).parent.parent / "templates" / "help"
+    for html_file in out_path.iterdir():
+        with open(html_file, "r") as f:
+            soup = BeautifulSoup(f.read(), "html.parser")
+        with open(templates_path / html_file.name.replace(" ", "_"), "w") as f:
+            f.write("""{% extends "help/help_base.html" %}\n\n{% block content %}""")
+            for tag in soup.body.contents:
+                f.write(str(tag))
+            f.write("{% endblock content %}")
+
+
 if __name__ == '__main__':
     out_path = Path(__file__).parent / "out"
     in_path = Path(__file__).parent / "in"
