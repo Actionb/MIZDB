@@ -109,6 +109,16 @@ class WikiParser:
         return template % f"\n{' ' * 8}".join(str(t) for t in self.elements if t is not None)
 
 
+def parse_main_page():
+    with open(Path(__file__).parent / "in" / "hauptseite.html", "r") as f:
+        parser = WikiParser("Hauptseite", f.read())
+        for tag in parser.soup.contents:
+            parser.clean_tag(tag)
+            parser.add(tag)
+    with open(Path(__file__).parent / "out" / "hauptseite.html", "w") as out:
+        out.write(parser.as_html())
+
+
 if __name__ == '__main__':
     out_path = Path(__file__).parent / "out"
     in_path = Path(__file__).parent / "in"
@@ -119,3 +129,4 @@ if __name__ == '__main__':
             parser.parse()
             with open(out_path / html_file.name, "w") as out:
                 out.write(parser.as_html())
+    parse_main_page()
