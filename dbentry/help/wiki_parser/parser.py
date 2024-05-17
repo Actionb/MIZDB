@@ -7,14 +7,6 @@ from pathlib import Path
 from bs4 import BeautifulSoup, Tag
 
 
-def _parse_toc(toc):
-    pass
-
-
-def _strip_class(element):
-    pass
-
-
 class WikiParser:
 
     def __init__(self, title, html):
