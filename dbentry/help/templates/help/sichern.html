@@ -1,0 +1,15 @@
+{% extends "help/help_base.html" %}
+
+{% block content %}
+<h1>Sichern</h1>
+<p>Es stehen drei Knöpfe zum Sichern eines Datensatzes zur Verfügung. Erst durch das Betätigen einer der Knöpfe werden die Daten des Formulars auch wirklich gespeichert. Verlasst ihr das Formular ohne eine Anfrage an den Server geschickt zu haben - z.B. wenn ihr einfach das Fenster schließt - können Änderungen nicht übernommen werden.
+</p>
+<p>
+</p>
+<ul><li>Sichern und neu hinzufügen</li></ul>
+<dl><dd>Das Formular wird zum Server geschickt, um den Datensatz zu speichern, und der Server liefert ein neues, leeres Formular zurück.</dd></dl>
+<ul><li>Sichern und weiter bearbeiten</li></ul>
+<dl><dd>Zwischenspeichern. Der Datensatz wird abgespeichert und das Formular wird zur weiteren Bearbeitung erneut dargestellt.</dd></dl>
+<ul><li>Sichern</li></ul>
+<dl><dd>Nachdem der Datensatz abgespeichert wurde, wird man zur <a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungsliste</a> weitergeleitet.</dd></dl>
+{% endblock content %}

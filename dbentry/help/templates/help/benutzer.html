@@ -1,0 +1,21 @@
+{% extends "help/help_base.html" %}
+
+{% block content %}
+<h1>Benutzer</h1>
+<p>Zunächst muss ein Benutzername eingegeben werden. Der Benutzername wird hauptsächlich in der <a class="new" href="/mediawiki/index.php?title=%C3%84nderungsgeschichte&amp;action=edit&amp;redlink=1" title="Änderungsgeschichte (Seite nicht vorhanden)">Änderungsgeschichte</a> eines Datensatzes verwendet; d.h. Änderungen an Datensätzen werden mit dem Benutzernamen vermerkt.
+</p>
+<p>
+Es ist also sinnvoll, wenn der Benutzername direkt einem Mitarbeiter zugeordnet werden kann. Darüber hinaus muss jeder Benutzername einzigartig sein. Daher bietet sich eine Kombination von Vor- und Nachname gut als Benutzername an. Da Leerzeichen im Benutzernamen nicht zulässig sind, könnte ein Benutzername z.B. so aussehen: <code>max.mustermann</code> oder <code>max_mustermann</code>. </p>
+<p> Das Passwort zum Benutzerkonto kann von dem Benutzer nachher frei geändert werden. Daher ist ein vorläufiges, eher generisches Passwort ausreichend.
+</p>
+<p>Durch einen Klick auf <b>Sichern</b> wird man auf das nächste Formular weitergeleitet. Hier können  Vor- und Nachname noch einmal eingetragen werden. Dies kann nützlich sein, wenn der Benutzername nicht vom Namen abgeleitet ist.
+</p>
+<p>Sofern der Benutzer aktiv an der Datenbank mitarbeiten sollen, so muss ein Häkchen bei Mitarbeiter-Status gesetzt werden. Ohne diesen Status schlägt die Anmeldung an die Adminoberfläche (mit welcher letztlich Bearbeitung der Datensätze durchgeführt wird) mit dieser Fehlermeldung fehl:
+</p>
+<blockquote style="color:#ba2121;"><p>Bitte Benutzername und Passwort für einen Staff-Account eingeben. Beide Felder berücksichtigen die Groß-/Kleinschreibung. </p></blockquote>
+<p>Danach müssen dem Benutzer Berechtigungen für die einzelnen Bereiche der Datenbank zugewiesen werden. Zu diesem Zweck gibt es Gruppen, die eine Vielzahl von Berechtigungen enthalten; wird dem Benutzer eine Gruppe zugewiesen, so bekommt der Benutzer alle Berechtigungen dieser Gruppen.
+</p>
+<p>Eine "Mitarbeiter" Gruppe sollte vorhanden sein: mit Doppelklick kann diese in die Auswahl verschoben werden.
+Für eine Erklärung des Bedienelementes siehe <a href="/help/Bedienelement#gefilterte_Mehrfachauswahl" title="Bedienelement">Bedienelement#gefilterte_Mehrfachauswahl</a>.
+</p>
+{% endblock content %}

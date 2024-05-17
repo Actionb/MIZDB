@@ -1,0 +1,12 @@
+{% extends "help/help_base.html" %}
+
+{% block content %}
+<h1>Id</h1>
+<p>Jeder Datensatz besitzt genau eine ID. Und eine ID identifiziert auch genau einen Datensatz. Dadurch spielt die ID für die Datenbank eine enorm wichtige Rolle und kann deshalb von Benutzern nicht verändert werden - sie wird stattdessen von der Datenbank selbst vergeben. 
+</p>
+<p>Die ID-Nummer könnt ihr aus der Webadresse eines Datensatzes ableiten:<br/>
+die Adresse, die <code>.../magazin/3/change/...</code> enthält, verweist auf den Datensatz mit der ID <code>3</code> aus der Magazin Tabelle.
+</p>
+<p>Abgesehen von der Suche nach IDs im <a href="/help/Suchformular#ID" title="Suchformular">Suchformular</a>, wird die ID eines Datensatzes zur Kennzeichnung von Foto-Materialien verwendet: <a href="/help/Foto#ID" title="Foto">Foto#ID</a>
+</p>
+{% endblock content %}
