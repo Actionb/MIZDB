@@ -1,74 +1,51 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title></title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
-</head>
-<body class="container">
-<h1>Suchformular</h1>
-<p>
-  <a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungslisten</a> bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann.
-</p>
-<div aria-labelledby="mw-toc-heading" id="toc" role="navigation">
-  <input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/>
-  <div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2>
-    <span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
-  <ul>
-    <li class="toclevel-1 tocsection-1"><a href="#Textsuche"><span class="tocnumber">1</span>
-      <span class="toctext">Textsuche</span></a></li>
-    <li class="toclevel-1 tocsection-2"><a href="#Felder"><span class="tocnumber">2</span>
-      <span class="toctext">Felder</span></a>
-      <ul>
-        <li class="toclevel-2 tocsection-3"><a href="#von_-_bis_Felder"><span class="tocnumber">2.1</span>
-          <span class="toctext">von - bis Felder</span></a></li>
-        <li class="toclevel-2 tocsection-4"><a href="#partielles_Datum"><span class="tocnumber">2.2</span>
-          <span class="toctext">partielles Datum</span></a></li>
-        <li class="toclevel-2 tocsection-5"><a href="#ID"><span class="tocnumber">2.3</span>
-          <span class="toctext">ID</span></a></li>
-      </ul>
-    </li>
-  </ul>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
+    </head>
+    <body class="container">
+        <h1>Suchformular</h1>
+        <p><a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungslisten</a> bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann. </p>
+        <div aria-labelledby="mw-toc-heading" id="toc" role="navigation"><input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/><div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Textsuche"><span class="tocnumber">1</span> <span class="toctext">Textsuche</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Felder"><span class="tocnumber">2</span> <span class="toctext">Felder</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#von_-_bis_Felder"><span class="tocnumber">2.1</span> <span class="toctext">von - bis Felder</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#partielles_Datum"><span class="tocnumber">2.2</span> <span class="toctext">partielles Datum</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#ID"><span class="tocnumber">2.3</span> <span class="toctext">ID</span></a></li>
+</ul>
+</li>
+</ul>
 </div>
-<h2><span class="mw-headline" id="Textsuche">Textsuche</span></h2>
-<p>Das Formular beinhaltet ein Element zur Textsuche, zu erkennen an dem Icon mit der Lupe.
+        <h2><span class="mw-headline" id="Textsuche">Textsuche</span></h2>
+        <p>Das Formular beinhaltet ein Element zur Textsuche, zu erkennen an dem Icon mit der Lupe.
 </p>
-<p>
+        <p>
 </p>
-<p>Ihr gebt den Suchtext in das Textfeld ein und klickt dann auf "Suche". Alle
-  <i><a class="extiw" href="https://en.wikipedia.org/wiki/de:Textfeld" title="wikipedia:de:Textfeld">Eingabefelder</a></i> der Datensätze werden daraufhin nach dem Suchtext durchsucht. Bei
-  <a href="/help/Artikel" title="Artikel">Artikeln</a> werden beispielsweise Felder wie "Zusammenfassung" oder "Beschreibung" durchsucht, aber nicht Felder wie "Musiker" oder "Autoren" - diese Felder sind nicht wirklich Eingabefelder, sondern eher
-  <a class="extiw" href="https://en.wikipedia.org/wiki/de:Schl%C3%BCssel_(Datenbank)#Fremdschl.C3.BCssel" title="wikipedia:de:Schlüssel (Datenbank)">Beziehungsfelder</a>.
+        <p>Ihr gebt den Suchtext in das Textfeld ein und klickt dann auf "Suche". Alle <i><a class="extiw" href="https://en.wikipedia.org/wiki/de:Textfeld" title="wikipedia:de:Textfeld">Eingabefelder</a></i> der Datensätze werden daraufhin nach dem Suchtext durchsucht. Bei <a href="/help/Artikel" title="Artikel">Artikeln</a> werden beispielsweise Felder wie "Zusammenfassung" oder "Beschreibung" durchsucht, aber nicht Felder wie "Musiker" oder "Autoren" - diese Felder sind nicht wirklich Eingabefelder, sondern eher <a class="extiw" href="https://en.wikipedia.org/wiki/de:Schl%C3%BCssel_(Datenbank)#Fremdschl.C3.BCssel" title="wikipedia:de:Schlüssel (Datenbank)">Beziehungsfelder</a>.
 </p>
-<p>Grundsätzlich gilt: nur Felder, in denen ihr Werte (also Texte, Zahlen, usw.) eingebt und hinterlegt, können mit der Textsuche durchsucht werden. Dazu kommt, dass nur Felder, die
-  <i>nicht</i> separat im Suchformular auftauchen, von der allgemeinen Textsuche erfasst werden: Suchparameter aus Feldern des Suchformulars haben Priorität gegenüber dem Suchtext der Textsuche.
+        <p>Grundsätzlich gilt: nur Felder, in denen ihr Werte (also Texte, Zahlen, usw.) eingebt und hinterlegt, können mit der Textsuche durchsucht werden. Dazu kommt, dass nur Felder, die <i>nicht</i> separat im Suchformular auftauchen, von der allgemeinen Textsuche erfasst werden: Suchparameter aus Feldern des Suchformulars haben Priorität gegenüber dem Suchtext der Textsuche.
 </p>
-<h2><span class="mw-headline" id="Felder">Felder</span></h2>
-<p>Neben den gewöhnlichen aus den Änderungsformularen bekannten
-  <a href="/help/Bedienelement" title="Bedienelement">Bedienelementen</a>, tauchen in Suchformularen auch noch Felder mit Besonderheiten auf.
+        <h2><span class="mw-headline" id="Felder">Felder</span></h2>
+        <p>Neben den gewöhnlichen aus den Änderungsformularen bekannten <a href="/help/Bedienelement" title="Bedienelement">Bedienelementen</a>, tauchen in Suchformularen auch noch Felder mit Besonderheiten auf.
 </p>
-<h5><span class="mw-headline" id="von_-_bis_Felder">von - bis Felder</span></h5>
-<dl>
-  <dd>Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also: "größer gleich X und kleiner gleich Y") angegeben werden. Wird nur in dem ersten Feld ein Wert eingetragen, so wird stattdessen nach genau diesem Wert gesucht (also: "gleich X").</dd>
-</dl>
-<p>
+        <h5><span class="mw-headline" id="von_-_bis_Felder">von - bis Felder</span></h5>
+        <dl><dd>Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also: "größer gleich X und kleiner gleich Y") angegeben werden. Wird nur in dem ersten Feld ein Wert eingetragen, so wird stattdessen nach genau diesem Wert gesucht (also: "gleich X").</dd></dl>
+        <p>
 </p>
-<h5><span class="mw-headline" id="partielles_Datum">partielles Datum</span></h5>
-<dl>
-  <dd>Ähnlich wie das "von bis Feld", nur mit teilweisen Datumsangaben.</dd>
-</dl>
-<p>
+        <h5><span class="mw-headline" id="partielles_Datum">partielles Datum</span></h5>
+        <dl><dd>Ähnlich wie das "von bis Feld", nur mit teilweisen Datumsangaben.</dd></dl>
+        <p>
 </p>
-<h5><span class="mw-headline" id="ID">ID</span></h5>
-<dl>
-  <dd>Ermöglicht es, Datensätze mittels ihrer
-    <a href="/help/ID" title="ID">ID</a>-Nummer zu finden. Mehrere Nummern mit Kommas trennen.
-  </dd>
-</dl>
-</body>
+        <h5><span class="mw-headline" id="ID">ID</span></h5>
+        <dl><dd>Ermöglicht es, Datensätze mittels ihrer <a href="/help/ID" title="ID">ID</a>-Nummer zu finden. Mehrere Nummern mit Kommas trennen.</dd></dl>
+    </body>
 </html>

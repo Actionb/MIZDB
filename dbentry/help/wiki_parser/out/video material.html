@@ -1,218 +1,100 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title></title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
-</head>
-<body class="container">
-<h1>Video Material</h1>
-<p>Die Kategorie für Material wie Video-DVDs und VHS.
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <link id="default_theme" href="/static/mizdb/css/mizdb_theme.css" rel="stylesheet">
+    </head>
+    <body class="container">
+        <h1>Video Material</h1>
+        <p>Die Kategorie für Material wie Video-DVDs und VHS.
 </p>
-<div aria-labelledby="mw-toc-heading" id="toc" role="navigation">
-  <input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/>
-  <div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2>
-    <span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
-  <ul>
-    <li class="toclevel-1 tocsection-1"><a href="#Felder"><span class="tocnumber">1</span>
-      <span class="toctext">Felder</span></a>
-      <ul>
-        <li class="toclevel-2 tocsection-2"><a href="#Titel"><span class="tocnumber">1.1</span>
-          <span class="toctext">Titel</span></a></li>
-        <li class="toclevel-2 tocsection-3"><a href="#Anz.Tracks"><span class="tocnumber">1.2</span>
-          <span class="toctext">Anz.Tracks</span></a></li>
-        <li class="toclevel-2 tocsection-4"><a href="#Jahr"><span class="tocnumber">1.3</span>
-          <span class="toctext">Jahr</span></a></li>
-        <li class="toclevel-2 tocsection-5"><a href="#Originalmaterial"><span class="tocnumber">1.4</span>
-          <span class="toctext">Originalmaterial</span></a></li>
-        <li class="toclevel-2 tocsection-6"><a href="#Quelle"><span class="tocnumber">1.5</span>
-          <span class="toctext">Quelle</span></a></li>
-        <li class="toclevel-2 tocsection-7"><a href="#Speichermedium"><span class="tocnumber">1.6</span>
-          <span class="toctext">Speichermedium</span></a></li>
-        <li class="toclevel-2 tocsection-8"><a href="#Anzahl"><span class="tocnumber">1.7</span>
-          <span class="toctext">Anzahl</span></a></li>
-        <li class="toclevel-2 tocsection-9"><a href="#Release_ID_.28discogs.29"><span class="tocnumber">1.8</span>
-          <span class="toctext">Release ID (discogs)</span></a></li>
-        <li class="toclevel-2 tocsection-10"><a href="#Link_discogs.com"><span class="tocnumber">1.9</span>
-          <span class="toctext">Link discogs.com</span></a></li>
-        <li class="toclevel-2 tocsection-11"><a href="#Beschreibung"><span class="tocnumber">1.10</span>
-          <span class="toctext">Beschreibung</span></a></li>
-        <li class="toclevel-2 tocsection-12"><a href="#Bemerkungen"><span class="tocnumber">1.11</span>
-          <span class="toctext">Bemerkungen</span></a></li>
-        <li class="toclevel-2 tocsection-13"><a href="#Musiker"><span class="tocnumber">1.12</span>
-          <span class="toctext">Musiker</span></a></li>
-        <li class="toclevel-2 tocsection-14"><a href="#Bands"><span class="tocnumber">1.13</span>
-          <span class="toctext">Bands</span></a></li>
-        <li class="toclevel-2 tocsection-15"><a href="#Schlagw.C3.B6rter"><span class="tocnumber">1.14</span>
-          <span class="toctext">Schlagwörter</span></a></li>
-        <li class="toclevel-2 tocsection-16"><a href="#Genres"><span class="tocnumber">1.15</span>
-          <span class="toctext">Genres</span></a></li>
-        <li class="toclevel-2 tocsection-17"><a href="#Orte"><span class="tocnumber">1.16</span>
-          <span class="toctext">Orte</span></a></li>
-        <li class="toclevel-2 tocsection-18"><a href="#Spielorte"><span class="tocnumber">1.17</span>
-          <span class="toctext">Spielorte</span></a></li>
-        <li class="toclevel-2 tocsection-19"><a href="#Veranstaltungen"><span class="tocnumber">1.18</span>
-          <span class="toctext">Veranstaltungen</span></a></li>
-        <li class="toclevel-2 tocsection-20"><a href="#Personen"><span class="tocnumber">1.19</span>
-          <span class="toctext">Personen</span></a></li>
-        <li class="toclevel-2 tocsection-21"><a href="#Ausgaben"><span class="tocnumber">1.20</span>
-          <span class="toctext">Ausgaben</span></a></li>
-        <li class="toclevel-2 tocsection-22"><a href="#Dateien"><span class="tocnumber">1.21</span>
-          <span class="toctext">Dateien</span></a></li>
-        <li class="toclevel-2 tocsection-23"><a href="#Best.C3.A4nde"><span class="tocnumber">1.22</span>
-          <span class="toctext">Bestände</span></a></li>
-      </ul>
-    </li>
-    <li class="toclevel-1 tocsection-24"><a href="#Weblinks"><span class="tocnumber">2</span>
-      <span class="toctext">Weblinks</span></a></li>
-  </ul>
-</div>
-<h2><span class="mw-headline" id="Felder">Felder</span></h2>
-<h5><span class="mw-headline" id="Titel">Titel</span></h5>
-<dl>
-  <dd>Der Name des Materials, also beispielsweise der Name des Films.</dd>
-</dl>
-<h5><span class="mw-headline" id="Anz.Tracks">Anz.Tracks</span></h5>
-<dl>
-  <dd>Die Gesamtlaufzeit des Materials. Siehe
-    <a href="/help/Bedienelement#Laufzeitfeld" title="Bedienelement">Bedienelement#Laufzeitfeld</a>.
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Jahr">Jahr</span></h5>
-<dl>
-  <dd>Jahresangabe zwecks zeitlicher Einteilung des Objektes.</dd>
-</dl>
-<h5><span class="mw-headline" id="Originalmaterial">Originalmaterial</span></h5>
-<dl>
-  <dd>Wenn das vorliegende Material eine Originalausgabe ist (also nicht gebrannt o.ä.), so solltet ihr hier ein Häkchen setzen.</dd>
-</dl>
-<h5><span class="mw-headline" id="Quelle">Quelle</span></h5>
-<dl>
-  <dd>Angaben zur Herkunft der Videoaufnahme; z.B. Live, Amateuraufnahmen, usw. Damit soll die Qualität des Materials einschätzbar gemacht werden: z.B. bei einem Mitschnitt eines Zuschauers direkt aus dem Konzert wäre von minderer Qualität auszugehen.</dd>
-</dl>
-<h5><span class="mw-headline" id="Speichermedium">Speichermedium</span></h5>
-<dl>
-  <dd>Die Art des Materials; DVD, VHS, Film, etc.</dd>
-</dl>
-<h5><span class="mw-headline" id="Anzahl">Anzahl</span></h5>
-<dl>
-  <dd>Die Anzahl der Datenträger. Bei einem Boxset mit vier DVDs muss hier "4" eingegeben werden.</dd>
-</dl>
-<h5>
-  <span id="Release_ID_(discogs)"></span><span class="mw-headline" id="Release_ID_.28discogs.29">Release ID (discogs)</span>
-</h5>
-<dl>
-  <dd>
-    <div class="thumb tright">
-      <div class="thumbinner" style="width:275px;">
-        <div class="thumbcaption">
-          <div class="magnify"><a class="internal" href="/help/Datei:Discogs_release_id.png" title="vergrößern"></a>
-          </div>
-          Release-ID Angabe bei discogs
-        </div>
-      </div>
-    </div>
-    Die ID-Nummer des Eintrages zu diesem Material auf discogs.com. Die ID ist entweder vom Ende der Webadresse ablesbar (<code>www.discogs.com/.../release/<strong>&lt;id&gt;</strong></code>) oder ist oben rechts angegeben. Das vorangestellte "<b>r</b>" muss weggelassen werden.
-  </dd>
-  <dd>
-    <b>Wichtig</b>: Discogs erstellt neben Einträgen für Releases auch sogenannte Master Releases. Unter dem Master Release einer Produktion werden verschiedene Veröffentlichungen der Produktion zusammen getragen:
-    <a class="external text" href="https://support.discogs.com/hc/de/articles/360005055493-Datenbank-Richtlinien-16-Master-Release%7Cdiscogs" rel="nofollow">Master Release Richtlinien</a>. Der Master Release ID wird ein
-    <b>m</b> vorangestellt und ist daran auch zu erkennen. Die Datenbank erwartet jedoch IDs für die eigentlichen Veröffentlichungen (also die Release IDs) und kann deshalb mit Master Release IDs nicht viel anfangen. Das Verwenden von Master Release IDs führt zu falschen bzw. kaputten Links.
-  </dd>
-  <dd>Es ist einfacher (und sicherer), die Web-Adresse der richtigen Discogs-Seite in das nachfolgende Feld zu kopieren - die ID wird dann aus der Adresse automatisch ausgelesen und von der Datenbank hier eingefügt.</dd>
-</dl>
-<h5><span class="mw-headline" id="Link_discogs.com">Link discogs.com</span></h5>
-<dl>
-  <dd>Link zu der Webseite von discogs.com, die dem vorliegenden Material entspricht. Einfach die volle Adresse hier einfügen; beim Abspeichern wird die Adresse auf ein einheitliches Format umgewandelt - die Adresse sieht deshalb zwar anders aus, führt aber immer noch zur richtigen Seite. Adresse zu Master Release Einträgen (siehe
-    <a href="#Release_ID_.28discogs.29">Anmerkung oben</a>) sind nicht zulässig.
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Beschreibung">Beschreibung</span></h5>
-<dl>
-  <dd>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</dd>
-</dl>
-<h5><span class="mw-headline" id="Bemerkungen">Bemerkungen</span></h5>
-<dl>
-  <dd>Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.</dd>
-</dl>
-<hr/>
-<h5><span class="mw-headline" id="Musiker">Musiker</span></h5>
-<dl>
-  <dd>Bezieht sich das Objekt auf
-    <a href="/help/Musiker" title="Musiker">Musiker</a>, so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.
-  </dd>
-  <dd>Ist auf dem Cover bzw. der Aufschrift explizit angegeben, welche Instrumente der Musiker in diesem Video Material spielt, so sollten diese angegeben werden (dazu auf "Instrumente" unterhalb der Musiker
-    <a href="/help/Bedienelement#Kombinationsfeld.2FCombobox" title="Bedienelement">Combobox</a> klicken).
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Bands">Bands</span></h5>
-<dl>
-  <dd>Angaben zu <a href="/help/Band" title="Band">Bands</a>, auf die sich das Objekt bezieht.</dd>
-</dl>
-<h5><span id="Schlagwörter"></span><span class="mw-headline" id="Schlagw.C3.B6rter">Schlagwörter</span></h5>
-<dl>
-  <dd>
-    <a href="/help/Schlagwort" title="Schlagwort">Schlagwörter</a>/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (z.B. '60er Jahre') des Objekts.
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Genres">Genres</span></h5>
-<dl>
-  <dd>Sind bezüglich des Objektes bestimmte
-    <a href="/help/Genre" title="Genre">Genres</a> besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Orte">Orte</span></h5>
-<dl>
-  <dd>Auflistung der
-    <a href="/help/Ort" title="Ort">Orte</a> (also: Städte, Länder), die für das Objekt relevant sind. Herkunftsorte der Musiker, Bands, Autoren, usw. müssen hier nicht angegeben werden (sofern bereits beim Musiker usw. eingetragen). Siehe auch:
-    <a href="/help/Ort,_Spielort,_Veranstaltung" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a>
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Spielorte">Spielorte</span></h5>
-<dl>
-  <dd>Auflistung der
-    <a href="/help/Spielort" title="Spielort">Spielorte</a> (also: Venues, Locations), auf die sich das Objekt bezieht. Siehe auch:
-    <a href="/help/Ort,_Spielort,_Veranstaltung" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a>
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Veranstaltungen">Veranstaltungen</span></h5>
-<dl>
-  <dd>Hat das Objekt Bezug zu bestimmten
-    <a href="/help/Veranstaltung" title="Veranstaltung">Veranstaltungen</a> (also: Konzerte, Festivals), so sollen diese hier angegeben werden. Siehe auch:
-    <a href="/help/Ort,_Spielort,_Veranstaltung" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a>
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Personen">Personen</span></h5>
-<dl>
-  <dd>Angaben zu
-    <a href="/help/Person" title="Person">Personen</a>, auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
-  </dd>
-</dl>
-<h5><span class="mw-headline" id="Ausgaben">Ausgaben</span></h5>
-<dl>
-  <dd>Die <a href="/help/Ausgabe" title="Ausgabe">Ausgaben</a>, denen dieses Material bei lag.</dd>
-</dl>
-<h5><span class="mw-headline" id="Dateien">Dateien</span></h5>
-<dl>
-  <dd>Verweise auf Datensätze zu Computerdateien (z.B. Digitalisierungen) dieses Materials.</dd>
-</dl>
-<h5><span id="Bestände"></span><span class="mw-headline" id="Best.C3.A4nde">Bestände</span></h5>
-<dl>
-  <dd>
-    <a href="/help/Bestand" title="Bestand">Bestandsangaben</a> zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden. Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
-    <a href="/help/Bedienelement#Inlines" title="Bedienelement">Bedienelement#Inlines</a>). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
-  </dd>
-</dl>
-<h2><span class="mw-headline" id="Weblinks">Weblinks</span></h2>
+        <div aria-labelledby="mw-toc-heading" id="toc" role="navigation"><input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/><div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
 <ul>
-  <li>
-    <a class="external text" href="https://www.discogs.com/" rel="nofollow">Discogs (Online-Datenbank für Diskografien von Musikern und Musiklabeln)</a>
-  </li>
+<li class="toclevel-1 tocsection-1"><a href="#Felder"><span class="tocnumber">1</span> <span class="toctext">Felder</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Titel"><span class="tocnumber">1.1</span> <span class="toctext">Titel</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Anz.Tracks"><span class="tocnumber">1.2</span> <span class="toctext">Anz.Tracks</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Jahr"><span class="tocnumber">1.3</span> <span class="toctext">Jahr</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Originalmaterial"><span class="tocnumber">1.4</span> <span class="toctext">Originalmaterial</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Quelle"><span class="tocnumber">1.5</span> <span class="toctext">Quelle</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Speichermedium"><span class="tocnumber">1.6</span> <span class="toctext">Speichermedium</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Anzahl"><span class="tocnumber">1.7</span> <span class="toctext">Anzahl</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="#Release_ID_.28discogs.29"><span class="tocnumber">1.8</span> <span class="toctext">Release ID (discogs)</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Link_discogs.com"><span class="tocnumber">1.9</span> <span class="toctext">Link discogs.com</span></a></li>
+<li class="toclevel-2 tocsection-11"><a href="#Beschreibung"><span class="tocnumber">1.10</span> <span class="toctext">Beschreibung</span></a></li>
+<li class="toclevel-2 tocsection-12"><a href="#Bemerkungen"><span class="tocnumber">1.11</span> <span class="toctext">Bemerkungen</span></a></li>
+<li class="toclevel-2 tocsection-13"><a href="#Musiker"><span class="tocnumber">1.12</span> <span class="toctext">Musiker</span></a></li>
+<li class="toclevel-2 tocsection-14"><a href="#Bands"><span class="tocnumber">1.13</span> <span class="toctext">Bands</span></a></li>
+<li class="toclevel-2 tocsection-15"><a href="#Schlagw.C3.B6rter"><span class="tocnumber">1.14</span> <span class="toctext">Schlagwörter</span></a></li>
+<li class="toclevel-2 tocsection-16"><a href="#Genres"><span class="tocnumber">1.15</span> <span class="toctext">Genres</span></a></li>
+<li class="toclevel-2 tocsection-17"><a href="#Orte"><span class="tocnumber">1.16</span> <span class="toctext">Orte</span></a></li>
+<li class="toclevel-2 tocsection-18"><a href="#Spielorte"><span class="tocnumber">1.17</span> <span class="toctext">Spielorte</span></a></li>
+<li class="toclevel-2 tocsection-19"><a href="#Veranstaltungen"><span class="tocnumber">1.18</span> <span class="toctext">Veranstaltungen</span></a></li>
+<li class="toclevel-2 tocsection-20"><a href="#Personen"><span class="tocnumber">1.19</span> <span class="toctext">Personen</span></a></li>
+<li class="toclevel-2 tocsection-21"><a href="#Ausgaben"><span class="tocnumber">1.20</span> <span class="toctext">Ausgaben</span></a></li>
+<li class="toclevel-2 tocsection-22"><a href="#Dateien"><span class="tocnumber">1.21</span> <span class="toctext">Dateien</span></a></li>
+<li class="toclevel-2 tocsection-23"><a href="#Best.C3.A4nde"><span class="tocnumber">1.22</span> <span class="toctext">Bestände</span></a></li>
 </ul>
-</body>
+</li>
+<li class="toclevel-1 tocsection-24"><a href="#Weblinks"><span class="tocnumber">2</span> <span class="toctext">Weblinks</span></a></li>
+</ul>
+</div>
+        <h2><span class="mw-headline" id="Felder">Felder</span></h2>
+        <h5><span class="mw-headline" id="Titel">Titel</span></h5>
+        <dl><dd>Der Name des Materials, also beispielsweise der Name des Films.</dd></dl>
+        <h5><span class="mw-headline" id="Anz.Tracks">Anz.Tracks</span></h5>
+        <dl><dd>Die Gesamtlaufzeit des Materials. Siehe <a href="/help/Bedienelement#Laufzeitfeld" title="Bedienelement">Bedienelement#Laufzeitfeld</a>.</dd></dl>
+        <h5><span class="mw-headline" id="Jahr">Jahr</span></h5>
+        <dl><dd>Jahresangabe zwecks zeitlicher Einteilung des Objektes.</dd></dl>
+        <h5><span class="mw-headline" id="Originalmaterial">Originalmaterial</span></h5>
+        <dl><dd>Wenn das vorliegende Material eine Originalausgabe ist (also nicht gebrannt o.ä.), so solltet ihr hier ein Häkchen setzen.</dd></dl>
+        <h5><span class="mw-headline" id="Quelle">Quelle</span></h5>
+        <dl><dd>Angaben zur Herkunft der Videoaufnahme; z.B. Live, Amateuraufnahmen, usw. Damit soll die Qualität des Materials einschätzbar gemacht werden: z.B. bei einem Mitschnitt eines Zuschauers direkt aus dem Konzert wäre von minderer Qualität auszugehen.</dd></dl>
+        <h5><span class="mw-headline" id="Speichermedium">Speichermedium</span></h5>
+        <dl><dd>Die Art des Materials; DVD, VHS, Film, etc.</dd></dl>
+        <h5><span class="mw-headline" id="Anzahl">Anzahl</span></h5>
+        <dl><dd>Die Anzahl der Datenträger. Bei einem Boxset mit vier DVDs muss hier "4" eingegeben werden.</dd></dl>
+        <h5><span id="Release_ID_(discogs)"></span><span class="mw-headline" id="Release_ID_.28discogs.29">Release ID (discogs)</span></h5>
+        <dl><dd><div class="thumb tright"><div class="thumbinner" style="width:275px;"> <div class="thumbcaption"><div class="magnify"><a class="internal" href="/help/Datei:Discogs_release_id.png" title="vergrößern"></a></div>Release-ID Angabe bei discogs</div></div></div> Die ID-Nummer des Eintrages zu diesem Material auf discogs.com. Die ID ist entweder vom Ende der Webadresse ablesbar (<code>www.discogs.com/.../release/<strong>&lt;id&gt;</strong></code>) oder ist oben rechts angegeben. Das vorangestellte "<b>r</b>" muss weggelassen werden.</dd>
+<dd><b>Wichtig</b>: Discogs erstellt neben Einträgen für Releases auch sogenannte Master Releases. Unter dem Master Release einer Produktion werden verschiedene Veröffentlichungen der Produktion zusammen getragen: <a class="external text" href="https://support.discogs.com/hc/de/articles/360005055493-Datenbank-Richtlinien-16-Master-Release%7Cdiscogs" rel="nofollow">Master Release Richtlinien</a>. Der Master Release ID wird ein <b>m</b> vorangestellt und ist daran auch zu erkennen. Die Datenbank erwartet jedoch IDs für die eigentlichen Veröffentlichungen (also die Release IDs) und kann deshalb mit Master Release IDs nicht viel anfangen. Das Verwenden von Master Release IDs führt zu falschen bzw. kaputten Links.</dd>
+<dd>Es ist einfacher (und sicherer), die Web-Adresse der richtigen Discogs-Seite in das nachfolgende Feld zu kopieren - die ID wird dann aus der Adresse automatisch ausgelesen und von der Datenbank hier eingefügt.</dd></dl>
+        <h5><span class="mw-headline" id="Link_discogs.com">Link discogs.com</span></h5>
+        <dl><dd>Link zu der Webseite von discogs.com, die dem vorliegenden Material entspricht. Einfach die volle Adresse hier einfügen; beim Abspeichern wird die Adresse auf ein einheitliches Format umgewandelt - die Adresse sieht deshalb zwar anders aus, führt aber immer noch zur richtigen Seite. Adresse zu Master Release Einträgen (siehe <a href="#Release_ID_.28discogs.29">Anmerkung oben</a>) sind nicht zulässig.</dd></dl>
+        <h5><span class="mw-headline" id="Beschreibung">Beschreibung</span></h5>
+        <dl><dd>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</dd></dl>
+        <h5><span class="mw-headline" id="Bemerkungen">Bemerkungen</span></h5>
+        <dl><dd>Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.</dd></dl>
+        <hr/>
+        <h5><span class="mw-headline" id="Musiker">Musiker</span></h5>
+        <dl><dd>Bezieht sich das Objekt auf <a href="/help/Musiker" title="Musiker">Musiker</a>, so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.</dd>
+<dd>Ist auf dem Cover bzw. der Aufschrift explizit angegeben, welche Instrumente der Musiker in diesem Video Material spielt, so sollten diese angegeben werden (dazu auf "Instrumente" unterhalb der Musiker <a href="/help/Bedienelement#Kombinationsfeld.2FCombobox" title="Bedienelement">Combobox</a>  klicken).</dd></dl>
+        <h5><span class="mw-headline" id="Bands">Bands</span></h5>
+        <dl><dd>Angaben zu <a href="/help/Band" title="Band">Bands</a>, auf die sich das Objekt bezieht.</dd></dl>
+        <h5><span id="Schlagwörter"></span><span class="mw-headline" id="Schlagw.C3.B6rter">Schlagwörter</span></h5>
+        <dl><dd><a href="/help/Schlagwort" title="Schlagwort">Schlagwörter</a>/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (z.B. '60er Jahre') des Objekts.</dd></dl>
+        <h5><span class="mw-headline" id="Genres">Genres</span></h5>
+        <dl><dd>Sind bezüglich des Objektes bestimmte <a href="/help/Genre" title="Genre">Genres</a> besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.</dd></dl>
+        <h5><span class="mw-headline" id="Orte">Orte</span></h5>
+        <dl><dd>Auflistung der <a href="/help/Ort" title="Ort">Orte</a> (also: Städte, Länder), die für das Objekt relevant sind. Herkunftsorte der Musiker, Bands, Autoren, usw. müssen hier nicht angegeben werden (sofern bereits beim Musiker usw. eingetragen). Siehe auch: <a href="/help/Ort,_Spielort,_Veranstaltung" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></dd></dl>
+        <h5><span class="mw-headline" id="Spielorte">Spielorte</span></h5>
+        <dl><dd>Auflistung der <a href="/help/Spielort" title="Spielort">Spielorte</a> (also: Venues, Locations), auf die sich das Objekt bezieht. Siehe auch: <a href="/help/Ort,_Spielort,_Veranstaltung" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></dd></dl>
+        <h5><span class="mw-headline" id="Veranstaltungen">Veranstaltungen</span></h5>
+        <dl><dd>Hat das Objekt Bezug zu bestimmten <a href="/help/Veranstaltung" title="Veranstaltung">Veranstaltungen</a> (also: Konzerte, Festivals), so sollen diese hier angegeben werden. Siehe auch: <a href="/help/Ort,_Spielort,_Veranstaltung" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></dd></dl>
+        <h5><span class="mw-headline" id="Personen">Personen</span></h5>
+        <dl><dd>Angaben zu <a href="/help/Person" title="Person">Personen</a>, auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.</dd></dl>
+        <h5><span class="mw-headline" id="Ausgaben">Ausgaben</span></h5>
+        <dl><dd>Die <a href="/help/Ausgabe" title="Ausgabe">Ausgaben</a>, denen dieses Material bei lag.</dd></dl>
+        <h5><span class="mw-headline" id="Dateien">Dateien</span></h5>
+        <dl><dd>Verweise auf Datensätze zu Computerdateien (z.B. Digitalisierungen)  dieses Materials.</dd></dl>
+        <h5><span id="Bestände"></span><span class="mw-headline" id="Best.C3.A4nde">Bestände</span></h5>
+        <dl><dd><a href="/help/Bestand" title="Bestand">Bestandsangaben</a> zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden. Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe <a href="/help/Bedienelement#Inlines" title="Bedienelement">Bedienelement#Inlines</a>). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.</dd></dl>
+        <h2><span class="mw-headline" id="Weblinks">Weblinks</span></h2>
+        <ul><li><a class="external text" href="https://www.discogs.com/" rel="nofollow">Discogs (Online-Datenbank für Diskografien von Musikern und Musiklabeln)</a></li></ul>
+    </body>
 </html>
