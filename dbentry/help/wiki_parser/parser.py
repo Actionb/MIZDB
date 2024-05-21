@@ -52,6 +52,7 @@ class WikiParser:
         self._strip_self_links(tag)
         self._strip_image_links(tag)
         self._replace_h6(tag)
+        self._strip_broken_links(tag)
 
     def _strip_class(self, tag: Tag):
         tag.attrs.pop("class", None)
@@ -85,6 +86,12 @@ class WikiParser:
             # The 'Flatly' theme does not render h6 headings well, so use h5
             # instead.
             tag.name = "h5"
+
+    def _strip_broken_links(self, tag: Tag):
+        # Remove links to pages that do not exist
+        for link in tag.find_all("a"):
+            if "Seite nicht vorhanden" in link.get("title", ""):
+                link.replace_with(link.string)
 
     def as_html(self):
         # TODO: add proper <head>
