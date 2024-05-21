@@ -3,7 +3,7 @@
 import re
 import sys
 import textwrap
-from functools import partial, cached_property
+from functools import cached_property
 from pathlib import Path
 
 from bs4 import BeautifulSoup, Tag
@@ -22,16 +22,20 @@ class WikiParser:
 
     def parse(self):
         self._make_tables()
-        find = partial(self.find, self.soup)
-        heading = self.soup.new_tag("h1", attrs={"class": "border-bottom"})
-        heading.string = self.title
-        self.add(heading)
-        self.add(find("p"))
-        self._add_toc()
-        if self.elements:
-            for tag in self.elements[-1].find_next_siblings(lambda t: t.name != "div"):
-                self.clean_tag(tag)
-                self.add(tag)
+        self._add_heading()
+
+        if first_paragraph := self.soup.find("p"):
+            self.clean_tag(first_paragraph)
+            self.add(first_paragraph)
+            for tag in first_paragraph.find_next_siblings():
+                if tag.id == "toc":
+                    self._add_toc()
+                elif tag.name == "div":
+                    continue
+                else:
+                    self.clean_tag(tag)
+                    self.add(tag)
+
         return self.elements
 
     def add(self, tag):
@@ -158,6 +162,11 @@ class WikiParser:
         if toc:
             self._parse_toc(toc)
             self.add(toc)
+
+    def _add_heading(self):
+        heading = self.soup.new_tag("h1", attrs={"class": "border-bottom"})
+        heading.string = self.title
+        self.add(heading)
 
     def as_html(self):
         # TODO: add proper <head>
