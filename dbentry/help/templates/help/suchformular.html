@@ -1,7 +1,7 @@
 {% extends "help/help_base.html" %}
 
 {% block content %}
-<h1>Suchformular</h1>
+<h1 class="border-bottom">Suchformular</h1>
 <p><a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungslisten</a> bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann. </p>
 <div aria-labelledby="mw-toc-heading" id="toc" role="navigation"><input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/><div class="toctitle" dir="ltr" lang="de"><h2 id="mw-toc-heading">Inhaltsverzeichnis</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
 <ul>
@@ -15,7 +15,7 @@
 </li>
 </ul>
 </div>
-<h2><span class="mw-headline" id="Textsuche">Textsuche</span></h2>
+<h2 class="border-bottom"><span class="mw-headline" id="Textsuche">Textsuche</span></h2>
 <p>Das Formular beinhaltet ein Element zur Textsuche, zu erkennen an dem Icon mit der Lupe.
 </p>
 <p>
@@ -24,17 +24,17 @@
 </p>
 <p>Grundsätzlich gilt: nur Felder, in denen ihr Werte (also Texte, Zahlen, usw.) eingebt und hinterlegt, können mit der Textsuche durchsucht werden. Dazu kommt, dass nur Felder, die <i>nicht</i> separat im Suchformular auftauchen, von der allgemeinen Textsuche erfasst werden: Suchparameter aus Feldern des Suchformulars haben Priorität gegenüber dem Suchtext der Textsuche.
 </p>
-<h2><span class="mw-headline" id="Felder">Felder</span></h2>
+<h2 class="border-bottom"><span class="mw-headline" id="Felder">Felder</span></h2>
 <p>Neben den gewöhnlichen aus den Änderungsformularen bekannten <a href="/help/Bedienelement" title="Bedienelement">Bedienelementen</a>, tauchen in Suchformularen auch noch Felder mit Besonderheiten auf.
 </p>
-<h5><span class="mw-headline" id="von_-_bis_Felder">von - bis Felder</span></h5>
+<h6 class="fw-bold"><span class="mw-headline" id="von_-_bis_Felder">von - bis Felder</span></h6>
 <dl><dd>Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also: "größer gleich X und kleiner gleich Y") angegeben werden. Wird nur in dem ersten Feld ein Wert eingetragen, so wird stattdessen nach genau diesem Wert gesucht (also: "gleich X").</dd></dl>
 <p>
 </p>
-<h5><span class="mw-headline" id="partielles_Datum">partielles Datum</span></h5>
+<h6 class="fw-bold"><span class="mw-headline" id="partielles_Datum">partielles Datum</span></h6>
 <dl><dd>Ähnlich wie das "von bis Feld", nur mit teilweisen Datumsangaben.</dd></dl>
 <p>
 </p>
-<h5><span class="mw-headline" id="ID">ID</span></h5>
+<h6 class="fw-bold"><span class="mw-headline" id="ID">ID</span></h6>
 <dl><dd>Ermöglicht es, Datensätze mittels ihrer <a href="/help/ID" title="ID">ID</a>-Nummer zu finden. Mehrere Nummern mit Kommas trennen.</dd></dl>
 {% endblock content %}
