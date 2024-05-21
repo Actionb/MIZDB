@@ -28,13 +28,14 @@ class WikiParser:
             self.clean_tag(first_paragraph)
             self.add(first_paragraph)
             for tag in first_paragraph.find_next_siblings():
-                if tag.id == "toc":
-                    self._add_toc()
-                elif tag.name == "div":
-                    continue
-                else:
-                    self.clean_tag(tag)
-                    self.add(tag)
+                if isinstance(tag, Tag):
+                    if tag.id == "toc":
+                        self._add_toc()
+                    elif tag.name == "div":
+                        continue
+                    else:
+                        self.clean_tag(tag)
+                        self.add(tag)
 
         return self.elements
 
