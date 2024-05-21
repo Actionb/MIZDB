@@ -68,12 +68,6 @@ class TestWikiParser:
         parser._strip_image_links(tag)
         assert str(tag) == "<p></p>"
 
-    def test_adds_table_class_to_tables(self, parser, make_tag):
-        html = "<table><tbody></tbody></table>"
-        tag = make_tag(html)
-        parser.clean_tag(tag)
-        assert str(tag) == """<table class="table"><tbody></tbody></table>"""
-
     def test_add_class_beschreibung(self):
         html = """
         <h6 class="fw-bold"><span class="mw-headline" id="Beschreibung">Beschreibung</span></h6>
@@ -83,3 +77,32 @@ class TestWikiParser:
         parser = WikiParser("Test", html.replace("\n", ""))
         parser.parse()
         assert "ms-4" in str(parser.soup.find("p").get("class", ""))
+
+    def test_make_table(self, parser):
+        html = """
+        <table style="text-align:right;">
+            <tbody>
+                <tr>
+                    <th>Heading 1</th>
+                    <th>Heading 2</th>
+                </tr>
+                <tr>
+                    <td>Value 1</td>
+                    <td>Value 2</td>
+                </tr>
+            </tbody>
+        </table>
+        """
+        parser = WikiParser("Test", html)
+        table = parser.soup.table
+        parser._make_tables()
+        assert table["class"] == ["table", "table-bordered"]
+
+        assert table.thead
+        assert table.thead["class"] == ["text-center", "table-primary"]
+        assert len(list(table.thead.find_all("tr"))) == 1
+        assert len(list(table.thead.find_all("th"))) == 2
+
+        assert table.tbody["class"] == ["text-end"]
+        assert len(list(table.tbody.find_all("tr"))) == 1
+        assert len(list(table.tbody.find_all("td"))) == 2

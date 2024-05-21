@@ -20,6 +20,7 @@ class WikiParser:
         return BeautifulSoup(self.html, "html.parser")
 
     def parse(self):
+        self._make_tables()
         find = partial(self.find, self.soup)
         heading = self.soup.new_tag("h1", attrs={"class": "border-bottom"})
         heading.string = self.title
@@ -54,7 +55,8 @@ class WikiParser:
         self._strip_broken_links(tag)
 
     def _strip_class(self, tag: Tag):
-        tag.attrs.pop("class", None)
+        if tag.name != "table":
+            tag.attrs.pop("class", None)
 
     def _add_class(self, tag: Tag):
         def is_beschreibung_paragraph(t):
@@ -71,9 +73,7 @@ class WikiParser:
                 if sibling.name == "h6" and sibling.span and sibling.span.get("id") in ("Beschreibung", "Bemerkungen"):
                     return True
 
-        if tag.name == "table":
-            tag["class"] = ["table"]
-        elif tag.name in ("h1", "h2", "h3"):
+        if tag.name in ("h1", "h2", "h3"):
             tag["class"] = ["border-bottom"]
         elif tag.name == "h6":
             tag["class"] = ["fw-bold"]
@@ -108,6 +108,31 @@ class WikiParser:
         for link in tag.find_all("a"):
             if "Seite nicht vorhanden" in link.get("title", ""):
                 link.replace_with(link.string)
+
+    def _make_tables(self):
+        for table in self.soup.find_all("table"):
+            self._make_table(table)
+
+    def _make_table(self, table):
+        table["class"] = ["table", "table-bordered"]
+        try:
+            del table["style"]
+        except:  # noqa
+            pass
+
+        # Move table header elements into thead from tbody
+        if table.find("thead"):
+            # probably already fine
+            return
+        thead = self.soup.new_tag("thead", attrs={"class": "text-center table-primary"})
+        for row in table.tbody.find_all("tr"):
+            if row.find("th"):
+                thead.append(row.extract())
+                # row.decompose()
+        table.tbody.insert_before(thead)
+
+        # Text align for table body:
+        table.tbody["class"] = ["text-end"]
 
     def as_html(self):
         # TODO: add proper <head>
