@@ -1,4 +1,5 @@
 """Parse the content of a WIKI page and create a stripped-down HTML version of it."""
+
 import re
 import sys
 import textwrap
@@ -194,7 +195,7 @@ def create_templates():
             f.write("{% endblock content %}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cmd = sys.argv[-1]
     if cmd == "wiki":
         parse_wiki_pages()
