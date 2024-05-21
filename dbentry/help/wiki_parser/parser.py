@@ -21,7 +21,7 @@ class WikiParser:
 
     def parse(self):
         find = partial(self.find, self.soup)
-        heading = self.soup.new_tag("h1")
+        heading = self.soup.new_tag("h1", attrs={"class": "border-bottom"})
         heading.string = self.title
         self.add(heading)
         self.add(find("p"))
@@ -51,7 +51,6 @@ class WikiParser:
         self._update_links(tag)
         self._strip_self_links(tag)
         self._strip_image_links(tag)
-        self._replace_h6(tag)
         self._strip_broken_links(tag)
 
     def _strip_class(self, tag: Tag):
@@ -60,6 +59,10 @@ class WikiParser:
     def _add_class(self, tag: Tag):
         if tag.name == "table":
             tag["class"] = ["table"]
+        elif tag.name in ("h1", "h2", "h3"):
+            tag["class"] = ["border-bottom"]
+        elif tag.name == "h6":
+            tag["class"] = ["fw-bold"]
 
     def _strip_edit_link_sections(self, tag: Tag):
         try:
@@ -80,12 +83,6 @@ class WikiParser:
         if link := tag.find("a", class_="image"):
             # This tag contains a wiki image. Ignore:
             link.decompose()
-
-    def _replace_h6(self, tag: Tag):
-        if tag.name == "h6":
-            # The 'Flatly' theme does not render h6 headings well, so use h5
-            # instead.
-            tag.name = "h5"
 
     def _strip_broken_links(self, tag: Tag):
         # Remove links to pages that do not exist
