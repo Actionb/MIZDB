@@ -42,11 +42,6 @@ class WikiParser:
         if tag is not None:
             self.elements.append(tag)
 
-    def find(self, soup, *args, **kwargs):
-        tag = soup.find(*args, **kwargs)
-        self.clean_tag(tag)
-        return tag
-
     def clean_tag(self, tag: Tag):
         if tag is None:
             return
