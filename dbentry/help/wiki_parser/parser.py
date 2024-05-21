@@ -57,12 +57,31 @@ class WikiParser:
         tag.attrs.pop("class", None)
 
     def _add_class(self, tag: Tag):
+        def is_beschreibung_paragraph(t):
+            """
+            Check whether the immediate previous siblings of the given p element
+            are the headings for the 'Beschreibung' or 'Bemerkungen' fields.
+            """
+            for i, sibling in enumerate(t.previous_siblings):
+                if i > 1:
+                    # Only check up to the second previous sibling.
+                    # (the first previous sibling could just be an empty text
+                    # node)
+                    return False
+                if sibling.name == "h6" and sibling.span and sibling.span.get("id") in ("Beschreibung", "Bemerkungen"):
+                    return True
+
         if tag.name == "table":
             tag["class"] = ["table"]
         elif tag.name in ("h1", "h2", "h3"):
             tag["class"] = ["border-bottom"]
         elif tag.name == "h6":
             tag["class"] = ["fw-bold"]
+        elif tag.name == "dl":
+            tag["class"] = ["ms-4"]
+        elif tag.name == "p" and is_beschreibung_paragraph(tag):
+            # Beschreibung & Bemerkungen fields
+            tag["class"] = ["ms-4"]
 
     def _strip_edit_link_sections(self, tag: Tag):
         try:

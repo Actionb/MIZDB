@@ -73,3 +73,13 @@ class TestWikiParser:
         tag = make_tag(html)
         parser.clean_tag(tag)
         assert str(tag) == """<table class="table"><tbody></tbody></table>"""
+
+    def test_add_class_beschreibung(self):
+        html = """
+        <h6 class="fw-bold"><span class="mw-headline" id="Beschreibung">Beschreibung</span></h6>
+        <p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
+        </p>
+        """
+        parser = WikiParser("Test", html.replace("\n", ""))
+        parser.parse()
+        assert "ms-4" in str(parser.soup.find("p").get("class", ""))
