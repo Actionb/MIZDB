@@ -106,3 +106,31 @@ class TestWikiParser:
         assert table.tbody["class"] == ["text-end"]
         assert len(list(table.tbody.find_all("tr"))) == 1
         assert len(list(table.tbody.find_all("td"))) == 2
+
+    def test_parse_toc(self, parser):
+        html = """
+        <div id="toc">
+            <div class="toctitle">
+                <h2>ToC</h2>
+            </div<>
+            <ul>
+                <li>First Item</li>
+                <li>
+                    <ul><li>Second Item</li></ul>
+                </li>
+            </ul>
+        </div>
+        """
+        parser = WikiParser("Test", html)
+        toc = parser.soup.find(id="toc")
+        parser._parse_toc(toc)
+
+        toctitle = toc.find("div", class_="toctitle")
+        assert toctitle.find("button", attrs={"data-bs-toggle": "collapse"})
+        assert "d-flex" in toctitle["class"]
+        assert toctitle.find("h4")
+
+        top_ul, nested_ul = toc.find_all("ul")
+        assert top_ul["class"] == ["collapse", "list-unstyled"]
+
+        assert not nested_ul.get("class")

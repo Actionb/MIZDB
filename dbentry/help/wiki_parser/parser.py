@@ -27,8 +27,7 @@ class WikiParser:
         heading.string = self.title
         self.add(heading)
         self.add(find("p"))
-        toc = find(id="toc")
-        self.add(toc)
+        self._add_toc()
         if self.elements:
             for tag in self.elements[-1].find_next_siblings(lambda t: t.name != "div"):
                 self.clean_tag(tag)
@@ -134,6 +133,31 @@ class WikiParser:
 
         # Text align for table body:
         table.tbody["class"] = ["text-end"]
+
+    def _parse_toc(self, toc):
+        # Add a toggle button
+        if toctitle := toc.find("div", class_="toctitle"):
+            toggle_button = self.soup.new_tag(
+                "button",
+                attrs={"class": "btn btn-sm btn-link", "data-bs-toggle": "collapse", "data-bs-target": "#toc>ul"},
+            )
+            toggle_button.string = "[Verbergen/Anzeigen]"
+            toctitle.append(toggle_button)
+            toctitle["class"].append("d-flex")
+            if heading := toctitle.find("h2"):
+                heading.name = "h4"
+
+        if ul := toc.find("ul"):
+            ul["class"] = ["collapse", "list-unstyled"]
+
+        toc.get("class", []).extend(["border bg-primary bg-opacity-10", "px-4", "py-2", "mb-3"])
+        toc["style"] = "max-width: 500px;"
+
+    def _add_toc(self):
+        toc = self.soup.find(id="toc")
+        if toc:
+            self._parse_toc(toc)
+            self.add(toc)
 
     def as_html(self):
         # TODO: add proper <head>
