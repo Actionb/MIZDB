@@ -3,18 +3,13 @@
 {% block content %}
 <h1 class="border-bottom">Suchformular</h1>
 <p><a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungslisten</a> bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann. </p>
-<div aria-labelledby="mw-toc-heading" class="toc border bg-primary bg-opacity-10 px-4 py-2 mb-3" id="toc" role="navigation" style="max-width: 500px;"><input class="toctogglecheckbox" id="toctogglecheckbox" role="button" style="display:none" type="checkbox"/><div class="toctitle d-flex" dir="ltr" lang="de"><h4 id="mw-toc-heading">Inhaltsverzeichnis</h4><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span><button class="btn btn-sm btn-link" data-bs-target="#toc&gt;ul" data-bs-toggle="collapse">[Verbergen/Anzeigen]</button></div>
-<ul class="collapse list-unstyled">
-<li class="toclevel-1 tocsection-1"><a href="#Textsuche"><span class="tocnumber">1</span> <span class="toctext">Textsuche</span></a></li>
-<li class="toclevel-1 tocsection-2"><a href="#Felder"><span class="tocnumber">2</span> <span class="toctext">Felder</span></a>
-<ul>
-<li class="toclevel-2 tocsection-3"><a href="#von_-_bis_Felder"><span class="tocnumber">2.1</span> <span class="toctext">von - bis Felder</span></a></li>
-<li class="toclevel-2 tocsection-4"><a href="#partielles_Datum"><span class="tocnumber">2.2</span> <span class="toctext">partielles Datum</span></a></li>
-<li class="toclevel-2 tocsection-5"><a href="#ID"><span class="tocnumber">2.3</span> <span class="toctext">ID</span></a></li>
-</ul>
-</li>
-</ul>
-</div>
+<p>Das Formular ist gegebenenfalls ausgeblendet: um es einzublenden, klickt auf das blaue Element mit der Aufschrift "Suchoptionen" (das Formular kann so auch wieder ausgeblendet werden).
+Eine Reihe von <a href="/help/Bedienelement" title="Bedienelement">Bedienelementen</a> bzw. <a href="#Felder">Feldern</a> werden angezeigt - der Aufbau des Suchformulars orientiert sich an der Art der <a href="/help/Datensatz" title="Datensatz">Datensätze</a>, die durchsucht werden sollen.
+Die Felder benutzt ihr, um Suchparameter festzulegen. Um die Suche zu starten, klickt weiter unten auf den "Suche" Knopf.
+</p>
+<p>Suchparameter werden logisch mit UND verknüpft: ein Datensatz muss alle Suchparameter erfüllen, damit er in der Ergebnisliste auftaucht.
+Zum Beispiel: wählt man die Parameter Band "Rolling Stones" und Ort "Dortmund", so wird die Datenbank nach Datensätzen suchen, welche mit den "Rolling Stones" <b>und</b> dem Ort "Dortmund" verbunden sind. Erfüllt ein Datensatz nur einen der Parameter (also: entweder "Rolling Stones" oder "Dortmund"), wird er nicht in der Ergebnisliste auftauchen.
+</p>
 <h2 class="border-bottom"><span class="mw-headline" id="Textsuche">Textsuche</span></h2>
 <p>Das Formular beinhaltet ein Element zur Textsuche, zu erkennen an dem Icon mit der Lupe.
 </p>
