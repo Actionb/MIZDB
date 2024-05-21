@@ -156,3 +156,6 @@ if __name__ == '__main__':
         parse_wiki_pages()
     elif cmd == "templates":
         create_templates()
+    elif cmd == "all":
+        parse_wiki_pages()
+        create_templates()
