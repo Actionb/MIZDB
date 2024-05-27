@@ -1,5 +1,13 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- clean up templates
+  - remove unused files 
+  - move templates from project root into app directory
+
 ## [0.17] - 2024-05-27
 
 ### Added
