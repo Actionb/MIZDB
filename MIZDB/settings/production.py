@@ -26,22 +26,6 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        'csrf': {
-            'class': 'logging.FileHandler',
-            'level': 'INFO',
-            'filename': '/var/log/mizdb/csrf.log',
-            'formatter': 'default',
-            'filters': ['not_autoreload'],
-            'delay': True,
-        },
-        'change_confirmation': {
-            'class': 'logging.FileHandler',
-            'level': 'INFO',
-            'filename': '/var/log/mizdb/change_confirmation.log',
-            'formatter': 'default',
-            'filters': ['not_autoreload'],
-            'delay': True,
-        },
     },
     'formatters': {
         'default': {
@@ -55,16 +39,5 @@ LOGGING = {
             'callback': lambda record: record.name != 'django.utils.autoreload'
         }
     },
-    'loggers': {
-        'dbentry.csrf': {
-            'handlers': ['csrf'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'change_confirmation': {
-            'handlers': ['change_confirmation'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
+    'loggers': {},
 }
