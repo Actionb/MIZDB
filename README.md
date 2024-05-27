@@ -22,7 +22,7 @@ Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
 ### Per script
 
-Das Script installiert Docker und ladet MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
+Das Script installiert Docker und lädt MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
 Beim Aufruf des Scripts kann eine Backup-Datei der Datenbank übergeben werden (unten: `database_backup`), worauf die
 Datenbank in der neuen Installation sofort wiederhergestellt wird.
 
