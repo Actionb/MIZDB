@@ -2,7 +2,6 @@
 Base views for the other views of the site app.
 """
 
-import logging
 from collections import OrderedDict
 from urllib.parse import parse_qsl
 
@@ -337,7 +336,7 @@ class BaseEditView(
         if not self.add:
             ctx["changelist_links"] = self.get_changelist_links(self.changelist_link_labels)
         ctx["has_errors"] = (
-            ctx["form"].errors or ctx["form"].non_field_errors() or any(fs.errors for fs in ctx["formsets"])
+                ctx["form"].errors or ctx["form"].non_field_errors() or any(fs.errors for fs in ctx["formsets"])
         )
         return ctx
 
@@ -454,12 +453,7 @@ class BaseEditView(
         """
         This view requires a confirmation for big changes to the model object.
         """
-        logger = logging.getLogger("change_confirmation")
         if "_change_confirmed" in request.POST:
-            logger.info(
-                f"User '{request.user} ({request.user.pk})' confirmed changes to "
-                f"{self.opts.object_name} id={self.get_object().pk}"
-            )
             # Restore the original form data.
             request.POST = request.session.pop("confirmed_form_data", request.POST)
             return super().post(request, *args, **kwargs)
@@ -479,11 +473,6 @@ class BaseEditView(
                     # Save the form data to be used after the confirmation:
                     request.session["confirmed_form_data"] = request.POST
                     distance = Levenshtein.distance(before, after)
-                    logger.info(
-                        f"User '{request.user} ({request.user.pk})' attempted change on "
-                        f"{self.opts.object_name} id={self.object.pk} that requires confirmation. "
-                        f"Before: '{before}', After: '{after}', Distance: {distance}, Ratio: {ratio}"
-                    )
                     context = {
                         **super(ModelViewMixin, self).get_context_data(),
                         "title": "Änderungen bestätigen",
