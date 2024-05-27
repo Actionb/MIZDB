@@ -1006,6 +1006,71 @@ class TestACVeranstaltung(RequestTestCase):
         self.assertEqual(result["selected_text"], str(self.obj))
 
 
+class TestACMostUsed(ACViewTestCase):
+    model = _models.Schlagwort
+    view_class = views.ACMostUsed
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.most_used = most_used = make(cls.model, schlagwort="Most Used")
+        cls.second_most_used = second_most_used = make(cls.model, schlagwort="Second Most Used")
+        cls.not_used = make(cls.model)
+        cls.artikel1 = make(_models.Artikel, schlagwort=[most_used])
+        cls.artikel2 = make(_models.Artikel, schlagwort=[most_used, second_most_used])
+
+    def test(self):
+        response = self.client.get(reverse("acschlagwort"))
+        self.assertEqual(response.status_code, 200)
+        results = get_result_ids(response)
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0], str(self.most_used.pk))
+        self.assertEqual(results[1], str(self.second_most_used.pk))
+        self.assertEqual(results[2], str(self.not_used.pk))
+
+    def test_search_term(self):
+        response = self.client.get(reverse("acschlagwort"), data={"q": "second most used"})
+        self.assertEqual(response.status_code, 200)
+        results = get_result_ids(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], str(self.second_most_used.pk))
+
+    def test_order_queryset(self):
+        """
+        Assert that queryset.order_by_most_used is called when no search term
+        is given.
+        """
+        order_by_most_used_mock = Mock()
+        queryset_mock = Mock(order_by_most_used=order_by_most_used_mock)
+        with patch("dbentry.admin.autocomplete.views.super") as super_mock:
+            super_mock.return_value.get_queryset.return_value = queryset_mock
+            view = self.get_view()
+            view.get_queryset()
+            order_by_most_used_mock.assert_called()
+
+    def test_order_queryset_search_term(self):
+        """
+        Assert that queryset.order_by_most_used is not called when a search
+        term is given.
+        """
+        order_by_most_used_mock = Mock()
+        queryset_mock = Mock(order_by_most_used=order_by_most_used_mock)
+        with patch("dbentry.admin.autocomplete.views.super") as super_mock:
+            super_mock.return_value.get_queryset.return_value = queryset_mock
+            view = self.get_view(q="Foo")
+            view.get_queryset()
+            order_by_most_used_mock.assert_not_called()
+
+    def test_no_field_artikel(self):
+        """
+        Assert that exceptions raised from the queryset model not having a
+        relation to model `Artikel` are caught.
+        """
+        view = self.get_view()
+        view.queryset = _models.Buch.objects.all()
+        view.get_queryset()
+
+
 class TestGND(ViewTestCase):
     path = reverse_lazy("gnd")
     view_class = views.GND
@@ -1200,66 +1265,10 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
 # Tests for various autocompletes that use the generic URL.
 ####################################################################################################
 
-
-class TestACGenre(RequestTestCase):
-    model = _models.Genre
-    path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "genre"})
-    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "genre", "create_field": "genre"})
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj = make(cls.model, genre="Electronic Dance Music", genrealias__alias="EDM")
-        super().setUpTestData()
-
-    def test(self):
-        """Assert that an autocomplete request returns the expected results."""
-        for search_term in (self.obj.pk, "Electronic Dance Music", "EDM"):
-            with self.subTest(search_term=search_term):
-                response = self.get_response(self.path, data={"q": search_term})
-                self.assertIn(str(self.obj.pk), get_result_ids(response))
-
-    def test_create_object(self):
-        """Assert that a new object can be created using a POST request."""
-        response = self.post_response(self.create_path, data={"text": "Rock"})
-        self.assertEqual(response.status_code, 200)
-        created = response.json()
-        self.assertTrue(created["id"])
-        self.assertEqual(created["text"], "Rock")
-        self.assertTrue(self.model.objects.filter(genre="Rock").exists())
-        self.assertTrue(self.model.objects.get(pk=created["id"]))
-
-
-class TestACSchlagwort(RequestTestCase):
-    model = _models.Schlagwort
-    path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "schlagwort"})
-    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "schlagwort", "create_field": "schlagwort"})
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj = make(cls.model, schlagwort="Hippies", schlagwortalias__alias="Summer of Love")
-        super().setUpTestData()
-
-    def test(self):
-        """Assert that an autocomplete request returns the expected results."""
-        for search_term in (self.obj.pk, "Hippies", "Summer of Love"):
-            with self.subTest(search_term=search_term):
-                response = self.get_response(self.path, data={"q": search_term})
-                self.assertIn(str(self.obj.pk), get_result_ids(response))
-
-    def test_create_object(self):
-        """Assert that a new object can be created using a POST request."""
-        response = self.post_response(self.create_path, data={"text": "History"})
-        self.assertEqual(response.status_code, 200)
-        created = response.json()
-        self.assertTrue(created["id"])
-        self.assertEqual(created["text"], "History")
-        self.assertTrue(self.model.objects.filter(schlagwort="History").exists())
-        self.assertTrue(self.model.objects.get(pk=created["id"]))
-
-
 class TestACInstrument(RequestTestCase):
     model = _models.Instrument
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "instrument"})
+    create_path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "instrument", "create_field": "instrument"})
 
     @classmethod
     def setUpTestData(cls):
@@ -1272,6 +1281,16 @@ class TestACInstrument(RequestTestCase):
             with self.subTest(search_term=search_term):
                 response = self.get_response(self.path, data={"q": search_term})
                 self.assertIn(str(self.obj.pk), get_result_ids(response))
+
+    def test_create_object(self):
+        """Assert that a new object can be created using a POST request."""
+        response = self.post_response(self.create_path, data={"text": "Flöte"})
+        self.assertEqual(response.status_code, 200)
+        created = response.json()
+        self.assertTrue(created["id"])
+        self.assertEqual(created["text"], "Flöte")
+        self.assertTrue(self.model.objects.filter(instrument="Flöte").exists())
+        self.assertTrue(self.model.objects.get(pk=created["id"]))
 
 
 class TestACLand(RequestTestCase):

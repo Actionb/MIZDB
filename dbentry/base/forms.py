@@ -1,5 +1,11 @@
 import re
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TypeVar
+import sys
+
+if sys.version_info > (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TypeVar, TYPE_CHECKING
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -11,19 +17,16 @@ from dbentry.utils.text import snake_case_to_spaces
 from dbentry.validators import DiscogsURLValidator
 
 # Default attrs for the TextArea form widget
-ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
+ATTRS_TEXTAREA = {"rows": 3, "cols": 90}
 
-# Hotfix 0.16.1
-# if TYPE_CHECKING:  # pragma: no cover
-#     # For static type checking purposes, have the mixins extend the concrete
-#     # base class that they are designed to be used with.
-#     FormMixinBase: TypeAlias = forms.Form
-#     ModelFormMixinBase: TypeAlias = forms.ModelForm
-# else:
-#     FormMixinBase = object
-#     ModelFormMixinBase = object
-FormMixinBase = object
-ModelFormMixinBase = object
+if TYPE_CHECKING:  # pragma: no cover
+    # For static type checking purposes, have the mixins extend the concrete
+    # base class that they are designed to be used with.
+    FormMixinBase: TypeAlias = forms.Form
+    ModelFormMixinBase: TypeAlias = forms.ModelForm
+else:
+    FormMixinBase = object
+    ModelFormMixinBase = object
 
 MinMaxForm = TypeVar("MinMaxForm", bound=Union["MinMaxRequiredFormMixin", forms.Form])
 
@@ -66,8 +69,7 @@ class FieldGroup:
         self.fields = fields
         self.min, self.max = min_fields, max_fields
         self.error_messages = self.form.get_group_error_messages(
-            group=self, error_messages=error_messages or {},
-            format_callback=format_callback
+            group=self, error_messages=error_messages or {}, format_callback=format_callback
         )
 
     def fields_with_values(self) -> int:
@@ -78,8 +80,7 @@ class FieldGroup:
                 continue
             formfield = self.form.fields[field]
             value = self.form.cleaned_data.get(field, None)
-            if ((isinstance(formfield, forms.BooleanField) and not value)
-                    or value in formfield.empty_values):
+            if (isinstance(formfield, forms.BooleanField) and not value) or value in formfield.empty_values:
                 continue
             result += 1
         return result
@@ -163,18 +164,11 @@ class MinMaxRequiredFormMixin(FormMixinBase):
     """
 
     minmax_required: List[dict]
-    min_error_message: str = gettext_lazy(
-        'Bitte mindestens {min!s} dieser Felder ausfüllen: {fields}.'
-    )
-    max_error_message: str = gettext_lazy(
-        'Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.'
-    )
+    min_error_message: str = gettext_lazy("Bitte mindestens {min!s} dieser Felder ausfüllen: {fields}.")
+    max_error_message: str = gettext_lazy("Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.")
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.default_error_messages = {
-            'min': self.min_error_message,
-            'max': self.max_error_message
-        }
+        self.default_error_messages = {"min": self.min_error_message, "max": self.max_error_message}
 
         super().__init__(*args, **kwargs)
 
@@ -183,7 +177,7 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         # on the form and set the 'required' attribute of those formfields
         # to False.
         for group_kwargs in self.minmax_required or []:
-            fields = group_kwargs.get('fields', [])
+            fields = group_kwargs.get("fields", [])
             if not fields:  # pragma: no cover
                 continue
             try:
@@ -210,9 +204,9 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         for group in self.get_groups():
             min_error, max_error = group.check()
             if min_error:
-                self.add_group_error('min', group)
+                self.add_group_error("min", group)
             if max_error:
-                self.add_group_error('max', group)
+                self.add_group_error("max", group)
         return super().clean()
 
     def add_group_error(self, error_type: str, group: FieldGroup) -> None:
@@ -221,9 +215,9 @@ class MinMaxRequiredFormMixin(FormMixinBase):
     def get_error_message_format_kwargs(self, group: FieldGroup) -> dict:
         """Get the string format arguments for the error message template."""
         return {
-            'fields': self._get_message_field_names(group),
-            'min': group.min or '0',
-            'max': group.max or '0',
+            "fields": self._get_message_field_names(group),
+            "min": group.min or "0",
+            "max": group.max or "0",
         }
 
     def _get_message_field_names(self, group: FieldGroup) -> str:
@@ -235,10 +229,7 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         )
 
     def get_group_error_messages(
-            self,
-            group: FieldGroup,
-            error_messages: dict,
-            format_callback: Optional[Union[Callable, str]] = None
+            self, group: FieldGroup, error_messages: dict, format_callback: Optional[Union[Callable, str]] = None
     ) -> dict:
         """
         Prepare and format the error messages for the given group.
@@ -267,16 +258,13 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         if callable(callback):
             error_messages = callback(self, group, error_messages, format_kwargs)
         else:
-            error_messages = {
-                k: v.format(**format_kwargs)
-                for k, v in error_messages.items()
-            }
+            error_messages = {k: v.format(**format_kwargs) for k, v in error_messages.items()}
         defaults = self.get_default_error_messages(format_kwargs)
         return {**defaults, **error_messages}
 
     def get_default_error_messages(self, format_kwargs: dict) -> dict:
         messages = {}
-        for error_type in ('min', 'max'):
+        for error_type in ("min", "max"):
             # noinspection PyUnresolvedReferences
             messages[error_type] = self.default_error_messages[error_type].format(**format_kwargs)
         return messages
@@ -347,11 +335,12 @@ class DeleteDuplicatesMixin(ModelFormMixinBase):
             self.instance.validate_unique(exclude=exclude)
         except ValidationError:
             # Ignore non-unique entries in the same formset.
-            self.cleaned_data['DELETE'] = True
+            self.cleaned_data["DELETE"] = True
 
 
 class InlineFormBase(DeleteDuplicatesMixin, forms.ModelForm):
     """Base model form class to be used in inline formsets."""
+
     pass
 
 
@@ -369,15 +358,13 @@ class DiscogsFormMixin(FormMixinBase):
 
     # TODO: all forms using this mixin use the same values for url_field_name and
     #   release_id_field_name => set these values as defaults
-    url_field_name: str = ''
-    release_id_field_name: str = ''
+    url_field_name: str = ""
+    release_id_field_name: str = ""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if self.url_field_name in self.fields:
-            self.fields[self.url_field_name].validators.append(
-                DiscogsURLValidator()
-            )
+            self.fields[self.url_field_name].validators.append(DiscogsURLValidator())
 
     def clean(self) -> dict:
         """Validate and clean release_id and discogs_url."""
@@ -385,13 +372,13 @@ class DiscogsFormMixin(FormMixinBase):
             return self.cleaned_data
 
         # Reminder: cleaned_data['release_id'] could also be integer 0 or None:
-        release_id = str(self.cleaned_data.get(self.release_id_field_name, '') or '')
-        discogs_url = self.cleaned_data.get(self.url_field_name) or ''
+        release_id = str(self.cleaned_data.get(self.release_id_field_name, "") or "")
+        discogs_url = self.cleaned_data.get(self.url_field_name) or ""
 
         if not (release_id or discogs_url):
             return self.cleaned_data
 
-        match = re.match(r'.*release/(\d+)', discogs_url)
+        match = re.match(r".*release/(\d+)", discogs_url)
         if match:
             # We have a valid url with a release_id in it.
             release_id_from_url = match.groups()[-1]
@@ -403,7 +390,7 @@ class DiscogsFormMixin(FormMixinBase):
             elif not release_id:
                 # Set release_id from the url.
                 release_id = str(match.groups()[-1])
-                self.cleaned_data['release_id'] = release_id
+                self.cleaned_data["release_id"] = release_id
         discogs_url = "https://www.discogs.com/release/" + release_id
-        self.cleaned_data['discogs_url'] = discogs_url
+        self.cleaned_data["discogs_url"] = discogs_url
         return self.cleaned_data

@@ -5,6 +5,7 @@ from dal import autocomplete
 from django import http
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldError
 from django.core.paginator import Page, Paginator
 from django.db import transaction
 from django.db.models import Model, QuerySet
@@ -382,6 +383,23 @@ class ACVeranstaltung(ACTabular):
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]
+
+
+class ACMostUsed(ACBase):
+    """
+    An autocomplete view that orders unfiltered results by how often they have
+    been used in related Artikel objects.
+    """
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if not self.q:
+            try:
+                return queryset.order_by_most_used("artikel")
+            except FieldError:
+                # Model has no field "artikel"
+                pass
+        return queryset
 
 
 class UserAutocompleteView(autocomplete.Select2QuerySetView):

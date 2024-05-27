@@ -8,6 +8,7 @@ from dbentry.autocomplete.views import (
     AutocompletePerson,
     AutocompleteMagazin,
     AutocompleteProvenienz,
+    AutocompleteMostUsed,
 )
 
 urlpatterns = [
@@ -18,4 +19,6 @@ urlpatterns = [
     path("person/", AutocompletePerson.as_view(), name="autocomplete_person"),
     path("magazin/", AutocompleteMagazin.as_view(), name="autocomplete_magazin"),
     path("provenienz/", AutocompleteProvenienz.as_view(), name="autocomplete_provenienz"),
+    path("schlagwort/", AutocompleteMostUsed.as_view(), name="autocomplete_schlagwort"),
+    path("genre/", AutocompleteMostUsed.as_view(), name="autocomplete_genre"),
 ]

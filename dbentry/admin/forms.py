@@ -1,18 +1,21 @@
+import sys
+
+if sys.version_info > (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 from typing import TYPE_CHECKING
 
 from django import forms
 from django.contrib.admin.helpers import Fieldset
 from django.forms import Form
 
-# Hotfix 0.16.1
-# if TYPE_CHECKING:  # pragma: no cover
-#     # For static type checking purposes, have the mixin extend the concrete
-#     # base class that they are designed to be used with.
-#     FormMixinBase: TypeAlias = forms.Form
-# else:
-#     FormMixinBase = object
-
-FormMixinBase = object
+if TYPE_CHECKING:  # pragma: no cover
+    # For static type checking purposes, have the mixin extend the concrete
+    # base class that they are designed to be used with.
+    FormMixinBase: TypeAlias = forms.Form
+else:
+    FormMixinBase = object
 
 
 class MIZAdminFormMixin(FormMixinBase):

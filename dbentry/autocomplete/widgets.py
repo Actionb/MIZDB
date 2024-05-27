@@ -21,6 +21,8 @@ DEFAULTS = {
     _models.Spielort: {"extra_columns": {"ort___name": "Ort"}},
     _models.Veranstaltung: {"extra_columns": {"datum": "Datum", "spielort__name": "Spielort"}},
     _models.Provenienz: {"url": "autocomplete_provenienz", "label_field": "text"},
+    _models.Schlagwort: {"url": "autocomplete_schlagwort"},
+    _models.Genre: {"url": "autocomplete_genre"},
 }
 
 
