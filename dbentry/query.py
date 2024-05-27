@@ -236,6 +236,13 @@ def build_date(
     return datetime.date(year=year, month=month, day=day)
 
 
+class InvalidJahrgangError(Exception):
+    """
+    An exception raised by AusgabeQuerySet.increment_jahrgang() if any of the
+    final Jahrgang values would be invalid (<=0).
+    """
+
+
 class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
 
@@ -263,7 +270,7 @@ class AusgabeQuerySet(CNQuerySet):
         # Always apply the chronological ordering to the search results.
         return super().search(q, ranked=False).chronological_order()
 
-    def increment_jahrgang(self, start_obj: Model, start_jg: int = 1) -> Dict[int, List[int]]:
+    def increment_jahrgang(self, start_obj: Model, start_jg: int = 1, commit: bool = True) -> Dict[int, List[int]]:
         """
         Alter the 'jahrgang' values using ``start_obj`` as starting point.
 
@@ -279,7 +286,6 @@ class AusgabeQuerySet(CNQuerySet):
             a dictionary that was used to update the jahrgang values;
               it maps jahrgang to list of ids.
         """
-        # TODO: the return value isn't use anywhere
         start = start_obj or self.chronological_order().first()
         start_date = start.e_datum
         years = start.ausgabejahr_set.values_list('jahr', flat=True)
@@ -391,9 +397,14 @@ class AusgabeQuerySet(CNQuerySet):
                 update_dict[obj_jg].append(pk)
                 ids_seen.add(pk)
 
-        with transaction.atomic():
-            for jg, ids in update_dict.items():
-                self.filter(pk__in=ids).update(jahrgang=jg)
+        if any(k < 1 for k in update_dict.keys()):
+            # Jahrgang values <= 0 do not make any sense.
+            raise InvalidJahrgangError(f"With jahrgang={start_jg} and {start_obj=}, some Jahrgang values would be <= 0")
+
+        if commit:
+            with transaction.atomic():
+                for jg, ids in update_dict.items():
+                    self.filter(pk__in=ids).update(jahrgang=jg)
 
         return update_dict
 

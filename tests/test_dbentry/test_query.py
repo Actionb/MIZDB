@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models import Count
 
 from dbentry import models as _models
-from dbentry.query import CNQuerySet, MIZQuerySet, build_date
+from dbentry.query import CNQuerySet, MIZQuerySet, build_date, InvalidJahrgangError
 from tests.case import DataTestCase, MIZTestCase
 from tests.model_factory import make
 from .models import Band
@@ -745,6 +745,17 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             self.queryset.filter(pk=self.obj1.pk).values_list('jahrgang', flat=True),
             [10]
         )
+
+    def test_invalid_jahrgang_value(self):
+        """
+        Assert that increment_jahrgang raises a ValueError if any of the final
+        Jahrgang values are <= 0.
+        """
+        mag = make(_models.Magazin)
+        obj1 = make(self.model, magazin=mag, ausgabejahr__jahr=[2002], ausgabenum__num=[1])
+        obj2 = make(self.model, magazin=mag, ausgabejahr__jahr=[2003], ausgabenum__num=[1])
+        with self.assertRaises(InvalidJahrgangError):
+            self.model.objects.filter(id__in=[obj1.pk, obj2.pk]).increment_jahrgang(start_obj=obj2, start_jg=1)
 
 
 class TestBuildDate(MIZTestCase):
