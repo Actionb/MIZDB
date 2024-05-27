@@ -29,8 +29,7 @@ class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
     site_title = 'MIZDB'
     index_title = 'Index'
-    # TODO: move tools/index.html stuff into the base admin index.html
-    index_template = 'tools/index.html'
+    index_template = 'admin/index.html'
 
     site_url = reverse_lazy("index")
     # Disable the nav sidebar:
