@@ -3,8 +3,6 @@ import re
 
 from django import forms
 from django.contrib import messages
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.dispatch import receiver
 from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
 from django.urls import reverse, resolve, Resolver404
 from django.utils.safestring import mark_safe
@@ -170,20 +168,3 @@ def csrf_failure(request: HttpRequest, reason: str) -> HttpResponse:
         if user_is_logged_in:
             logger.warning(f"{reason} user: {request.user} ({request.user.pk})")
         return django_csrf_failure(request, reason)
-
-
-# Log logins and logouts to check if unexpected logouts could be responsible
-# for CSRF failures (CSRF token is rotated on login).
-
-
-@receiver(user_logged_in)
-def log_login(sender, user, **kwargs):  # type: ignore[no-untyped-def]  # noqa
-    logger.info(f"{user} ({user.pk}) logged in.")
-
-
-@receiver(user_logged_out)
-def log_logout(sender, user=None, **kwargs):  # type: ignore[no-untyped-def]  # noqa
-    # user can be None; for example when logging out in one tab and then also
-    # logging out in another tab.
-    if user is not None:
-        logger.info(f"{user} ({user.pk}) logged out.")
