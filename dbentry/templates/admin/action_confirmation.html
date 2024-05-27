@@ -27,6 +27,8 @@
     {% block confirmation_form %}
     
         <form method="post">{% csrf_token %}
+            {% if form %}{{ form.non_field_errors }}{% endif %}
+
             {% block selection_form %}
                 {% if form %}
                     {% for fieldset in form %}
