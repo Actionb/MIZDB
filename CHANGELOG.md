@@ -8,6 +8,10 @@
   - remove unused files 
   - move templates from project root into app directory
 
+### Fixed
+
+- BulkEditJahrgang now handles invalid Jahrgang values
+
 ## [0.17] - 2024-05-27
 
 ### Added
