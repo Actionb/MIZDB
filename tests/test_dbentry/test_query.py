@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.db import models
+from django.db.models import Count
 
 from dbentry import models as _models
 from dbentry.query import CNQuerySet, MIZQuerySet, build_date
@@ -141,6 +142,17 @@ class TestMIZQuerySet(DataTestCase):
         with patch.object(self.model, "overview", create=True) as overview_mock:
             self.queryset.overview("foo", "bar")
             overview_mock.assert_called_with(self.queryset, "foo", "bar")
+
+    def test_order_by_most_used(self):
+        """Assert that order_by_most_used applies the expected ordering."""
+        queryset = self.queryset.order_by("band_name")
+        ordered = queryset.order_by_most_used("musiker")
+        self.assertEqual(ordered.query.order_by, ("-musiker__count", "band_name"))
+
+    def test_order_by_most_used_annotation(self):
+        """Assert that order_by_most_used adds the expected annotation."""
+        ordered = self.queryset.order_by_most_used("musiker")
+        self.assertEqual(ordered.query.annotations["musiker__count"], Count("musiker"))
 
 
 class CNQuerySetModel(models.Model):

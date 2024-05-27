@@ -1,5 +1,14 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+- MIZQuerySet now has an `order_by_most_used` method that orders items by how
+  often they are used in a given relation. Schlagwort and Genre autocompletes
+  are now ordered by how often they are used in Artikel relations if no search
+  term is given.
+
 ## [0.16] - 2024-05-12
 
 ### Added
@@ -12,22 +21,22 @@
 
 - disallow empty URLs
 - allow anonymous users to use changelist selection
- 
+
 ## [0.15] - 2024-04-09
 
 ### Changed
 
 - updated dependencies:
-    - updated to Django 4.2.9. Notable
-      change: [set formfield_callback](https://docs.djangoproject.com/en/5.0/releases/4.2/#forms) in `MIZEditForm.Meta`
-    - removed unused dependencies PyYAML, pipreqs and pylint
+	- updated to Django 4.2.9. Notable
+	  change: [set formfield_callback](https://docs.djangoproject.com/en/5.0/releases/4.2/#forms) in `MIZEditForm.Meta`
+	- removed unused dependencies PyYAML, pipreqs and pylint
 - admin refactor:
-    - moved modules specific to admin to `dbentry/admin`
-    - added `DbentryAdminConfig` app config. With the above change, Django's autodiscovery for the admin _module_
-      containing the model admin classes will no longer work (it will try to import `dbentry.admin`, which is now a
-      package). `DbentryAdminConfig` is a config that disables the autodiscovery and imports the admin module.
-    - moved dal package `ac` to `dbentry/admin/autocomplete`
-    - moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
+	- moved modules specific to admin to `dbentry/admin`
+	- added `DbentryAdminConfig` app config. With the above change, Django's autodiscovery for the admin _module_
+	  containing the model admin classes will no longer work (it will try to import `dbentry.admin`, which is now a
+	  package). `DbentryAdminConfig` is a config that disables the autodiscovery and imports the admin module.
+	- moved dal package `ac` to `dbentry/admin/autocomplete`
+	- moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
 - changelist action refactor: make action base views compatible with non-admin views
 - re-enable "View on site" link in admin user links
 
@@ -36,13 +45,13 @@
 ### Changed
 
 - changed handling of requests with invalid CSRF tokens:
-    - invalid login requests by authenticated users will cause a redirect to the login page so that the user can confirm
-      the login with a refreshed token
-    - invalid logout requests by authenticated users will cause a redirect to the index page with a warning message, but
-      will not log out the user
-    - invalid logout requests by _unauthenticated_ users will cause a redirect to the login page like a normal logout
-    - invalid add/change page requests will redirect back to the page, preserving the previous form data, for the user
-      to try again with a refreshed token
+	- invalid login requests by authenticated users will cause a redirect to the login page so that the user can confirm
+	  the login with a refreshed token
+	- invalid logout requests by authenticated users will cause a redirect to the index page with a warning message, but
+	  will not log out the user
+	- invalid logout requests by _unauthenticated_ users will cause a redirect to the login page like a normal logout
+	- invalid add/change page requests will redirect back to the page, preserving the previous form data, for the user
+	  to try again with a refreshed token
 
 ### Fixed
 
@@ -80,9 +89,9 @@
 ### Added
 
 - Docker support
-    - added new installation methods
-    - added management utility script `mizdb.sh`
-    - reworked handling of secret files and database connection parameters
+	- added new installation methods
+	- added management utility script `mizdb.sh`
+	- reworked handling of secret files and database connection parameters
 
 ### Changed
 
@@ -128,10 +137,10 @@
 ### Other
 
 - updated package versions:
-    - Django updated to version 4.1
-    - `django-autocomplete-light` updated to verson 3.9.4
-    - use own fork of `django-tsvector-field` to make it compatible with Django 4
-    - other minor package updates
+	- Django updated to version 4.1
+	- `django-autocomplete-light` updated to verson 3.9.4
+	- use own fork of `django-tsvector-field` to make it compatible with Django 4
+	- other minor package updates
 
 - updated tox tests
 - force using jQuery version 3.5.1 (due to a bug with select2 and jQuery 3.6)
@@ -145,9 +154,9 @@
 ### Changed
 
 - unified 'maint' and 'bulk' package into a 'tools' package. That change includes:
-    - URLs for 'maint' and 'bulk' views are now configured in tools.urls (from dbentry.urls)
-    - moved templates for 'maint' and 'bulk' views into dbentry.templates.tools (from
-      MIZDB.templates.admin)
+	- URLs for 'maint' and 'bulk' views are now configured in tools.urls (from dbentry.urls)
+	- moved templates for 'maint' and 'bulk' views into dbentry.templates.tools (from
+	  MIZDB.templates.admin)
 
 ### Changed
 

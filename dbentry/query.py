@@ -133,6 +133,15 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         """Return a queryset that provides a comprehensive overview of the objects."""
         return self.model.overview(self, *annotations)
 
+    def order_by_most_used(self, relation: str) -> QuerySet:
+        """
+        Order the records in the queryset by how often they are used in the
+        given relation.
+        """
+        name = f"{relation}__count"
+        ordering = (f"-{name}", *self.query.order_by)
+        return self.annotate(**{name: Count(relation)}).order_by(*ordering)
+
 
 class CNQuerySet(MIZQuerySet):
     # TODO: shouldn't get() update the name just like filter?

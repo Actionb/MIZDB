@@ -1,3 +1,4 @@
+from django.core.exceptions import FieldError
 from django.db import transaction
 from mizdb_tomselect.views import AutocompleteView
 from nameparser import HumanName
@@ -107,3 +108,20 @@ class AutocompleteProvenienz(MIZAutocompleteView):
 
     def get_result_values(self, results):
         return [{self.model._meta.pk.name: r.pk, "text": str(r)} for r in results]
+
+
+class AutocompleteMostUsed(MIZAutocompleteView):
+    """
+    An autocomplete view that orders unfiltered results by how often they have
+    been used in related Artikel objects.
+    """
+
+    def order_queryset(self, queryset):
+        ordered = super().order_queryset(queryset)
+        if not self.q:
+            try:
+                return ordered.order_by_most_used("artikel")
+            except FieldError:
+                # Model has no field "artikel"
+                pass
+        return ordered

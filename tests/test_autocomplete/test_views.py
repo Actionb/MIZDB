@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+from django.urls import reverse
 from mizdb_tomselect.views import SEARCH_VAR
 
 from dbentry import models as _models
@@ -10,6 +11,7 @@ from dbentry.autocomplete.views import (
     AutocompleteBuchband,
     AutocompleteMagazin,
     AutocompletePerson,
+    AutocompleteMostUsed,
 )
 from tests.case import ViewTestCase, DataTestCase
 from tests.model_factory import make
@@ -206,3 +208,69 @@ class TestAutocompletePerson(ViewTestCase):
         view = self.get_view(request)
         view.create_object({"cf": "Alice Testman"})
         log_addition_mock.assert_called()
+
+
+class TestAutocompleteMostUsed(ViewTestCase):
+    view_class = AutocompleteMostUsed
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.most_used = most_used = make(_models.Schlagwort, schlagwort="Most Used")
+        cls.second_most_used = second_most_used = make(_models.Schlagwort, schlagwort="Second Most Used")
+        cls.not_used = make(_models.Schlagwort)
+        cls.artikel1 = make(_models.Artikel, schlagwort=[most_used])
+        cls.artikel2 = make(_models.Artikel, schlagwort=[most_used, second_most_used])
+
+    def test(self):
+        request_data = {"model": "dbentry.Schlagwort", self.view_class.page_kwarg: "1"}
+        response = self.client.get(reverse("autocomplete_schlagwort"), data=request_data)
+        self.assertEqual(response.status_code, 200)
+        results = response.json()["results"]
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0]["id"], self.most_used.pk)
+        self.assertEqual(results[1]["id"], self.second_most_used.pk)
+        self.assertEqual(results[2]["id"], self.not_used.pk)
+
+    def test_search_term(self):
+        request_data = {"model": "dbentry.Schlagwort", self.view_class.page_kwarg: "1", "q": "Second Most Used"}
+        response = self.client.get(reverse("autocomplete_schlagwort"), data=request_data)
+        self.assertEqual(response.status_code, 200)
+        results = response.json()["results"]
+        self.assertTrue(len(results), 1)
+        self.assertEqual(results[0]["id"], self.second_most_used.pk)
+
+    def test_order_queryset(self):
+        """
+        Assert that queryset.order_by_most_used is called when no search term
+        is given.
+        """
+        order_by_most_used_mock = Mock()
+        queryset_mock = Mock(order_by_most_used=order_by_most_used_mock)
+        with patch("dbentry.autocomplete.views.super") as super_mock:
+            super_mock.return_value.order_queryset.return_value = queryset_mock
+            view = self.get_view(self.get_request(data={"model": "dbentry.Schlagwort"}))
+            view.order_queryset(_models.Schlagwort.objects.all())
+            order_by_most_used_mock.assert_called()
+
+    def test_order_queryset_search_term(self):
+        """
+        Assert that queryset.order_by_most_used is not called when a search
+        term is given.
+        """
+        order_by_most_used_mock = Mock()
+        queryset_mock = Mock(order_by_most_used=order_by_most_used_mock)
+        with patch("dbentry.autocomplete.views.super") as super_mock:
+            super_mock.return_value.order_queryset.return_value = queryset_mock
+            view = self.get_view(self.get_request(data={"model": "dbentry.Schlagwort"}))
+            view.q = "Foo"
+            view.order_queryset(_models.Schlagwort.objects.all())
+            order_by_most_used_mock.assert_not_called()
+
+    def test_no_field_artikel(self):
+        """
+        Assert that exceptions raised from the queryset model not having a
+        relation to model `Artikel` are caught.
+        """
+        view = self.get_view(self.get_request(data={"model": "dbentry.Buch"}))
+        view.order_queryset(_models.Buch.objects.all())
