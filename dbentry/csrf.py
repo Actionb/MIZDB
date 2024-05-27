@@ -1,4 +1,3 @@
-import logging
 import re
 
 from django import forms
@@ -9,8 +8,6 @@ from django.utils.safestring import mark_safe
 from django.views.csrf import csrf_failure as django_csrf_failure
 
 from dbentry.site.registry import miz_site
-
-logger = logging.getLogger(__name__)
 
 CSRF_FORM_DATA_KEY = "_csrf_form_data"
 
@@ -165,6 +162,4 @@ def csrf_failure(request: HttpRequest, reason: str) -> HttpResponse:
         request.session[CSRF_FORM_DATA_KEY] = dict(form_data.lists())
         return HttpResponseRedirect(request.get_full_path())
     else:
-        if user_is_logged_in:
-            logger.warning(f"{reason} user: {request.user} ({request.user.pk})")
         return django_csrf_failure(request, reason)
