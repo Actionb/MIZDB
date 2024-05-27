@@ -62,6 +62,7 @@ def check_same_magazin(view: ActionConfirmationView) -> bool:
 class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
     """View that bulk edits the Jahrgang of a collection of Ausgabe instances."""
 
+    title = "Jahrgang hinzufügen"
     action_name = "bulk_jg"
     action_allowed_checks = [check_same_magazin]
 
