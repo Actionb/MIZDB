@@ -40,7 +40,9 @@ class WikiParser:
         return self.elements
 
     def add(self, tag):
-        if tag is not None:
+        def is_empty_p(t):
+            return t.name == "p" and str(t) == "<p><br/>\n</p>"
+        if tag is not None and not is_empty_p(tag):
             self.elements.append(tag)
 
     def clean_tag(self, tag: Tag):
