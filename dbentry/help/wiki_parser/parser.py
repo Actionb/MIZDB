@@ -93,6 +93,8 @@ class WikiParser:
         wiki_prefix = "/wiki"
         for a in tag.find_all(href=re.compile(rf"^{wiki_prefix}")):
             a["href"] = a["href"].replace(wiki_prefix, "/help")
+            if not a["href"].endswith("/"):
+                a["href"] += "/"
 
     def _strip_self_links(self, tag: Tag):
         for a in tag.find_all(class_="selflink"):
