@@ -2,28 +2,34 @@
 
 {% block content %}
 <h1 class="border-bottom">Löschen</h1>
-<p>Beim Löschen wird der jeweilige <a href="/help/Datensatz" title="Datensatz">Datensatz</a> aus der Datenbank entfernt. </p>
+<p>Beim Löschen wird der jeweilige <a href="/help/Datensatz" title="Datensatz">Datensatz</a> aus der Datenbank entfernt.
+</p>
 <p> Eine Wiederherstellung ist nicht möglich. Verweise von anderen Datensätzen auf diesen gelöschten Datensatz werden ebenfalls entfernt: löscht man ein Genre, so wird auch bei jedem Musiker der Verweis auf jenes Genre gelöscht.
 </p>
 <p>Alle von der Löschung betroffenen Objekte und Verweise (Beziehungen) werden in der Zusammenfassung auf der Seite, die die Löschung einleitet, aufgelistet.
 </p>
 <p><br/>
 </p>
-<h2 class="border-bottom"><span id="Geschützte_Objekte"></span><span class="mw-headline" id="Gesch.C3.BCtzte_Objekte">Geschützte Objekte</span></h2>
-<p>Manche Datensätze können nur unter bestimmten Umständen gelöscht werden. Versucht man, einen Datensatz mit geschützten Objekten zu löschen, so warnt die Datenbank:  
+<h2 class="border-bottom">
+  <span id="Geschützte_Objekte"></span><span class="mw-headline" id="Gesch.C3.BCtzte_Objekte">Geschützte Objekte</span>
+</h2>
+<p>Manche Datensätze können nur unter bestimmten Umständen gelöscht werden. Versucht man, einen Datensatz mit geschützten Objekten zu löschen, so warnt die Datenbank:
 </p>
 <pre>Kann Ausgabe nicht löschen
 Das Löschen von Ausgabe „2000-1“ würde ein Löschen der folgenden geschützten verwandte Objekte erfordern: Artikel: Testartikel
 </pre>
-<p>Um das zu erklären, hier eine Beispiel mit <a href="/help/Artikel" title="Artikel">Artikeln</a> und <a href="/help/Ausgabe" title="Ausgabe">Ausgaben</a>:
+<p>Um das zu erklären, hier eine Beispiel mit <a href="/help/Artikel" title="Artikel">Artikeln</a> und
+  <a href="/help/Ausgabe" title="Ausgabe">Ausgaben</a>:
 </p>
 <p>Ein Artikel erfordert immer eine Angabe zu der Ausgabe einer Zeitschrift, aus der der Artikel stammt. Dementsprechend ist Ausgabe ein notwendig erforderliches Feld (das nicht leer bleiben darf) für jeden Datensatz eines Artikels.
 </p>
-<p>Wird die Ausgabe eines Artikels gelöscht, würde auch der Verweis auf die Ausgabe aus dem Datensatz des Artikels verschwinden; das Feld Ausgabe würde für den Artikel leer bleiben - dies ist aber nicht erlaubt (<a class="extiw" href="https://en.wikipedia.org/wiki/de:Referentielle_Integrit%C3%A4t" title="wikipedia:de:Referentielle Integrität">Referentielle Integrität</a>).  
+<p>Wird die Ausgabe eines Artikels gelöscht, würde auch der Verweis auf die Ausgabe aus dem Datensatz des Artikels verschwinden; das Feld Ausgabe würde für den Artikel leer bleiben - dies ist aber nicht erlaubt (<a class="extiw" href="https://en.wikipedia.org/wiki/de:Referentielle_Integrit%C3%A4t" title="wikipedia:de:Referentielle Integrität">Referentielle Integrität</a>).
 </p>
-<p>Die Datenbank würde dieses Beziehungsproblem dadurch lösen, dass sie <b>den Artikel ebenfalls löscht</b>. In manchen Fällen ist dieses Verhalten durchaus erwünscht. Bei Ausgaben könnte dies jedoch zur Löschung von vielen Artikeln auf einen Schlag führen.
-Um eine Löschung mit drastischen Folgen vorzubeugen, ist die Löschung von manchen Arten von Datensätzen (Ausgaben, Magazine) nur dann erlaubt, wenn es keine verwandten Datensätzen gibt, die von dem zu löschenden Datensatz abhängig sind und dementsprechend dann ebenfalls gelöscht werden würden.
+<p>Die Datenbank würde dieses Beziehungsproblem dadurch lösen, dass sie
+  <b>den Artikel ebenfalls löscht</b>. In manchen Fällen ist dieses Verhalten durchaus erwünscht. Bei Ausgaben könnte dies jedoch zur Löschung von vielen Artikeln auf einen Schlag führen.
+  Um eine Löschung mit drastischen Folgen vorzubeugen, ist die Löschung von manchen Arten von Datensätzen (Ausgaben, Magazine) nur dann erlaubt, wenn es keine verwandten Datensätzen gibt, die von dem zu löschenden Datensatz abhängig sind und dementsprechend dann ebenfalls gelöscht werden würden.
 </p>
-<p>Die Beziehung von Artikel zu Ausgabe gilt als geschützt: eine Ausgabe <i>ohne</i> Artikel kann gelöscht werden. Eine <i>mit</i> Artikeln jedoch nicht.
+<p>Die Beziehung von Artikel zu Ausgabe gilt als geschützt: eine Ausgabe <i>ohne</i> Artikel kann gelöscht werden. Eine
+  <i>mit</i> Artikeln jedoch nicht.
 </p>
 {% endblock content %}

@@ -2,71 +2,103 @@
 
 {% block content %}
 <h1 class="border-bottom">Autor</h1>
-<p>Hier werden Autorinnen und Autoren von Büchern, Artikel, etc. gelistet. Es muss zumindest  ein Kürzel oder die Person des Autors angegeben werden.
+<p>Hier werden Autorinnen und Autoren von Büchern, Artikel, etc. gelistet. Es muss zumindest ein Kürzel oder die Person des Autors angegeben werden.
 </p>
 <h2 class="border-bottom"><span class="mw-headline" id="Felder">Felder</span></h2>
 <h6 class="fw-bold"><span id="Kürzel"></span><span class="mw-headline" id="K.C3.BCrzel">Kürzel</span></h6>
-<dl class="ms-4"><dd>Häufig wird der Autor eines <a href="/help/Artikel" title="Artikel">Artikels</a> nur in verkürzter Form angegeben (z.B. Initialen). Auch ein kurzer Spitzname kann hier angegeben werden. Maximal 8 Zeichen.</dd></dl>
+<dl class="ms-4">
+  <dd>Häufig wird der Autor eines
+    <a href="/help/Artikel" title="Artikel">Artikels</a> nur in verkürzter Form angegeben (z.B. Initialen). Auch ein kurzer Spitzname kann hier angegeben werden. Maximal 8 Zeichen.
+  </dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Person">Person</span></h6>
-<dl class="ms-4"><dd>Verweis auf den <a href="/help/Datensatz" title="Datensatz">Datensatz</a>, der die <a href="/help/Person" title="Person">Person</a> dieses Autors repräsentiert.</dd></dl>
+<dl class="ms-4">
+  <dd>Verweis auf den <a href="/help/Datensatz" title="Datensatz">Datensatz</a>, der die
+    <a href="/help/Person" title="Person">Person</a> dieses Autors repräsentiert.
+  </dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Beschreibung">Beschreibung</span></h6>
-<dl class="ms-4"><dd>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</dd></dl>
+<dl class="ms-4">
+  <dd>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Bemerkungen">Bemerkungen</span></h6>
-<dl class="ms-4"><dd>Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.</dd></dl>
+<dl class="ms-4">
+  <dd>Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Magazine">Magazine</span></h6>
-<dl class="ms-4"><dd>Hier kann man angeben, bei welchen <a href="/help/Magazin" title="Magazin">Magazinen</a> der Autor mitwirkt oder mitgewirkt hat.</dd></dl>
-<h2 class="border-bottom"><span class="mw-headline" id="Schnellerstellung_mit_Dropdown">Schnellerstellung mit Dropdown</span></h2>
+<dl class="ms-4">
+  <dd>Hier kann man angeben, bei welchen
+    <a href="/help/Magazin" title="Magazin">Magazinen</a> der Autor mitwirkt oder mitgewirkt hat.
+  </dd>
+</dl>
+<h2 class="border-bottom">
+  <span class="mw-headline" id="Schnellerstellung_mit_Dropdown">Schnellerstellung mit Dropdown</span></h2>
 <p>
-Von anderen Formularen (z.B. dem für Artikel) aus, kann mithilfe des Such-Dropdowns für Autoren auch direkt ein Datensatz für einen neuen Autor erstellt werden. Dabei berücksichtigt das <a class="extiw" href="https://en.wikipedia.org/wiki/de:Steuerelement" title="wikipedia:de:Steuerelement">Steuerelement</a> gängige Schreibweisen für bürgerliche Namen, um einen passenden Datensatz erstellen zu können. </p>
+  Von anderen Formularen (z.B. dem für Artikel) aus, kann mithilfe des Such-Dropdowns für Autoren auch direkt ein Datensatz für einen neuen Autor erstellt werden. Dabei berücksichtigt das
+  <a class="extiw" href="https://en.wikipedia.org/wiki/de:Steuerelement" title="wikipedia:de:Steuerelement">Steuerelement</a> gängige Schreibweisen für bürgerliche Namen, um einen passenden Datensatz erstellen zu können.
+</p>
 <p>Hier einige Beispiele. Links der Text, der in das Steuerelement eingegeben wird und rechts die Daten, mit denen der Datensatz für den Autor erstellt wird.
 </p>
 <table class="table table-bordered">
-<thead class="text-center table-primary"><tr>
-<th>Eingabetext</th>
-<th>Vorname</th>
-<th>Nachname</th>
-<th>Autoren-Kürzel
-</th></tr></thead><tbody class="text-end">
-<tr>
-<td>Mustermann</td>
-<td></td>
-<td>Mustermann</td>
-<td>
-</td></tr>
-<tr>
-<td>Max Mustermann</td>
-<td>Max</td>
-<td>Mustermann</td>
-<td>
-</td></tr>
-<tr>
-<td>Mustermann, Max</td>
-<td>Max</td>
-<td>Mustermann</td>
-<td>
-</td></tr>
-<tr>
-<td>Mustermann (MM)</td>
-<td></td>
-<td>Mustermann</td>
-<td>MM
-</td></tr>
-<tr>
-<td>Max (MM) Mustermann</td>
-<td>Max</td>
-<td>Mustermann</td>
-<td>MM
-</td></tr>
-<tr>
-<td>Max "MM" Mustermann</td>
-<td>Max</td>
-<td>Mustermann</td>
-<td>MM
-</td></tr>
-<tr>
-<td>Mustermann, Max (MM)</td>
-<td>Max</td>
-<td>Mustermann</td>
-<td>MM
-</td></tr></tbody></table>
+  <thead class="text-center table-primary">
+  <tr>
+    <th>Eingabetext</th>
+    <th>Vorname</th>
+    <th>Nachname</th>
+    <th>Autoren-Kürzel
+    </th>
+  </tr>
+  </thead>
+  <tbody class="text-end">
+  <tr>
+    <td>Mustermann</td>
+    <td></td>
+    <td>Mustermann</td>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <td>Max Mustermann</td>
+    <td>Max</td>
+    <td>Mustermann</td>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <td>Mustermann, Max</td>
+    <td>Max</td>
+    <td>Mustermann</td>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <td>Mustermann (MM)</td>
+    <td></td>
+    <td>Mustermann</td>
+    <td>MM
+    </td>
+  </tr>
+  <tr>
+    <td>Max (MM) Mustermann</td>
+    <td>Max</td>
+    <td>Mustermann</td>
+    <td>MM
+    </td>
+  </tr>
+  <tr>
+    <td>Max "MM" Mustermann</td>
+    <td>Max</td>
+    <td>Mustermann</td>
+    <td>MM
+    </td>
+  </tr>
+  <tr>
+    <td>Mustermann, Max (MM)</td>
+    <td>Max</td>
+    <td>Mustermann</td>
+    <td>MM
+    </td>
+  </tr>
+  </tbody>
+</table>
 {% endblock content %}

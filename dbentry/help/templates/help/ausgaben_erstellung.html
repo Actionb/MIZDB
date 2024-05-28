@@ -2,98 +2,172 @@
 
 {% block content %}
 <h1 class="border-bottom">Ausgaben Erstellung</h1>
-<p>Dieses Formular dient zur Eingabe vieler <a href="/help/Ausgabe" title="Ausgabe">Ausgaben</a> gleichzeitig. Damit können Jahrgänge zügig neu erfasst werden. 
+<p>Dieses Formular dient zur Eingabe vieler
+  <a href="/help/Ausgabe" title="Ausgabe">Ausgaben</a> gleichzeitig. Damit können Jahrgänge zügig neu erfasst werden.
 </p>
-<p><b>Anmerkung</b>: Wenn ihr die Bestandsangaben bereits erfasster Ausgaben erweitern wollt, ist die <a href="/help/Aktion#Best.C3.A4nde_bearbeiten" title="Aktion">Aktion 'Bestände bearbeiten'</a> besser geeignet.
+<p><b>Anmerkung</b>: Wenn ihr die Bestandsangaben bereits erfasster Ausgaben erweitern wollt, ist die
+  <a href="/help/Aktion#Best.C3.A4nde_bearbeiten" title="Aktion">Aktion 'Bestände bearbeiten'</a> besser geeignet.
 </p>
 <h2 class="border-bottom"><span class="mw-headline" id="Funktionsweise">Funktionsweise</span></h2>
 <p>Ganz grob gefasst, ist der Arbeitsablauf hier wie folgt:
 </p>
-<ol><li>Hefte nach Jahrgängen sortieren und zusammenstellen</li>
-<li>Grunddaten eintragen: Magazin, Jahrgangsangabe, Jahr(e)</li>
-<li>Lagerort für die neuen Ausgaben einstellen</li>
-<li>numerische Daten eintragen: Nummern, laufende Nummern, Monatszahlen</li>
-<li>Vorschau erstellen und auf Korrektheit prüfen</li>
-<li>falls nötig Daten korrigieren und neue Vorschau erstellen</li>
-<li>Abspeichern</li></ol>
-<p>Die <b>Vorschau</b> gibt einen Überblick darüber, wie die Angaben auf die verschiedenen Ausgaben verteilt werden. Dabei sucht die Datenbank nach bereits vorhandenen Ausgaben-Datensätzen, die den Angaben entsprechen. Wird ein solcher Datensatz gefunden, so wird kein neuer Datensatz für die jeweilige Ausgabe erstellt. Stattdessen wird dem existierenden Datensatz ein Dubletten-Bestand zugewiesen, dessen Lagerort mit <a href="#Lagerort_f._Dubletten">#Lagerort f. Dubletten</a> festgelegt wird.
+<ol>
+  <li>Hefte nach Jahrgängen sortieren und zusammenstellen</li>
+  <li>Grunddaten eintragen: Magazin, Jahrgangsangabe, Jahr(e)</li>
+  <li>Lagerort für die neuen Ausgaben einstellen</li>
+  <li>numerische Daten eintragen: Nummern, laufende Nummern, Monatszahlen</li>
+  <li>Vorschau erstellen und auf Korrektheit prüfen</li>
+  <li>falls nötig Daten korrigieren und neue Vorschau erstellen</li>
+  <li>Abspeichern</li>
+</ol>
+<p>Die
+  <b>Vorschau</b> gibt einen Überblick darüber, wie die Angaben auf die verschiedenen Ausgaben verteilt werden. Dabei sucht die Datenbank nach bereits vorhandenen Ausgaben-Datensätzen, die den Angaben entsprechen. Wird ein solcher Datensatz gefunden, so wird kein neuer Datensatz für die jeweilige Ausgabe erstellt. Stattdessen wird dem existierenden Datensatz ein Dubletten-Bestand zugewiesen, dessen Lagerort mit
+  <a href="#Lagerort_f._Dubletten">#Lagerort f. Dubletten</a> festgelegt wird.
 </p>
-<p>Die Felder "Jahrgang" und "Jahr" zählen nach Abspeichern mit "<b>Sichern und mehr erstellen</b>" automatisch hoch. Das Formular ist dann sofort bereit für die Erstellung des nächsten Jahrganges. Im Idealfall könnt ihr so mehrere Jahrgänge in wenigen Minuten erstellen. Klickt ihr auf "Sichern und erstellte Ausgaben bearbeiten", werdet ihr von der Datenbank nach dem Sichern direkt auf die <a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungsliste</a> geführt, wo die erstellten Ausgaben gelistet werden.
+<p>Die Felder "Jahrgang" und "Jahr" zählen nach Abspeichern mit "<b>Sichern und mehr erstellen</b>" automatisch hoch. Das Formular ist dann sofort bereit für die Erstellung des nächsten Jahrganges. Im Idealfall könnt ihr so mehrere Jahrgänge in wenigen Minuten erstellen. Klickt ihr auf "Sichern und erstellte Ausgaben bearbeiten", werdet ihr von der Datenbank nach dem Sichern direkt auf die
+  <a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungsliste</a> geführt, wo die erstellten Ausgaben gelistet werden.
 </p>
-<p><b><span style="color:red;">WICHTIG</span></b>: Es wird abgespeichert was in dem Formular steht, nicht was in der Vorschau gezeigt wird! Erstellt ihr eine Vorschau zu einer Reihe von Angaben und ändert dann die Angaben wieder, werden die gespeicherten Ausgaben NICHT der Vorschau entsprechen.
-Es ist also am besten, nach jeder Änderung immer erst eine Vorschau zu erstellen und danach abzuspeichern.
+<p>
+  <b><span style="color:red;">WICHTIG</span></b>: Es wird abgespeichert was in dem Formular steht, nicht was in der Vorschau gezeigt wird! Erstellt ihr eine Vorschau zu einer Reihe von Angaben und ändert dann die Angaben wieder, werden die gespeicherten Ausgaben NICHT der Vorschau entsprechen.
+  Es ist also am besten, nach jeder Änderung immer erst eine Vorschau zu erstellen und danach abzuspeichern.
 </p>
 <h2 class="border-bottom"><span class="mw-headline" id="Ein_Beispiel">Ein Beispiel</span></h2>
 <p>Mal angenommen, ihr habt drei Hefte vom Magazin "Musik Express" vor euch liegen. Alle drei Hefte sind aus dem Jahr "2000" und ihre Ausgabennummern sind jeweils "1", "2" und "3". Die Hefte sind alle aus dem 10. Jahrgang des Magazines. Sie sollen in "Raum 101" gelagert werden.
 </p>
 <p>Zu erkennen ist, dass es zwei Arten von Daten gibt. Es gibt Daten, die von allen drei der Hefte geteilt werden (Magazin, Jahrgang und Jahr), und es gibt Daten, die von Heft zu Heft unterschiedlich sind (Ausgabennummer).
-Das Formular besitzt dementsprechend auch zwei Teile:
+  Das Formular besitzt dementsprechend auch zwei Teile:
 </p>
-<ul><li>im ersten, oberen Teil macht ihr Angaben, die jeder Ausgabe gleichermaßen angehören und zu jedem neuen Datensatz auch hinzugefügt werden. Gebt ihr unter <code>Jahrgang</code> "10" an, so werden den Ausgaben 1, 2 und 3 der Jahrgang "10" hinzugefügt.</li>
-<li>Angaben aus dem zweiten, unteren Teil werden auf die einzelnen Ausgaben verteilt - die <i>Verteilung</i> bestimmt daher auch wieviel Ausgaben schlussendlich erzeugt werden. Tragt ihr unter <code>Nummer</code> "1,2,3" ein, so wird die Datenbank drei Ausgaben mit je einer Nummer eins bis drei erstellen.</li></ul>
-<p>Um die drei Ausgaben nun zu erfassen und in die Datenbank aufzunehmen, gebt ihr im ersten Teil das <code>Magazin</code> "Musik Express", den <code>Jahrgang</code> "10", das <code>Jahr</code> "2000" und den <code>Lagerort f. Ausgaben</code> "Raum 101" an. Im zweiten Teil tragt ihr unter <code>Nummer</code> "1,2,3" (oder "1-3", <a href="#Gruppierungen">siehe #Gruppierungen</a>) ein.
-Als nächstes klickt ihr auf <code>Vorschau</code>. Mit der Vorschau zeigt euch die Datenbank, wie die Ausgaben aussehen werden. Kontrolliert hier eure Angaben. Mit einem Klick auf einen der Speicher-Knöpfe wird der Prozess abgeschlossen.
+<ul>
+  <li>im ersten, oberen Teil macht ihr Angaben, die jeder Ausgabe gleichermaßen angehören und zu jedem neuen Datensatz auch hinzugefügt werden. Gebt ihr unter
+    <code>Jahrgang</code> "10" an, so werden den Ausgaben 1, 2 und 3 der Jahrgang "10" hinzugefügt.
+  </li>
+  <li>Angaben aus dem zweiten, unteren Teil werden auf die einzelnen Ausgaben verteilt - die
+    <i>Verteilung</i> bestimmt daher auch wieviel Ausgaben schlussendlich erzeugt werden. Tragt ihr unter
+    <code>Nummer</code> "1,2,3" ein, so wird die Datenbank drei Ausgaben mit je einer Nummer eins bis drei erstellen.
+  </li>
+</ul>
+<p>Um die drei Ausgaben nun zu erfassen und in die Datenbank aufzunehmen, gebt ihr im ersten Teil das
+  <code>Magazin</code> "Musik Express", den <code>Jahrgang</code> "10", das <code>Jahr</code> "2000" und den
+  <code>Lagerort f. Ausgaben</code> "Raum 101" an. Im zweiten Teil tragt ihr unter
+  <code>Nummer</code> "1,2,3" (oder "1-3", <a href="#Gruppierungen">siehe #Gruppierungen</a>) ein.
+  Als nächstes klickt ihr auf
+  <code>Vorschau</code>. Mit der Vorschau zeigt euch die Datenbank, wie die Ausgaben aussehen werden. Kontrolliert hier eure Angaben. Mit einem Klick auf einen der Speicher-Knöpfe wird der Prozess abgeschlossen.
 </p>
 <p>Die Datenbank erstellt nun drei Ausgaben-<a href="/help/Datensatz" title="Datensatz">Datensätze</a>: "2000-1", "2000-2" und "2000-3".
 </p>
 <h2 class="border-bottom"><span class="mw-headline" id="Felder">Felder</span></h2>
 <h6 class="fw-bold"><span class="mw-headline" id="Magazin">Magazin</span></h6>
-<dl class="ms-4"><dd>Der Name des Magazins der Ausgaben.</dd></dl>
+<dl class="ms-4">
+  <dd>Der Name des Magazins der Ausgaben.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Jahrgang">Jahrgang</span></h6>
-<dl class="ms-4"><dd>Der Jahrgang der Ausgaben. Angaben in diesem Feld werden beim Abspeichern hochgezählt.</dd></dl>
+<dl class="ms-4">
+  <dd>Der Jahrgang der Ausgaben. Angaben in diesem Feld werden beim Abspeichern hochgezählt.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Jahr">Jahr</span></h6>
-<dl class="ms-4"><dd>Das Jahr (oder die Jahre, getrennt mit Kommas) der Ausgaben. Angaben in diesem Feld werden beim Abspeichern hochgezählt.</dd></dl>
+<dl class="ms-4">
+  <dd>Das Jahr (oder die Jahre, getrennt mit Kommas) der Ausgaben. Angaben in diesem Feld werden beim Abspeichern hochgezählt.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Bearbeitungsstatus">Bearbeitungsstatus</span></h6>
-<dl class="ms-4"><dd>Der Stand der Bearbeitung/Erfassung der Artikel der Ausgaben.</dd></dl>
+<dl class="ms-4">
+  <dd>Der Stand der Bearbeitung/Erfassung der Artikel der Ausgaben.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Beschreibung">Beschreibung</span></h6>
-<dl class="ms-4"><dd>Beschreibungen <i>für alle</i> Ausgaben.</dd></dl>
+<dl class="ms-4">
+  <dd>Beschreibungen <i>für alle</i> Ausgaben.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Bemerkungen">Bemerkungen</span></h6>
-<dl class="ms-4"><dd>Bemerkungen <i>für alle</i> Ausgaben.</dd></dl>
+<dl class="ms-4">
+  <dd>Bemerkungen <i>für alle</i> Ausgaben.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Musik_Beilage">Musik Beilage</span></h6>
-<dl class="ms-4"><dd>Liegt <b>allen</b> Ausgaben eine Musik-CD, o.ä. bei, setzt den Haken bei dem Feld 'Musik-Beilage'. Ein entsprechender Datensatz wird dann in der Audiotabelle erstellt und mit der jeweiligen Ausgabe verknüpft.</dd></dl>
+<dl class="ms-4">
+  <dd>Liegt
+    <b>allen</b> Ausgaben eine Musik-CD, o.ä. bei, setzt den Haken bei dem Feld 'Musik-Beilage'. Ein entsprechender Datensatz wird dann in der Audiotabelle erstellt und mit der jeweiligen Ausgabe verknüpft.
+  </dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Lagerort_f._Ausgaben">Lagerort f. Ausgaben</span></h6>
-<dl class="ms-4"><dd>Der Lagerort für die erfassten Ausgaben.</dd></dl>
+<dl class="ms-4">
+  <dd>Der Lagerort für die erfassten Ausgaben.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Lagerort_f._Dubletten">Lagerort f. Dubletten</span></h6>
-<dl class="ms-4"><dd>Sollte eine der im Formular angegebenen Ausgaben bereits einen Bestand in der Datenbank haben, so wird automatisch ein Dublettenbestand hinzugefügt und die vorhandene Ausgabe erscheint im Vorschau-Bereich 'Bereits vorhanden'. Bitte kontrolliert die Korrektheit eurer Angaben, sollte dies der Fall sein.</dd></dl>
+<dl class="ms-4">
+  <dd>Sollte eine der im Formular angegebenen Ausgaben bereits einen Bestand in der Datenbank haben, so wird automatisch ein Dublettenbestand hinzugefügt und die vorhandene Ausgabe erscheint im Vorschau-Bereich 'Bereits vorhanden'. Bitte kontrolliert die Korrektheit eurer Angaben, sollte dies der Fall sein.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Provenienz">Provenienz</span></h6>
-<dl class="ms-4"><dd>Die Herkunft der Hefte. Siehe <a href="/help/Provenienz" title="Provenienz">Provenienz</a>.</dd></dl>
+<dl class="ms-4">
+  <dd>Die Herkunft der Hefte. Siehe <a href="/help/Provenienz" title="Provenienz">Provenienz</a>.</dd>
+</dl>
 <hr/>
 <p>Angaben, die mittels <a href="#Gruppierungen">#Gruppierungen</a> auf die Ausgaben verteilt werden:
 </p>
 <h6 class="fw-bold"><span class="mw-headline" id="Nummer">Nummer</span></h6>
-<dl class="ms-4"><dd>Die Nummern der Ausgaben. Siehe <a href="/help/Ausgabe#Ausgabennummer" title="Ausgabe">Ausgabe#Ausgabennummer</a>.</dd></dl>
+<dl class="ms-4">
+  <dd>Die Nummern der Ausgaben. Siehe <a href="/help/Ausgabe#Ausgabennummer" title="Ausgabe">Ausgabe#Ausgabennummer</a>.
+  </dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Monate">Monate</span></h6>
-<dl class="ms-4"><dd>Die Monats<i><b>zahlen</b></i> 1 bis 12.</dd></dl>
+<dl class="ms-4">
+  <dd>Die Monats<i><b>zahlen</b></i> 1 bis 12.</dd>
+</dl>
 <h6 class="fw-bold"><span class="mw-headline" id="Laufende_Nummer">Laufende Nummer</span></h6>
-<dl class="ms-4"><dd>Die fortlaufenden Nummern der Ausgaben. Siehe <a href="/help/Ausgabe#laufende_Nummer" title="Ausgabe">Ausgabe#laufende_Nummer</a>.</dd></dl>
+<dl class="ms-4">
+  <dd>Die fortlaufenden Nummern der Ausgaben. Siehe
+    <a href="/help/Ausgabe#laufende_Nummer" title="Ausgabe">Ausgabe#laufende_Nummer</a>.
+  </dd>
+</dl>
 <h2 class="border-bottom"><span class="mw-headline" id="Gruppierungen">Gruppierungen</span></h2>
-<p>Mit 'Gruppierung' ist die Zusammenfassung von verschiedenen Daten, die genau eine Ausgabe beschreiben sollen, gemeint. Zur Festlegung von Gruppierung sind, neben Ziffern, folgende Zeichen erlaubt: 
+<p>Mit 'Gruppierung' ist die Zusammenfassung von verschiedenen Daten, die genau eine Ausgabe beschreiben sollen, gemeint. Zur Festlegung von Gruppierung sind, neben Ziffern, folgende Zeichen erlaubt:
 </p>
-<dl class="ms-4"><dt>"," (Trennzeichen)</dt>
-<dd>Ein Komma trennt einzelne Gruppierungen von Angaben voneinander:</dd>
-<dd><code>1,3,6</code> beschreibt fünf Ausgaben: "1", "3" und "6"</dd>
-<dt>"-" (von bis)</dt>
-<dd>Das Minus-Zeichen stellt eine Reihe von Angaben dar:</dd>
-<dd><code>1-4</code> beschreibt vier Ausgaben: "1", "2", "3" und "4"</dd>
-<dt>"/" (einfache Gruppierung)</dt>
-<dd>Das Slash-Zeichen weist einer einzelnen Ausgabe mehrere Angaben zu:</dd>
-<dd><code>1,3,6/7</code> beschreibt drei Ausgaben: "1" und "3" und "6 UND 7"</dd>
-<dt>"*" (mehrfache Gruppierung)</dt>
-<dd>Das Sternchen erlaubt Zuweisung mehrerer Angaben zu einer Reihe (Kombination von "-" und "/"):</dd>
-<dd><code>1-4*2</code> beschreibt "1/2" und "3/4" (Nummer 1 bis 4, je zwei Nummern pro Ausgabe)</dd>
-<dd><code>1-6*3</code> beschreibt "1/2/3" und "4/5/6" (Nummern 1 bis 6, je drei Nummern pro Ausgabe)</dd></dl>
-<h3 class="border-bottom"><span id="Beispiele_für_Gruppierungen"></span><span class="mw-headline" id="Beispiele_f.C3.BCr_Gruppierungen">Beispiele für Gruppierungen</span></h3>
-<ul><li>Eine Ausgabe mit der Nummer 6 und den Monaten April und Mai:</li></ul>
-<dl class="ms-4"><dd>Nummer-Feld: <code>6</code></dd>
-<dd>Monat-Feld: <code>4/5</code></dd></dl>
-<ul><li>Zwei Ausgaben mit den laufenden Nummern 253 und 255:</li></ul>
-<dl class="ms-4"><dd>Laufende Nummer: <code>253,255</code></dd></dl>
-<ul><li>Drei Ausgaben mit Nummern 3 bis 5 und Monaten Januar/Februar und März/April und Mai/Juni:</li></ul>
-<dl class="ms-4"><dd>Nummer: <code>3-5</code> (oder natürlich auch <code>3,4,5</code>)</dd>
-<dd>Monat: <code>1-6*2</code> (oder auch <code>1/2,3/4,5/6</code>)</dd></dl>
-<ul><li>Ein ganzer Jahrgang von 11 Ausgaben mit Monaten Jan bis Dez, wobei im Juli und August eine zwei-monatige Ausgabe erschienen ist:</li></ul>
-<dl class="ms-4"><dd>Monat: <code>1-6,7/8,9-12</code> (oder auch <code>1,2,3,4,5,6,7/8,9,10,11,12</code>)</dd></dl>
-<ul><li>Eine jahresübergreifende Ausgabe mit dem Monat Dezember im Jahre 2000 und dem Monat Januar im Jahre 2001:</li></ul>
-<dl class="ms-4"><dd>Jahr: <code>2000,2001</code></dd>
-<dd>Monat: <code>12/1</code></dd></dl>
+<dl class="ms-4">
+  <dt>"," (Trennzeichen)</dt>
+  <dd>Ein Komma trennt einzelne Gruppierungen von Angaben voneinander:</dd>
+  <dd><code>1,3,6</code> beschreibt fünf Ausgaben: "1", "3" und "6"</dd>
+  <dt>"-" (von bis)</dt>
+  <dd>Das Minus-Zeichen stellt eine Reihe von Angaben dar:</dd>
+  <dd><code>1-4</code> beschreibt vier Ausgaben: "1", "2", "3" und "4"</dd>
+  <dt>"/" (einfache Gruppierung)</dt>
+  <dd>Das Slash-Zeichen weist einer einzelnen Ausgabe mehrere Angaben zu:</dd>
+  <dd><code>1,3,6/7</code> beschreibt drei Ausgaben: "1" und "3" und "6 UND 7"</dd>
+  <dt>"*" (mehrfache Gruppierung)</dt>
+  <dd>Das Sternchen erlaubt Zuweisung mehrerer Angaben zu einer Reihe (Kombination von "-" und "/"):</dd>
+  <dd><code>1-4*2</code> beschreibt "1/2" und "3/4" (Nummer 1 bis 4, je zwei Nummern pro Ausgabe)</dd>
+  <dd><code>1-6*3</code> beschreibt "1/2/3" und "4/5/6" (Nummern 1 bis 6, je drei Nummern pro Ausgabe)</dd>
+</dl>
+<h3 class="border-bottom">
+  <span id="Beispiele_für_Gruppierungen"></span><span class="mw-headline" id="Beispiele_f.C3.BCr_Gruppierungen">Beispiele für Gruppierungen</span>
+</h3>
+<ul>
+  <li>Eine Ausgabe mit der Nummer 6 und den Monaten April und Mai:</li>
+</ul>
+<dl class="ms-4">
+  <dd>Nummer-Feld: <code>6</code></dd>
+  <dd>Monat-Feld: <code>4/5</code></dd>
+</dl>
+<ul>
+  <li>Zwei Ausgaben mit den laufenden Nummern 253 und 255:</li>
+</ul>
+<dl class="ms-4">
+  <dd>Laufende Nummer: <code>253,255</code></dd>
+</dl>
+<ul>
+  <li>Drei Ausgaben mit Nummern 3 bis 5 und Monaten Januar/Februar und März/April und Mai/Juni:</li>
+</ul>
+<dl class="ms-4">
+  <dd>Nummer: <code>3-5</code> (oder natürlich auch <code>3,4,5</code>)</dd>
+  <dd>Monat: <code>1-6*2</code> (oder auch <code>1/2,3/4,5/6</code>)</dd>
+</dl>
+<ul>
+  <li>Ein ganzer Jahrgang von 11 Ausgaben mit Monaten Jan bis Dez, wobei im Juli und August eine zwei-monatige Ausgabe erschienen ist:</li>
+</ul>
+<dl class="ms-4">
+  <dd>Monat: <code>1-6,7/8,9-12</code> (oder auch <code>1,2,3,4,5,6,7/8,9,10,11,12</code>)</dd>
+</dl>
+<ul>
+  <li>Eine jahresübergreifende Ausgabe mit dem Monat Dezember im Jahre 2000 und dem Monat Januar im Jahre 2001:</li>
+</ul>
+<dl class="ms-4">
+  <dd>Jahr: <code>2000,2001</code></dd>
+  <dd>Monat: <code>12/1</code></dd>
+</dl>
 {% endblock content %}
