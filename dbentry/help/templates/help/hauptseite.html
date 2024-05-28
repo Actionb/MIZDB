@@ -3,15 +3,13 @@
 {% block content %}
 <h1 class="border-bottom">Hilfe</h1>
 <div>
-  <p>Hier könnt ihr mehr über den Umgang mit der Datenbank erfahren. Neu hier? Dann lest die
-    <b><a href="/help/Einf%C3%BChrung" title="Einführung">Einführung</a>!</b></p>
-  <hr/>
-  <div style="column-count:2;-moz-column-count:2;-webkit-column-count:2">
-    <div style="break-inside:avoid;">
-      <dl>
-        <dt>Archiv Materialien</dt>
-        <dd></dd>
-      </dl>
+  <p>Willkommen auf der Hilfe-Seite der MIZDB Anwendung!</p>
+  <p>Hier könnt ihr mehr über den Umgang mit der Datenbank erfahren.</p>
+  <p> Neu hier? Dann lest die <b><a href="/help/Einf%C3%BChrung" title="Einführung">Einführung</a>!</b></p>
+
+  <div class="d-flex gap-5">
+    <div>
+      <h5>Archiv Materialien</h5>
       <ul>
         <li><a href="/help/Artikel" title="Artikel">Artikel</a></li>
         <li><a href="/help/Audio_Material" title="Audio Material">Audio Materialien</a></li>
@@ -25,11 +23,8 @@
         <li><a href="/help/Warenkatalog" title="Warenkatalog">Warenkataloge</a></li>
       </ul>
     </div>
-    <div style="break-inside:avoid;">
-      <dl>
-        <dt>Stammdaten</dt>
-        <dd></dd>
-      </dl>
+    <div>
+      <h5>Stammdaten</h5>
       <ul>
         <li><a href="/help/Autor" title="Autor">Autoren</a></li>
         <li><a href="/help/Band" title="Band">Bands</a></li>
@@ -41,11 +36,8 @@
         <li><a href="/help/Schlagwort" title="Schlagwort">Schlagwörter</a></li>
       </ul>
     </div>
-    <div style="break-inside:avoid;">
-      <dl>
-        <dt>Sonstige</dt>
-        <dd></dd>
-      </dl>
+    <div>
+      <h5>Sonstige</h5>
       <ul>
         <li><a href="/help/Herausgeber" title="Herausgeber">Herausgeber</a></li>
         <li><a href="/help/Instrument" title="Instrument">Instrumente</a></li>
@@ -55,20 +47,22 @@
       </ul>
     </div>
   </div>
-  <hr/>
-  <p>Weitere Seiten:
-  </p>
-  <ul>
-    <li><a href="/help/Ausgaben_Erstellung" title="Ausgaben Erstellung">Ausgaben Erstellung</a></li>
-    <li><a href="/help/Benutzer" title="Benutzer">Benutzerverwaltung</a></li>
-    <li><a href="/help/Grunds%C3%A4tze" title="Grundsätze">Grundsätze</a></li>
-    <li><a href="/help/Oberfl%C3%A4che" title="Oberfläche">Oberfläche</a></li>
-    <li><a href="/help/Bedienelement" title="Bedienelement">Bedienelemente</a></li>
-    <li><a href="/help/Sichern" title="Sichern">Sichern</a> &amp;
-      <a href="/help/L%C3%B6schen" title="Löschen">Löschen</a></li>
-    <li><a href="/help/Aktion" title="Aktion">Aktionen</a></li>
-    <li><a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungsliste</a></li>
-    <li><a href="/help/Suchformular" title="Suchformular">Suchformular</a></li>
-  </ul>
+  <hr>
+  <div>
+    <h5>Weitere Seiten:</h5>
+    <ul>
+      <li><a href="/help/Ausgaben_Erstellung" title="Ausgaben Erstellung">Ausgaben Erstellung</a></li>
+      <li><a href="/help/Benutzer" title="Benutzer">Benutzerverwaltung</a></li>
+      <li><a href="/help/Grunds%C3%A4tze" title="Grundsätze">Grundsätze</a></li>
+      <li><a href="/help/Oberfl%C3%A4che" title="Oberfläche">Oberfläche</a></li>
+      <li><a href="/help/Bedienelement" title="Bedienelement">Bedienelemente</a></li>
+      <li><a href="/help/Sichern" title="Sichern">Sichern</a> &amp;
+        <a href="/help/L%C3%B6schen" title="Löschen">Löschen</a></li>
+      <li><a href="/help/Aktion" title="Aktion">Aktionen</a></li>
+      <li><a href="/help/%C3%84nderungsliste" title="Änderungsliste">Änderungsliste</a></li>
+      <li><a href="/help/Suchformular" title="Suchformular">Suchformular</a></li>
+    </ul>
+  </div>
+
 </div>
 {% endblock content %}
