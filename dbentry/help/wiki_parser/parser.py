@@ -77,7 +77,7 @@ class WikiParser:
                     return True
 
         if tag.name in ("h1", "h2", "h3"):
-            tag["class"] = ["border-bottom"]
+            tag["class"] = ["border-bottom", "mb-3"]
         elif tag.name == "h6":
             tag["class"] = ["fw-bold"]
         elif tag.name == "dl":
