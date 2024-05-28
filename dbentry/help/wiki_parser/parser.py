@@ -53,6 +53,7 @@ class WikiParser:
         self._strip_self_links(tag)
         self._strip_image_links(tag)
         self._strip_broken_links(tag)
+        self._replace_felder_heading(tag)
 
     def _strip_class(self, tag: Tag):
         if tag.name != "table":
@@ -110,6 +111,10 @@ class WikiParser:
         for link in tag.find_all("a"):
             if "Seite nicht vorhanden" in link.get("title", ""):
                 link.replace_with(link.string)
+
+    def _replace_felder_heading(self, tag: Tag):
+        if tag.name == "h2":
+            tag.name = "h3"
 
     def _make_tables(self):
         for table in self.soup.find_all("table"):
