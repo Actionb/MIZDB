@@ -116,6 +116,10 @@ check() {
   docker exec -i $app_container python manage.py check
 }
 
+collectstatic() {
+  docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
+}
+
 case "$1" in
   dump) dump "$2" ;;
   restore) restore "$2" ;;
@@ -128,5 +132,6 @@ case "$1" in
   dbshell) dbshell ;;
   test) runtests ;;
   check) check ;;
+  collectstatic) collectstatic ;;
   *) show_help ;;
 esac
