@@ -17,7 +17,6 @@ services:
     build: .
     container_name: mizdb-app
     volumes:
-      - .:/mizdb
       - ./logs:/var/log/mizdb
     env_file:
       - .env
