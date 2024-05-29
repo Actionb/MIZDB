@@ -46,7 +46,7 @@ def _restore_formset(formset: forms.BaseInlineFormSet, data: dict):  # type: ign
 
     # Add the rest of the data as initial_extra.
     initial_extra = []
-    pattern = re.compile(f"{formset.prefix}-(?P<index>\d+)-(?P<field>[\w_]+)")  # noqa
+    pattern = re.compile(rf"{formset.prefix}-(?P<index>\d+)-(?P<field>[\w_]+)")
     # Group the data items by index:
     indexes: dict = {}
     for k, v in sorted(data.items()):
