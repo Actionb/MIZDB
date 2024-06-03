@@ -1,15 +1,17 @@
 from django.contrib.auth.mixins import UserPassesTestMixin
 from import_export.mixins import ExportViewFormMixin
 
-from dbentry.site.views.base import ModelViewMixin, ACTION_SELECTED_ITEM
+from dbentry.actions.base import ActionConfirmationView
+from dbentry.site.views.base import ModelViewMixin
 
 
 def has_export_permission(user, opts):  # pragma: no cover
     return user.is_superuser
 
 
-class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
+class BaseExportView(ActionConfirmationView, UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
     """Base view for exporting model objects."""
+
     queryset = None
 
     title = "Export"
@@ -33,31 +35,9 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
         """test_func for UserPassesTestMixin."""
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
-    def action_confirmed(self, request):
-        # TODO: move this to a 'BaseActionView'/'ActionConfirmationView'
-        return request.POST.get("post") is not None
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-
-        if not self.action_confirmed(self.request):
-            # Only include data and files if the action was confirmed.
-            # This is to avoid the form from being treated as a bound form (and
-            # thus undergo validation) when the user first lands on the
-            # confirmation page.
-            kwargs.pop("data", None)
-            kwargs.pop("files", None)
-        return kwargs
-
-
-class ExportActionView(BaseExportView):
+class ExportActionView(BaseExportView):  # TODO: rename to ExportQuerysetView or ExportSelectedView
     """Export a queryset."""
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["is_changelist_action"] = True
-        ctx["action_selection_name"] = ACTION_SELECTED_ITEM
-        return ctx
 
     def post(self, request, *args, **kwargs):
         if self.action_confirmed(request):
