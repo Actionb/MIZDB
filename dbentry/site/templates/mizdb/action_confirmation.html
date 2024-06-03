@@ -18,7 +18,9 @@
 {% block confirmation_form %}
 
 <form method="post">{% csrf_token %}
+  {% block form_fields %}
   {% bootstrap_form form layout="horizontal"%}
+  {% endblock form_fields %}
   <p>
     {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
   </p>
@@ -39,8 +41,13 @@
     <input type="hidden" name="changelist_action" value="{{ action_name }}"/>
     {% endblock hidden_fields %}
 
-      <input class="btn btn-danger" type="submit" name="{{ action_confirmed_key }}" value="Ja, ich bin sicher">
+    {% block submit_button %}
+    <input class="btn btn-danger" type="submit" name="{{ action_confirmed_name }}" value="Ja, ich bin sicher">
+    {% endblock submit_button %}
+
+    {% block cancel_button %}
     <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
+    {% endblock cancel_button %}
   </div>
 </form>
 {% endblock confirmation_form %}
