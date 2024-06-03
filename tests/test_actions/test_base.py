@@ -3,6 +3,7 @@ from unittest.mock import patch, Mock, DEFAULT
 from django import forms
 from django.contrib import admin
 from django.contrib.admin import helpers
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.http import HttpResponse
 from django.test import override_settings
 from django.urls import reverse, path
@@ -19,6 +20,7 @@ from dbentry.actions.base import (
     AdminActionConfirmationView,
 )
 from dbentry.admin.forms import MIZAdminForm
+from dbentry.site.views.base import ACTION_SELECTED_ITEM
 from tests.case import DataTestCase, RequestTestCase, AdminTestCase
 from tests.model_factory import make
 from tests.test_actions.case import ActionViewTestCase, AdminActionViewTestCase
@@ -209,6 +211,12 @@ class TestActionMixin(ActionViewTestCase):
                 context = view.get_context_data()
                 self.assertEqual(context["objects_name"], "Bands")
 
+    def test_get_context_data_adds_action_selection_name(self):
+        view = self.get_view(self.post_request(), model=self.model)
+        context_data = view.get_context_data()
+        self.assertIn("action_selection_name", context_data)
+        self.assertEqual(context_data["action_selection_name"], ACTION_SELECTED_ITEM)
+
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestAdminActionMixin(AdminActionViewTestCase):
@@ -262,6 +270,12 @@ class TestAdminActionMixin(AdminActionViewTestCase):
             get_form_mock.return_value = Form()
             context = view.get_context_data()
             self.assertEqual(str(context["media"]), str(self.model_admin.media + form_media))
+
+    def test_get_context_data_adds_action_selection_name(self):
+        view = self.get_view(self.post_request(), model=self.model)
+        context_data = view.get_context_data()
+        self.assertIn("action_selection_name", context_data)
+        self.assertEqual(context_data["action_selection_name"], ACTION_CHECKBOX_NAME)
 
 
 @override_settings(ROOT_URLCONF=URLConf)

@@ -128,9 +128,10 @@ class ActionMixin(object):
             "opts": self.opts,
             "action_name": self.action_name,
             "view_helptext": self.view_helptext,
-            # action_checkbox_name is used for marking the (hidden) inputs
-            # that hold the primary keys of the objects.
-            "action_checkbox_name": ACTION_SELECTED_ITEM,
+            # action_selection_name is used for marking the (hidden) inputs
+            # that hold the primary keys of the objects that were selected for
+            # this action.
+            "action_selection_name": ACTION_SELECTED_ITEM,
         }
 
         # template variable to accurately address the objects of the queryset
@@ -181,7 +182,7 @@ class AdminActionMixin(ActionMixin):
             media += self.get_form().media  # type: ignore[attr-defined]
         context["media"] = media
         # ModelAdmin uses a different name for the selection checkboxes:
-        context["action_checkbox_name"] = helpers.ACTION_CHECKBOX_NAME
+        context["action_selection_name"] = helpers.ACTION_CHECKBOX_NAME
         return context
 
     def message_user(
