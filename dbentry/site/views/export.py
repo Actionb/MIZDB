@@ -9,13 +9,12 @@ def has_export_permission(user, opts):  # pragma: no cover
     return user.is_superuser
 
 
-class BaseExportView(ActionConfirmationView, UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
+class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
     """Base view for exporting model objects."""
 
     queryset = None
 
     title = "Export"
-    template_name = "mizdb/export.html"
 
     def get_queryset(self):
         return self.queryset
@@ -36,8 +35,18 @@ class BaseExportView(ActionConfirmationView, UserPassesTestMixin, ModelViewMixin
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
 
-class ExportActionView(BaseExportView):  # TODO: rename to ExportQuerysetView or ExportSelectedView
+class ExportActionView(ActionConfirmationView, BaseExportView):
     """Export a queryset."""
+
+    # FIXME: if we don't assign `title` here, the respective template context
+    #  variable will be set to an empty string???
+    title = "Export"
+    action_name = "export"
+    template_name = "mizdb/export.html"
+
+    def form_valid(self, form):
+        # Call the method that creates the export response directly.
+        return ExportViewFormMixin.form_valid(self, form)
 
     def post(self, request, *args, **kwargs):
         if self.action_confirmed(request):
@@ -53,6 +62,7 @@ class ExportModelView(BaseExportView):
     """Export all objects of the view's model."""
 
     model = None
+    template_name = "mizdb/export_model.html"
 
     def get_queryset(self):  # pragma: no cover
         return self.model.objects.all()
