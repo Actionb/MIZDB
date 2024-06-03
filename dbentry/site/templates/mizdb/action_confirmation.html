@@ -38,7 +38,7 @@
     <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk|unlocalize }}"/>
     {% endfor %}
 
-    <input type="hidden" name="changelist_action" value="{{ action_name }}"/>
+    <input type="hidden" name="action_name" value="{{ action_name }}"/>
     {% endblock hidden_fields %}
 
     {% block submit_button %}

@@ -71,7 +71,7 @@
         {% for obj in queryset %}
             <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk|unlocalize }}" />
         {% endfor %}
-        <input type="hidden" name="changelist_action" value="{{action_name}}" />
+        <input type="hidden" name="action_name" value="{{action_name}}" />
         <input class="btn btn-danger" type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="Weiter">
         <a href=""  class="btn btn-secondary">Abbrechen</a>
         {% if wizard.steps.prev %}

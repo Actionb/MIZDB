@@ -720,7 +720,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         delete_action = merge_action = watchlist_action = export_action = None
         other_actions = []
         for name, (_func, text, title) in self.get_actions().items():
-            action = {"value": name, "text": text, "title": title}
+            action = {"name": name, "text": text, "title": title}
             if name == "delete":
                 delete_action = action
             elif name == "merge_records":
@@ -990,7 +990,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
     def post(self, request, *_args, **_kwargs):
         """Handle a changelist action."""
         try:
-            selected_action = request.POST["changelist_action"]
+            selected_action = request.POST["action_name"]
             func, _text, _title = self.get_actions()[selected_action]
         except KeyError:
             # Unknown action.
