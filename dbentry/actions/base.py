@@ -200,17 +200,19 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
     The view presents the user with a confirmation form (via the template).
 
     Attributes:
-        - ``display_fields`` (tuple): the model fields whose values should be
-          displayed in the summary of objects affected by this action
+        - ``action_confirmed_name`` (str): name of the input element on the
+          confirmation form that signals that the user has confirmed the action
     """
 
     template_name: str = "mizdb/action_confirmation.html"
+    action_confirmed_name: str = "action_confirmed"
 
-    display_fields: tuple = ()
+    def action_confirmed(self, request: HttpRequest) -> bool:
+        return request.POST.get(self.action_confirmed_name) is not None
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
-        if "action_confirmed" not in self.request.POST:
+        if not self.action_confirmed(self.request):
             # Only pass in 'data' if the user tries to confirm an action.
             # Do not try to validate the form if it is the first time the
             # user sees the form.
@@ -220,6 +222,11 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
             if "files" in kwargs:
                 del kwargs["files"]
         return kwargs
+
+    def get_context_data(self, **kwargs: Any) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["action_confirmed_name"] = self.action_confirmed_name
+        return context
 
     def form_valid(self, form: Form) -> None:
         self.perform_action(form.cleaned_data)

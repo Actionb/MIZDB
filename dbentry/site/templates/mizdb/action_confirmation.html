@@ -41,8 +41,8 @@
                     <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
                 {% endfor %}
                 <input type="hidden" name="changelist_action" value="{{action_name}}" />
-            <input class="btn btn-danger" type="submit" value="Ja, ich bin sicher">
-            <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
+            <input class="btn btn-danger" type="submit" name="{{ action_confirmed_key }}" value="Ja, ich bin sicher">
+    <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
             </div>
         </form>
     {% endblock confirmation_form %}

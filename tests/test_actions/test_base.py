@@ -280,7 +280,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view(self.post_request("/"))
         self.assertNotIn("data", view.get_form_kwargs())
         self.assertNotIn("files", view.get_form_kwargs())
-        view = self.get_view(self.post_request("/", data={"action_confirmed": "1"}))
+        view = self.get_view(self.post_request("/", data={self.view_class.action_confirmed_name: "1"}))
         self.assertIn("data", view.get_form_kwargs())
         self.assertIn("files", view.get_form_kwargs())
 
@@ -292,6 +292,16 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view()
         view.perform_action = Mock()
         self.assertIsNone(view.form_valid(Mock()))
+
+    def test_action_confirmed_true(self):
+        request = self.post_request(data={self.view_class.action_confirmed_name: ""})
+        view = self.get_view(request, model=self.model)
+        self.assertTrue(view.action_confirmed(request))
+
+    def test_action_confirmed_false(self):
+        request = self.post_request(data={})
+        view = self.get_view(request, model=self.model)
+        self.assertFalse(view.action_confirmed(request))
 
 
 @override_settings(ROOT_URLCONF=URLConf)
