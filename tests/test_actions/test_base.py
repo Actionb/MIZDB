@@ -272,17 +272,23 @@ class TestActionConfirmationView(ActionViewTestCase):
     model = Band
     view_class = DummyView
 
-    def test_get_form_kwargs_data_item(self):
+    @patch("dbentry.actions.base.super")
+    def test_get_form_kwargs(self, super_mock):
         """
-        Assert that the 'data' kwarg is removed, unless the request contains an
-        'action_confirmed' item.
+        Assert that the kwargs returned by get_form_kwargs only includes 'data'
+        if the action was confirmed.
         """
-        view = self.get_view(self.post_request("/"))
-        self.assertNotIn("data", view.get_form_kwargs())
-        self.assertNotIn("files", view.get_form_kwargs())
-        view = self.get_view(self.post_request("/", data={self.view_class.action_confirmed_name: "1"}))
-        self.assertIn("data", view.get_form_kwargs())
-        self.assertIn("files", view.get_form_kwargs())
+        super_mock.return_value.get_form_kwargs = Mock(return_value={"data": ""})
+        view = self.get_view(request=self.post_request(), model=self.model)
+        with patch.object(view, "action_confirmed") as action_confirmed_mock:
+            for action_confirmed in (True, False):
+                action_confirmed_mock.return_value = action_confirmed
+                with self.subTest(action_confirmed=action_confirmed):
+                    form_kwargs = view.get_form_kwargs()
+                    if action_confirmed:
+                        self.assertIn("data", form_kwargs)
+                    else:
+                        self.assertNotIn("data", form_kwargs)
 
     def test_form_valid(self):
         """

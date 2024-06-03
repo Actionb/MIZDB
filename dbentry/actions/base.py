@@ -217,10 +217,8 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
             # Do not try to validate the form if it is the first time the
             # user sees the form.
             # Note that action requests are always POST requests.
-            if "data" in kwargs:
-                del kwargs["data"]
-            if "files" in kwargs:
-                del kwargs["files"]
+            kwargs.pop("data", None)
+            kwargs.pop("files", None)
         return kwargs
 
     def get_context_data(self, **kwargs: Any) -> dict:
