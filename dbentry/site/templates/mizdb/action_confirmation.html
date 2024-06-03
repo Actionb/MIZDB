@@ -22,14 +22,6 @@
   <p>
     {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
   </p>
-  {% block object_details %}
-  {% if object_list %}
-  <h2>{% trans "Objects" %}</h2>
-  {% for obj in object_list %}
-  <ul>{{ obj|unordered_list }}</ul>
-  {% endfor %}
-  {% endif %}
-  {% endblock object_details %}
 
   {% if non_reversible_warning %}
   <p> {{non_reversible_warning}}</p>
