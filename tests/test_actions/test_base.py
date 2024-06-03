@@ -22,7 +22,7 @@ from dbentry.admin.forms import MIZAdminForm
 from tests.case import DataTestCase, RequestTestCase, AdminTestCase
 from tests.model_factory import make
 from tests.test_actions.case import ActionViewTestCase, AdminActionViewTestCase
-from tests.test_actions.models import Band, Genre
+from tests.test_actions.models import Band
 
 admin_site = admin.AdminSite(name="test_actions")
 
@@ -272,16 +272,6 @@ class TestActionConfirmationView(ActionViewTestCase):
     model = Band
     view_class = DummyView
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.genres = genres = [make(Genre, genre="Funk"), make(Genre, genre="Soul")]
-        cls.obj = obj = make(cls.model, band_name="Khruangbin", genres=genres, status=Band.Status.ACTIVE)
-
-        opts = cls.model._meta
-        cls.change_url = reverse(f"{opts.app_label}_{opts.model_name}_change", args=[obj.pk])
-
-        super().setUpTestData()
-
     def test_get_form_kwargs_data_item(self):
         """
         Assert that the 'data' kwarg is removed, unless the request contains an
@@ -294,65 +284,6 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertIn("data", view.get_form_kwargs())
         self.assertIn("files", view.get_form_kwargs())
 
-    def test_get_objects_list(self):
-        """
-        Assert that the list returned by get_objects_list contains the expected
-        data.
-        """
-        view = self.get_view(
-            self.get_request(), queryset=self.model.objects.all(), display_fields=["band_name", "genres", "status"]
-        )
-        link_list = view.get_objects_list()
-
-        # link_list should have a structure like this:
-        # [
-        #       ('Band: <link of obj1>', [<additional info (display_fields)>]),
-        #       ('Band: <link of obj2>', [<additional info (display_fields)>]),
-        #       ...
-        # ]
-        self.assertEqual(len(link_list), 1)
-        self.assertEqual(link_list[0][0], f'Band: <a href="{self.change_url}" target="_blank">{self.obj}</a>')
-
-        # link_list[0][1] is the list of values for the display fields:
-        display_field_values = link_list[0][1]
-        # It should contain 4 items: one for the band name, two for the genres,
-        # and one for the status:
-        self.assertEqual(len(display_field_values), 4)
-
-        # 'band_name' value:
-        self.assertEqual(display_field_values[0], "Bandname: " + self.obj.band_name)
-
-        # links to the genres:
-        genres = Genre.objects.all().order_by("genre")
-        url_name = f"{Genre._meta.app_label}_{Genre._meta.model_name}_change"
-        url = reverse(url_name, args=[genres[0].pk])
-        self.assertEqual(display_field_values[1], f'Genre: <a href="{url}" target="_blank">{genres[0]}</a>')
-        url = reverse(url_name, args=[genres[1].pk])
-        self.assertEqual(display_field_values[2], f'Genre: <a href="{url}" target="_blank">{genres[1]}</a>')
-
-        # 'status' value:
-        self.assertEqual(link_list[0][1][3], "Status: Aktiv")
-
-    def test_get_objects_list_no_display_fields(self):
-        """
-        Assert that the list returned by get_objects_list only contains links
-        if display_fields is not set.
-        """
-        view = self.get_view(self.get_request(), queryset=self.model.objects.all(), display_fields=[])
-        self.assertEqual(
-            view.get_objects_list(), [(f'Band: <a href="{self.change_url}" target="_blank">{self.obj}</a>',)]
-        )
-
-    def test_get_objects_list_no_link(self):
-        """
-        Assert that a string representation of the object is presented, if
-        no link could be created for it.
-        """
-        view = self.get_view(
-            self.get_request(user=self.noperms_user), queryset=self.model.objects.all(), display_fields=[]
-        )
-        self.assertEqual(view.get_objects_list(), [(f"Band: {self.obj}",)])
-
     def test_form_valid(self):
         """
         Assert that form_valid returns None (which will prompt a redirect back
@@ -361,12 +292,6 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view()
         view.perform_action = Mock()
         self.assertIsNone(view.form_valid(Mock()))
-
-    def test_get_context_data_adds_objects_list(self):
-        """Assert that the 'object_list' item is added to the context data."""
-        view = self.get_view(self.get_request())
-        with patch.object(view, "get_objects_list"):
-            self.assertIn("object_list", view.get_context_data())
 
 
 @override_settings(ROOT_URLCONF=URLConf)

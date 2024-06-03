@@ -24,7 +24,8 @@ import dbentry.models as _models
 from dbentry.actions.forms import (
     BrochureActionFormOptions,
     BrochureActionFormSet,
-    MergeFormSelectPrimary, AdminMergeConflictsFormSet,
+    MergeFormSelectPrimary,
+    AdminMergeConflictsFormSet,
 )
 from dbentry.actions.views import (
     BulkEditJahrgang,
@@ -370,7 +371,7 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
     def setUpTestData(cls):
         mag = make(_models.Magazin, magazin_name="Testmagazin")
         # obj1 should be in the initial jahrgang (i.e. jg + 0) starting in year 2000:
-        cls.obj1 = make(
+        obj1 = cls.obj1 = make(
             cls.model,
             magazin=mag,
             ausgabejahr__jahr=[2000, 2001],
@@ -378,7 +379,7 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
             ausgabemonat__monat__ordinal=[6],
         )
         # obj2 should be in the next jahrgang because it's one year later: jg + 1
-        cls.obj2 = make(
+        obj2 = cls.obj2 = make(
             cls.model,
             magazin=mag,
             ausgabejahr__jahr=[2001],
@@ -386,7 +387,16 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
             ausgabemonat__monat__ordinal=[6],
         )
         cls.other = make(cls.model, magazin=make(_models.Magazin, magazin_name="Other"))
+
+        opts = cls.model._meta
+        view_name = f"admin:{opts.app_label}_{opts.model_name}_change"
+        cls.change_url1 = reverse(view_name, args=[obj1.pk])
+        cls.change_url2 = reverse(view_name, args=[obj2.pk])
         super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        self.queryset = self.model.objects.filter(pk__in=(self.obj1.pk, self.obj2.pk)).chronological_order()
 
     def test(self):
         """Request updating the jahrgang values of Ausgabe instances."""
@@ -498,6 +508,66 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
         """Assert that the help text(s) are included in the context data."""
         view = self.get_view(self.get_request())
         self.assertIn("view_helptext", view.get_context_data().keys())
+
+    def test_get_objects_list(self):
+        """
+        Assert that the list returned by get_objects_list contains the expected
+        data.
+        """
+        view = self.get_view(
+            self.get_request(),
+            queryset=self.queryset,
+            display_fields=["jahrgang", "ausgabejahr__jahr"],
+        )
+        link_list = view.get_objects_list()
+
+        # link_list should have a structure like this:
+        # [
+        #       ('Ausgabe: <link of obj1>', [<additional info (display_fields)>]),
+        #       ('Ausgabe: <link of obj2>', [<additional info (display_fields)>]),
+        #       ...
+        # ]
+        self.assertEqual(len(link_list), 2)
+        self.assertEqual(link_list[0][0], f'Ausgabe: <a href="{self.change_url1}" target="_blank">{self.obj1}</a>')
+
+        # link_list[0][1] is the list of values for the display fields:
+        display_field_values = link_list[0][1]
+        # It should contain 3 items: one for the 'jahrgang' value and two for
+        # the year values:
+        self.assertEqual(len(display_field_values), 3)
+
+        # 'jahrgang' value:
+        self.assertEqual(display_field_values[0], f"Jahrgang: ---")
+
+        # 'year' values:
+        # noinspection PyUnresolvedReferences
+        jahre = self.obj1.ausgabejahr_set.all()
+        self.assertEqual(display_field_values[1], f"Jahr: {jahre[0]}")
+        self.assertEqual(display_field_values[2], f"Jahr: {jahre[1]}")
+
+    def test_get_objects_list_no_display_fields(self):
+        """
+        Assert that the list returned by get_objects_list only contains the
+        links to the objects (with no additional nested lists).
+        """
+        view = self.get_view(
+            self.get_request(),
+            queryset=self.queryset,
+            display_fields=[],
+        )
+        object_list = view.get_objects_list()
+        self.assertEqual(len(object_list), 2)
+        for i, obj in enumerate((self.obj1, self.obj2)):
+            with self.subTest(obj=obj):
+                self.assertEqual(len(object_list[i]), 1)
+                change_url = getattr(self, f"change_url{i + 1}")
+                self.assertEqual(object_list[i][0], f'Ausgabe: <a href="{change_url}" target="_blank">{obj}</a>')
+
+    def test_get_context_data_adds_objects_list(self):
+        """Assert that the 'object_list' item is added to the context data."""
+        view = self.get_view(self.get_request())
+        with patch.object(view, "get_objects_list"):
+            self.assertIn("object_list", view.get_context_data())
 
 
 class TestMergeViewAusgabe(AdminActionViewTestCase):

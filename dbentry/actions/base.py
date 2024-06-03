@@ -3,7 +3,7 @@ from typing import Any, Callable, Iterable, Optional, Sequence, Type, Union, TYP
 from django import views
 from django.contrib import messages
 from django.contrib.admin import ModelAdmin, helpers
-from django.contrib.admin.utils import display_for_field, get_fields_from_path, model_format_dict
+from django.contrib.admin.utils import model_format_dict
 from django.db.models import Model, QuerySet
 from django.db.models.options import Options
 from django.forms import Form
@@ -197,8 +197,7 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
     """
     A view that requires the user to confirm the action.
 
-    The view presents the user with a confirmation form (via the template) and
-    an overview of the objects affected by the action.
+    The view presents the user with a confirmation form (via the template).
 
     Attributes:
         - ``display_fields`` (tuple): the model fields whose values should be
@@ -229,53 +228,6 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
         # If we return None, options.ModelAdmin.response_action will do
         # the redirect for us.
         return None
-
-    def get_objects_list(self) -> list:
-        """
-        Compile a list of the objects that would be changed by this action.
-
-        Returns a list of 2-tuples, where the first item is a link to the
-        change page of an object, and the second may be a nested list of the
-        values (which may include yet more links) of fields declared in
-        self.display_fields.
-        """
-        objects = []
-        for obj in self.queryset:
-            # Investigate the field paths in display_fields:
-            # - if the path follows a relation, add a link to each related
-            #   object that is going to be impacted by the action's changes
-            # - if it's a field of the object, get that field's value
-            sub_list = []
-            for field_path in self.display_fields:
-                field = get_fields_from_path(self.opts.model, field_path)[0]
-                if field.is_relation:
-                    related_pks = (
-                        self.queryset.filter(pk=obj.pk).values_list(field.name, flat=True).order_by(field.name)
-                    )
-                    for pk in related_pks:
-                        if not pk:
-                            # values_list() will also gather None values
-                            continue  # pragma: no cover
-                        related_obj = field.related_model.objects.get(pk=pk)
-                        sub_list.append(get_object_link(self.request, related_obj, self.url_namespace))
-                else:
-                    value = display_for_field(getattr(obj, field.name), field, "---")
-                    verbose_name = field.verbose_name
-                    if verbose_name == field.name.replace("_", " "):
-                        # The field has the default django verbose_name
-                        verbose_name = verbose_name.title()
-                    sub_list.append("{}: {}".format(verbose_name, str(value)))
-            if self.display_fields:
-                links = (get_object_link(self.request, obj, self.url_namespace), sub_list)
-            else:
-                links = (get_object_link(self.request, obj, self.url_namespace),)  # type: ignore[assignment]
-            objects.append(links)
-        return objects
-
-    def get_context_data(self, **kwargs: Any) -> dict:
-        context = super().get_context_data(**kwargs)
-        context["object_list"] = self.get_objects_list()
-        return context
 
 
 class AdminActionConfirmationView(AdminActionMixin, ActionConfirmationView):
