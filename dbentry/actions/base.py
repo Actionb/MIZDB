@@ -6,7 +6,6 @@ from django.contrib.admin import ModelAdmin, helpers
 from django.contrib.admin.utils import model_format_dict
 from django.db.models import Model, QuerySet
 from django.db.models.options import Options
-from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch
 from django.utils.encoding import force_str
@@ -110,9 +109,6 @@ class ActionMixin(object):
             if not check(self):
                 return False
         return True
-
-    def perform_action(self, *args: Any, **kwargs: Any) -> None:
-        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Optional[HttpResponse]:
         if not self.action_allowed():
@@ -226,14 +222,6 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
         context = super().get_context_data(**kwargs)
         context["action_confirmed_name"] = self.action_confirmed_name
         return context
-
-    def form_valid(self, form: Form) -> None:
-        self.perform_action(form)
-        # We always want to be redirected back to the changelist the action
-        # originated from (request.get_full_path()).
-        # If we return None, options.ModelAdmin.response_action will do
-        # the redirect for us.
-        return None
 
 
 class AdminActionConfirmationView(AdminActionMixin, ActionConfirmationView):

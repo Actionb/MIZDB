@@ -44,10 +44,6 @@ class ExportActionView(ActionConfirmationView, BaseExportView):
     action_name = "export"
     template_name = "mizdb/export.html"
 
-    def form_valid(self, form):
-        # Call the method that creates the export response directly.
-        return ExportViewFormMixin.form_valid(self, form)
-
     def post(self, request, *args, **kwargs):
         if self.action_confirmed(request):
             # User confirmed the export.
@@ -55,6 +51,7 @@ class ExportActionView(ActionConfirmationView, BaseExportView):
         else:
             # This POST request was issued from the changelist selection panel.
             # Show the confirmation page.
+            # TODO: call self.get here - update the tests, too!
             return super().get(request, *args, **kwargs)
 
 

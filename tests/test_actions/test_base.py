@@ -47,9 +47,10 @@ class RenameBandActionView(AdminActionConfirmationView):
         """Return whether all selected Band objects are active."""
         return not view.queryset.exclude(status=Band.Status.ACTIVE).exists()
 
-    def perform_action(self, form) -> None:
+    def form_valid(self, form) -> None:
         """Rename all Band objects in the view's queryset."""
         self.queryset.update(band_name=form.cleaned_data["new_name"])
+        return None
 
 
 def rename_band(model_admin, request, queryset):
@@ -303,15 +304,6 @@ class TestActionConfirmationView(ActionViewTestCase):
                         self.assertIn("data", form_kwargs)
                     else:
                         self.assertNotIn("data", form_kwargs)
-
-    def test_form_valid(self):
-        """
-        Assert that form_valid returns None (which will prompt a redirect back
-        to the changelist).
-        """
-        view = self.get_view()
-        view.perform_action = Mock()
-        self.assertIsNone(view.form_valid(Mock()))
 
     def test_action_confirmed_true(self):
         request = self.post_request(data={self.view_class.action_confirmed_name: ""})

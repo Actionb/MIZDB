@@ -96,6 +96,10 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
             "start": self.queryset.values_list("pk", flat=True).first(),
         }
 
+    def form_valid(self, form: Form) -> None:
+        self.perform_action(form)
+        return None
+
     def perform_action(self, form: Form) -> None:
         """
         Incrementally update the jahrgang for each instance.
@@ -839,6 +843,10 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
             "object": str(self.queryset.get()),
         }
         return context
+
+    def form_valid(self, form: Form) -> None:
+        self.perform_action(form)
+        return None
 
     def perform_action(self, form: Form) -> None:  # type: ignore[override]
         obj = self.queryset.get()

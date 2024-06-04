@@ -569,6 +569,15 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
         with patch.object(view, "get_objects_list"):
             self.assertIn("object_list", view.get_context_data())
 
+    def test_form_valid(self):
+        """
+        Assert that form_valid returns None (which will prompt a redirect back
+        to the changelist).
+        """
+        view = self.get_view()
+        with patch.object(view, "perform_action"):
+            self.assertIsNone(view.form_valid(None))
+
 
 class TestMergeViewAusgabe(AdminActionViewTestCase):
     admin_site = miz_site
@@ -1832,6 +1841,15 @@ class TestReplace(AdminActionViewTestCase, LoggingTestMixin):
             with self.subTest(key=key):
                 self.assertIn(key, context)
                 self.assertEqual(context[key], value)
+
+    def test_form_valid(self):
+        """
+        Assert that form_valid returns None (which will prompt a redirect back
+        to the changelist).
+        """
+        view = self.get_view()
+        with patch.object(view, "perform_action"):
+            self.assertIsNone(view.form_valid(None))
 
 
 class TestSummarize(TestCase):
