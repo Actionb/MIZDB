@@ -194,6 +194,13 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
     action_confirmed_name: str = "action_confirmed"
 
     def action_confirmed(self, request: HttpRequest) -> bool:
+        """
+        Return whether the action was confirmed by the user.
+        
+        This is indicated by the POST data containing a value for the key
+        given by ``self.action_confirmed_name``, which is the case if the user
+        submitted the confirmation form.
+        """
         return request.POST.get(self.action_confirmed_name) is not None
 
     def get_form_kwargs(self) -> dict:
