@@ -1000,7 +1000,7 @@ class TestDeleteSelectedView(ViewTestCase):
     def post_data(self, confirmed=False):
         data = {"action_name": "delete", ACTION_SELECTED_ITEM: [str(self.obj1.pk), str(self.obj2.pk)]}
         if confirmed:
-            data["post"] = "yes"
+            data[self.view_class.action_confirmed_name] = "yes"
         return data
 
     def test_deletion_confirmed(self):
