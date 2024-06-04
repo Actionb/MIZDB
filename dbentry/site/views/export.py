@@ -51,8 +51,7 @@ class ExportActionView(ActionConfirmationView, BaseExportView):
         else:
             # This POST request was issued from the changelist selection panel.
             # Show the confirmation page.
-            # TODO: call self.get here - update the tests, too!
-            return super().get(request, *args, **kwargs)
+            return self.get(request, *args, **kwargs)
 
 
 class ExportModelView(BaseExportView):

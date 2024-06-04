@@ -29,15 +29,13 @@ class TestBaseExportView(ViewTestCase):
 class TestExportActionView(ViewTestCase):
     view_class = ExportActionView
 
-    @patch("dbentry.site.views.export.super")
-    def test_post_calls_get_if_action_not_confirmed(self, super_mock):
+    def test_post_calls_get_if_action_not_confirmed(self):
         request = self.post_request()
         view = self.get_view(request, model=DummyModel, queryset=Mock())
-        get_mock = Mock()
-        super_mock.return_value.get = get_mock
         with patch.object(view, "action_confirmed", new=Mock(return_value=False)):
-            view.post(request)
-            get_mock.assert_called()
+            with patch.object(view, "get") as get_mock:
+                view.post(request)
+                get_mock.assert_called()
 
     @patch("dbentry.site.views.export.super")
     def test_post_calls_post_if_action_confirmed(self, super_mock):
