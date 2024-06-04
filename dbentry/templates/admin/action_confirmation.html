@@ -48,10 +48,6 @@
                 {% endif %}
             {% endblock object_details %}
             
-            {% if non_reversible_warning %}
-                <p> {{non_reversible_warning}}</p>
-            {% endif %}
-            
             <div>
                 {% for obj in queryset %}
                     {# The list of selected primary keys #}

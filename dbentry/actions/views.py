@@ -66,9 +66,7 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
     title = "Jahrgang hinzufügen"
     action_name = "bulk_jg"
     action_allowed_checks = [check_same_magazin]
-
     display_fields = ("jahrgang", "ausgabejahr__jahr")
-
     form_class = BulkEditJahrgangForm
 
     view_helptext = (
@@ -514,7 +512,6 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
     template_name = "admin/movetobrochure.html"
     action_name = "moveto_brochure"
     action_allowed_checks = [check_same_magazin, "check_protected_artikel"]
-
     form_class = BrochureActionFormSet
 
     def check_protected_artikel(self) -> bool:
@@ -705,13 +702,13 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
         return context
 
 
+# TODO: fix superclasses: ActionMixin is redundant since it is a super class of
+#  AdminActionMixin
 class ChangeBestand(AdminActionMixin, ActionMixin, MIZAdminMixin, views.generic.TemplateView):
     """A view to edit the Bestand set of the parent model instance(s)."""
 
     template_name = "admin/change_bestand.html"
-
     action_name = "change_bestand"
-    action_reversible = True
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Optional[HttpResponse]:
         if "action_confirmed" in request.POST:
@@ -804,7 +801,6 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
     title = "%(verbose_name)s ersetzen"
     action_name = "replace"
     action_allowed_checks = ["_check_one_object_only"]
-    action_reversible = True
     view_helptext = (
         'Ersetze %(verbose_name)s "%(object)s" durch die unten ausgewählten '
         "%(verbose_name_plural)s. "

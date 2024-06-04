@@ -177,18 +177,12 @@ class TestActionMixin(ActionViewTestCase):
         with patch.object(view, "action_allowed", new=Mock(return_value=False)):
             self.assertIsNone(view.dispatch(self.get_request()))
 
-    def test_get_context_data(self):
-        """
-        Assert that the context data includes items for 'titel' and
-        'non_reversible_warning'.
-        """
+    def test_get_context_data_contains_titel(self):
+        """Assert that the context data includes a 'titel' item."""
         view = self.get_view(self.get_request())
         view.title = "Merge %(verbose_name_plural)s"
-        view.non_reversible_warning = "This action cannot be reversed."
-
         context = view.get_context_data()
         self.assertEqual(context["title"], "Merge Bands")
-        self.assertEqual(context["non_reversible_warning"], "This action cannot be reversed.")
 
     def test_get_context_data_object_name_singular(self):
         """

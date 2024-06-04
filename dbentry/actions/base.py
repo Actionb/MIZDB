@@ -12,7 +12,6 @@ from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
 from django.utils.text import capfirst
-from django.utils.translation import gettext_lazy
 from formtools.wizard.views import SessionWizardView
 
 from dbentry.utils.html import create_hyperlink
@@ -52,11 +51,6 @@ class ActionMixin(object):
     Attributes:
         - ``title`` (str): the title that is shown both in the template and
           in the browser title
-        - ``action_reversible`` (bool): if False (which is the default), it is
-          implied that this action will make a change that is not easily
-          reversed. If False, a warning text is added to the template context.
-        - ``non_reversible_warning`` (str): a text that warns the user that
-          the action they are about to confirm is not reversible.
         - ``action_name`` (str): name of the action as registered with the
           changelist view or the ModelAdmin. This is the value for the hidden
           input named "action" with which the changelist view resolves the
@@ -71,8 +65,6 @@ class ActionMixin(object):
     """
 
     title: str = ""
-    action_reversible: bool = False
-    non_reversible_warning: str = gettext_lazy("Warning: This action is NOT reversible!")
     action_name: str = ""
     view_helptext: str = ""
     action_allowed_checks: Sequence = ()
@@ -137,9 +129,6 @@ class ActionMixin(object):
             defaults["objects_name"] = force_str(self.opts.verbose_name_plural)
 
         defaults["title"] = self.title % model_format_dict(self.model)
-
-        if not self.action_reversible:
-            defaults["non_reversible_warning"] = self.non_reversible_warning
 
         kwargs = {**defaults, **kwargs}
         return super().get_context_data(**kwargs)  # type: ignore[misc]

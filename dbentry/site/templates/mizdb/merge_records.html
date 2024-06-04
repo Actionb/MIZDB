@@ -62,10 +62,6 @@
             {% bootstrap_form form layout="horizontal" %}
         {% endfor %}
     {% endif %}
-
-    {% if non_reversible_warning %}
-        <p>{{non_reversible_warning}}</p>
-    {% endif %}
     
     <div>
         {% for obj in queryset %}
