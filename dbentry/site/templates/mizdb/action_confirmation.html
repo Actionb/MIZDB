@@ -44,11 +44,11 @@
   {% endblock before_submit %}
 
   {% block submit_button %}
-  <input class="btn btn-danger" type="submit" name="{{ action_confirmed_name }}" value="Ja, ich bin sicher">
+  <input class="btn btn-danger" type="submit" name="{{ action_confirmed_name }}" value="Weiter">
   {% endblock submit_button %}
 
   {% block cancel_button %}
-  <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
+  <button type="button" class="btn btn-secondary button cancel-link">Abbrechen</button>
   {% endblock cancel_button %}
 </form>
 {% endblock confirmation_form %}
