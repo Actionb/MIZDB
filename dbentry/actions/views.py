@@ -96,7 +96,7 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
             "start": self.queryset.values_list("pk", flat=True).first(),
         }
 
-    def perform_action(self, form_cleaned_data: dict) -> None:
+    def perform_action(self, form: Form) -> None:
         """
         Incrementally update the jahrgang for each instance.
 
@@ -104,8 +104,8 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
         values instead.
         """
         qs = self.queryset.order_by().all()
-        jg = form_cleaned_data["jahrgang"]
-        start = self.queryset.get(pk=form_cleaned_data.get("start"))
+        jg = form.cleaned_data["jahrgang"]
+        start = self.queryset.get(pk=form.cleaned_data.get("start"))
 
         if jg == 0:
             # User entered 0 for jahrgang.
@@ -586,22 +586,22 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
         if not options_form.is_valid():
             context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
-        self.perform_action(form.cleaned_data, options_form.cleaned_data)
+        self.perform_action(form, options_form)
         # Return to the changelist:
         return None
 
-    def perform_action(self, form_cleaned_data: dict, options_form_cleaned_data: dict) -> None:
+    def perform_action(self, form: Form, options_form: Form) -> None:
         protected = []
-        delete_magazin = options_form_cleaned_data.get("delete_magazin", False)
+        delete_magazin = options_form.cleaned_data.get("delete_magazin", False)
         # brochure_art is guaranteed to be a valid model name due to the
         # form validation.
-        brochure_art = options_form_cleaned_data.get("brochure_art", "")
+        brochure_art = options_form.cleaned_data.get("brochure_art", "")
         brochure_class = get_model_from_string(brochure_art)
         # Must set self._magazin_instance before we begin deleting Ausgabe
         # instances.
         magazin_instance = self.magazin_instance
 
-        for data in form_cleaned_data:
+        for data in form.cleaned_data:
             if not data.get("accept", False):
                 continue
 
@@ -840,9 +840,9 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
         }
         return context
 
-    def perform_action(self, cleaned_data: dict) -> None:  # type: ignore[override]
+    def perform_action(self, form: Form) -> None:  # type: ignore[override]
         obj = self.queryset.get()
-        replacements = self.model.objects.filter(pk__in=cleaned_data["replacements"])
+        replacements = self.model.objects.filter(pk__in=form.cleaned_data["replacements"])
         changes = replace(obj, replacements)
 
         change_message = [{"deleted": {"object": str(obj), "name": obj._meta.verbose_name}}]

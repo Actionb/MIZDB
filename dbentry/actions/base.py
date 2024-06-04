@@ -228,7 +228,7 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
         return context
 
     def form_valid(self, form: Form) -> None:
-        self.perform_action(form.cleaned_data)
+        self.perform_action(form)
         # We always want to be redirected back to the changelist the action
         # originated from (request.get_full_path()).
         # If we return None, options.ModelAdmin.response_action will do

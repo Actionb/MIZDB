@@ -47,9 +47,9 @@ class RenameBandActionView(AdminActionConfirmationView):
         """Return whether all selected Band objects are active."""
         return not view.queryset.exclude(status=Band.Status.ACTIVE).exists()
 
-    def perform_action(self, cleaned_data) -> None:
+    def perform_action(self, form) -> None:
         """Rename all Band objects in the view's queryset."""
-        self.queryset.update(band_name=cleaned_data["new_name"])
+        self.queryset.update(band_name=form.cleaned_data["new_name"])
 
 
 def rename_band(model_admin, request, queryset):
