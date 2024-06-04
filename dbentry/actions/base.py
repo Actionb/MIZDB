@@ -259,11 +259,3 @@ class WizardConfirmationView(ActionMixin, SessionWizardView):
         else:
             # The previous form was most likely a wizard form.
             return super().post(request, *args, **kwargs)
-
-    def done(self, *args: Any, **kwargs: Any) -> None:
-        # The 'final' method of a WizardView.
-        # By default, redirect back to the changelist by returning None.
-        try:
-            self.perform_action()
-        finally:
-            return None
