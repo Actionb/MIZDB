@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+
 {% block view_helptext %}
 {% if view_helptext %}
 <p> {{view_helptext|linebreaks}} </p>
@@ -16,20 +17,14 @@
 {% endblock view_helptext %}
 
 {% block confirmation_form %}
+<form method="post">
+  {% csrf_token %}
 
-<form method="post">{% csrf_token %}
   {% block form_fields %}
   {% bootstrap_form form layout="horizontal"%}
   {% endblock form_fields %}
-  <p>
-    {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
-  </p>
 
-  {% if non_reversible_warning %}
-  <p> {{non_reversible_warning}}</p>
-  {% endif %}
-
-  <div>
+  <div id="hidden">
     {% block hidden_fields %}
     {# This block contains hidden inputs required by the action views. #}
 
@@ -40,15 +35,22 @@
 
     <input type="hidden" name="action_name" value="{{ action_name }}"/>
     {% endblock hidden_fields %}
-
-    {% block submit_button %}
-    <input class="btn btn-danger" type="submit" name="{{ action_confirmed_name }}" value="Ja, ich bin sicher">
-    {% endblock submit_button %}
-
-    {% block cancel_button %}
-    <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
-    {% endblock cancel_button %}
   </div>
+
+  {% block before_submit %}
+  {% if non_reversible_warning %}
+  <p>{{non_reversible_warning}}</p>
+  {% endif %}
+  {% endblock before_submit %}
+
+  {% block submit_button %}
+  <input class="btn btn-danger" type="submit" name="{{ action_confirmed_name }}" value="Ja, ich bin sicher">
+  {% endblock submit_button %}
+
+  {% block cancel_button %}
+  <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
+  {% endblock cancel_button %}
 </form>
 {% endblock confirmation_form %}
+
 {% endblock content %}
