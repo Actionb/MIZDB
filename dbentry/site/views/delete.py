@@ -83,6 +83,8 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
 class DeleteSelectedView(DeleteView, ActionConfirmationView):
     """Confirmation for deleting model objects selected on the changelist."""
 
+    action_name = "delete"
+
     def get_objects_for_deletion(self):
         return self.queryset
 
