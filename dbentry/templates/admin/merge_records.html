@@ -9,6 +9,8 @@
 {% endblock extrahead %}
 
 {% block confirmation_form %}
+{# add a button that is expected by one of the included changelist scripts #}
+<div id="changelist-form" style="display: none;"><button name="index"></button></div>
 <form method="post">
     
     {% if wizard.steps.prev %}
