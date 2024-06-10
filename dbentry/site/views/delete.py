@@ -7,7 +7,7 @@ from django.views.generic import DeleteView as BaseDeleteView
 
 from dbentry.actions.base import ActionConfirmationView
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import ModelViewMixin, ACTION_SELECTED_ITEM
+from dbentry.site.views.base import ModelViewMixin
 from dbentry.utils import permission as perms
 from dbentry.utils.admin import log_deletion
 from dbentry.utils.models import get_deleted_objects
@@ -76,7 +76,6 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
             ctx["content_title"] = f"Kann {self.opts.verbose_name} nicht löschen"
         else:
             ctx["content_title"] = "Sind Sie sicher?"
-        ctx["action_selection_name"] = ACTION_SELECTED_ITEM
         return ctx
 
 
