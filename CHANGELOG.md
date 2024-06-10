@@ -8,10 +8,12 @@
   - remove unused files 
   - move templates from project root into app directory
 - clean up and rework action views
+- remove logging for change confirmations, logins, logouts and CSRF failures
 
 ### Fixed
 
 - BulkEditJahrgang now handles invalid Jahrgang values
+- Ausgabe changelist is now ordered chronologically
 
 ## [0.17] - 2024-05-27
 
