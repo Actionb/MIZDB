@@ -177,7 +177,8 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
     """
     A view that requires the user to confirm the action.
 
-    The view presents the user with a confirmation form (via the template).
+    The view presents the user with a confirmation form. The form is declared
+    in the template.
 
     Attributes:
         - ``action_confirmed_name`` (str): name of the input element on the

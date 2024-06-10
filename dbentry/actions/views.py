@@ -495,8 +495,8 @@ class AdminMergeView(MIZAdminMixin, AdminActionMixin, MergeView):
     def get_context_for_primary_step(self, context: dict) -> dict:
         """Return additional template context for the 'select primary' step."""
         # The template uses the django admin tag 'result_list' so that the
-        # results are displayed as on the changelist. The tag requires the
-        # changelist as an argument.
+        # results are displayed as seen as on the changelist. The tag requires
+        # the changelist as an argument.
         cl = self.model_admin.get_changelist_instance(self.request)
         cl.result_list = self.queryset
         cl.formset = None
