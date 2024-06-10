@@ -53,8 +53,7 @@ class ActionMixin(object):
           in the browser title
         - ``action_name`` (str): name of the action as registered with the
           changelist view or the ModelAdmin. This is the value for the hidden
-          input named "action" with which the changelist view resolves the
-          action to use.
+          input with which the changelist view resolves the action to use.
         - ``view_helptext`` (str): a help text for this view
         - ``action_allowed_checks`` (list or tuple): list of callables or names
           of view methods that assess whether the action is allowed. The checks
