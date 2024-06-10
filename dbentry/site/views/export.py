@@ -35,12 +35,9 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
 
-class ExportActionView(ActionConfirmationView, BaseExportView):
+class ExportActionView(BaseExportView, ActionConfirmationView):
     """Export a queryset."""
 
-    # FIXME: if we don't assign `title` here, the respective template context
-    #  variable will be set to an empty string???
-    title = "Export"
     action_name = "export"
     template_name = "mizdb/export.html"
 
