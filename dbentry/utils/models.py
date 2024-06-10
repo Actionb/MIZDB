@@ -8,7 +8,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
 from django.db import models, transaction, utils
-from django.db.models import Field, Model, constants
+from django.db.models import Field, Model, constants, QuerySet
 from django.db.models.fields.related import ForeignKey, OneToOneField
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel, OneToOneRel
 from django.http import HttpRequest
@@ -329,7 +329,7 @@ def clean_permissions(stream: Optional[TextIO] = None) -> None:
 
 def get_deleted_objects(
     request: HttpRequest,
-    objs: Sequence[models.Model],
+    objs: Union[Sequence[models.Model], QuerySet],
     namespace: str = "",
 ) -> tuple[list, dict, set, list]:
     """

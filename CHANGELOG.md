@@ -7,6 +7,7 @@
 - clean up templates
   - remove unused files 
   - move templates from project root into app directory
+- clean up and rework action views
 
 ### Fixed
 

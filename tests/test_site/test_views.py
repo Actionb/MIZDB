@@ -926,7 +926,7 @@ class TestBaseListView(DataTestCase, ViewTestCase):
 
     def test_post_unknown_action(self):
         """Assert that a user message is issued if an unknown action was selected."""
-        response = self.post_response(self.url, data={"changelist_action": "foo", ACTION_SELECTED_ITEM: [self.obj.pk]})
+        response = self.post_response(self.url, data={"action_name": "foo", ACTION_SELECTED_ITEM: [self.obj.pk]})
         self.assertMessageSent(response.wsgi_request, "Abgebrochen")
         self.assertRedirects(response, self.url)
 
@@ -935,7 +935,7 @@ class TestBaseListView(DataTestCase, ViewTestCase):
         Assert that a user message is issued if action was requested but no
         objects were selected.
         """
-        response = self.post_response(self.url, data={"changelist_action": "delete"})
+        response = self.post_response(self.url, data={"action_name": "delete"})
         self.assertMessageSent(response.wsgi_request, "Abgebrochen")
         self.assertRedirects(response, self.url)
 
@@ -998,9 +998,9 @@ class TestDeleteSelectedView(ViewTestCase):
         self.url = reverse("test_site_band_changelist")
 
     def post_data(self, confirmed=False):
-        data = {"changelist_action": "delete", ACTION_SELECTED_ITEM: [str(self.obj1.pk), str(self.obj2.pk)]}
+        data = {"action_name": "delete", ACTION_SELECTED_ITEM: [str(self.obj1.pk), str(self.obj2.pk)]}
         if confirmed:
-            data["post"] = "yes"
+            data[self.view_class.action_confirmed_name] = "yes"
         return data
 
     def test_deletion_confirmed(self):

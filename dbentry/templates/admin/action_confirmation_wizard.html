@@ -29,13 +29,9 @@
         {% endfor %}
     {% endif %}
     
-    {% if non_reversible_warning %}
-        <p> {{non_reversible_warning}}</p>
-    {% endif %}
-    
     <div>
         {% for obj in queryset %}
-            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
+            <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk|unlocalize }}" />
         {% endfor %}
         <input type="hidden" name="action" value="{{action_name}}" />
         <input type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="{% trans "Continue" %}" />

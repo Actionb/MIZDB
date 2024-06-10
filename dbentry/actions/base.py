@@ -3,17 +3,15 @@ from typing import Any, Callable, Iterable, Optional, Sequence, Type, Union, TYP
 from django import views
 from django.contrib import messages
 from django.contrib.admin import ModelAdmin, helpers
-from django.contrib.admin.utils import display_for_field, get_fields_from_path, model_format_dict
+from django.contrib.admin.utils import model_format_dict
 from django.db.models import Model, QuerySet
 from django.db.models.options import Options
-from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch
 from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
 from django.utils.text import capfirst
-from django.utils.translation import gettext_lazy
 from formtools.wizard.views import SessionWizardView
 
 from dbentry.utils.html import create_hyperlink
@@ -53,39 +51,26 @@ class ActionMixin(object):
     Attributes:
         - ``title`` (str): the title that is shown both in the template and
           in the browser title
-        - ``action_reversible`` (bool): if False (which is the default), it is
-          implied that this action will make a change that is not easily
-          reversed. If False, a warning text is added to the template context.
-        - ``non_reversible_warning`` (str): a text that warns the user that
-          the action they are about to confirm is not reversible.
         - ``action_name`` (str): name of the action as registered with the
           changelist view or the ModelAdmin. This is the value for the hidden
-          input named "action" with which the changelist view resolves the
-          action to use.
+          input with which the changelist view resolves the action to use.
         - ``view_helptext`` (str): a help text for this view
         - ``action_allowed_checks`` (list or tuple): list of callables or names
           of view methods that assess whether the action is allowed. The checks
           are called with the view instance as the only argument.
         - ``url_namespace`` (str): the namespace for reversing view names
-        - ``view`` (ListView or ModelAdmin): the changelist or model admin that
-          called this action.
     """
 
     title: str = ""
-    action_reversible: bool = False
-    non_reversible_warning: str = gettext_lazy("Warning: This action is NOT reversible!")
     action_name: str = ""
     view_helptext: str = ""
     action_allowed_checks: Sequence = ()
     url_namespace: str = ""
 
-    # These will be passed in as initkwargs, sp they must be declared as class
-    # attributes or as_view will reject them:
+    # These will be passed in as initkwargs:
     queryset: QuerySet = None
-    view: ViewOrModelAdmin = None
 
-    def __init__(self, *, queryset: QuerySet, view: ViewOrModelAdmin = None, **kwargs: Any) -> None:
-        self.view = view
+    def __init__(self, *, queryset: QuerySet, **kwargs: Any) -> None:
         self.queryset = queryset
         self.opts: Options = self.queryset.query.get_meta()
         self.model: Type[Model] = self.opts.model
@@ -111,9 +96,6 @@ class ActionMixin(object):
                 return False
         return True
 
-    def perform_action(self, *args: Any, **kwargs: Any) -> None:
-        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
-
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Optional[HttpResponse]:
         if not self.action_allowed():
             # The action is not allowed, redirect back to the changelist.
@@ -128,9 +110,10 @@ class ActionMixin(object):
             "opts": self.opts,
             "action_name": self.action_name,
             "view_helptext": self.view_helptext,
-            # action_checkbox_name is used for marking the (hidden) inputs
-            # that hold the primary keys of the objects.
-            "action_checkbox_name": ACTION_SELECTED_ITEM,
+            # action_selection_name is used for marking the (hidden) inputs
+            # that hold the primary keys of the objects that were selected for
+            # this action.
+            "action_selection_name": ACTION_SELECTED_ITEM,
         }
 
         # template variable to accurately address the objects of the queryset
@@ -140,9 +123,6 @@ class ActionMixin(object):
             defaults["objects_name"] = force_str(self.opts.verbose_name_plural)
 
         defaults["title"] = self.title % model_format_dict(self.model)
-
-        if not self.action_reversible:
-            defaults["non_reversible_warning"] = self.non_reversible_warning
 
         kwargs = {**defaults, **kwargs}
         return super().get_context_data(**kwargs)  # type: ignore[misc]
@@ -181,7 +161,7 @@ class AdminActionMixin(ActionMixin):
             media += self.get_form().media  # type: ignore[attr-defined]
         context["media"] = media
         # ModelAdmin uses a different name for the selection checkboxes:
-        context["action_checkbox_name"] = helpers.ACTION_CHECKBOX_NAME
+        context["action_selection_name"] = helpers.ACTION_CHECKBOX_NAME
         return context
 
     def message_user(
@@ -197,84 +177,41 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
     """
     A view that requires the user to confirm the action.
 
-    The view presents the user with a confirmation form (via the template) and
-    an overview of the objects affected by the action.
+    The view presents the user with a confirmation form. The form is declared
+    in the template.
 
     Attributes:
-        - ``display_fields`` (tuple): the model fields whose values should be
-          displayed in the summary of objects affected by this action
+        - ``action_confirmed_name`` (str): name of the input element on the
+          confirmation form that signals that the user has confirmed the action
     """
 
     template_name: str = "mizdb/action_confirmation.html"
+    action_confirmed_name: str = "action_confirmed"
 
-    display_fields: tuple = ()
+    def action_confirmed(self, request: HttpRequest) -> bool:
+        """
+        Return whether the action was confirmed by the user.
+        
+        This is indicated by the POST data containing a value for the key
+        given by ``self.action_confirmed_name``, which is the case if the user
+        submitted the confirmation form.
+        """
+        return request.POST.get(self.action_confirmed_name) is not None
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
-        if "action_confirmed" not in self.request.POST:
+        if not self.action_confirmed(self.request):
             # Only pass in 'data' if the user tries to confirm an action.
             # Do not try to validate the form if it is the first time the
             # user sees the form.
             # Note that action requests are always POST requests.
-            if "data" in kwargs:
-                del kwargs["data"]
-            if "files" in kwargs:
-                del kwargs["files"]
+            kwargs.pop("data", None)
+            kwargs.pop("files", None)
         return kwargs
-
-    def form_valid(self, form: Form) -> None:
-        self.perform_action(form.cleaned_data)
-        # We always want to be redirected back to the changelist the action
-        # originated from (request.get_full_path()).
-        # If we return None, options.ModelAdmin.response_action will do
-        # the redirect for us.
-        return None
-
-    def get_objects_list(self) -> list:
-        """
-        Compile a list of the objects that would be changed by this action.
-
-        Returns a list of 2-tuples, where the first item is a link to the
-        change page of an object, and the second may be a nested list of the
-        values (which may include yet more links) of fields declared in
-        self.display_fields.
-        """
-        objects = []
-        for obj in self.queryset:
-            # Investigate the field paths in display_fields:
-            # - if the path follows a relation, add a link to each related
-            #   object that is going to be impacted by the action's changes
-            # - if it's a field of the object, get that field's value
-            sub_list = []
-            for field_path in self.display_fields:
-                field = get_fields_from_path(self.opts.model, field_path)[0]
-                if field.is_relation:
-                    related_pks = (
-                        self.queryset.filter(pk=obj.pk).values_list(field.name, flat=True).order_by(field.name)
-                    )
-                    for pk in related_pks:
-                        if not pk:
-                            # values_list() will also gather None values
-                            continue  # pragma: no cover
-                        related_obj = field.related_model.objects.get(pk=pk)
-                        sub_list.append(get_object_link(self.request, related_obj, self.url_namespace))
-                else:
-                    value = display_for_field(getattr(obj, field.name), field, "---")
-                    verbose_name = field.verbose_name
-                    if verbose_name == field.name.replace("_", " "):
-                        # The field has the default django verbose_name
-                        verbose_name = verbose_name.title()
-                    sub_list.append("{}: {}".format(verbose_name, str(value)))
-            if self.display_fields:
-                links = (get_object_link(self.request, obj, self.url_namespace), sub_list)
-            else:
-                links = (get_object_link(self.request, obj, self.url_namespace),)  # type: ignore[assignment]
-            objects.append(links)
-        return objects
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
-        context["object_list"] = self.get_objects_list()
+        context["action_confirmed_name"] = self.action_confirmed_name
         return context
 
 
@@ -301,11 +238,3 @@ class WizardConfirmationView(ActionMixin, SessionWizardView):
         else:
             # The previous form was most likely a wizard form.
             return super().post(request, *args, **kwargs)
-
-    def done(self, *args: Any, **kwargs: Any) -> None:
-        # The 'final' method of a WizardView.
-        # By default, redirect back to the changelist by returning None.
-        try:
-            self.perform_action()
-        finally:
-            return None

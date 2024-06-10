@@ -334,7 +334,7 @@ def test_delete_action(
     # Should be on the delete confirmation page now. Confirm the deletion:
     expect(changelist).to_have_title(re.compile("Löschen"))
     with changelist.expect_request_finished():
-        changelist.get_by_role("button", name=re.compile("Ja")).click()
+        changelist.get_by_role("button", name=re.compile("Weiter")).click()
     expect(changelist).to_have_title(re.compile("Übersicht"))
     assert not _models.Artikel.objects.filter(pk__in=selected_pks).exists()
 
@@ -370,7 +370,7 @@ def test_delete_action_abort(
     # Should be on the delete confirmation page now. Abort:
     expect(changelist).to_have_title(re.compile("Löschen"))
     with changelist.expect_request_finished():
-        changelist.get_by_role("button", name=re.compile("Nein")).click()
+        changelist.get_by_role("button", name=re.compile("Abbrechen")).click()
     expect(changelist).to_have_title(re.compile("Übersicht"))
     assert _models.Artikel.objects.filter(pk__in=selected_pks).exists()
 
