@@ -60,8 +60,6 @@ class ActionMixin(object):
           of view methods that assess whether the action is allowed. The checks
           are called with the view instance as the only argument.
         - ``url_namespace`` (str): the namespace for reversing view names
-        - ``view`` (ListView or ModelAdmin): the changelist or model admin that
-          called this action.
     """
 
     title: str = ""
@@ -70,13 +68,10 @@ class ActionMixin(object):
     action_allowed_checks: Sequence = ()
     url_namespace: str = ""
 
-    # These will be passed in as initkwargs, sp they must be declared as class
-    # attributes or as_view will reject them:
+    # These will be passed in as initkwargs:
     queryset: QuerySet = None
-    view: ViewOrModelAdmin = None
 
-    def __init__(self, *, queryset: QuerySet, view: ViewOrModelAdmin = None, **kwargs: Any) -> None:
-        self.view = view
+    def __init__(self, *, queryset: QuerySet, **kwargs: Any) -> None:
         self.queryset = queryset
         self.opts: Options = self.queryset.query.get_meta()
         self.model: Type[Model] = self.opts.model

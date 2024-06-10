@@ -181,6 +181,7 @@ class MergeView(WizardConfirmationView):
     (merge conflict resolution step) of the process.
     """
 
+    view = None
     template_name = "mizdb/merge_records.html"
     action_name = "merge_records"
     action_allowed_checks = ["check_at_least_two_objects", "check_same_magazin", "check_same_ausgabe"]
