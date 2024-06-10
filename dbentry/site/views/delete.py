@@ -73,9 +73,9 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
             }
         )
         if protected or perms_needed:
-            ctx["content_title"] = f"Kann {self.opts.verbose_name} nicht löschen"
+            ctx["title"] = f"Kann {self.opts.verbose_name} nicht löschen"
         else:
-            ctx["content_title"] = "Sind Sie sicher?"
+            ctx["title"] = "Sind Sie sicher?"
         return ctx
 
 
