@@ -13,7 +13,7 @@ pytestmark = pytest.mark.e2e
 def test_can_delete(page, view_name, test_object, model, fill_value):
     """Assert that the delete view can be used to delete model objects."""
     pk = test_object.pk
-    page.get_by_role("button", name=re.compile("Ja")).click()
+    page.get_by_role("button", name=re.compile("Weiter")).click()
     assert not model.objects.filter(pk=pk).exists(), "Model object was not deleted."
 
 
@@ -25,7 +25,7 @@ def test_can_abort(page, view_name, test_object, model, fill_value):
     Assert that the object is not deleted if the user clicks the abort button.
     """
     pk = test_object.pk
-    page.get_by_role("button", name=re.compile("Nein")).click()
+    page.get_by_role("button", name=re.compile("Abbrechen")).click()
     assert model.objects.filter(pk=pk).exists(), "Model object was deleted unexpectedly."
 
 
@@ -40,5 +40,5 @@ def test_abort_redirect_to_previous_page(page, get_url, view_name, test_object, 
     pk = test_object.pk
     url = get_url(f"{model._meta.app_label}_{model._meta.model_name}_{DELETE_VIEW}", args=[pk])
     page.goto(url)
-    page.get_by_role("button", name=re.compile("Nein")).click()
+    page.get_by_role("button", name=re.compile("Abbrechen")).click()
     page.wait_for_url("**/change/")
