@@ -16,7 +16,6 @@ from django.views.generic import FormView
 from dbentry import models as _models
 from dbentry.actions.base import (
     ActionConfirmationView,
-    ActionMixin,
     WizardConfirmationView,
     get_object_link,
     AdminActionMixin,
@@ -703,9 +702,7 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
         return context
 
 
-# TODO: fix superclasses: ActionMixin is redundant since it is a super class of
-#  AdminActionMixin
-class ChangeBestand(AdminActionMixin, ActionMixin, MIZAdminMixin, views.generic.TemplateView):
+class ChangeBestand(AdminActionMixin, MIZAdminMixin, views.generic.TemplateView):
     """A view to edit the Bestand set of the parent model instance(s)."""
 
     template_name = "admin/change_bestand.html"
