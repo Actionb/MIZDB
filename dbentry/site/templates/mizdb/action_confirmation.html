@@ -21,7 +21,7 @@
   {% csrf_token %}
 
   {% block form_fields %}
-  {% bootstrap_form form layout="horizontal"%}
+  {% if form %}{% bootstrap_form form layout="horizontal"%}{% endif %}
   {% endblock form_fields %}
 
   <div id="hidden">
