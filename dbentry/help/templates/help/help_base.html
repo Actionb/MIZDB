@@ -1,5 +1,25 @@
 {% extends "mizdb/base.html" %}
+{% load static help_tags %}
+
+{% block extrahead %}
+  <script src="{% static 'help/js/image_modal.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'help/css/image_modal.css' %}">
+{% endblock extrahead %}
 
 {% block content_title %}{% endblock %}
 
-{% block content %} {{ content }} {% endblock %}
+{% block content %}{{ content }}{% endblock %}
+
+{% block extrascript %}
+{% block image_modal %}
+<div class="d-none" id="imageModal">
+  <!-- The Close Button -->
+  <span id="imageModalClose" class="close">&times;</span>
+  <!-- Modal Content (The Image) -->
+  <img id="imageModalImage" class="modal-content" src="">
+  <!-- Modal Caption (Image Text) -->
+  <div id="imageModalCaption" class="modal-caption text-white text-center"></div>
+</div>
+{% endblock %}
+{{ block.super }}
+{% endblock %}
