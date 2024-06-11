@@ -1,0 +1,5 @@
+<div class="image-gallery d-flex justify-content-evenly text-center py-3">
+  {% for image_name, caption in images %}
+    {% include 'help/includes/image_modal.html' with image_name=image_name caption=caption %}
+  {% endfor %}
+</div>
