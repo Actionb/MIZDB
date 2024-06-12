@@ -1,16 +1,20 @@
 {% extends "help/help_base.html" %}
+{% load static %}
 
 {% block content %}
 <h1 class="border-bottom">Sichern</h1>
-<p>Es stehen drei Knöpfe zum Sichern eines Datensatzes zur Verfügung. Erst durch das Betätigen einer der Knöpfe werden die Daten des Formulars auch wirklich gespeichert. Verlasst ihr das Formular ohne eine Anfrage an den Server geschickt zu haben - z.B. wenn ihr einfach das Fenster schließt - können Änderungen nicht übernommen werden.
-</p>
 <p>
+  Es stehen drei Knöpfe zum Sichern eines Datensatzes zur Verfügung. Erst durch das Betätigen einer der Knöpfe werden die Daten des Formulars auch wirklich gespeichert.
+  Verlasst ihr das Formular, ohne eine Anfrage an den Server geschickt zu haben - z.B. wenn ihr einfach das Fenster schließt - können Änderungen nicht übernommen werden.
 </p>
+
+<img src="{% static 'help/img/sichern.png' %}" alt="Speicherknöpfe" class="mb-3">
+
 <ul>
-  <li>Sichern und neu hinzufügen</li>
+  <li>Sichern</li>
 </ul>
 <dl class="ms-4">
-  <dd>Das Formular wird zum Server geschickt, um den Datensatz zu speichern, und der Server liefert ein neues, leeres Formular zurück.</dd>
+  <dd>Nachdem der Datensatz abgespeichert wurde, werdet ihr zur <a href="/help/%C3%84nderungsliste/" title="Übersicht">Übersicht</a> weitergeleitet.</dd>
 </dl>
 <ul>
   <li>Sichern und weiter bearbeiten</li>
@@ -19,11 +23,9 @@
   <dd>Zwischenspeichern. Der Datensatz wird abgespeichert und das Formular wird zur weiteren Bearbeitung erneut dargestellt.</dd>
 </dl>
 <ul>
-  <li>Sichern</li>
+  <li>Sichern und neu hinzufügen</li>
 </ul>
 <dl class="ms-4">
-  <dd>Nachdem der Datensatz abgespeichert wurde, wird man zur
-    <a href="/help/%C3%84nderungsliste/" title="Änderungsliste">Änderungsliste</a> weitergeleitet.
-  </dd>
+  <dd>Das Formular wird zum Server geschickt, um den Datensatz zu speichern, und der Server liefert ein neues, leeres Formular zurück.</dd>
 </dl>
 {% endblock content %}
