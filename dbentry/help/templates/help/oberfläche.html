@@ -1,39 +1,67 @@
 {% extends "help/help_base.html" %}
+{% load help_tags %}
 
 {% block content %}
 <h1 class="border-bottom">Oberfläche</h1>
-<p>Nach der Anmeldung an die Datenbank landet ihr im Hauptmenü, dem Index.
-  Hier werden die verschiedenen Kategorien (also: Artikel, Bücher, usw.) der Datenbank angezeigt. Unter "Archivgut" befinden sich die Kategorien, mit denen man Archivmaterial erfasst. Darunter, unter "Stammdaten", sind die Kategorien, die bei der Erfassung am häufigst verwendet werden.
+<p>Hier werden einige Aspekte der Benutzeroberfläche erklärt.</p>
+
+<h3 class="border-bottom mb-3">Index</h3>
+<p>
+  Nach der Anmeldung an die Datenbank landet ihr im Hauptmenü, dem Index. Hier werden die verschiedenen Kategorien (also: Artikel, Bücher, usw.) der Datenbank angezeigt.
+  Unter "Archivgut" befinden sich die Kategorien, mit denen man Archivmaterial erfasst. Darunter, unter "Stammdaten", sind die Kategorien, die bei der Erfassung am häufigst verwendet werden.
 </p>
-<p>Klickt ihr auf die Beschriftung einer Kategorie oder auf den "Ändern" Knopf in der Zeile der Kategorie, gelangt ihr zur
-  <a href="/help/%C3%84nderungsliste/" title="Änderungsliste">Änderungsliste</a> dieser Kategorie. Klickt ihr auf "Hinzufügen", werdet ihr direkt zu einem leeren Formular der Kategorie geführt, mit welchem ihr einen neuen
+<p>
+  Klickt ihr auf die Beschriftung einer Kategorie, gelangt ihr zur
+  <a href="/help/%C3%84nderungsliste/" title="Übersicht">Übersicht</a> dieser Kategorie.
+  Klickt ihr auf den "Hinzufügen" Link neben der Kategorie, werdet ihr direkt zu einem leeren Formular der Kategorie geführt, mit welchem ihr einen neuen
   <a href="/help/Datensatz/" title="Datensatz">Datensatz</a> erstellen könnt.
 </p>
-<p>Rechts auf der Indexseite findet ihr Datenbank-Werkzeuge ("Admin Tools"); zur Zeit stehen Mitarbeitern lediglich die
-  <a href="/help/Ausgaben_Erstellung/" title="Ausgaben Erstellung">Ausgaben Erstellung</a> und eine Suchfunktion zur Verfügung. Unter den Werkzeugen befindet sich die Änderungsgeschichte, in welcher die letzten Aktivitäten des Benutzers gezeigt werden.
-  <br clear="all"/>
+<p>
+  Rechts auf der Indexseite findet ihr
+  <a class="extiw" href="https://en.wikipedia.org/wiki/de:Hyperlink" title="wikipedia:de:Hyperlink">Links</a> zu den Änderungsseiten der Archivgüter
+  (wie z.B. Artikel, Ausgaben oder Bücher), die von euch zuletzt bearbeitet wurden.
+  Darunter befinden sich Links zu Änderungsseiten von jeglichen Datensätzen, die von euch erstellt, bearbeitet oder gelöscht wurden.
 </p>
+
+{% gallery_args 'index.png' 'Index' as index %}
+{% image_gallery index %}
+
 <h3 class="border-bottom mb-3"><span class="mw-headline" id="Kopfzeile">Kopfzeile</span></h3>
-<p>Im oberen Teil der Seite, dem Header (Kopfzeile), befindet sich unter anderem der Schriftzug für die Datenbank. Dieser dient als zugleich als
-  <a class="extiw" href="https://en.wikipedia.org/wiki/de:Hyperlink" title="wikipedia:de:Hyperlink">Link</a> zurück zum Index.
-  Neben dem Namen des angemeldeten Benutzers findet ihr den Link zu der Hauptseite dieser Hilfe. Daneben befindet sich der Benutzerbereich, in welchem ein Link zur Änderung des Passworts dieses Benutzers und der Abmelde-Knopf anzeigt wird.
-</p>
-<p>Darauf folgen die sogenannten Breadcrumbs, auf deutsch Brotkrümelnavigation(!). Diese sollen die Navigation auf der Seite erleichtern. Sie zeigen an, in welcher Ebene der Seite ihr euch gerade befindet, und erlauben euch, zu den vorherigen Ebenen zurück zu springen.
-</p>
+<p>In der Kopfzeile findet ihr die Navigation, die Datenbanksuche und Links zu der Merkliste, der Hilfe und der Anmeldung. Der MIZDB Schriftzug dient als Link zurück zum Index.</p>
+<p>Neben der Merkliste findet ihr dort einen Knopf, mit dem ihr den Farbmodus (hell oder dunkel) wechseln könnt.</p>
+
+{% gallery_args 'kopfzeile.png' 'Die Kopfzeile' as header %}
+{% gallery_args 'navigation.png' 'Navigationsmenü' as nav %}
+{% image_gallery header nav %}
+
+
+<h3 class="border-bottom mb-3">Datenbanksuche</h3>
+<p>Klickt ihr auf 'Datenbanksuche' öffnet sich ein kleines Suchformular. Dort gebt ihr einfach einen Suchbegriff ein und die Datenbank wird sofort durchsucht.</p>
+<p>Mit einem Klick auf den Suchbutton oder mit der Eingabetaste werdet ihr auf die Suchseite weitergeleitet.</p>
+
+{% gallery_args 'datenbanksuche.png' 'Datenbanksuche' as search %}
+{% gallery_args 'datenbanksuche_seite.png' 'Datenbanksuche (Seite)' as search_page %}
+{% image_gallery search search_page %}
+
 <h3 class="border-bottom mb-3">
   <span id="Änderungsseite"></span><span class="mw-headline" id=".C3.84nderungsseite">Änderungsseite</span></h3>
 <p>Auf der Änderungsseite könnt ihr neue Datensätze erstellen oder Änderungen an bereits existierenden Datensätzen vornehmen. Dies wird mit Hilfe von
   <a class="extiw" href="https://en.wikipedia.org/wiki/de:Webformular" title="wikipedia:de:Webformular">Webformularen</a> bewerkstelligt. Das Formular sammelt die Angaben, die ihr macht, und verschickt diese nach der Aufforderung zu Speicherung an den Server der Datenbank, der diese Daten dann schließlich sichert.
-  <b>Wichtig</b>: Änderungen werden nur übernommen, wenn ihr auch auf einen der Speicherknöpfe klickt (siehe
-  <a href="/help/Sichern/" title="Sichern">Sichern</a>). Diese Knöpfe findet ihr immer am unteren Ende des Formulars. Bei manchen Formularen sind die Knöpfe auch am Anfang der Seite zu finden.
+</p>
+<p>
+<div class="card">
+  <div class="card-header text-bg-warning"><b>Wichtig:</b></div>
+  <div class="card-body">
+    Änderungen werden nur übernommen, wenn ihr abspeichert (siehe <a href="/help/Sichern/" title="Sichern">Sichern</a>).
+    Die Knöpfe zum Speichern findet ihr immer am unteren Ende des Fensters.
+  </div>
+</div>
 </p>
 <p>Erklärungen zu den verschiedenen Bedienelementen, die bei der Dateneingabe verwendet werden, findet ihr auf der entsprechenden Hilfe-Seite:
   <a href="/help/Bedienelement/" title="Bedienelement">Bedienelement</a>.
 </p>
-<h4><span class="mw-headline" id="Einblenden_und_Ausblenden">Einblenden und Ausblenden</span></h4>
-<p>Manche Elemente können mit einem Klick ganze Abschnitte des Formulars aus- und einblenden. Diese Elemente erkennt ihr an der blauen Hintergrundfarbe und an den Hinweisen am rechten Ende ("(Einblenden)" und "(Ausblenden)"). Außerdem ändert sich der Mauszeiger zu einem Zeigefinger, wenn die Maus über einem solchen Element ist.<br/>
-  Beispiel: die zunächst ausgeblendeten Felder "Beschreibung" und "Bemerkungen" des Artikel Formulars können durch einen Klick auf
-  <span style="color:#447e9b;">"Beschreibung &amp; Bemerkungen"</span> eingeblendet werden. Auch die
-  <a href="/help/Bedienelement#Inlines/" title="Bedienelement">Inlines</a> lassen sich aus- und einblenden.
-</p>
+
+{% gallery_args 'change_page.png' 'Änderungsseite der Beatles' as change_page %}
+{% image_gallery change_page %}
+
 {% endblock content %}
