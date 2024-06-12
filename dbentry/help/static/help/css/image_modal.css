@@ -3,6 +3,7 @@
 img.modal-image {
     width: 100%;
     max-width: 300px;
+    max-height: 150px;
 }
 
 img.modal-image:hover {
@@ -28,7 +29,9 @@ div#imageModal {
 img#imageModalImage {
   margin: auto;
   display: block;
-  width: 80%;
+  width: auto;
+  max-height: 80%;
+  max-width: 80%;
 }
 
 /* Caption of Modal Image (Image Text) - Same Width as the Image */
