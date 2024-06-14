@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres
+    image: postgres:15-alpine
     container_name: mizdb-postgres
     volumes:
       - ./db/data:/var/lib/postgresql/data
