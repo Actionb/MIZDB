@@ -64,8 +64,6 @@ bash mizdb.sh restore database_backup
 Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
 `bash mizdb.sh shell` und dann `python manage.py migrate`
 
-Für Entwicklung: füge `DJANGO_DEVELOPMENT=1` zu den Umgebungsvariablen in der Datei `.env` hinzu.
-
 ## Verwaltung
 
 Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeichnis zur Verfügung:
@@ -129,14 +127,6 @@ bash mizdb.sh reload
 
 `mizdb.sh update` führt `git pull` aus, um den lokalen Branch auf den Stand des Upstream-Branches zu bringen.
 Anschließend werden die statischen Dateien gesammelt und ein Django Systemcheck ausgeführt.
-
-### Tests ausführen
-
-Um einen Testlauf des Codes zu starten, benutze:
-
-```shell
-bash mizdb.sh test
-```
 
 ### Django Shell & psql
 

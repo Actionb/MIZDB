@@ -28,7 +28,6 @@ BEFEHLE:
   dump          Daten der Datenbank in eine Backup-Datei übertragen
   shell         Kommandozeile des MIZDB App Containers aufrufen
   dbshell       Kommandozeile des Postgresql Containers aufrufen
-  test          MIZDB Tests ausführen
   check         MIZDB/Django checks ausführen
 EOF
 }
@@ -109,10 +108,6 @@ dbshell() {
   docker exec -it $db_container sh
 }
 
-runtests() {
-  docker exec -i $app_container python manage.py test --settings=tests.settings tests
-}
-
 check() {
   docker exec -i $app_container python manage.py check
 }
@@ -131,7 +126,6 @@ case "$1" in
   reload) reload ;;
   shell) shell ;;
   dbshell) dbshell ;;
-  test) runtests ;;
   check) check ;;
   collectstatic) collectstatic ;;
   *) show_help ;;
