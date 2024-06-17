@@ -40,6 +40,7 @@ dump() {
     dir=$(readlink -f ./dumps)
     file="$dir/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"
   fi
+  echo "Erstelle Datenbank Backup Datei..."
   docker exec -i "$db_container" /bin/sh -c "/mizdb/dump.sh" > "$file"
   echo "Backup erstellt: $file"
 }
