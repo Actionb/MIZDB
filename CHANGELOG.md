@@ -9,6 +9,8 @@
   - move templates from project root into app directory
 - clean up and rework action views
 - remove logging for change confirmations, logins, logouts and CSRF failures
+- reworked docker image: now uses alpine as base images instead of debian
+- many tweaks to the `mizdb.sh` utility script and the installation script  
 
 ### Fixed
 
