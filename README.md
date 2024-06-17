@@ -62,7 +62,9 @@ bash mizdb.sh restore database_backup
 ```
 
 Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
-`bash mizdb.sh shell` und dann `python manage.py migrate`
+```shell
+bash mizdb.sh migrate
+```
 
 ## Verwaltung
 

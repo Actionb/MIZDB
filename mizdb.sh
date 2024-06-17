@@ -29,6 +29,7 @@ BEFEHLE:
   shell         Kommandozeile des MIZDB App Containers aufrufen
   dbshell       Kommandozeile des Postgresql Containers aufrufen
   check         MIZDB/Django checks ausführen
+  migrate       Datenbankmigrationen ausführen
 EOF
 }
 
@@ -116,6 +117,10 @@ collectstatic() {
   docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
 }
 
+migrate() {
+  docker exec -i $app_container python manage.py migrate
+}
+
 case "$1" in
   dump) dump "$2" ;;
   restore) restore "$2" ;;
@@ -128,5 +133,6 @@ case "$1" in
   dbshell) dbshell ;;
   check) check ;;
   collectstatic) collectstatic ;;
+  migrate) migrate;;
   *) show_help ;;
 esac
