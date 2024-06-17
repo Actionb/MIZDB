@@ -28,13 +28,13 @@ Datenbank in der neuen Installation sofort wiederhergestellt wird.
 
 ```shell
 sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://gist.githubusercontent.com/Actionb/76babf08b35acc0f94a679e63d979d3a/raw/b0494ee97bd2b645ce7b37a7fc3bc434aee93807/get-mizdb.sh -o get-mizdb.sh
+curl -fsSL https://gist.githubusercontent.com/Actionb/76babf08b35acc0f94a679e63d979d3a/raw/706b9c22efc46200d066e6307b861868ad9ed359/get-mizdb.sh -o get-mizdb.sh
 sh get-mizdb.sh database_backup
 ```
 
 ### Manuell
 
-- Docker installieren:  https://docs.docker.com/engine/install/
+- Docker installieren: https://docs.docker.com/engine/install/
 - Docker Post-Install Schritte durchführen: https://docs.docker.com/engine/install/linux-postinstall/
 - MIZDB installieren:
 
@@ -52,7 +52,7 @@ sh get-mizdb.sh database_backup
   # Statische Dateien sammeln:
   docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
   # Log-Verzeichnis Besitzer einrichten:
-  docker exec -i mizdb-app chown -R www-data:www-data logs
+  docker exec -i mizdb-app chown -R apache:apache logs
   ```
 
 Wenn eine Backup-Datei (hier: `database_backup`) vorhanden ist, kann die Datenbank wiederhergestellt werden:
