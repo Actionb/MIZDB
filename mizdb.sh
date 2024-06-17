@@ -101,11 +101,11 @@ reload() {
 }
 
 shell() {
-  docker exec -it $app_container bash
+  docker exec -it $app_container sh
 }
 
 dbshell() {
-  docker exec -it $db_container bash
+  docker exec -it $db_container sh
 }
 
 runtests() {
