@@ -28,8 +28,8 @@ BEFEHLE:
   dump          Daten der Datenbank in eine Backup-Datei übertragen
   shell         Kommandozeile des MIZDB App Containers aufrufen
   dbshell       Kommandozeile des Postgresql Containers aufrufen
-  test          MIZDB Tests ausführen
   check         MIZDB/Django checks ausführen
+  migrate       Datenbankmigrationen ausführen
 EOF
 }
 
@@ -40,6 +40,7 @@ dump() {
     dir=$(readlink -f ./dumps)
     file="$dir/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"
   fi
+  echo "Erstelle Datenbank Backup Datei..."
   docker exec -i "$db_container" /bin/sh -c "/mizdb/dump.sh" > "$file"
   echo "Backup erstellt: $file"
 }
@@ -101,15 +102,11 @@ reload() {
 }
 
 shell() {
-  docker exec -it $app_container bash
+  docker exec -it $app_container sh
 }
 
 dbshell() {
-  docker exec -it $db_container bash
-}
-
-runtests() {
-  docker exec -i $app_container python manage.py test --settings=tests.settings tests
+  docker exec -it $db_container sh
 }
 
 check() {
@@ -118,6 +115,10 @@ check() {
 
 collectstatic() {
   docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
+}
+
+migrate() {
+  docker exec -i $app_container python manage.py migrate
 }
 
 case "$1" in
@@ -130,8 +131,8 @@ case "$1" in
   reload) reload ;;
   shell) shell ;;
   dbshell) dbshell ;;
-  test) runtests ;;
   check) check ;;
   collectstatic) collectstatic ;;
+  migrate) migrate;;
   *) show_help ;;
 esac
