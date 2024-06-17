@@ -12,6 +12,7 @@ services:
     restart: always
     secrets:
       - db_password
+    user: "${UID:-1000}:${GID:-1000}"
 
   web:
     build: .

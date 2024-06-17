@@ -31,6 +31,10 @@ MOUNT_POINT=${MOUNT_POINT:-/miz}
 
 # URL at which the WIKI is available
 WIKI_URL=${WIKI_URL}
+
+# Docker user IDs
+UID=$(id -u)
+GID=$(id -g)
 EOF
 
 # Create a directory for the database data.
