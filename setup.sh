@@ -39,9 +39,6 @@ DATA_DIR=${DATA_DIR:-/var/lib/mizdb/pgdata}
 LOG_DIR=${LOG_DIR:-/var/log/mizdb}
 EOF
 
-# Create a directory for log files.
-mkdir -p logs
-
 # Create the secrets directory and secret files.
 mkdir -p .secrets
 python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));' > .secrets/.key
