@@ -5,15 +5,15 @@ Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 <!-- TOC -->
 
 * [Installation Debian (Docker)](#installation-debian-docker)
-    * [Per script](#per-script)
-    * [Manuell](#manuell)
+	* [Per script](#per-script)
+	* [Manuell](#manuell)
 * [Verwaltung](#verwaltung)
-    * [Docker Container & Webserver](#docker-container--webserver)
-    * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pgrestore)
-    * [Backup erstellen (pg_dump)](#backup-erstellen-pgdump)
-    * [Update](#update)
-    * [Django Shell & psql](#django-shell--psql)
-    * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
+	* [Docker Container & Webserver](#docker-container--webserver)
+	* [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pgrestore)
+	* [Backup erstellen (pg_dump)](#backup-erstellen-pgdump)
+	* [Update](#update)
+	* [Django Shell & psql](#django-shell--psql)
+	* [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
 * [Installation (ohne Docker)](#installation-ohne-docker)
 
 <!-- TOC -->
@@ -62,6 +62,7 @@ bash mizdb.sh restore database_backup
 ```
 
 Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
+
 ```shell
 bash mizdb.sh migrate
 ```
@@ -196,9 +197,9 @@ die folgenden Dateien:
 
 - im Stammverzeichnis wird die Datei `.env` mit den Werten für Umgebungsvariablen erstellt
 - im Unterverzeichnis `.secrets` werden die folgenden Dateien erstellt:
-    - `.passwd`: beinhaltet das Passwort der Datenbank
-    - `.key`: beinhaltet einen kryptografischen Schlüssel
-    - `.allowedhosts`: beinhaltet die erwarteten Hostnamen
+	- `.passwd`: beinhaltet das Passwort der Datenbank
+	- `.key`: beinhaltet einen kryptografischen Schlüssel
+	- `.allowedhosts`: beinhaltet die erwarteten Hostnamen
 
 #### Python Module installieren:
 
@@ -287,10 +288,10 @@ UndefMacro VHost
 * In der Zeile mit `ServerName` muss der Hostname des Servers eingefügt werden. Dieser Name muss auch in der `.env`
   Datei unter `ALLOWED_HOSTS` auftauchen.
 * In der Zeile `USE VHOST` müssen gegebenenfalls die zwei Pfade angepasst werden.
-    * der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung
-    * der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch `manage.py` zu finden ist.
+	* der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung
+	* der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch `manage.py` zu finden ist.
 
-  Also beispielsweise: `USE VHost /opt/archiv/venv /opt/archiv`
+	Also beispielsweise: `USE VHost /opt/archiv/venv /opt/archiv`
 
 Danach:
 
@@ -323,9 +324,31 @@ python manage.py test --settings=tests.settings tests
 psql --username=mizdb_user --host=localhost mizdb
 ```
 
-## Development 
+## Deinstallation (Docker)
+
+Bei der Deinstallation werden folgende Verzeichnisse und Dateien gelöscht:
+
+- das MIZDB Source Verzeichnis
+- das Datenbank Verzeichnis (standardmäßig: `/var/lib/mizdb`)
+- das Log Verzeichnis (standardmäßig: `/var/log/mizdb`)
+- das Management Skript (standardmäßg: `/usr/local/bin/mizdb`)
+
+Mit Management Skript:
+
+```shell
+mizdb uninstall
+```
+
+oder aus dem MIZDB Verzeichnis:
+
+```shell
+bash mizdb.sh uninstall
+```
+
+## Development
 
 Installiere zusätzliche Dependencies:
+
 ```shell
 pip install -r requirements/dev.txt
 npm install
@@ -334,16 +357,21 @@ npm install
 ### CSS, Sass & Theme
 
 Benutze
+
 ```shell
 npm run sass-build
 ```
+
 oder
+
 ```shell
 npm run sass-watch
 ```
-Um die CSS Dateien zu erstellen. 
+
+Um die CSS Dateien zu erstellen.
 
 Links:
- - https://getbootstrap.com/
- - https://bootswatch.com/flatly/
- - https://sass-lang.com/
+
+- https://getbootstrap.com/
+- https://bootswatch.com/flatly/
+- https://sass-lang.com/
