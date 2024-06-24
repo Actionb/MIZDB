@@ -31,7 +31,7 @@ LOGGING = {
             "class": "logging.StreamHandler",
         },
         "timed_rotating_file": {
-            "class": "logging.TimedRotatingFileHandler",
+            "class": "logging.handlers.TimedRotatingFileHandler",
             "level": os.getenv("MIZDB_LOG_LEVEL", "INFO"),
             "filename": Path(os.getenv("LOG_DIR", BASE_DIR)) / "mizdb.log",
             "formatter": "default",
