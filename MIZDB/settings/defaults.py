@@ -134,7 +134,7 @@ USE_TZ = True
 
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
