@@ -323,6 +323,17 @@ python manage.py test --settings=tests.settings tests
 psql --username=mizdb_user --host=localhost mizdb
 ```
 
+## Deinstallation (Docker)
+
+Mit Management Skript:
+```shell
+mizdb uninstall
+```
+oder aus dem MIZDB Verzeichnis:
+```shell
+bash mizdb.sh uninstall
+```
+
 ## Development 
 
 Installiere zusätzliche Dependencies:
