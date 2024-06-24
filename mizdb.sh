@@ -121,6 +121,38 @@ migrate() {
   docker exec -i $app_container python manage.py migrate --no-input
 }
 
+uninstall() {
+  set -e
+  set +a
+  source .env
+
+  echo "MIZDB wird deinstalliert."
+  echo "WARNUNG: Dabei werden alle Daten gelöscht!"
+
+  read -r -p "Bitte geben Sie 'MIZDB löschen' ein, um zu bestätigen: "
+  if [[ ! $REPLY = "MIZDB löschen" ]]; then
+    echo "Abgebrochen."
+    exit 1
+  fi
+
+  echo "Lösche Docker Container..."
+  docker stop $app_container $db_container
+  docker container rm $app_container $db_container
+  docker image prune -a
+
+  echo "Lösche Datenbank und Log Verzeichnisse..."
+  sudo rm -rf "$DATA_DIR"
+  sudo rm -rf "$LOG_DIR"
+
+  echo "Lösche Management Skript"
+  sudo rm /usr/local/bin/mizdb
+
+  echo "Lösche MIZDB Verzeichnis..."
+  rm -rf "$PWD"
+  set -a
+  set +e
+}
+
 case "$1" in
   dump) dump "$2" ;;
   restore) restore "$2" ;;
@@ -134,5 +166,6 @@ case "$1" in
   check) check ;;
   collectstatic) collectstatic ;;
   migrate) migrate;;
+  uninstall) uninstall;;
   *) show_help ;;
 esac
