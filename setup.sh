@@ -30,10 +30,6 @@ MOUNT_POINT=${MOUNT_POINT:-/miz}
 # URL at which the WIKI is available
 WIKI_URL=${WIKI_URL}
 
-# Docker user IDs
-UID=$(id -u)
-GID=$(id -g)
-
 # Mounted Directories
 DATA_DIR=${DATA_DIR:-/var/lib/mizdb/pgdata}
 LOG_DIR=${LOG_DIR:-/var/log/mizdb}
