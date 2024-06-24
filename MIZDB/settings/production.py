@@ -17,27 +17,25 @@ DEBUG = True
 # URL to the wiki.
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context
-WIKI_URL = os.environ.get('WIKI_URL', "/wiki/Hauptseite")
+WIKI_URL = os.environ.get("WIKI_URL", "/wiki/Hauptseite")
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'formatters': {
-        'default': {
-            'format': '[%(asctime)s] %(levelname)s - %(name)s - %(message)s'
-        },
+    "formatters": {
+        "default": {"format": "[%(asctime)s] %(levelname)s - %(name)s - %(message)s"},
     },
-    'filters': {
+    "filters": {
         # Do not log dev server auto reloads:
-        'not_autoreload': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.name != 'django.utils.autoreload'
+        "not_autoreload": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: record.name != "django.utils.autoreload",
         }
     },
-    'loggers': {},
+    "loggers": {},
 }
