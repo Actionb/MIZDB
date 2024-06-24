@@ -118,7 +118,7 @@ collectstatic() {
 }
 
 migrate() {
-  docker exec -i $app_container python manage.py migrate
+  docker exec -i $app_container python manage.py migrate --no-input
 }
 
 case "$1" in
