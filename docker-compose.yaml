@@ -10,7 +10,7 @@ services:
       POSTGRES_DB: mizdb
       POSTGRES_USER: mizdb_user
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-    restart: always
+    restart: unless-stopped
     secrets:
       - db_password
     healthcheck:
@@ -31,7 +31,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
     entrypoint: ["/mizdb/docker-entrypoint.sh"]
     command: ["/etc/mizdb-server/apachectl", "start", "-DFOREGROUND"]
 
