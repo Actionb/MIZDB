@@ -35,10 +35,11 @@ WIKI_URL=${WIKI_URL}
 # Docker user IDs
 UID=$(id -u)
 GID=$(id -g)
-EOF
 
-# Create a directory for the database data.
-mkdir -p db/data
+# Mounted Directories
+DATA_DIR=/var/lib/mizdb/pgdata
+LOG_DIR=/var/log/mizdb
+EOF
 
 # Create a directory for log files.
 mkdir -p logs
