@@ -126,6 +126,7 @@ uninstall() {
   set -e
   set +a
   source .env
+  set -a
 
   echo "MIZDB wird deinstalliert."
   echo "WARNUNG: Dabei werden alle Daten gelöscht!"
@@ -140,9 +141,8 @@ uninstall() {
   docker stop $app_container $db_container
   docker container rm $app_container $db_container
   docker image prune -a
-  printf "Fertig.\n"
+  printf "Docker Container gelöscht.\n\n"
 
-  echo "Lösche Datenbank und Log Verzeichnisse..."
   echo "Lösche Datenbankverzeichnis: $(dirname "$DATA_DIR")"
   read -r -p "Fortfahren? [j/N]: "
   if [[ $REPLY =~ ^[jJyY]$ ]]; then
@@ -158,15 +158,15 @@ uninstall() {
   sudo rm /usr/local/bin/mizdb
 
   MIZDB_DIR="$(dirname -- "$( readlink -f -- "$0"; )"; )"
-  echo "Lösche MIZDB Verzeichnis ${MIZDB_DIR}."
+  echo "Lösche MIZDB Source Verzeichnis ${MIZDB_DIR}."
   read -r -p "Fortfahren? [j/N]: "
   if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
     exit 1
   fi
   cd ..
   rm -rf "$MIZDB_DIR"
-  set -a
   set +e
+  printf "\nFertig!"
 }
 
 case "$1" in
