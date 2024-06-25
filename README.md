@@ -325,6 +325,12 @@ psql --username=mizdb_user --host=localhost mizdb
 
 ## Deinstallation (Docker)
 
+Bei der Deinstallation werden folgende Verzeichnisse und Dateien gelöscht:
+- das MIZDB Source Verzeichnis
+- das Datenbank Verzeichnis (standardmäßig: `/var/lib/mizdb`)
+- das Log Verzeichnis (standardmäßig: `/var/log/mizdb`)
+- das Management Skript (standardmäßg: `/usr/local/bin/mizdb`)
+
 Mit Management Skript:
 ```shell
 mizdb uninstall
