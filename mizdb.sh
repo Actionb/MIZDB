@@ -37,6 +37,7 @@ EOF
 dump() {
   file="$1"
   if [ -z "$file" ]; then
+    # TODO: read directory for dumps from .env file?
     mkdir -p dumps
     dir=$(readlink -f ./dumps)
     file="$dir/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"
