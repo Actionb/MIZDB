@@ -5,6 +5,7 @@
 # > crontab -e
 # > 51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
 
+BACKUP_DIR="/var/lib/mizdb/backups"
 # Numbers of days you want to keep copies of your database:
 number_of_days=30
 
