@@ -4,6 +4,7 @@ services:
     container_name: mizdb-postgres
     volumes:
       - "$DATA_DIR:/var/lib/postgresql/data"
+      - "$BACKUP_DIR:$BACKUP_DIR"
       # Mount the directory that contains the restore and dump scripts:
       - ./db:/mizdb
     environment:

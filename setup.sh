@@ -11,6 +11,7 @@
 #   WIKI_URL        -- URL to the MIZDB WIKI
 #   MOUNT_POINT     -- mount point for the apache server (defaults to /miz)
 #   DATA_DIR        -- directory for the database data (defaults to /var/lib/mizdb/pgdata)
+#   BACKUP_DIR      -- directory for the database backups (defaults to /var/lib/mizdb/backups)
 #   LOG_DIR         -- directory for the log files (defaults to /var/log/mizdb)
 #
 # USAGE:
@@ -32,6 +33,7 @@ WIKI_URL=${WIKI_URL}
 
 # Mounted Directories
 DATA_DIR=${DATA_DIR:-/var/lib/mizdb/pgdata}
+BACKUP_DIR=${BACKUP_DIR:-/var/lib/mizdb/backups}
 LOG_DIR=${LOG_DIR:-/var/log/mizdb}
 EOF
 
