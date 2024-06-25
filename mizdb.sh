@@ -143,12 +143,12 @@ uninstall() {
   printf "Fertig.\n"
 
   echo "Lösche Datenbank und Log Verzeichnisse..."
-  echo "Lösche Datenbankverzeichnis ${DATA_DIR}."
+  echo "Lösche Datenbankverzeichnis: $(dirname "$DATA_DIR")"
   read -r -p "Fortfahren? [j/N]: "
   if [[ $REPLY =~ ^[jJyY]$ ]]; then
-    sudo rm -rf "$DATA_DIR"
+    sudo rm -rf "$(dirname "$DATA_DIR")"
   fi
-  echo "Lösche Log Verzeichnis ${LOG_DIR}."
+  echo "Lösche Log Verzeichnis: ${LOG_DIR}"
   read -r -p "Fortfahren? [j/N]: "
   if [[ $REPLY =~ ^[jJyY]$ ]]; then
     sudo rm -rf "$LOG_DIR"
