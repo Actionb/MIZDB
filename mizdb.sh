@@ -140,16 +140,31 @@ uninstall() {
   docker stop $app_container $db_container
   docker container rm $app_container $db_container
   docker image prune -a
+  printf "Fertig.\n"
 
   echo "Lösche Datenbank und Log Verzeichnisse..."
-  sudo rm -rf "$DATA_DIR"
-  sudo rm -rf "$LOG_DIR"
+  echo "Lösche Datenbankverzeichnis ${DATA_DIR}."
+  read -r -p "Fortfahren? [j/N]: "
+  if [[ $REPLY =~ ^[jJyY]$ ]]; then
+    sudo rm -rf "$DATA_DIR"
+  fi
+  echo "Lösche Log Verzeichnis ${LOG_DIR}."
+  read -r -p "Fortfahren? [j/N]: "
+  if [[ $REPLY =~ ^[jJyY]$ ]]; then
+    sudo rm -rf "$LOG_DIR"
+  fi
 
   echo "Lösche Management Skript"
   sudo rm /usr/local/bin/mizdb
 
-  echo "Lösche MIZDB Verzeichnis..."
-  rm -rf "$PWD"
+  MIZDB_DIR="$(dirname -- "$( readlink -f -- "$0"; )"; )"
+  echo "Lösche MIZDB Verzeichnis ${MIZDB_DIR}."
+  read -r -p "Fortfahren? [j/N]: "
+  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+    exit 1
+  fi
+  cd ..
+  rm -rf "$MIZDB_DIR"
   set -a
   set +e
 }
