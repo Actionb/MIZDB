@@ -30,6 +30,7 @@ BEFEHLE:
   dbshell       Kommandozeile des Postgresql Containers aufrufen
   check         MIZDB/Django checks ausführen
   migrate       Datenbankmigrationen ausführen
+  uninstall     MIZDB deinstallieren
 EOF
 }
 
@@ -124,8 +125,9 @@ migrate() {
 
 uninstall() {
   set -e
+  MIZDB_DIR="$(dirname -- "$( readlink -f -- "$0"; )"; )"
   set +a
-  source .env
+  source "$MIZDB_DIR/.env"
   set -a
 
   echo "MIZDB wird deinstalliert."
@@ -157,7 +159,6 @@ uninstall() {
   echo "Lösche Management Skript"
   sudo rm /usr/local/bin/mizdb
 
-  MIZDB_DIR="$(dirname -- "$( readlink -f -- "$0"; )"; )"
   echo "Lösche MIZDB Source Verzeichnis ${MIZDB_DIR}."
   read -r -p "Fortfahren? [j/N]: "
   if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
