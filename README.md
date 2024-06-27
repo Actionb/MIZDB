@@ -3,19 +3,32 @@
 Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
 <!-- TOC -->
-
-* [Installation Debian (Docker)](#installation-debian-docker)
-	* [Per script](#per-script)
-	* [Manuell](#manuell)
-* [Verwaltung](#verwaltung)
-	* [Docker Container & Webserver](#docker-container--webserver)
-	* [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pgrestore)
-	* [Backup erstellen (pg_dump)](#backup-erstellen-pgdump)
-	* [Update](#update)
-	* [Django Shell & psql](#django-shell--psql)
-	* [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
-* [Installation (ohne Docker)](#installation-ohne-docker)
-
+* [MIZDB - Musikarchiv Datenbank](#mizdb---musikarchiv-datenbank)
+  * [Installation Debian (Docker)](#installation-debian-docker)
+    * [Per script](#per-script)
+    * [Manuell](#manuell)
+  * [Verwaltung](#verwaltung)
+    * [Docker Container & Webserver](#docker-container--webserver)
+    * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pg_restore)
+    * [Backup erstellen (pg_dump)](#backup-erstellen-pg_dump)
+    * [Backups automatisieren](#backups-automatisieren)
+      * [Cronjob](#cronjob)
+    * [Update](#update)
+    * [Django Shell & psql](#django-shell--psql)
+    * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
+  * [Installation (ohne Docker)](#installation-ohne-docker)
+    * [1. Erforderliche Pakete installieren](#1-erforderliche-pakete-installieren)
+    * [2. Postgres Datenbank einrichten](#2-postgres-datenbank-einrichten)
+    * [3. MIZDB Dateien herunterladen und einrichten](#3-mizdb-dateien-herunterladen-und-einrichten)
+      * [Python Module installieren:](#python-module-installieren)
+      * [Ordner für Log-Dateien einrichten:](#ordner-für-log-dateien-einrichten)
+    * [4. Apache einrichten](#4-apache-einrichten)
+    * [Datenbank wiederherstellen](#datenbank-wiederherstellen)
+    * [MIZDB testen](#mizdb-testen)
+    * [PostgreSQL Terminal aufrufen](#postgresql-terminal-aufrufen)
+  * [Deinstallation (Docker)](#deinstallation-docker)
+  * [Development](#development)
+    * [CSS, Sass & Theme](#css-sass--theme)
 <!-- TOC -->
 
 ## Installation Debian (Docker)
@@ -113,6 +126,20 @@ bash mizdb.sh dump backup_datei
 ```
 
 Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis `MIZDB/dumps` erstellt.
+
+### Backups automatisieren
+
+#### Cronjob
+
+Crontab des root users öffnen:
+```shell
+sudo crontab -e
+```
+Und folgenden cronjob hinzufügen:
+```
+# Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
+51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+```
 
 ### Update
 
