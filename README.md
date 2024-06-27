@@ -114,6 +114,20 @@ bash mizdb.sh dump backup_datei
 
 Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis `MIZDB/dumps` erstellt.
 
+### Backups automatisieren
+
+#### Cronjob
+
+Crontab des root users öffnen:
+```shell
+sudo crontab -e
+```
+Und folgenden cronjob hinzufügen:
+```
+# Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
+51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+```
+
 ### Update
 
 Um die Anwendung zu aktualisieren, benutze:
