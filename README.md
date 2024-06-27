@@ -139,6 +139,21 @@ Und folgenden cronjob hinzufügen:
 51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
 ```
 
+#### rclone
+
+Mit rclone und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden:
+1. rclone installieren: https://rclone.org/install/
+2. rclone für Service Account (unattended mode) konfigurieren: https://rclone.org/drive/#service-account-support
+3. crontab öffnen:
+    ```shell
+    sudo crontab -e
+    ```
+    und dann den cronjob definieren, zum Beispiel:
+    ```shell
+   # Backups mit rclone hochladen:
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups <remote_name>:backups
+    ```
+
 ### Update
 
 Um die Anwendung zu aktualisieren, benutze:
