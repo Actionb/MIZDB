@@ -358,7 +358,9 @@ Bei der Deinstallation werden folgende Verzeichnisse und Dateien gelöscht:
 - das MIZDB Source Verzeichnis
 - das Datenbank Verzeichnis (standardmäßig: `/var/lib/mizdb`)
 - das Log Verzeichnis (standardmäßig: `/var/log/mizdb`)
-- das Management Skript (standardmäßg: `/usr/local/bin/mizdb`)
+- das Management Skript (standardmäßig: `/usr/local/bin/mizdb`)
+
+Außerdem wird der Backup cronjob aus der root crontab entfernt.
 
 Mit Management Skript:
 
