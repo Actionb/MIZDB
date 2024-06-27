@@ -156,10 +156,14 @@ uninstall() {
     sudo rm -rf "$LOG_DIR"
   fi
 
-  echo "Lösche Management Skript"
+  echo "Lösche Management Skript."
   sudo rm /usr/local/bin/mizdb
 
-  echo "Lösche MIZDB Source Verzeichnis ${MIZDB_DIR}."
+  echo "Entferne Backup cronjob."
+  # https://askubuntu.com/a/719877
+  sudo crontab -l 2>/dev/null | grep -v 'docker exec mizdb-postgres sh /mizdb/backup.sh' | grep -v "Backup der MIZDB Datenbank" | sudo crontab -u root -
+
+  echo "Lösche MIZDB Source Verzeichnis ${MIZDB_DIR}"
   read -r -p "Fortfahren? [j/N]: "
   if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
     exit 1
