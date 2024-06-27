@@ -50,9 +50,9 @@ sh get-mizdb.sh database_backup
   # Docker Container erstellen und starten: 
   docker compose up -d
   # Statische Dateien sammeln:
-  docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
+  docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0  
   # Log-Verzeichnis Besitzer einrichten:
-  docker exec -i mizdb-app chown -R apache:apache logs
+  docker exec -i mizdb-app sh -c 'chown -R apache:apache $LOG_DIR'
   ```
 
 Wenn eine Backup-Datei (hier: `database_backup`) vorhanden ist, kann die Datenbank wiederhergestellt werden:

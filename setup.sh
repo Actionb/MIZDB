@@ -1,19 +1,17 @@
 #!/bin/sh
-# Create secret files, an .env file and directories for the docker container.
+# Create secret files and the .env file for the docker container.
 #
 # Parameters read from the environment:
-# 	DB_NAME
-# 	DB_USER
-# 	DB_HOST
-# 	DB_PORT
-#   DB_PASSWORD
-#   ALLOWED_HOSTS
-#   WIKI_URL
-#   MOUNT_POINT
-#
-# Prompts for the database password if the environment variable DB_PASSWORD
-# is not set.
-# Prompts for the hostname if the environment variable ALLOWED_HOSTS is not set.
+# 	DB_NAME         -- name of the database (defaults to mizdb)
+# 	DB_USER         -- user name of the database user (defaults to mizdb_user)
+# 	DB_HOST         -- host name of the database container (defaults to db)
+# 	DB_PORT         -- port of the database (defaults to 5432)
+#   DB_PASSWORD     -- database password (will ask if not set)
+#   ALLOWED_HOSTS   -- value for ALLOWED_HOSTS Django setting (will ask if not set)
+#   WIKI_URL        -- URL to the MIZDB WIKI
+#   MOUNT_POINT     -- mount point for the apache server (defaults to /miz)
+#   DATA_DIR        -- directory for the database data (defaults to /var/lib/mizdb/pgdata)
+#   LOG_DIR         -- directory for the log files (defaults to /var/log/mizdb)
 #
 # USAGE:
 # 	DB_PASSWORD=supersecret DB_NAME=my_db ALLOWED_HOSTS=example.com sh setup.sh
@@ -35,10 +33,11 @@ WIKI_URL=${WIKI_URL}
 # Docker user IDs
 UID=$(id -u)
 GID=$(id -g)
-EOF
 
-# Create a directory for the database data.
-mkdir -p db/data
+# Mounted Directories
+DATA_DIR=${DATA_DIR:-/var/lib/mizdb/pgdata}
+LOG_DIR=${LOG_DIR:-/var/log/mizdb}
+EOF
 
 # Create a directory for log files.
 mkdir -p logs
