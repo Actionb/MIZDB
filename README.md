@@ -3,32 +3,36 @@
 Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
 <!-- TOC -->
+
 * [MIZDB - Musikarchiv Datenbank](#mizdb---musikarchiv-datenbank)
-  * [Installation Debian (Docker)](#installation-debian-docker)
-    * [Per script](#per-script)
-    * [Manuell](#manuell)
-  * [Verwaltung](#verwaltung)
-    * [Docker Container & Webserver](#docker-container--webserver)
-    * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pg_restore)
-    * [Backup erstellen (pg_dump)](#backup-erstellen-pg_dump)
-    * [Backups automatisieren](#backups-automatisieren)
-      * [Cronjob](#cronjob)
-    * [Update](#update)
-    * [Django Shell & psql](#django-shell--psql)
-    * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
-  * [Installation (ohne Docker)](#installation-ohne-docker)
-    * [1. Erforderliche Pakete installieren](#1-erforderliche-pakete-installieren)
-    * [2. Postgres Datenbank einrichten](#2-postgres-datenbank-einrichten)
-    * [3. MIZDB Dateien herunterladen und einrichten](#3-mizdb-dateien-herunterladen-und-einrichten)
-      * [Python Module installieren:](#python-module-installieren)
-      * [Ordner für Log-Dateien einrichten:](#ordner-für-log-dateien-einrichten)
-    * [4. Apache einrichten](#4-apache-einrichten)
-    * [Datenbank wiederherstellen](#datenbank-wiederherstellen)
-    * [MIZDB testen](#mizdb-testen)
-    * [PostgreSQL Terminal aufrufen](#postgresql-terminal-aufrufen)
-  * [Deinstallation (Docker)](#deinstallation-docker)
-  * [Development](#development)
-    * [CSS, Sass & Theme](#css-sass--theme)
+	* [Installation Debian (Docker)](#installation-debian-docker)
+		* [Per script](#per-script)
+		* [Manuell](#manuell)
+	* [Verwaltung](#verwaltung)
+		* [Docker Container & Webserver](#docker-container--webserver)
+		* [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pg_restore)
+		* [Backup erstellen (pg_dump)](#backup-erstellen-pg_dump)
+		* [Backups automatisieren](#backups-automatisieren)
+			* [Cronjob](#cronjob)
+			* [rclone](#rclone)
+				* [rclone mit Google Service Account](#rclone-mit-google-service-account)
+		* [Update](#update)
+		* [Django Shell & psql](#django-shell--psql)
+		* [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
+	* [Installation (ohne Docker)](#installation-ohne-docker)
+		* [1. Erforderliche Pakete installieren](#1-erforderliche-pakete-installieren)
+		* [2. Postgres Datenbank einrichten](#2-postgres-datenbank-einrichten)
+		* [3. MIZDB Dateien herunterladen und einrichten](#3-mizdb-dateien-herunterladen-und-einrichten)
+			* [Python Module installieren:](#python-module-installieren)
+			* [Ordner für Log-Dateien einrichten:](#ordner-für-log-dateien-einrichten)
+		* [4. Apache einrichten](#4-apache-einrichten)
+		* [Datenbank wiederherstellen](#datenbank-wiederherstellen)
+		* [MIZDB testen](#mizdb-testen)
+		* [PostgreSQL Terminal aufrufen](#postgresql-terminal-aufrufen)
+	* [Deinstallation (Docker)](#deinstallation-docker)
+	* [Development](#development)
+		* [CSS, Sass & Theme](#css-sass--theme)
+
 <!-- TOC -->
 
 ## Installation Debian (Docker)
@@ -132,14 +136,83 @@ Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverz
 #### Cronjob
 
 Crontab des root users öffnen:
+
 ```shell
 sudo crontab -e
 ```
+
 Und folgenden cronjob hinzufügen:
+
 ```
 # Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
 51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
 ```
+
+#### rclone
+
+Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.
+
+1. rclone installieren: https://rclone.org/install/
+2. rclone für Google Drive konfigurieren: https://rclone.org/drive/
+3. crontab öffnen:
+    ```shell
+    sudo crontab -e
+    ```
+   und dann den cronjob definieren, zum Beispiel:
+    ```shell
+   # Backups mit rclone hochladen:
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups <remote_name>:backups
+    ```
+
+Die Standardkonfiguration erfordert einen Webbrowser.
+Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: https://rclone.org/remote_setup/
+
+##### rclone mit Google Service Account
+
+Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:
+
+https://rclone.org/drive/#service-account-support
+
+Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:
+
+1. Falls nicht der bereits existierende Service "dbbackup-service" benutzt werden soll, muss
+   vorerst ein Service Account angelegt werden:
+	1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+	2. Service Accounts > Create Service Account
+	3. im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
+	   Account freigeben
+
+2. Service Account Key (`credentials.json`) generieren, falls nicht vorhanden:
+	1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+	2. Service Accounts > dbbackup-service > KEYS
+	3. Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen
+
+3. Root Folder ID des Backup-Ordners herausfinden:
+	1. In Google Drive einloggen
+	2. Unter "Meine Ablage" den entsprechenden Ordner anklicken
+	3. die ID ist am Ende der URL nach `/folders/` zu finden; also
+	   z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
+	   ID `10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa`
+
+4. rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support
+
+Mit einer solchen rclone.conf, zu finden unter `/home/my_user/.config/rclone/`:
+
+```
+[dbbackup]
+type = drive
+scope = drive
+root_folder_id = 10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa
+service_account_file = /pfad/zu/service/account/credentials.json
+```
+
+müsste der cronjob so aussehen:
+
+```
+53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
+```
+
+Weitere Links: [Gdrive access via service account](https://forum.rclone.org/t/gdrive-access-via-service-account/17926)
 
 ### Update
 
@@ -329,7 +402,7 @@ sudo a2ensite mizdb
 sudo service apache2 restart   
 ```
 
-Jetzt sollte MIZDB unter `http://<ServerName>/miz/admin` (also z.B http://localhost/miz/admin) erreichbar sein.
+Jetzt sollte MIZDB unter `http://<ServerName>/miz/admin` (also z.B. http://localhost/miz/admin) erreichbar sein.
 
 ### Datenbank wiederherstellen
 
