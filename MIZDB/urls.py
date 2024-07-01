@@ -19,8 +19,9 @@ import warnings
 
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views import defaults
+from django.views.static import serve
 
 from dbentry.admin.site import miz_site
 
@@ -29,6 +30,14 @@ urlpatterns = [
     path("admin/", miz_site.urls),
     path("", include("dbentry.site.urls")),
     path("mizdb_watchlist/", include("mizdb_watchlist.urls")),
+    # Static help pages:
+    path(
+        "help/index.html",
+        serve,
+        kwargs={"path": "index.html", "document_root": settings.HELP_PAGES_ROOT},
+        name="help_index",
+    ),
+    re_path(r"^%s(?P<path>.*)$" % "help/", serve, kwargs={"document_root": settings.HELP_PAGES_ROOT}),
 ]
 
 if settings.DEBUG:
