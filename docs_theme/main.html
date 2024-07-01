@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if page.title %}{{ page.title }} - {% endif %}{{ config.site_name }}{% endblock title %}</title>
+    {% block bootstrap %}
+        <script src="{{ static('bootstrap/js/bootstrap.bundle.js') }}"></script>
+        <link id="default_theme" href="{{ static('mizdb/css/mizdb_theme.css') }}" rel="stylesheet">
+        <script src="{{ static('mizdb/js/mode_switch.js') }}"></script>
+    {% endblock bootstrap %}
+    {% block style %}
+        <link rel="stylesheet" href="{{ static('mizdb/css/mizdb.css') }}">
+    {% endblock style %}
+    {% block extrastyle %}
+      {%- for path in config.extra_css %}
+        <link href="{{ path | url }}" rel="stylesheet">
+      {%- endfor %}
+    {% endblock extrastyle %}
+    {% block extrahead %}{% endblock extrahead %}
+</head>
+<body>
+
+<!-- Header -->
+{% block header %}
+<header class="navbar navbar-dark bg-primary px-4 container-fluid justify-content-between">
+    <div id="branding-navigation" class="col ps-3">
+        {% block branding %}<a class="navbar-brand align-middle" href="{{ url('index') }}" title="Hauptseite">MIZDB</a>{% endblock branding %}
+    </div>
+
+    {% block user_links %}
+        <div id="user-links" class="d-flex gap-2 col justify-content-end px-3">
+            <button id="color-mode-toggle" type="button" class="btn btn-primary border-dark" title="Farbschema umschalten (hell/dunkel)">
+                <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg id="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon d-none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <a class="btn btn-primary border-dark p-2" href="{{ url('help_index') }}" target="_blank" title="Hilfe">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-help-circle"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <span class="nav-text">Hilfe</span>
+            </a>
+        </div>
+    {% endblock user_links %}
+</header>
+{% endblock header %}
+<!-- END Header -->
+
+<main id="main" class="p-1 pb-0 container-lg">
+    <!-- Content -->
+    <div id="content" class="mt-2">
+        {% block content %} {{ page.content }} {% endblock content %}
+    </div>
+    <!-- END Content -->
+</main>
+
+<div id="sticky-bottom-container" class="container-lg sticky-bottom pb-1 px-1">
+{% block sticky_bottom %}
+    <div id="to-top-button-container" class="d-flex justify-content-center">
+        <a href="#" type="button" class="btn btn-primary mb-1 opacity-75 d-none" id="btn-back-to-top" title="Zum Anfang scrollen" aria-label="Zum Anfang scrollen" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-up"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            <span>nach oben</span>
+        </a>
+    </div>
+{% endblock %}
+</div>
+{% block extrascript %}
+    {%- for script in config.extra_javascript %}
+      {{ script | script_tag }}
+    {%- endfor %}
+    <script src="{{ static('mizdb/js/scrolltop.js') }}"></script>
+{% endblock extrascript %}
+</body>
+</html>
