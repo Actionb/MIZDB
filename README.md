@@ -194,7 +194,7 @@ Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:
 
 4. rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support
 
-Mit einer solchen rclone.conf:
+Mit einer solchen rclone.conf, zu finden unter `/home/my_user/.config/rclone/`:
 
 ```
 [dbbackup]
@@ -207,7 +207,7 @@ service_account_file = /pfad/zu/service/account/credentials.json
 müsste der cronjob so aussehen:
 
 ```
-53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
+53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
 ```
 
 Weitere Links: [Gdrive access via service account](https://forum.rclone.org/t/gdrive-access-via-service-account/17926)
