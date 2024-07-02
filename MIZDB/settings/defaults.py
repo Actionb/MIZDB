@@ -165,8 +165,6 @@ ANONYMOUS_CAN_VIEW = True
 # Log CSRF failures:
 CSRF_FAILURE_VIEW = "dbentry.csrf.csrf_failure"
 
-HELP_PAGES_ROOT = BASE_DIR / "site"  # 'site' is the mkdocs default
-
 STATICFILES_DIRS = [
     BASE_DIR / "docs",  # include static files for help pages, such as images
 ]
