@@ -7,4 +7,8 @@ theme:
 hooks:
   - 'docs/hooks/mizdb_hooks.py'
 use_directory_urls: false
-plugins: []
+plugins:
+   - glightbox
+markdown_extensions:
+  - attr_list
+  - md_in_html
