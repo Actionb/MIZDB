@@ -1,0 +1,19 @@
+{% extends "mizdb/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+<link href="{% static 'help/css/glightbox.min.css' %}" rel="stylesheet"/>
+<style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }</style>
+<script src="{% static 'help/js/glightbox.min.js' %}"></script>
+{% endblock extrahead %}
+
+{% block content_title %}{% endblock %}
+
+{% block extrascript %}
+    {{ block.super }}
+    <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});</script>
+{% endblock extrascript %}
