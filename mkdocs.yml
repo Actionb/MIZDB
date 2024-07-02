@@ -1,11 +1,9 @@
 site_name: My Docs
 theme:
-  name: null
+  name: mkdocs
   custom_dir: 'docs_theme/'
-  static_templates:
-    - main.html
 hooks:
-  - 'docs/hooks/mizdb_hooks.py'
+  - 'docs/hooks/post_build.py'
 use_directory_urls: false
 plugins:
    - glightbox
