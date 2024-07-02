@@ -8,45 +8,25 @@ site_root = project_root / "dbentry" / "site"
 static_root = site_root / "static"
 
 
-def image_static_tag(url):
-    """
-    Wrap the image URL in a django static tag.
-
-    Note, mkdocs images are served directly from the 'docs' directory:
-    STATICFILES_DIRS = [
-        BASE_DIR / "docs",  # include static files for help pages, such as images
-    ]
-    """
-    return "{% static " + f"'{url}'" + " %}"
-
-
-def url_tag(url):
-    """Return a django 'url' tag that reverses the given URL to the corresponding HelpView."""
-    return "{% url 'help' page_name=" + f"'{url.replace('.html', '')}'" + "%}"
-
-
 def _replace_urls(content):
-    requires_static = False
-    for link in content.find_all("a"):
-        try:
-            href = link.attrs["href"]
-        except (KeyError, AttributeError):
-            continue
-        if href.startswith("img/"):
-            link.attrs["href"] = image_static_tag(href)
-            requires_static = True
-        elif "/" not in href and href.endswith(".html"):
-            link.attrs["href"] = "{% url 'help' page_name=" + f"'{href.replace('.html', '')}'" + "%}"
-    for img in content.find_all("img"):
-        if img.attrs["src"].startswith("img/"):
-            try:
-                src = img.attrs["src"]
-            except (KeyError, AttributeError):
-                continue
-            img.attrs["src"] = image_static_tag(src)
-            requires_static = True
+    requires_load_static = False
 
-    return requires_static
+    def is_link_or_img(node):
+        return node.name in ("a", "img")
+
+    for elem in content.find_all(is_link_or_img):
+        if elem.name == "img":
+            key = "src"
+        else:
+            key = "href"
+        url = elem.attrs[key]
+        if url.startswith("img/"):
+            elem.attrs[key] = "{% static " + f"'{url}'" + " %}"
+            requires_load_static = True  # need to load the static tag
+        elif "/" not in url and url.endswith(".html"):
+            elem.attrs[key] = "{% url 'help' page_name=" + f"'{url.replace('.html', '')}'" + "%}"
+
+    return requires_load_static
 
 
 def copy_glightbox_assets(config):
