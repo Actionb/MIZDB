@@ -347,3 +347,13 @@ Links:
  - https://getbootstrap.com/
  - https://bootswatch.com/flatly/
  - https://sass-lang.com/
+
+### Hilfe Seiten erzeugen
+
+Um die Hilfe Seiten der MIZDB "site" app zu erzeugen, benutze:
+```shell
+mkdocs build
+```
+
+Ein [post build hook](https://www.mkdocs.org/dev-guide/plugins/#on_post_build) 
+erzeugt aus den mkdocs html Dateien Django Templates und legt sie unter `dbentry/site/templates/help` ab. 
