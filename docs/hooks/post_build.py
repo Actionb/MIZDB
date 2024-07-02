@@ -24,6 +24,7 @@ def url_tag(url):
     """Return a django 'url' tag that reverses the given URL to the corresponding HelpView."""
     return "{% url 'help' page_name=" + f"'{url.replace('.html', '')}'" + "%}"
 
+
 def _replace_urls(content):
     requires_static = False
     for link in content.find_all("a"):
@@ -68,8 +69,9 @@ def parse_pages(config):
     else:
         out_dir = project_root / "dbentry" / "site" / "templates" / "help"
     out_dir.mkdir(exist_ok=True)
+    exclude = ("main.html", "404.html")
     for page in Path(config["site_dir"]).iterdir():
-        if page.is_file() and page.suffix == ".html":
+        if page.is_file() and page.suffix == ".html" and not page.name in exclude:
             with open(page, "r") as f:
                 soup = BeautifulSoup(f.read(), "html.parser")
             content = soup.find(id="help_content")
