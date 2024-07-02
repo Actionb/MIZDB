@@ -1,0 +1,7 @@
+site_name: My Docs
+site_dir: site_standalone
+plugins:
+  - glightbox
+markdown_extensions:
+  - attr_list
+  - md_in_html
