@@ -1,4 +1,4 @@
-site_name: My Docs
+site_name: MIZDB - Hilfe
 theme:
   name: mkdocs
   custom_dir: 'docs_theme/'
