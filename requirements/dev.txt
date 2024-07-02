@@ -13,3 +13,4 @@ pytest-playwright==0.4.3
 pytest-subtests==0.11.0
 mkdocs==1.6.0
 mkdocs-glightbox==0.4.0
+mkdocs[i18n]

@@ -2,8 +2,8 @@ site_name: MIZDB - Hilfe
 theme:
   name: mkdocs
   custom_dir: 'docs_theme/'
-hooks:
-  - 'docs/hooks/post_build.py'
+  navigation_depth: 3
+  locale: de
 use_directory_urls: false
 plugins:
    - glightbox
