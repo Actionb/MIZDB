@@ -1,3 +1,4 @@
+import re
 import shutil
 from pathlib import Path
 
@@ -9,6 +10,7 @@ static_root = site_root / "static"
 
 
 def _replace_urls(content):
+    pattern = re.compile(r"(.*).html(#.*)?")
     requires_load_static = False
 
     def is_link_or_img(node):
@@ -23,8 +25,18 @@ def _replace_urls(content):
         if url.startswith("img/"):
             elem.attrs[key] = "{% static " + f"'{url}'" + " %}"
             requires_load_static = True  # need to load the static tag
-        elif "/" not in url and url.endswith(".html"):
-            elem.attrs[key] = "{% url 'help' page_name=" + f"'{url.replace('.html', '')}'" + "%}"
+        elif "/" not in url and "html" in url:
+            match = pattern.search(url)
+            if not match:
+                continue
+            page_name = match.group(1)  # TODO: need to use unquote?
+            fragment = ""
+            if match.group(2) and len(match.group(2)) > 1:
+                group = match.group(2)
+                # Use lower case for fragment:
+                # Foo#Index -> Foo#index
+                fragment = group[0] + group[1].lower() + group[2:]
+            elem.attrs[key] = "{% url 'help' page_name=" + f"'{page_name}'" + "%}" + fragment
 
     return requires_load_static
 
