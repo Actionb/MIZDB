@@ -14,3 +14,5 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - admonition
+not_in_nav:
+  "index.md"
