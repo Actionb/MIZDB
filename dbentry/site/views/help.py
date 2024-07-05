@@ -1,3 +1,5 @@
+from urllib.parse import unquote
+
 from django.http import Http404
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
@@ -17,8 +19,9 @@ class HelpView(BaseViewMixin, TemplateView):
             return super().get(request, *args, **kwargs)
 
     def get_template_names(self):
-        return [f'help/{self.kwargs["page_name"]}.html']
+        template_name = unquote(self.kwargs["page_name"])
+        return [f'help/{template_name}.html']
 
     @property
     def title(self):
-        return f"{self.kwargs['page_name'].title()} - Hilfe"
+        return f"{unquote(self.kwargs['page_name']).title()} - Hilfe"
