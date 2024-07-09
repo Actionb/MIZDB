@@ -159,7 +159,7 @@ Anmerkung: Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automa
 
 Der Kern der Datenbank sind die
  [Beziehungen](https://en.wikipedia.org/wiki/de:Relationale_Datenbank "wikipedia:de:Relationale Datenbank") zwischen den Tabellen. Ein Musiker kommt aus Dortmund, weil im
- [Datensatz](datensatz.md "Datensatz") des Musikers aus der Musiker Tabelle eine Beziehung zum Datensatz Dortmund aus der Tabelle der Orte existiert. Steuerelemente wie das Auswahlfeld oder die Combobox dienen dazu, die Herstellung und Verwaltung dieser Beziehungen zu vereinfachen. Zu diesem Zweck findet man neben diesen Elementen meist weitere Elemente, die das Hinzufügen eines neuen oder das Bearbeiten/[Löschen](l%c3%b6schen.md "Löschen") eines bereits existierenden "fremden" Datensatzes ermöglichen.
+ [Datensatz](datensatz.md "Datensatz") des Musikers aus der Musiker Tabelle eine Beziehung zum Datensatz Dortmund aus der Tabelle der Orte existiert. Steuerelemente wie das Auswahlfeld oder die Combobox dienen dazu, die Herstellung und Verwaltung dieser Beziehungen zu vereinfachen. Zu diesem Zweck findet man neben diesen Elementen meist weitere Elemente, die das Hinzufügen eines neuen oder das Bearbeiten/[Löschen](löschen.md "Löschen") eines bereits existierenden "fremden" Datensatzes ermöglichen.
    
 
  Für die ausgewählte Ausgabe "2000-1", von links nach rechts: Ausgabe bearbeiten, neue Ausgabe hinzufügen, Ausgabe löschen.

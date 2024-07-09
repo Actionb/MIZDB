@@ -88,4 +88,4 @@ Relevante [Schlagwörter](schlagwort.md "Schlagwort") bzgl. des Objektes.
 ### Siehe auch { .fs-5 }
 
 
-* [Wikipedia: Broschüre](https://en.wikipedia.org/wiki/de:Brosch%C3%BCre "wikipedia:de:Broschüre")
+* [Wikipedia: Broschüre](https://en.wikipedia.org/wiki/de:Broschüre "wikipedia:de:Broschüre")

@@ -21,7 +21,7 @@ Allgemein stehen die Aktionen "Löschen" und "Zusammenfügen" zur Verfügung. Be
 
 
 Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet. Die Datensätze werden zusammen in einem Zug gelöscht. Siehe auch:
- [Löschen](l%c3%b6schen.md "Löschen")
+ [Löschen](löschen.md "Löschen")
 
 
 
@@ -29,7 +29,7 @@ Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet. Die Datens
 
 
 Diese Aktion ermöglicht das Bearbeiten der Bestandsangaben von mehreren Datensätzen. Die Bestände der einzelnen Datensätze werden wie aus den
- [Änderungsseiten](oberfl%c3%a4che.md#.C3.84nderungsseite "Oberfläche") gewohnt angezeigt und können frei verändert werden. Änderungen müssen durch einen Klick auf den roten Knopf "Ja, ich in sicher" bestätigt werden, bevor sie übernommen werden.
+ [Änderungsseiten](oberfläche.md#.C3.84nderungsseite "Oberfläche") gewohnt angezeigt und können frei verändert werden. Änderungen müssen durch einen Klick auf den roten Knopf "Ja, ich in sicher" bestätigt werden, bevor sie übernommen werden.
    
 
 
@@ -53,7 +53,7 @@ Mit dieser Aktionen können mehrere Datensätze zu einem einzigen Datensatz zusa
 
 
 Bei der Auswahl des primären Datensatzes werden die Datensätze in derselben Reihenfolge wie in der
- [Änderungsliste](%c3%84nderungsliste.md "Änderungsliste") dargestellt. Hier soll der oberste Datensatz für dieses Beispiel ausgewählt werden, um das Erweitern der Grunddaten ("Primären Datensatz erweitern") veranschaulichen zu können.
+ [Änderungsliste](änderungsliste.md "Änderungsliste") dargestellt. Hier soll der oberste Datensatz für dieses Beispiel ausgewählt werden, um das Erweitern der Grunddaten ("Primären Datensatz erweitern") veranschaulichen zu können.
 
 
 

@@ -7,7 +7,7 @@ Auf der Seite der Änderungsliste könnt ihr
 
 
  Um beispielsweise zur Änderungsliste der Artikel-Datensätze zu gelangen, klickt ihr auf der
- [Indexseite](oberfl%c3%a4che.md#Index "Oberfläche") entweder auf den Link mit der Beschriftung "Artikel" oder auf den "Ändern" Knopf daneben. Der obere Teil der Seite dient der Eingabe von Suchparametern bzw. dem Setzen von Filtern (siehe
+ [Indexseite](oberfläche.md#Index "Oberfläche") entweder auf den Link mit der Beschriftung "Artikel" oder auf den "Ändern" Knopf daneben. Der obere Teil der Seite dient der Eingabe von Suchparametern bzw. dem Setzen von Filtern (siehe
  [Suchformular](suchformular.md "Suchformular")). Darunter, direkt über der Tabelle, befindet sich das
  [Auswahlfeld](bedienelement.md#Einfaches_Auswahlfeld.2FDrop-Down "Bedienelement") für die
  [Aktionen](aktion.md "Aktion") und der Knopf, der Ausführung der ausgewählten Aktion einleitet.

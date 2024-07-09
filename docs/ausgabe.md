@@ -38,7 +38,7 @@ Mit Ausgabennummer (auch oft auch einfach nur "Nummer") ist die Nummer gemeint, 
 Es kommt zwar häufig vor, dass die
  *angegebene* Ausgabennummer mit der Monatszahl übereinstimmt (Bsp.: Ausgabe mit Nummer 9 erschien im September). Allerdings lässt sich von der Monatszahl alleine keine Ausgabennummer ableiten: nur weil die Ausgabe im Mai erschien, bedeutet es nicht, dass die Ausgabe die Nummer 5 hat. Umgekehrt gilt das natürlich genau so.
  
-Der [Grundsatz](grunds%c3%a4tze.md "Grundsätze"),
+Der [Grundsatz](grundsätze.md "Grundsätze"),
  **nichts zu erfinden**, greift hier; wenn keine Ausgabennummer angegeben ist, dann sollte auch keine eingetragen werden.
  
 
@@ -77,7 +77,7 @@ Für Ausgaben, die außerhalb des üblichen
  
 Wird diese Ausgabe als Sonderausgabe markiert, wird für die
  [textliche Repräsentation](#Textliche_Darstellung) des Datensatzes (welche u.a. für die
- [Änderungsliste](%c3%84nderungsliste.md "Änderungsliste") benutzt wird) die
+ [Änderungsliste](änderungsliste.md "Änderungsliste") benutzt wird) die
  <#Beschreibung> benutzt anstatt der numerischen Angaben wie Ausgabennummer.
  
 
@@ -173,7 +173,7 @@ Liegen der Ausgabe Video Materialien (z.B. DVDs) bei, so können hier Verweise a
 
 
 [Datensätze](datensatz.md "Datensatz") brauchen einen Titel; einen Text, der den Datensatz repräsentiert. Dieser Titel wird zum Beispiel in der
- [Änderungsliste](%c3%84nderungsliste.md "Änderungsliste") und in der Suche mittels
+ [Änderungsliste](änderungsliste.md "Änderungsliste") und in der Suche mittels
  [Comboboxen](bedienelement.md#Kombinationsfeld.2FCombobox "Bedienelement") verwendet. 
 
 
@@ -254,7 +254,7 @@ Ist keine chronologische Ordnung möglich, werden die Datensätze zuerst nach Ma
  [Titel](#Textliche_Darstellung) und schließlich nach
  [ID](id.md "ID") sortiert. Dabei werden die Titel
  [lexikographisch](https://en.wikipedia.org/wiki/de:Lexikographische_Ordnung "wikipedia:de:Lexikographische Ordnung") sortiert, was zu einer Ordnung führen kann, die augenscheinlich nicht chronologisch ist ("1970-Dez" kommt vor "1970-Nov"). Siehe auch:
- [Änderungsliste#Sortierung](%c3%84nderungsliste.md#Sortierung "Änderungsliste").
+ [Änderungsliste#Sortierung](änderungsliste.md#Sortierung "Änderungsliste").
 
 
 
@@ -305,7 +305,7 @@ Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
 
 
 Ausgaben, die keine Artikel besitzen, können zu einer
- [Broschüre](brosch%c3%bcre.md "Broschüre"), zu einem
+ [Broschüre](broschüre.md "Broschüre"), zu einem
  [Warenkatalog](warenkatalog.md "Warenkatalog") oder zu einem
  [Programmheft](programmheft.md "Programmheft") umgewandelt und in die entsprechende Kategorie verschoben werden. Auf der Seite zur Bestätigung der Aktion können die Angaben zu den Broschüren eingesehen und überarbeitet werden, bevor die Broschüren erstellt werden.
  

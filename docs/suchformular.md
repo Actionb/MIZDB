@@ -3,7 +3,7 @@ Suchformular
 
 
 
-[Änderungslisten](%c3%84nderungsliste.md "Änderungsliste") bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann.
+[Änderungslisten](änderungsliste.md "Änderungsliste") bieten ein Formular an, mit welchem man genauere Parameter (Filter) für eine Suchanfrage an die Datenbank einstellen kann.
 
 
 

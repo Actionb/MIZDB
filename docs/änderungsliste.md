@@ -6,7 +6,7 @@ Auf der Seite der Änderungsliste könnt ihr [Datensätze](datensatz.md "Datensa
 
 
 
- Um beispielsweise zur Änderungsliste der Artikel-Datensätze zu gelangen, klickt ihr auf der [Indexseite](oberfl%c3%a4che.md#Index "Oberfläche") auf den Link mit der Beschriftung "Artikel".
+ Um beispielsweise zur Änderungsliste der Artikel-Datensätze zu gelangen, klickt ihr auf der [Indexseite](oberfläche.md#Index "Oberfläche") auf den Link mit der Beschriftung "Artikel".
  Der obere Teil der Seite dient der Eingabe von Suchparametern bzw. dem Setzen von Filtern (siehe [Suchformular](suchformular.md "Suchformular")).
 
 

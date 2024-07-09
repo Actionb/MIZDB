@@ -37,7 +37,7 @@ Ein Artikel erfordert immer eine Angabe zu der Ausgabe einer Zeitschrift, aus de
 
 
 
-Wird die Ausgabe eines Artikels gelöscht, würde auch der Verweis auf die Ausgabe aus dem Datensatz des Artikels verschwinden; das Feld Ausgabe würde für den Artikel leer bleiben - dies ist aber nicht erlaubt ([Referentielle Integrität](https://en.wikipedia.org/wiki/de:Referentielle_Integrit%C3%A4t "wikipedia:de:Referentielle Integrität")).
+Wird die Ausgabe eines Artikels gelöscht, würde auch der Verweis auf die Ausgabe aus dem Datensatz des Artikels verschwinden; das Feld Ausgabe würde für den Artikel leer bleiben - dies ist aber nicht erlaubt ([Referentielle Integrität](https://en.wikipedia.org/wiki/de:Referentielle_Integrität "wikipedia:de:Referentielle Integrität")).
 
 
 

@@ -13,7 +13,7 @@ Sichern
 
 
 
-Nachdem der Datensatz abgespeichert wurde, werdet ihr zur [Übersicht](%c3%84nderungsliste.md "Übersicht") weitergeleitet.
+Nachdem der Datensatz abgespeichert wurde, werdet ihr zur [Übersicht](änderungsliste.md "Übersicht") weitergeleitet.
 
 * Sichern und weiter bearbeiten
 

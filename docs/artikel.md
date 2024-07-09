@@ -6,9 +6,7 @@ In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
 ## Erfassung { .fs-3 }
 
-Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
-geeignet.
-Zu dem Zweck der Einführung in die Datenbank ist diese Anleitung hier auch ein wenig ausführlicher.
+Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank geeignet. Zu dem Zweck der Einführung in die Datenbank ist diese Anleitung hier auch ein wenig ausführlicher.
 
 Mal angenommen, ihr habt euch ein Heft des Magazins "Rolling Stone" zum Erfassen ausgesucht.
 Um mit der Erfassung zu beginnen, solltet ihr zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
@@ -17,7 +15,7 @@ Um mit der Erfassung zu beginnen, solltet ihr zuerst die Datenbank nach vorhande
 
 In Kurzform:
 
-* im [Index/Hauptmenü](oberfl%c3%a4che.md#Index "Oberfläche") auf "Artikel" klicken
+* im [Index/Hauptmenü](oberfläche.md#Index "Oberfläche") auf "Artikel" klicken
 * im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
 * im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
   entsprechende Magazin aus der Liste auswählen
@@ -83,8 +81,8 @@ Aufschrift "Sichern und weiterbearbeiten" klickt.
     Davon ausgenommen sind Kurznachrichten und Reviews von Alben und Tonträgern. Aus Zeitgründen müsst ihr diese nicht in
     Datenbank eintragen (ihr *könnt* es aber, wenn ihr wollt).
 
-Im [Hauptmenü](oberfl%c3%a4che.md#Index "Oberfläche") klickt ihr zuerst auf "Artikel", um zur
-[Änderungsliste](%c3%84nderungsliste.md "Änderungsliste") zu gelangen.
+Im [Hauptmenü](oberfläche.md#Index "Oberfläche") klickt ihr zuerst auf "Artikel", um zur
+[Änderungsliste](änderungsliste.md "Änderungsliste") zu gelangen.
 In dieser solltet ihr nach Magazin und Ausgabe filtern und eine Suche ausführen.
 Dazu klickt ihr zunächst auf "Erweiterte Suchoptionen anzeigen", damit die restlichen Felder
 des [Suchformulars](suchformular.md "Suchformular") angezeigt werden.

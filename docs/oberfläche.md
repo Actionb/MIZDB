@@ -16,7 +16,7 @@ Hier werden einige Aspekte der Benutzeroberfläche erklärt.
 
 
  Klickt ihr auf die Beschriftung einer Kategorie, gelangt ihr zur
- [Übersicht](%c3%84nderungsliste.md "Übersicht") dieser Kategorie.
+ [Übersicht](änderungsliste.md "Übersicht") dieser Kategorie.
  Klickt ihr auf den "Hinzufügen" Link neben der Kategorie, werdet ihr direkt zu einem leeren Formular der Kategorie geführt, mit welchem ihr einen neuen
  [Datensatz](datensatz.md "Datensatz") erstellen könnt.
 
