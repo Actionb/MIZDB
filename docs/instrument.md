@@ -6,7 +6,7 @@ Die Datensätze in dieser Kategorie werden dazu benutzt, um Angaben zu Instrumen
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Instrument { .fs-5 }

@@ -6,7 +6,7 @@ Die Kategorie für Druckzeugnisse, welche eine Auflistung von (Verkaufs-)Waren d
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Titel { .fs-5 }

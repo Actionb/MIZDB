@@ -4,7 +4,7 @@ Artikel
 
 In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
-## Erfassung
+## Erfassung { .fs-3 }
 
 Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
 geeignet.
@@ -171,7 +171,7 @@ braucht.
 Am Ende unterliegt es immer eurer Einschätzung, welcher Text erfasst wird. Findet ihr eine News, die ihr für wichtig
 oder erwähnenswert haltet, könnt ihr diese erfassen.
 
-## Formularfelder
+## Formularfelder { .fs-3 }
 
 ### Magazin { .fs-5 }
 

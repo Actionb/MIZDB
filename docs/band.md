@@ -6,7 +6,7 @@ Eine Gruppe von Musikern, die sich unter einem Bandnamen zusammengeschlossen hab
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Bandname { .fs-5 }

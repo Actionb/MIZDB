@@ -51,7 +51,7 @@ Bei der Textsuche werden Textfelder (wie z.B. Schlagzeile, Zusammenfassung oder 
 So taucht zum Beispiel ein Datensatz mit dem Wort "Arzt" bei einer Suche nach "Die Ärzte" als Ergebnis auf, da "Arzt" und "Ärzte" denselben Wortstamm haben.
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 Neben den gewöhnlichen aus den Änderungsformularen bekannten

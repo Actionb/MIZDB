@@ -6,7 +6,7 @@ Provenienz bezeichnet die Herkunft einer Sache; also hier die Herkunft von Archi
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Art der Provenienz { .fs-5 }

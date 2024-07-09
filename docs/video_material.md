@@ -6,7 +6,7 @@ Die Kategorie für Material wie Video-DVDs und VHS.
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Titel { .fs-5 }

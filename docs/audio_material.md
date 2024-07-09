@@ -6,7 +6,7 @@ Die Kategorie für Material wie Audio-CDs, Schallplatten und Kassetten.
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Titel { .fs-5 }

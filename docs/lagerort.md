@@ -6,7 +6,7 @@ Der Ort, an dem sich das physikalische Objekt befindet.
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Ort { .fs-5 }

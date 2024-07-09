@@ -53,7 +53,7 @@ Sofern die zu erfassende Ausgabe genügend andere Angaben bereitstellt (siehe
  [textliche Darstellung](#Textliche_Darstellung)) und das Erscheinungsdatum nicht unmittelbar ablesbar ist, kann man das Datum aber auch weglassen: es muss nicht die vorherige Ausgabe nach dem Erscheinungsdatum der nächsten durchsucht werden.
  
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Magazin { .fs-5 }

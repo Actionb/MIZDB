@@ -5,7 +5,7 @@ Magazin
 In dieser Kategorie werden regelmäßig erscheinende Zeitschriften und Zeitungen, unter deren Namen in der Datenbank
 [Ausgaben](ausgabe.md "Ausgabe") gruppiert werden, gelistet.
 
-## Felder
+## Felder { .fs-3 }
 
 ### Magazin { .fs-5 }
 

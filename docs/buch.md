@@ -16,7 +16,7 @@ Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband m
 
 
 
-## Felder
+## Felder { .fs-3 }
 
 
 ### Titel { .fs-5 }
