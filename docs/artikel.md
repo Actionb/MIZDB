@@ -4,7 +4,7 @@ Artikel
 
 In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
-### Erfassung
+## Erfassung
 
 Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
 geeignet.
@@ -13,7 +13,7 @@ Zu dem Zweck der Einführung in die Datenbank ist diese Anleitung hier auch ein 
 Mal angenommen, ihr habt euch ein Heft des Magazins "Rolling Stone" zum Erfassen ausgesucht.
 Um mit der Erfassung zu beginnen, solltet ihr zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
 
-#### Vorhandene Artikel suchen
+### Vorhandene Artikel suchen { .fs-5 }
 
 In Kurzform:
 
@@ -47,7 +47,7 @@ Daraufhin werden euch die Artikel des Heftes angezeigt, die bereits in der Daten
     Durch die Suche werden die Angaben zu Magazin und Ausgabe im Suchformular an die Formulare für neue Artikel
     weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch erspart ihr euch etwas Arbeit.
 
-#### Neuen Artikel erstellen
+### Neuen Artikel erstellen { .fs-5 }
 
 Nun sucht ihr euch aus der Zeitschrift den Artikel heraus, der noch nicht in die Datenbank eingetragen wurde und den ihr
 erfassen wollt.
@@ -157,7 +157,7 @@ auf "[Sichern](sichern.md "Sichern") und neu hinzufügen". Der Artikel wird abge
 Formular angezeigt und das Magazin und die Ausgabe werden eingefügt (sofern ihr, wie vorgeschlagen, die Suche mit der
 Änderungsliste gemacht habt).
 
-#### Ausnahmen
+### Ausnahmen { .fs-5 }
 
 Prinzipiell kann jeder Text einer Ausgabe erfasst und eingetragen werden. Jedoch haben manche Abschnitte wenig
 Informationsgehalt: News mit einem Umfang von 20 Wörtern haben meist nicht viel Aussagekraft. Aus Zeitgründen ist die
@@ -171,7 +171,7 @@ braucht.
 Am Ende unterliegt es immer eurer Einschätzung, welcher Text erfasst wird. Findet ihr eine News, die ihr für wichtig
 oder erwähnenswert haltet, könnt ihr diese erfassen.
 
-### Formularfelder
+## Formularfelder
 
 ### Magazin { .fs-5 }
 

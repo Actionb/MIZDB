@@ -13,10 +13,9 @@ Der Name des Magazins.
 
 ### Ausgaben Merkmal { .fs-5 }
 
-Benutzer mit vollen Adminrechten können den
-[Algorithmus zur Erstellung von Ausgabentiteln](ausgabe.md#Textliche_Darstellung "Ausgabe") übergehen und eine
-Darstellung für
-*alle* Ausgaben des Magazins festlegen.
+Benutzer mit vollen Adminrechten können
+den [Algorithmus zur Erstellung von Ausgabentiteln](ausgabe.md#Textliche_Darstellung "Ausgabe") übergehen und eine
+Darstellung für *alle* Ausgaben des Magazins festlegen.
 
 Wenn sich beispielsweise die Titel der Ausgaben aus den Monatsangaben und nicht aus den vom Algorithmus bevorzugten
 Ausgabennummern zusammensetzen sollen, dann muss aus dem Dropdown der Eintrag "Monat" ausgewählt werden. Die Titel der

@@ -7,7 +7,7 @@ In dieser Kategorie befinden sich Bücher und
 
 
 
-### Sammelbänder
+### Sammelbänder { .fs-5 }
 
 
 Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband markiert werden: dazu muss bei "Ist Sammelband" ein Häkchen gesetzt werden. Danach müssen die einzelnen Aufsätze ebenfalls als Buch-[Datensatz](datensatz.md "Datensatz") erfasst werden, wobei unter "Sammelband" das anfangs erstellte Buch ausgewählt werden muss.
@@ -211,7 +211,7 @@ Verweise auf relevante [Verlage](verlag.md "Verlag").
  [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch
+### Siehe auch { .fs-5 }
 
 
 * [Wikipedia: Sammelband](https://en.wikipedia.org/wiki/de:Sammelband "wikipedia:de:Sammelband")

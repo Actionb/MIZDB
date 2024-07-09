@@ -14,7 +14,7 @@ Alle von der Löschung betroffenen Objekte und Verweise (Beziehungen) werden in 
 
 
 
-### Geschützte Objekte
+### Geschützte Objekte { .fs-5 }
 
 
 Manche Datensätze können nur unter bestimmten Umständen gelöscht werden. Versucht man, einen Datensatz mit geschützten Objekten zu löschen, so warnt die Datenbank:

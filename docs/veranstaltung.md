@@ -93,7 +93,7 @@ Angaben zu
  [Personen](person.md "Person"), die an der Veranstaltung mitgewirkt haben, aber keine Musiker sind.
  
 
-### Siehe auch
+### Siehe auch { .fs-5 }
 
 
 * [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")

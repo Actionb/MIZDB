@@ -7,7 +7,7 @@ Angaben zur Zuordnung von Objekten (sowohl Archivmaterialien als auch
 
 
 
-### Siehe auch
+### Siehe auch { .fs-5 }
 
 
 * [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")

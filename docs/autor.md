@@ -45,7 +45,7 @@ Hier kann man angeben, bei welchen
  [Magazinen](magazin.md "Magazin") der Autor mitwirkt oder mitgewirkt hat.
  
 
-### Schnellerstellung mit Dropdown
+### Schnellerstellung mit Dropdown { .fs-5 }
 
 
 

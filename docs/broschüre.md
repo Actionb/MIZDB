@@ -85,7 +85,7 @@ Relevante [Schlagwörter](schlagwort.md "Schlagwort") bzgl. des Objektes.
  [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch
+### Siehe auch { .fs-5 }
 
 
 * [Wikipedia: Broschüre](https://en.wikipedia.org/wiki/de:Brosch%C3%BCre "wikipedia:de:Broschüre")

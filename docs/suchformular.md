@@ -35,7 +35,7 @@ Zum Beispiel: wählt man die Parameter Band "Rolling Stones" und Ort "Dortmund",
 
 
 
-### Textsuche
+### Textsuche { .fs-5 }
 
 
 Bei der Textsuche werden Textfelder (wie z.B. Schlagzeile, Zusammenfassung oder Beschreibung) der Datensätze nach den Suchbegriffen durchsucht.

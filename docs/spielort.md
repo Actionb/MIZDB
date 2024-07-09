@@ -45,7 +45,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 
 Weitere Namen unter denen der Spielort bekannt ist.
 
-### Siehe auch
+### Siehe auch { .fs-5 }
 
 
 * [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")

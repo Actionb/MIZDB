@@ -20,7 +20,7 @@ Darauf folgt die Tabelle, die die Suchergebnisse darstellt. Die erste, unbeschri
 
 
 
-### Sortierung
+### Sortierung { .fs-5 }
 
 
 Die Ergebnisse werden stets sortiert dargestellt. Die Spalten, nach denen sortiert wird, erkennt man an einem kleinen dreieckigen Symbol am rechten Rand im Spaltenkopf. Zeigt das Dreieck nach oben, werden die Werte der Spalte aufsteigend sortiert (kleinste Werte nach oben). Zeigt es nach unten, wird absteigend sortiert (größte Werte nach oben). Durch einen Klick auf das Dreieck könnt ihr zwischen auf- und absteigend wechseln.
@@ -62,7 +62,7 @@ Wenn ihr auf eine Spalte klickt, so wird primär nach dieser Spalte sortiert: si
 
 
 
-### Ungefilterte Liste anzeigen
+### Ungefilterte Liste anzeigen { .fs-5 }
 
 
 Manche Änderungslisten sind zunächst leer und zeigen keine Ergebnisse an, um den Seitenaufbau zu beschleunigen, und um
@@ -75,7 +75,7 @@ Manche Änderungslisten sind zunächst leer und zeigen keine Ergebnisse an, um d
 
 
 
-### Paginierung aufheben
+### Paginierung aufheben { .fs-5 }
 
 
 Standardmäßig wird die Ergebnisliste in Seiten unterteilt ([Paginierung](https://en.wikipedia.org/wiki/de:Paginierung#Paginierung_in_der_Suchmaschinenoptimierung "wikipedia:de:Paginierung")). Um alle Ergebnisse gleichzeitig aufzulisten, kann die Paginierung durch einen Klick auf den "Zeige alle" Link aufgehoben werden:

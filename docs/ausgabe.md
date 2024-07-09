@@ -7,7 +7,7 @@ Publikationen fortlaufender Sammelwerke: in dieser Kategorie werden Hefte von
 
 
 
-### Erfassung
+### Erfassung { .fs-5 }
 
 
 Eine Ausgabe kann durch verschiedene Angaben identifiziert werden, die u.a. auf dem Titelseite, dem Rücken des Heftes oder im Impressum gefunden werden können. Die meisten Angaben sollten selbsterklärend sein, aber es gibt einige Feinheiten, auf die geachtet werden muss:
@@ -168,7 +168,7 @@ Liegen der Ausgabe Video Materialien (z.B. DVDs) bei, so können hier Verweise a
  [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Textliche Darstellung
+### Textliche Darstellung { .fs-5 }
 
 
 
@@ -242,7 +242,7 @@ Nachfolgend einige Beispiele. Die Angaben, die zum Titel beitragen, sind in fett
 |  |  |  |  | **Juni** |  | k.A.-Jun |
 
 
-### Sortierung
+### Sortierung { .fs-5 }
 
 
 Datensätze der Ausgaben sollten in einer chronologischen Ordnung gelistet werden; d.h. Ausgaben sollten in derselben Reihenfolge, wie sie erschienen sind, gelistet werden. Von der Datenbank wird nur dann eine chronologische Ordnung versucht, wenn die Ausgaben-Datensätze, die gelistet werden sollen, von einem einzigen Magazin stammen.
@@ -289,7 +289,7 @@ Unter den Magazinen herrscht bezüglich der Verwendung von Angaben keine Einheit
 
 
 
-### Aktionen
+### Aktionen { .fs-5 }
 
 
 #### Jahrgang hinzufügen

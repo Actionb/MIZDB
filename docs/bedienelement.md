@@ -7,7 +7,7 @@ Die Seiten und Formulare der Datenbank verwenden verschiedene
 
 
 
-### Einfache Felder
+### Einfache Felder { .fs-5 }
 
 
 ### Textfeld { .fs-5 }
@@ -42,7 +42,7 @@ Ein Element für Wahrheitswerte. Wenn die Beschriftung des Elementes zutrifft, d
 
 
 
-### Auswahlfelder
+### Auswahlfelder { .fs-5 }
 
 
 ### Einfaches Auswahlfeld/Drop-Down { .fs-5 }
@@ -93,7 +93,7 @@ Dieses Bedienelement erfüllt denselben Zweck wie die Combobox mit Mehrfachauswa
 Auf der linken Seite befinden sich die Ergebnisse, auf der rechten Seite die vorgenommene Auswahl. Einzelne Einträge können mittels Doppelklick in die jeweils andere Liste verschoben werden. Um mehrere Einträge auszuwählen, muss die Strg-Taste während des Klickens gedrückt gehalten werden. Alternativ dazu können mehrere nebeneinander liegende Einträge auch durch Festhalten der linken Maustaste ausgewählt werden. Die Auswahl kann dann mithilfe der Pfeil-Knöpfe verschoben werden.
 
 
-### Spezialfelder
+### Spezialfelder { .fs-5 }
 
 
 ### Datumsfeld { .fs-5 }
@@ -170,7 +170,7 @@ Der Kern der Datenbank sind die
 
 
 
-### Inlines
+### Inlines { .fs-5 }
 
 
 Die meisten Formulare enthalten Inlines. Kurz und knapp gesagt, sind das Formulare von verwandten Datensätzen, die in dem Hauptformular eingebettet sind. Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die Artikel-Musiker Beziehung.

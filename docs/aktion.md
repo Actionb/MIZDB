@@ -17,7 +17,7 @@ Allgemein stehen die Aktionen "Löschen" und "Zusammenfügen" zur Verfügung. Be
 
 
 
-### Löschen
+### Löschen { .fs-5 }
 
 
 Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet. Die Datensätze werden zusammen in einem Zug gelöscht. Siehe auch:
@@ -25,7 +25,7 @@ Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet. Die Datens
 
 
 
-### Bestände bearbeiten
+### Bestände bearbeiten { .fs-5 }
 
 
 Diese Aktion ermöglicht das Bearbeiten der Bestandsangaben von mehreren Datensätzen. Die Bestände der einzelnen Datensätze werden wie aus den
@@ -35,7 +35,7 @@ Diese Aktion ermöglicht das Bearbeiten der Bestandsangaben von mehreren Datens�
 
 
 
-### Zusammenfügen
+### Zusammenfügen { .fs-5 }
 
 
 Mit dieser Aktionen können mehrere Datensätze zu einem einzigen Datensatz zusammengefügt werden. Aus den entsprechenden Datensätzen wählt ihr den Datensatz aus, der am Ende des Prozesses übrig bleiben soll. Dieser "primäre Datensatz" wird mit Daten der anderen Datensätze erweitert. Verweise (also z.B. auf Musiker oder Bands, siehe

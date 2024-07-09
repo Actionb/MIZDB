@@ -71,7 +71,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 [Orte](ort.md "Ort"), mit denen die Person assoziiert ist oder war. Zum Beispiel Geburtsort oder Stadt, in der die Person tätig war.
  
 
-### Gemeinsame Normdatei
+### Gemeinsame Normdatei { .fs-5 }
 
 
 Die
@@ -115,7 +115,7 @@ Erweiterte Suche der DNB
 Ausschnitt mit dem Link zum Datensatz, den ihr kopieren müsst
 
 
-### Weblinks
+### Weblinks { .fs-5 }
 
 
 * [Deutsche Nationalbibliothek über die gemeinsame Normdatei](https://www.dnb.de/DE/Professionell/Standardisierung/GND/gnd_node.html)

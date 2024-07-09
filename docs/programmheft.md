@@ -96,7 +96,7 @@ Hat das Objekt Bezug zu bestimmten
  [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch
+### Siehe auch { .fs-5 }
 
 
 * [Wikipedia: Programmheft](https://en.wikipedia.org/wiki/de:Programmheft "wikipedia:de:Programmheft")

@@ -190,7 +190,7 @@ Verweise auf Datensätze zu Computerdateien (z.B. Digitalisierungen) dieses Mate
  [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Weblinks
+### Weblinks { .fs-5 }
 
 
 * [Discogs (Online-Datenbank für Diskografien von Musikern und Musiklabeln)](https://www.discogs.com/)
