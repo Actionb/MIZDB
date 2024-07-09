@@ -262,7 +262,7 @@ Angaben zu im Artikel benannten
 
 Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
 
-### Anmerkungen zu Ort, Spielort, Verantsaltung
+### Anmerkungen zu Ort, Spielort, Veranstaltung { .fs-5 }
 
 Hier einige Beispiele, die die Unterschiede zwischen und die Verwendungszwecke von
 [Ort](ort.md "Ort"), [Spielort](spielort.md "Spielort") und
