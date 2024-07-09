@@ -9,7 +9,7 @@ Zu diesem Zweck sollte die Hilfe-Seite zur [Oberfläche](oberfläche.md "Oberfl�
 solltest du dir die [Empfehlungen](grundsätze.md "Grundsätze") zum Arbeiten mit der Datenbank anschauen, bevor du
 selber mit der Erfassung von Material beginnst.
 
-Zum Einstieg sei die Erfassung von [Artikeln](artikel.md#Erfassung "Artikel") aus Zeitschriften empfohlen. Der Prozess
+Zum Einstieg sei die Erfassung von [Artikeln](artikel.md "Artikel") aus Zeitschriften empfohlen. Der Prozess
 ist unkompliziert (z.B. da keine Bestandsangaben gemacht werden müssen) und ist bei jedem Artikel gleich, sodass du
 dich gut an die Arbeit mit der Datenbank gewöhnen kannst. Wenn du das Bearbeiten von Artikeln drauf hast, und wenn du
 den Umgang mit den verschiedenen Elementen der Formulare verinnerlicht hast, dann sollten dir die anderen Kategorien
@@ -26,7 +26,7 @@ Hier noch eine Auflistung der empfohlenen Seiten zur Einführung in die Arbeit m
 	  [Datensätzen](datensatz.md "Datensatz")
 2. Einleitung in die Erfassung von Archiv Materialien:
 	* [Grundsätze](grundsätze.md "Grundsätze") zum Arbeiten mit der Datenbank
-	* [Erfassung von Artikeln aus Zeitschriften](artikel.md#Erfassung "Artikel")
+	* [Erfassung von Artikeln aus Zeitschriften](artikel.md "Artikel")
 3. Suchen, sortieren und finden:
 	* das [Suchformular](suchformular.md "Suchformular")
 	* die [Änderungsliste](änderungsliste.md "Änderungsliste")
