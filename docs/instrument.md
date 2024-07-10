@@ -6,16 +6,16 @@ Die Datensätze in dieser Kategorie werden dazu benutzt, um Angaben zu Instrumen
 
 
 
-## Felder {.fs-3}
+## Felder {.fs-3 .mt-5 .border-bottom}
 
 
-### Instrument {.fs-5}
+### Instrument {.fs-5 .mt-5}
 
 
 
 Der Name des Instruments.
 
-### Kürzel {.fs-5}
+### Kürzel {.fs-5 .mt-5}
 
 
 

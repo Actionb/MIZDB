@@ -7,16 +7,16 @@ In dieser Kategorie werden fotografische Lichtbilder (mit Ausnahme von
 
 
 
-## Felder {.fs-3}
+## Felder {.fs-3 .mt-5 .border-bottom}
 
 
-### Titel {.fs-5}
+### Titel {.fs-5 .mt-5}
 
 
 
 Ein kurzer Text, der das Foto treffend beschreibt.
 
-### ID {.fs-5}
+### ID {.fs-5 .mt-5}
 
 
 
@@ -25,25 +25,25 @@ Ein kurzer Text, der das Foto treffend beschreibt.
  [das Absichern](sichern.md "Sichern") automatisch erzeugt; d.h. ihr müsst den Datensatz erst einmal abspeichern, bevor in diesem Feld ein Wert angezeigt wird. Diesen Wert verzeichnet ihr dann auf der Rückseite des Fotos mit Bleistift.
  
 
-### Größe {.fs-5}
+### Größe {.fs-5 .mt-5}
 
 
 
 Höhe und Breite des Fotos in Zentimetern: z.B. `13x17 cm`
 
-### Art des Fotos {.fs-5}
+### Art des Fotos {.fs-5 .mt-5}
 
 
 
 Die genaue Art des Lichtbildes. Neuabzüge (reprint) sind Fotos, die ohne Negative erstellt wurden.
 
-### Farbfoto {.fs-5}
+### Farbfoto {.fs-5 .mt-5}
 
 
 
 Wenn das vorliegende Foto ein Farbfoto ist, so bitte ein Häkchen setzen.
 
-### Zeitangabe {.fs-5}
+### Zeitangabe {.fs-5 .mt-5}
 
 
 
@@ -51,25 +51,25 @@ Angaben zur zeitlichen Einteilung. Siehe
  [Bedienelement für partielle Datumsangaben](bedienelement.md#Feld_f.C3.BCr_partielles_Datum "Bedienelement").
  
 
-### Bildreihe {.fs-5}
+### Bildreihe {.fs-5 .mt-5}
 
 
 
 Wenn das vorliegende Foto einer Bildreihe (auch Bildserie) angehört, so kann diese hier vermerkt werden.
 
-### Rechteinhaber {.fs-5}
+### Rechteinhaber {.fs-5 .mt-5}
 
 
 
 Textfeld zum Angeben der Rechteinhaber des Bildes.
 
-### Beschreibung {.fs-5}
+### Beschreibung {.fs-5 .mt-5}
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5}
+### Bemerkungen {.fs-5 .mt-5}
 
 
 
@@ -80,7 +80,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 ---
 
 
-### Schlagwörter {.fs-5}
+### Schlagwörter {.fs-5 .mt-5}
 
 
 
@@ -88,7 +88,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 [Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (z.B. '60er Jahre') des Objekts.
  
 
-### Genres {.fs-5}
+### Genres {.fs-5 .mt-5}
 
 
 
@@ -96,7 +96,7 @@ Sind bezüglich des Objektes bestimmte
  [Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
  
 
-### Musiker {.fs-5}
+### Musiker {.fs-5 .mt-5}
 
 
 
@@ -104,13 +104,13 @@ Bezieht sich das Objekt auf
  [Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.
  
 
-### Bands {.fs-5}
+### Bands {.fs-5 .mt-5}
 
 
 
 Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 
-### Orte {.fs-5}
+### Orte {.fs-5 .mt-5}
 
 
 
@@ -119,7 +119,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Spielorte {.fs-5}
+### Spielorte {.fs-5 .mt-5}
 
 
 
@@ -128,7 +128,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Veranstaltungen {.fs-5}
+### Veranstaltungen {.fs-5 .mt-5}
 
 
 
@@ -137,7 +137,7 @@ Hat das Objekt Bezug zu bestimmten
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Personen {.fs-5}
+### Personen {.fs-5 .mt-5}
 
 
 
@@ -145,7 +145,7 @@ Angaben zu
  [Personen](person.md "Person"), auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
  
 
-### Bestände {.fs-5}
+### Bestände {.fs-5 .mt-5}
 
 
 

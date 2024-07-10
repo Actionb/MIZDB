@@ -6,22 +6,22 @@ Die Kategorie für Material wie Audio-CDs, Schallplatten und Kassetten.
 
 
 
-## Felder {.fs-3}
+## Felder {.fs-3 .mt-5 .border-bottom}
 
 
-### Titel {.fs-5}
+### Titel {.fs-5 .mt-5}
 
 
 
 Der Name des Materials, also beispielsweise der Name des Albums.
 
-### Anz.Tracks {.fs-5}
+### Anz.Tracks {.fs-5 .mt-5}
 
 
 
 Anzahl der Songs.
 
-### Laufzeit {.fs-5}
+### Laufzeit {.fs-5 .mt-5}
 
 
 
@@ -32,43 +32,43 @@ Zusätzlich besteht auch die Möglichkeit die CD/DVD im Laufwerk (falls vorhande
 
 
 
-### Jahr {.fs-5}
+### Jahr {.fs-5 .mt-5}
 
 
 
 Jahresangabe zwecks zeitlicher Einteilung des Objektes.
 
-### Land der Pressung {.fs-5}
+### Land der Pressung {.fs-5 .mt-5}
 
 
 
 Nur für Schallplatten relevant. Das Land, in welchem die Platte gepresst wurde.
 
-### Originalmaterial {.fs-5}
+### Originalmaterial {.fs-5 .mt-5}
 
 
 
 Wenn das vorliegende Material eine Originalausgabe ist (also nicht gebrannt o.ä.), so bitte hier ein Häkchen setzen.
 
-### Quelle {.fs-5}
+### Quelle {.fs-5 .mt-5}
 
 
 
 Angaben zur Herkunft der Tonaufnahme; z.B. Broadcast, Live, Studio. Damit soll die Qualität des Materials einschätzbar gemacht werden: eine Studioaufnahme ist schließlich qualitativ hochwertiger als eine Aufnahme aus einem Radio-Broadcast.
 
-### Speichermedium {.fs-5}
+### Speichermedium {.fs-5 .mt-5}
 
 
 
 Die Art des Materials; CD, Vinyl, Kassette, etc.
 
-### Anzahl {.fs-5}
+### Anzahl {.fs-5 .mt-5}
 
 
 
 Die Anzahl der Tonträger. Für ein Album mit zwei CDs müsste hier der Wert "2" eingetragen werden.
 
-### Plattennummer {.fs-5}
+### Plattennummer {.fs-5 .mt-5}
 
 
 
@@ -76,7 +76,7 @@ Angabe nur für Schallplatten relevant. Die Plattennummer (auch Katalognummer) i
  <http://mikiwiki.org/wiki/Plattennummer>
 
 
-### Release ID (discogs) {.fs-5}
+### Release ID (discogs) {.fs-5 .mt-5}
 
 
 
@@ -99,7 +99,7 @@ Angabe nur für Schallplatten relevant. Die Plattennummer (auch Katalognummer) i
  
 Es ist einfacher (und sicherer), die Web-Adresse der richtigen Discogs-Seite in das nachfolgende Feld zu kopieren - die ID wird dann aus der Adresse automatisch ausgelesen und von der Datenbank hier eingefügt.
 
-### Link discogs.com {.fs-5}
+### Link discogs.com {.fs-5 .mt-5}
 
 
 
@@ -107,13 +107,13 @@ Link zu der Webseite von discogs.com, die dem vorliegenden Material entspricht. 
  [Anmerkung oben](#Release_ID_.28discogs.29)) sind nicht zulässig.
  
 
-### Beschreibung {.fs-5}
+### Beschreibung {.fs-5 .mt-5}
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5}
+### Bemerkungen {.fs-5 .mt-5}
 
 
 
@@ -124,7 +124,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 ---
 
 
-### Musiker {.fs-5}
+### Musiker {.fs-5 .mt-5}
 
 
 
@@ -135,13 +135,13 @@ Ist auf dem Cover bzw. der Aufschrift explizit angegeben, welche Instrumente der
  [Combobox](bedienelement.md#Kombinationsfeld.2FCombobox "Bedienelement") klicken).
  
 
-### Bands {.fs-5}
+### Bands {.fs-5 .mt-5}
 
 
 
 Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 
-### Schlagwörter {.fs-5}
+### Schlagwörter {.fs-5 .mt-5}
 
 
 
@@ -149,7 +149,7 @@ Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 [Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (z.B. '60er Jahre') des Objekts.
  
 
-### Genres {.fs-5}
+### Genres {.fs-5 .mt-5}
 
 
 
@@ -157,7 +157,7 @@ Sind bezüglich des Objektes bestimmte
  [Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
  
 
-### Orte {.fs-5}
+### Orte {.fs-5 .mt-5}
 
 
 
@@ -166,7 +166,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Spielorte {.fs-5}
+### Spielorte {.fs-5 .mt-5}
 
 
 
@@ -175,7 +175,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Veranstaltungen {.fs-5}
+### Veranstaltungen {.fs-5 .mt-5}
 
 
 
@@ -184,7 +184,7 @@ Hat das Objekt Bezug zu bestimmten
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Personen {.fs-5}
+### Personen {.fs-5 .mt-5}
 
 
 
@@ -192,25 +192,25 @@ Angaben zu
  [Personen](person.md "Person"), auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
  
 
-### Plattenfirmen {.fs-5}
+### Plattenfirmen {.fs-5 .mt-5}
 
 
 
 Die Plattenfirmen, die die Produktion und den Vertrieb des Materials betreibt.
 
-### Ausgaben {.fs-5}
+### Ausgaben {.fs-5 .mt-5}
 
 
 
 Die [Ausgaben](ausgabe.md "Ausgabe"), denen dieses Material bei lag.
 
-### Dateien {.fs-5}
+### Dateien {.fs-5 .mt-5}
 
 
 
 Verweise auf Datensätze zu Computerdateien (z.B. Digitalisierungen) dieses Materials.
 
-### Bestände {.fs-5}
+### Bestände {.fs-5 .mt-5}
 
 
 
@@ -219,7 +219,7 @@ Verweise auf Datensätze zu Computerdateien (z.B. Digitalisierungen) dieses Mate
  [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Weblinks {.fs-5}
+### Weblinks {.fs-5 .mt-5}
 
 
 * [Discogs (Online-Datenbank für Diskografien von Musikern und Musiklabeln)](https://www.discogs.com/)

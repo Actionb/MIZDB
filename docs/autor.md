@@ -6,10 +6,10 @@ Hier werden Autorinnen und Autoren von Büchern, Artikel, etc. gelistet. Es muss
 
 
 
-## Felder {.fs-3}
+## Felder {.fs-3 .mt-5 .border-bottom}
 
 
-### Kürzel {.fs-5}
+### Kürzel {.fs-5 .mt-5}
 
 
 
@@ -17,7 +17,7 @@ Häufig wird der Autor eines
  [Artikels](artikel.md "Artikel") nur in verkürzter Form angegeben (z.B. Initialen). Auch ein kurzer Spitzname kann hier angegeben werden. Maximal 8 Zeichen.
  
 
-### Person {.fs-5}
+### Person {.fs-5 .mt-5}
 
 
 
@@ -25,19 +25,19 @@ Verweis auf den [Datensatz](datensatz.md "Datensatz"), der die
  [Person](person.md "Person") dieses Autors repräsentiert.
  
 
-### Beschreibung {.fs-5}
+### Beschreibung {.fs-5 .mt-5}
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5}
+### Bemerkungen {.fs-5 .mt-5}
 
 
 
 Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 
-### Magazine {.fs-5}
+### Magazine {.fs-5 .mt-5}
 
 
 
@@ -45,7 +45,7 @@ Hier kann man angeben, bei welchen
  [Magazinen](magazin.md "Magazin") der Autor mitwirkt oder mitgewirkt hat.
  
 
-### Schnellerstellung mit Dropdown {.fs-5}
+### Schnellerstellung mit Dropdown {.fs-5 .mt-5}
 
 
 

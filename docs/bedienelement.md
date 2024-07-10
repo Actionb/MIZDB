@@ -7,24 +7,24 @@ Die Seiten und Formulare der Datenbank verwenden verschiedene
 
 
 
-### Einfache Felder {.fs-5}
+### Einfache Felder {.fs-5 .mt-5}
 
 
-### Textfeld {.fs-5}
+### Textfeld {.fs-5 .mt-5}
 
 
 
 Ein Element, dass jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements und die erlaubte Länge des Textes stehen in keinem Zusammenhang.
 
 
-### Textfeld mit variabler Grösse {.fs-5}
+### Textfeld mit variabler Grösse {.fs-5 .mt-5}
 
 
 
 Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.
 
 
-### Zahlenfeld {.fs-5}
+### Zahlenfeld {.fs-5 .mt-5}
 
 
 
@@ -34,7 +34,7 @@ Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manc
 
 
 
-### Checkbox {.fs-5}
+### Checkbox {.fs-5 .mt-5}
 
 
 
@@ -42,10 +42,10 @@ Ein Element für Wahrheitswerte. Wenn die Beschriftung des Elementes zutrifft, d
 
 
 
-### Auswahlfelder {.fs-5}
+### Auswahlfelder {.fs-5 .mt-5}
 
 
-### Einfaches Auswahlfeld/Drop-Down {.fs-5}
+### Einfaches Auswahlfeld/Drop-Down {.fs-5 .mt-5}
 
 
 
@@ -53,7 +53,7 @@ Beim Klicken auf dieses Feld klappt sich ein Menü auf ("drop down"), aus dem ma
 
 
 
-### Kombinationsfeld/Combobox {.fs-5}
+### Kombinationsfeld/Combobox {.fs-5 .mt-5}
 
 
 
@@ -75,7 +75,7 @@ Manche Combobox Elemente lassen auch die Erstellung von neuen
 [![Schnellerstellung](/mediawiki/images/8/88/Widget_autocomplete_create.png)](datei:widget_autocomplete_create.png.md "Schnellerstellung")
 
 
-### Combobox mit Mehrfachauswahl {.fs-5}
+### Combobox mit Mehrfachauswahl {.fs-5 .mt-5}
 
 
 
@@ -85,7 +85,7 @@ Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewä
  
 
 
-### gefilterte Mehrfachauswahl {.fs-5}
+### gefilterte Mehrfachauswahl {.fs-5 .mt-5}
 
 
 
@@ -93,10 +93,10 @@ Dieses Bedienelement erfüllt denselben Zweck wie die Combobox mit Mehrfachauswa
 Auf der linken Seite befinden sich die Ergebnisse, auf der rechten Seite die vorgenommene Auswahl. Einzelne Einträge können mittels Doppelklick in die jeweils andere Liste verschoben werden. Um mehrere Einträge auszuwählen, muss die Strg-Taste während des Klickens gedrückt gehalten werden. Alternativ dazu können mehrere nebeneinander liegende Einträge auch durch Festhalten der linken Maustaste ausgewählt werden. Die Auswahl kann dann mithilfe der Pfeil-Knöpfe verschoben werden.
 
 
-### Spezialfelder {.fs-5}
+### Spezialfelder {.fs-5 .mt-5}
 
 
-### Datumsfeld {.fs-5}
+### Datumsfeld {.fs-5 .mt-5}
 
 
 
@@ -105,14 +105,14 @@ Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.
  
 
 
-### Feld für partielles Datum {.fs-5}
+### Feld für partielles Datum {.fs-5 .mt-5}
 
 
 
 Ein Feld mit dem Datumsangaben gemacht werden können, die nicht unbedingt vollständig sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.
 
 
-### Laufzeitfeld {.fs-5}
+### Laufzeitfeld {.fs-5 .mt-5}
 
 
 
@@ -139,7 +139,7 @@ Angaben, die dem Format nicht vollständig entsprechen, werden akzeptiert und gg
 
 
 
-### ISSN/ISBN/EAN {.fs-5}
+### ISSN/ISBN/EAN {.fs-5 .mt-5}
 
 
 
@@ -170,7 +170,7 @@ Der Kern der Datenbank sind die
 
 
 
-### Inlines {.fs-5}
+### Inlines {.fs-5 .mt-5}
 
 
 Die meisten Formulare enthalten Inlines. Kurz und knapp gesagt, sind das Formulare von verwandten Datensätzen, die in dem Hauptformular eingebettet sind. Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die Artikel-Musiker Beziehung.

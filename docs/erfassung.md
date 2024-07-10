@@ -6,7 +6,7 @@ Erfassung von Artikeln
 Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
 geeignet.
 
-## Erfassung {.fs-3}
+## Erfassung {.fs-3 .mt-5 .border-bottom}
 
 Bei der Erfassung ist es deine Aufgabe, die wichtigsten Informationen, die in einem Artikel enthalten sind, in die
 Datenbank einzufügen, sodass der Artikel bei einer Suche wiedergefunden werden kann.
@@ -14,7 +14,7 @@ Datenbank einzufügen, sodass der Artikel bei einer Suche wiedergefunden werden 
 Für ein Beispiel nehmen wir mal an, dass du einen Artikel aus einem Heft des "Rolling Stone" Magazins erfassen willst.
 Um mit der Erfassung zu beginnen, solltest du zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
 
-### Vorhandene Artikel suchen {.fs-5}
+### Vorhandene Artikel suchen {.fs-5 .mt-5}
 
 Bevor du einen neuen Artikel hinzufügst, solltest du erst schauen, ob dieser schon in der Datenbank existiert.
 Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.
@@ -52,7 +52,7 @@ Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenb
 
 [comment]: # (@formatter:on)
 
-### Neuen Artikel erstellen {.fs-5}
+### Neuen Artikel erstellen {.fs-5 .mt-5}
 
 Nun suchst du dir aus der Zeitschrift den Artikel heraus, **der noch nicht in die Datenbank eingetragen wurde** und den
 du erfassen willst. Um mit der Erfassung zu beginnen, klicke auf den Knopf "Artikel hinzufügen". Es wird ein leeres
@@ -104,7 +104,7 @@ Hand, die man braucht, um den Artikel im "echten" Heft wiederzufinden.
 
 [comment]: # (@formatter:on)
 
-### Artikel Inhalt aufnehmen {.fs-5}
+### Artikel Inhalt aufnehmen {.fs-5 .mt-5}
 
 Bisher hast du nur Angaben zu dem Heft, der Schlagzeile und der Seitenzahl gemacht. Das ist aber noch nicht
 aussagekräftig genug, denn über den Inhalt des Artikels hast du noch keine Angaben gemacht.
@@ -134,7 +134,7 @@ anhand der Angaben in der Zusammenfassung wiedergefunden werden.
 
 [comment]: # (@formatter:on)
 
-### Verknüpfungen hinzufügen {.fs-5}
+### Verknüpfungen hinzufügen {.fs-5 .mt-5}
 
 Neben der Volltextsuche lassen sich Artikel auch über Verknüpfungen (oder Beziehungen) mit anderen Datensätzen, wie zum
 Beispiel mit Bands oder Musikern, finden. Eine solche Verknüpfung hast du bereits gesehen: die Ausgabe. Ein Artikel ist
@@ -201,7 +201,7 @@ Artikel und der Band wird gelöscht.
 
 [comment]: # (@formatter:on)
 
-### Bearbeitung abschließen {.fs-5}
+### Bearbeitung abschließen {.fs-5 .mt-5}
 
 Wenn du mit der Erfassung dieses Artikels fertig bist und direkt den nächsten erfassen willst, klicke
 auf "[Sichern](sichern.md "Sichern") und neu hinzufügen". Der Artikel wird abgespeichert, es wird ein neues, leeres
@@ -230,7 +230,7 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
   
 [comment]: # (@formatter:on)
 
-## Welche Artikel müssen erfasst werden und welche nicht? {.fs-3}
+## Welche Artikel müssen erfasst werden und welche nicht? {.fs-3 .mt-5 .border-bottom}
 
 Prinzipiell kann jeder Text einer Ausgabe erfasst und eingetragen werden. Jedoch haben manche Abschnitte wenig
 Informationsgehalt: News mit einem Umfang von 20 Wörtern haben meist nicht viel Aussagekraft. Aus Zeitgründen ist die
@@ -250,7 +250,7 @@ erwähnenswert hältst, kannst du diese gerne erfassen.
   
 [comment]: # (@formatter:on)
 
-### Ein Kompromiss, um Rezensionen trotzdem aufzunehmen {.fs-5}
+### Ein Kompromiss, um Rezensionen trotzdem aufzunehmen {.fs-5 .mt-5}
 
 In Rezensionen können auch Künstler oder Bands erwähnt sein, die zu klein oder zu unbekannt für einen vollständigen
 Artikel sind. Wenn Rezensionen also nicht erfasst werden, dann existiert in der Datenbank auch kein Hinweis auf
@@ -272,7 +272,7 @@ diesen Künstler.
 </figure>
 </div>
 
-## Über Verknüpfungen {.fs-3}
+## Über Verknüpfungen {.fs-3 .mt-5 .border-bottom}
 
 - Verknüpfungen gehen in beide Richtungen
 - Änderungen an einem Teil der Verknüpfung wirken sich auf den anderen Teil aus

@@ -35,7 +35,7 @@ Zum Beispiel: wählt man die Parameter Band "Rolling Stones" und Ort "Dortmund",
 
 
 
-### Textsuche {.fs-5}
+### Textsuche {.fs-5 .mt-5}
 
 
 Bei der Textsuche werden Textfelder (wie z.B. Schlagzeile, Zusammenfassung oder Beschreibung) der Datensätze nach den Suchbegriffen durchsucht.
@@ -51,7 +51,7 @@ Bei der Textsuche werden Textfelder (wie z.B. Schlagzeile, Zusammenfassung oder 
 So taucht zum Beispiel ein Datensatz mit dem Wort "Arzt" bei einer Suche nach "Die Ärzte" als Ergebnis auf, da "Arzt" und "Ärzte" denselben Wortstamm haben.
 
 
-## Felder {.fs-3}
+## Felder {.fs-3 .mt-5 .border-bottom}
 
 
 Neben den gewöhnlichen aus den Änderungsformularen bekannten
@@ -59,14 +59,14 @@ Neben den gewöhnlichen aus den Änderungsformularen bekannten
 
 
 
-### von - bis Felder {.fs-5}
+### von - bis Felder {.fs-5 .mt-5}
 
 
 
 Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also: "größer gleich X und kleiner gleich Y") angegeben werden. Wird nur in dem ersten Feld ein Wert eingetragen, so wird stattdessen nach genau diesem Wert gesucht (also: "gleich X").
 ![von - bis Felder]()
 
-### partielles Datum {.fs-5}
+### partielles Datum {.fs-5 .mt-5}
 
 
 
@@ -77,7 +77,7 @@ Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also
 
 
 
-### ID {.fs-5}
+### ID {.fs-5 .mt-5}
 
 
 

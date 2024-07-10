@@ -5,7 +5,7 @@ Oberfläche
 Hier werden einige Aspekte der Benutzeroberfläche erklärt.
 
 
-### Index {.fs-5}
+### Index {.fs-5 .mt-5}
 
 
 
@@ -30,7 +30,7 @@ Hier werden einige Aspekte der Benutzeroberfläche erklärt.
 
 
 
-### Kopfzeile {.fs-5}
+### Kopfzeile {.fs-5 .mt-5}
 
 
 In der Kopfzeile findet ihr die Navigation, die Datenbanksuche und Links zu der Merkliste, der Hilfe und der Anmeldung. Der MIZDB Schriftzug dient als Link zurück zum Index.
@@ -39,7 +39,7 @@ In der Kopfzeile findet ihr die Navigation, die Datenbanksuche und Links zu der 
 Neben der Merkliste findet ihr dort einen Knopf, mit dem ihr den Farbmodus (hell oder dunkel) wechseln könnt.
 
 
-### Datenbanksuche {.fs-5}
+### Datenbanksuche {.fs-5 .mt-5}
 
 
 Klickt ihr auf 'Datenbanksuche' öffnet sich ein kleines Suchformular. Dort gebt ihr einfach einen Suchbegriff ein und die Datenbank wird sofort durchsucht.
@@ -48,7 +48,7 @@ Klickt ihr auf 'Datenbanksuche' öffnet sich ein kleines Suchformular. Dort gebt
 Mit einem Klick auf den Suchbutton oder mit der Eingabetaste werdet ihr auf die Suchseite weitergeleitet.
 
 
-### Änderungsseite {.fs-5}
+### Änderungsseite {.fs-5 .mt-5}
 
 
 Auf der Änderungsseite könnt ihr neue Datensätze erstellen oder Änderungen an bereits existierenden Datensätzen vornehmen. Dies wird mit Hilfe von
