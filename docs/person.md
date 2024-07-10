@@ -13,10 +13,10 @@ Zur Verdeutlichung: einem
 
 
 
-## Felder { .fs-3 }
+## Felder {.fs-3}
 
 
-### Vorname { .fs-5 }
+### Vorname {.fs-5}
 
 
 
@@ -24,13 +24,13 @@ Vorname(n) des
  [bürgerlichen Namens](https://en.wikipedia.org/wiki/de:Realname#B.C3.BCrgerlicher_Name "wikipedia:de:Realname") der Person.
  
 
-### Nachname { .fs-5 }
+### Nachname {.fs-5}
 
 
 
 Nachname(n) des bürgerlichen Namens der Person.
 
-### Normdatei ID { .fs-5 }
+### Normdatei ID {.fs-5}
 
 
 
@@ -40,19 +40,19 @@ Mit diesem
  
 Ihr gebt den vollständigen Namen der Person ein und wählt anschließend den passenden Eintrag aus der Auswahlliste aus. Die Normdatei ID wird zwischen den Klammern angezeigt.
 
-### Link DNB { .fs-5 }
+### Link DNB {.fs-5}
 
 
 
 Link zum Eintrag zu dieser Person auf der Webseite der deutschen Nationalbibliothek.
 
-### Beschreibung { .fs-5 }
+### Beschreibung {.fs-5}
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen { .fs-5 }
+### Bemerkungen {.fs-5}
 
 
 
@@ -63,7 +63,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 ---
 
 
-### Assoziierte Orte { .fs-5 }
+### Assoziierte Orte {.fs-5}
 
 
 
@@ -71,7 +71,7 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 [Orte](ort.md "Ort"), mit denen die Person assoziiert ist oder war. Zum Beispiel Geburtsort oder Stadt, in der die Person tätig war.
  
 
-### Gemeinsame Normdatei { .fs-5 }
+### Gemeinsame Normdatei {.fs-5}
 
 
 Die
@@ -115,7 +115,7 @@ Erweiterte Suche der DNB
 Ausschnitt mit dem Link zum Datensatz, den ihr kopieren müsst
 
 
-### Weblinks { .fs-5 }
+### Weblinks {.fs-5}
 
 
 * [Deutsche Nationalbibliothek über die gemeinsame Normdatei](https://www.dnb.de/DE/Professionell/Standardisierung/GND/gnd_node.html)

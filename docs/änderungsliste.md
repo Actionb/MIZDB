@@ -19,7 +19,7 @@ Auf der Seite der Änderungsliste könnt ihr [Datensätze](datensatz.md "Datensa
 
 
 
-### Sortierung { .fs-5 }
+### Sortierung {.fs-5}
 
 
 Mit den kleinen dreieckigen Symbolen (Chevrons) im Spaltenkopf einer Spalte könnt ihr die Sortierung der Ergebnisse einstellen.

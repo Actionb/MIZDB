@@ -4,7 +4,7 @@ Artikel
 
 In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
-## Erfassung { .fs-3 }
+## Erfassung {.fs-3}
 
 Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
 geeignet.
@@ -14,7 +14,7 @@ sodass der Artikel bei einer Suche wiedergefunden werden kann.
 Für ein Beispiel nehmen wir mal an, dass du einen Artikel aus einem Heft des "Rolling Stone" Magazins erfassen willst.
 Um mit der Erfassung zu beginnen, solltest du zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
 
-### Vorhandene Artikel suchen { .fs-5 }
+### Vorhandene Artikel suchen {.fs-5}
 
 Bevor du einen neuen Artikel hinzufügst, solltest du erst schauen, ob dieser schon in der Datenbank existiert.
 Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.
@@ -54,7 +54,7 @@ Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenb
 
 [comment]: # (@formatter:on)
 
-### Neuen Artikel erstellen { .fs-5 }
+### Neuen Artikel erstellen {.fs-5}
 
 Nun suchst du dir aus der Zeitschrift den Artikel heraus, **der noch nicht in die Datenbank eingetragen wurde** und den
 du erfassen willst. Um mit der Erfassung zu beginnen, klicke auf den Knopf "Artikel hinzufügen". Es wird ein leeres
@@ -105,7 +105,7 @@ Hand, die man braucht, um den Artikel im "echten" Heft wiederzufinden.
 
 [comment]: # (@formatter:on)
 
-### Artikel Inhalt aufnehmen { .fs-5 }
+### Artikel Inhalt aufnehmen {.fs-5}
 
 Bisher hast du nur Angaben zu dem Heft, der Schlagzeile und der Seitenzahl gemacht. Das ist aber noch nicht
 aussagekräftig genug, denn über den Inhalt des Artikels hast du noch keine Angaben gemacht.
@@ -135,7 +135,7 @@ der Zusammenfassung wiedergefunden werden.
 
 [comment]: # (@formatter:on)
 
-### Verknüpfungen hinzufügen { .fs-5 }
+### Verknüpfungen hinzufügen {.fs-5}
 
 Neben der Volltextsuche lassen sich Artikel auch über Verknüpfungen (oder Beziehungen) mit anderen Datensätzen, wie zum
 Beispiel mit Bands oder Musikern, finden. Eine solche Verknüpfung hast du bereits gesehen: die Ausgabe. Ein Artikel ist
@@ -220,7 +220,7 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
 </figure>
 </div>
 
-## Ausnahmen: Welche Artikel müssen erfasst werden und welche nicht? { .fs-5 }
+## Ausnahmen: Welche Artikel müssen erfasst werden und welche nicht? {.fs-3}
 
 Prinzipiell kann jeder Text einer Ausgabe erfasst und eingetragen werden. Jedoch haben manche Abschnitte wenig
 Informationsgehalt: News mit einem Umfang von 20 Wörtern haben meist nicht viel Aussagekraft. Aus Zeitgründen ist die
@@ -232,46 +232,46 @@ willst: fällt die Zusammenfassung sehr dünn aus, ist das ein Indiz dafür, das
 Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findest du eine News, die du für wichtig oder
 erwähnenswert hältst, kannst du diese gerne erfassen.
 
-## Über Verknüpfungen { .fs-3 }
+## Über Verknüpfungen {.fs-3}
 
 - Verknüpfungen gehen in beide Richtungen
 - Änderungen an einem Teil der Verknüpfung wirken sich auf den anderen Teil aus
 - Vorsicht beim Ändern!
 
-## Formularfelder { .fs-3 }
+## Formularfelder {.fs-3}
 
-### Magazin { .fs-5 }
+### Magazin {.fs-5}
 
 Das [Magazin](magazin.md "Magazin") der Ausgabe, welche den Artikel enthält.
 
-### Ausgabe { .fs-5 }
+### Ausgabe {.fs-5}
 
 Die [Ausgabe](ausgabe.md "Ausgabe"), welche den Artikel enthält.
 Um nach einer Ausgabe suchen zu können, muss ein Magazin ausgewählt sein.
 
-### Schlagzeile { .fs-5 }
+### Schlagzeile {.fs-5}
 
 Die Schlagzeile des Artikels wie sie im Heft steht. Die Angabe hier soll dazu dienen, den entsprechenden Artikel auf
 einer Seite wiederfinden zu können.
 
-### Seite { .fs-5 }
+### Seite {.fs-5}
 
 Zahl der Anfangsseite des Artikels.
 
-### Seitenumfang { .fs-5 }
+### Seitenumfang {.fs-5}
 
 Mit dieser Angabe soll erkennbar gemacht werden, wie umfangreich der Artikel ist. Umfasst der Artikel nur die eine
 Seite, so muss hier keine Angabe gemacht werden. Bei zwei Seiten '**f'**, und bei mehr als zwei Seiten '**ff'**.
 
-### Zusammenfassung { .fs-5 }
+### Zusammenfassung {.fs-5}
 
 Ein kurzer Text, der die wichtigsten Aspekte und Themen des Artikels aufführt.
 
-### Beschreibung { .fs-5 }
+### Beschreibung {.fs-5}
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen { .fs-5 }
+### Bemerkungen {.fs-5}
 
 Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 
@@ -279,57 +279,57 @@ Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
 
 ---
 
-### Autoren { .fs-5 }
+### Autoren {.fs-5}
 
 Die
 [Autoren](autor.md "Autor") des Artikels sollen hier gelistet werden. Zur Erklärung des Such-Dropdowns siehe:
 [Autor#Schnellerstellung mit Dropdown](autor.md#Schnellerstellung_mit_Dropdown "Autor")
 
-### Musiker { .fs-5 }
+### Musiker {.fs-5}
 
 Bezieht sich der Artikel auf
 [Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich der Artikel auf eine Band, müssen die
 Mitglieder der Band hier nicht zusätzlich ausgewählt werden.
 
-### Bands { .fs-5 }
+### Bands {.fs-5}
 
 Angabe der im Artikel besprochenen [Bands](band.md "Band").
 
-### Schlagwörter { .fs-5 }
+### Schlagwörter {.fs-5}
 
 [Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (
 z.B. '60er Jahre') des Artikels.
 
-### Genres { .fs-5 }
+### Genres {.fs-5}
 
 Geht es im Artikel um bestimmte
 [Genres](genre.md "Genre") (z.B. ein Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden.
 Genres von oben ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
 
-### Orte { .fs-5 }
+### Orte {.fs-5}
 
 Auflistung der [Orte](ort.md "Ort"), auf die sich der Artikel bezieht.
 Herkunftsorte der Musiker, Bands, Autoren, usw. müssen hier nicht angegeben werden.
 
-### Spielorte { .fs-5 }
+### Spielorte {.fs-5}
 
 Auflistung der
 [Spielorte](spielort.md "Spielort") (also: Venues, Locations), auf die sich der Artikel bezieht.
 
-### Veranstaltungen { .fs-5 }
+### Veranstaltungen {.fs-5}
 
 Werden in dem Artikel bestimmte
 [Veranstaltungen](veranstaltung.md "Veranstaltung") (also: Konzerte, Festivals) behandelt, so sollen diese hier
 angegeben werden.
 
-### Personen { .fs-5 }
+### Personen {.fs-5}
 
 Angaben zu im Artikel benannten
 [Personen](person.md "Person"), die weder Autoren noch Musiker sind (z.B. Produzenten).
 
 Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
 
-### Anmerkungen zu Ort, Spielort, Veranstaltung { .fs-5 }
+### Anmerkungen zu Ort, Spielort, Veranstaltung {.fs-5}
 
 Hier einige Beispiele, die die Unterschiede zwischen und die Verwendungszwecke von
 [Ort](ort.md "Ort"), [Spielort](spielort.md "Spielort") und
