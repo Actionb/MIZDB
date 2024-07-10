@@ -6,21 +6,27 @@ In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
 ## Erfassung { .fs-3 }
 
-Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank geeignet. Zu dem Zweck der Einführung in die Datenbank ist diese Anleitung hier auch ein wenig ausführlicher.
+Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
+geeignet.
+Deine Aufgabe ist es, die wichtigsten Informationen, die in einem Artikel enthalten sind, in die Datenbank einzufügen,
+sodass der Artikel bei einer Suche wiedergefunden werden kann.
 
-Mal angenommen, ihr habt euch ein Heft des Magazins "Rolling Stone" zum Erfassen ausgesucht.
-Um mit der Erfassung zu beginnen, solltet ihr zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
+Für ein Beispiel nehmen wir mal an, dass du einen Artikel aus einem Heft des "Rolling Stone" Magazins erfassen willst.
+Um mit der Erfassung zu beginnen, solltest du zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
 
 ### Vorhandene Artikel suchen { .fs-5 }
 
-In Kurzform:
+Bevor du einen neuen Artikel hinzufügst, solltest du erst schauen, ob dieser schon in der Datenbank existiert.
+Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.
 
-* im [Index/Hauptmenü](oberfläche.md#Index "Oberfläche") auf "Artikel" klicken
-* im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
-* im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
-  entsprechende Magazin aus der Liste auswählen
-* danach im Feld "Ausgabe" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen
-* auf "Suchen" klicken
+So suchst du nach den Artikeln eines Heftes:
+
+1. im [Index/Hauptmenü](oberfläche.md#Index "Oberfläche") auf "Artikel" klicken
+2. im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
+3. im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
+   entsprechende Magazin aus der Liste auswählen
+4. danach im Feld "Ausgabe" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen
+5. auf "Suchen" klicken
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">
 <figure markdown="span">
@@ -39,135 +45,198 @@ In Kurzform:
 
 
 
-Daraufhin werden euch die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
+Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
 
+[comment]: # (@formatter:off)
 !!! info "Praktisch"
-    Durch die Suche werden die Angaben zu Magazin und Ausgabe im Suchformular an die Formulare für neue Artikel
-    weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch erspart ihr euch etwas Arbeit.
+    Durch die Suche werden die Angaben zu **Magazin** und **Ausgabe** im Suchformular an die Formulare für neue Artikel
+    weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch ersparst du dir etwas Arbeit.
+
+[comment]: # (@formatter:on)
 
 ### Neuen Artikel erstellen { .fs-5 }
 
-Nun sucht ihr euch aus der Zeitschrift den Artikel heraus, der noch nicht in die Datenbank eingetragen wurde und den ihr
-erfassen wollt.
-Um mit der Erfassung zu beginnen, klickt ihr auf den Knopf "Artikel hinzufügen".
-Es wird euch nun ein leeres Formular angezeigt, in das ihr die Daten des Artikels eintragen könnt.
+Nun suchst du dir aus der Zeitschrift den Artikel heraus, **der noch nicht in die Datenbank eingetragen wurde** und den
+du erfassen willst. Um mit der Erfassung zu beginnen, klicke auf den Knopf "Artikel hinzufügen". Es wird ein leeres
+Formular angezeigt, in das du die Daten des Artikels eintragen kannst.
 
-Zunächst solltet ihr die Grunddaten des Artikels eintragen, damit man anhand der Daten im
-Artikel-[Datensatz](datensatz.md "Datensatz") zu dem
-"echten" Artikel in der physischen Zeitschrift gelangen kann.
-Dazu gebt ihr das **Magazin**, die **Ausgabe** (diese sollten bereits eingetragen sein, sofern ihr die [Suche](#Suche)
-gemacht habt),
-die **Schlagzeile** und die **Seite**, wo der Artikel beginnt, ein.
-Der Datensatz der Ausgabe gibt den [Lagerort](lagerort.md "Lagerort") des Heftes an, und mit der Schlagzeile und der
-Seitenangabe sollte man den Artikel schnell im Heft wiederfinden können.
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Artikel hinzufügen](img/artikel_hinzufügen_btn.png){ width="300" .mb-1 }  
+  <figcaption>Artikel hinzufügen</figcaption>  
+</figure>
+<figure markdown="span">  
+  ![Artikel Formular](img/artikel_formular.png){ width="300" .mb-1 }  
+  <figcaption>Artikel Formular</figcaption>  
+</figure>
+</div>
 
-Je nach Artikel ist es manchmal nicht ganz klar, was die Schlagzeile eines Artikels ist. Lasst euch davon nicht
-entmutigen; die Schlagzeile dient schlicht als Erkennungsmerkmal und ist nicht so sehr wichtig.
-Tragt also das ein, was ihr als Schlagzeile erachtet. Oder schaut im Inhaltsverzeichnis der Ausgabe nach, was dort als
+Zunächst solltest du die Grunddaten des Artikels eintragen, damit man anhand der Daten im
+Artikel-[Datensatz](datensatz.md "Datensatz") zu dem "echten" Artikel in der physischen Zeitschrift gelangen kann. Dazu
+gibst du das **Magazin**, die **Ausgabe** (diese sollten bereits eingetragen sein, sofern du
+die [Suche](#vorhandene-artikel-suchen) gemacht hast), die **Schlagzeile** und die **Seite**, wo der Artikel beginnt,
+ein.
+
+Je nach Artikel ist es manchmal nicht ganz klar, was die Schlagzeile eines Artikels ist. Lasse dich davon nicht
+entmutigen; die Schlagzeile dient schlicht als Erkennungsmerkmal und ist inhaltlich nicht so sehr wichtig.
+Trage also das ein, was du als Schlagzeile erachtest. Oder schaue im Inhaltsverzeichnis der Ausgabe nach, was dort als
 Titel angegeben ist.
 
-Habt ihr diese Angaben gemacht, solltet ihr erst einmal zwischenspeichern, indem ihr unten auf den Knopf mit der
-Aufschrift "Sichern und weiterbearbeiten" klickt.
-
-!!! warning "Wichtig!"
-    Änderungen werden nur übernommen, wenn ihr auf einen der "[Sichern](sichern.md "Sichern")" Knöpfe klickt.
-    Verlasst ihr das Formular (z.B. indem ihr das Fenster schließt oder zu einer anderen Seite navigiert), ohne es zu
-    sichern, geht eure Arbeit verloren!
-    Es sollte eine Warnung auftauchen, wenn ihr versucht, ein Formular mit ungespeicherten Änderungen zu verlassen.
-
-!!! info "Welche Artikel müssen erfassen werden und welche nicht?"
-    Prinzipiell **müssen** alle Texte erfasst werden, die einen Bezug zur Musikern, Bands oder zur Musik im Allgemeinen
-    aufweisen.
-    Davon ausgenommen sind Kurznachrichten und Reviews von Alben und Tonträgern. Aus Zeitgründen müsst ihr diese nicht in
-    Datenbank eintragen (ihr *könnt* es aber, wenn ihr wollt).
-
-Im [Hauptmenü](oberfläche.md#Index "Oberfläche") klickt ihr zuerst auf "Artikel", um zur
-[Änderungsliste](änderungsliste.md "Änderungsliste") zu gelangen.
-In dieser solltet ihr nach Magazin und Ausgabe filtern und eine Suche ausführen.
-Dazu klickt ihr zunächst auf "Erweiterte Suchoptionen anzeigen", damit die restlichen Felder
-des [Suchformulars](suchformular.md "Suchformular") angezeigt werden.
-Wenn ihr dann das Feld Magazin anklickt, könnt ihr den Namen des Magazins eingeben und dann in den Ergebnissen das
-passende Magazin auswählen.
-
-Damit überprüft ihr, ob bereits Artikel zu der jeweiligen Ausgabe erfasst wurden. Außerdem werden die Angaben zu Magazin
-und Ausgabe aus dieser Änderungsliste heraus an Formulare für neue Artikel weitergereicht und dort in die entsprechenden
-Felder automatisch eingefügt. Dadurch erspart ihr euch später etwas Arbeit.
-
-Klickt dazu auf das
-[Bedienelement](bedienelement.md "Bedienelement") neben "Magazin", und tippt den Namen (Anfangsbuchstaben reichen) des
-Magazins ein. Im
-[Dropdown Menü](bedienelement.md#Kombinationsfeld.2FCombobox "Bedienelement") des Ausgabenfeldes werden daraufhin die
-Ausgaben dieses Magazins angezeigt, aus denen ihr nun die entsprechende heraus suchen könnt. Um eine Ausgabe zu finden,
-ist meistens das Jahr als Suchtext ausreichend. Insbesondere dann, wenn ihr nicht wisst, wie der
-[Titel](ausgabe.md#Textliche_Darstellung "Ausgabe") der Ausgabe in der Datenbank genau lautet, kann eine zu enge Suche
-ins Nichts führen: wenn euer Suchtext etwas enthält, was es so nicht in Datenbank gibt, dann wird auch nichts gefunden
-werden.
-Habt ihr Magazin und Ausgabe angegeben, dann klickt ihr weiter unten auf den "Suche" Knopf, um die Suche nach Artikel
-dieser Ausgabe zu starten. Werden keine Ergebnisse gefunden, oder ist zumindest der entsprechende Artikel noch nicht
-vorhanden, dann klickt auf den Knopf "Artikel hinzufügen", um zu dem Formular für
-Artikel-[Datensätze](datensatz.md "Datensatz") zu gelangen.
-
-Nun müssen Daten erfasst werden, mit denen man vom Datensatz des Artikels in einer Datenbank zu dem "echten" Artikel in
-der Zeitschrift kommen kann. Dazu gehören der Name des Magazins, die jeweilige Ausgabe, die Schlagzeile und die
-Seitenzahl. Sofern ihr die Suche aus dem ersten Punkt gemacht habt, sind Magazin und Ausgabe bereits eingetragen. Ist
-das nicht der Fall, so müsst ihr zunächst das richtige Magazin auswählen. Danach müsst ihr die Ausgabe auswählen. Die
-Angabe zur Schlagzeile hilft beim Erkennen des Artikels auf einer Seite und sollte dementsprechend wortgetreu
-eingetragen werden. Der
-[Lagerort](lagerort.md "Lagerort") des Heftes ist in der Ausgabe angegeben. Jetzt fehlt einer an dem Artikel
-interessierten Person nur noch eine Seitenangabe und sie kann anhand der Daten von der Datenbank genau und problemlos
-zum echten Zeitungsartikel in der Zeitung gelangen. Um eine Einschätzung des Umfangs des Artikels zu ermöglichen, sollte
-die Anzahl der Seiten des Artikels festgehalten werden (siehe
-<#Seitenumfang>).
-
-Jetzt kommt der wichtigste und aufwendigste Teil: es gilt, Daten bezüglich des Inhaltes des Artikels einzutragen. Diese
-Daten sind deshalb so wichtig, da der jeweilige Artikel dank ihnen "gefunden" werden kann. Eine Person, die gar nichts
-von diesem Artikel weiß, kann auf diesen Artikel treffen, wenn er als Ergebnis einer Suchanfrage auftaucht. Damit der
-Artikel als Teil der Ergebnisse gelten kann, müssen die Suchkriterien und die im Datensatz gemachten Angaben ähnlich
-oder gleich sein. Für euch bedeutet das:
+Hast du diese Angaben gemacht, solltest du erst einmal zwischenspeichern, indem du unten auf den Knopf mit der
+Aufschrift "Sichern und weiterbearbeiten" klickst.
 
 
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Speicher Knöpfe](img/sichern.png){ width="300" .mb-1 }  
+  <figcaption>Speicher Knöpfe</figcaption>  
+</figure>
+</div>
+
+Da der Datensatz der Ausgabe den [Lagerort](lagerort.md "Lagerort") des Heftes angibt, hat man nun alle Angaben zur
+Hand, die man braucht, um den Artikel im "echten" Heft wiederzufinden.
+
+[comment]: # (@formatter:off)
+!!! warning "Abspeichern ist notwendig!"
+    Änderungen werden nur übernommen, wenn du auf einen der "[Sichern](sichern.md "Sichern")" Knöpfe klickst.
+    Verlässt du das Formular (z.B. indem du das Fenster schließt oder zu einer anderen Seite navigierst), ohne es zu
+    sichern, geht deine Arbeit verloren!
+    Es sollte eine Warnung auftauchen, wenn du versuchst, ein Formular mit ungespeicherten Änderungen zu verlassen.
+
+[comment]: # (@formatter:on)
+
+### Artikel Inhalt aufnehmen { .fs-5 }
+
+Bisher hast du nur Angaben zu dem Heft, der Schlagzeile und der Seitenzahl gemacht. Das ist aber noch nicht
+aussagekräftig genug, denn über den Inhalt des Artikels hast du noch keine Angaben gemacht.
+Also ist es jetzt an der Zeit, dass du dir den Artikel einmal durchliest. Anschließend solltest du eine
+Zusammenfassung des Artikels in das entsprechende Feld des Formulars eintragen.
+
+Anhand der Zusammenfassung werden Recherchierende feststellen können, ob der Artikel für sie interessant ist oder nicht.
+Dementsprechend solltest du dir hier Mühe geben, die relevanten Teile eines Artikels anzugeben. Dabei ist es wichtiger,
+dass alle wichtigen, interessanten Informationen enthalten sind, als dass du einen schönen Text schreibst. Wenn es dir
+leichter fällt, kannst du anstelle von Fließtext auch Stichpunkte benutzen. Hauptsache die Informationen sind
+eingetragen. Die Zusammenfassung wird in die Volltextsuche miteinbezogen; d.h. ein Artikel kann anhand der Angaben in
+der Zusammenfassung wiedergefunden werden.
+
+[comment]: # (@formatter:off)  
+!!! info "Nur Relevantes eintragen"
+    Machst du keine Angaben, kann der Artikel auch nie gefunden werden. Machst du hingegen viele ungenaue oder 
+    überflüssige Angaben, so kann der Artikel unerwünscht als Ergebnis auftauchen. Trage also nur das ein, was für den
+    Artikel relevant ist, oder was für das Thema des Artikels von Bedeutung ist.<br>  
+    **Beispiel**: Wird in einem Artikel eine Band nur beiläufig erwähnt, so solltest du diese Band nicht erwähnen.
+
+[comment]: # (@formatter:on)
+
+[comment]: # (@formatter:off)  
+!!! info "Textfeld zu klein?"  
+    Manche Textfelder, wie z.B. "Zusammenfassung", kannst du vergrößern oder verkleinern, in dem du im Textfeld unten 
+    rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst. 
+
+[comment]: # (@formatter:on)
+
+### Verknüpfungen hinzufügen { .fs-5 }
+
+Neben der Volltextsuche lassen sich Artikel auch über Verknüpfungen (oder Beziehungen) mit anderen Datensätzen, wie zum
+Beispiel mit Bands oder Musikern, finden. Eine solche Verknüpfung hast du bereits gesehen: die Ausgabe. Ein Artikel ist
+immer mit einer Ausgabe, dem Heft, verknüpft. Wenn du neben der Ausgabe auf den kleinen grünen Bleistift klickst,
+gelangst du auf die Änderungsseite der Ausgabe. Und andersherum gelangst du von der Änderungsseite der Ausgabe zu einer
+Auflistung aller Artikeln dieser Ausgabe, indem du unter dem Namen der Ausgabe auf den Link mit der Beschriftung
+"Artikel" klickst.
 
 
-> **macht ihr keine Angaben, kann der Artikel auch nie gefunden werden. Und macht ihr viele ungenaue oder überflüssige
-Angaben, so kann der Artikel unerwünscht als Ergebnis auftauchen.**
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Ausgabe ändern Knopf](img/artikel_edit_ausgabe.png){ width="300" .mb-1 }  
+  <figcaption>Ausgabe ändern Knopf</figcaption>  
+</figure>
+<figure markdown="span">  
+  ![Artikel einer Ausgabe](img/ausgabe_related_link.png){ width="300" .mb-1 }  
+  <figcaption>Artikel einer Ausgabe</figcaption>  
+</figure>
+</div>
+
+Weitere Verknüpfungen kannst du unten auf der Artikelseite hinzufügen. Um beispielsweise eine Verknüpfung zwischen dem
+Artikel und der Band "The Rolling Stones" herzustellen, klicke unten auf den Reiter mit der Aufschrift "Band" (1).
+Klicke dann in ein leeres Dropdown-Feld (2) und gebe im Dropdown-Menü den Namen der Band ein (3). Aus der Ergebnisliste
+wählst du dann die entsprechende Band mit einem Klick aus (4).
+Mit dem Knopf "Änderungsliste" (5) rufst du die Ergebnisse in der Bands-Übersichtsseite auf - hier kannst du die
+Ergebnisse genauer anschauen.
+Findest du keine passende Band, kannst du mit dem Knopf "Hinzufügen" (6) eine neue Band erstellen.
+
+Um eine weitere Verknüpfung hinzuzufügen, klicke auf den Knopf "Band hinzufügen". Daraufhin erscheint ein weiteres
+Dropdown-Element in einer neuen Zeile.
+Um eine Verknüpfung zu entfernen, klicke auf das rote "X" in der entsprechenden Zeile. Die Zeile wird daraufhin zur
+Löschung markiert. Wenn du den Artikel abspeicherst, wird die *Verknüpfung* gelöscht. Der Datensatz, der mit dem Artikel
+verknüpft war (also hier die Band "Rolling Stones"), wird dabei *nicht* gelöscht - nur die Verknüpfung zwischen dem
+Artikel und der Band wird gelöscht.
 
 
-Beispiel: wenn in einem Artikel beiläufig die Beatles erwähnt werden, und ihr trotzdem Beatles als Band angebt, wird
-dieser Artikel auch in jeder Suche nach Beatles auftauchen, obwohl eigentlich kaum Bezug zu der Band besteht.
-Grundsätzlich sollten die Angaben den Kern des Artikels wieder spiegeln. Im Zweifelsfall ist es jedoch besser, eher mehr
-als weniger Angaben zu machen: ein Datensatz, der nicht gefunden werden kann, bringt schließlich auch nichts.
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Verknüpfung mit einer Band hinzufügen](img/band_select.png){ width="300" .mb-1 }  
+  <figcaption>Verknüpfung mit einer Band hinzufügen</figcaption>  
+</figure>
+<figure markdown="span">  
+  ![Hinzufügen & Löschen](img/band_inline_add_delete.png){ width="300" .mb-1 }  
+  <figcaption>Hinzufügen & Löschen</figcaption>  
+</figure>
+</div>
 
-Nachdem ihr den Artikel durchgelesen habt, solltet ihr dem Datensatz eine kurze textliche Zusammenfassung des Artikels
-hinzufügen. Anhand der Zusammenfassung soll eine recherchierende Person einschätzen können, ob der Artikel für sie
-interessant ist oder nicht. Dazu kommt, dass der Inhalt des Feldes in die Volltextsuche miteinbezogen wird und damit zum
-Wiederfinden des Artikels beiträgt.
+[comment]: # (@formatter:off)  
+!!! warning "Ausreichend Angaben machen"  
+    Wenn du eine neue Band erstellst, solltest du mehr Informationen als nur den Namen hinterlegen. Es kommt häufig vor, 
+    dass zwei Bands denselben Namen haben. Um diese voneinander unterscheiden zu können, solltest du weitere Angaben wie
+    zum Beispiel Genres, Aliase oder Links zu Wikipedia oder Discogs machen. Dies gilt [grundsätzlich](grundsätze.md) 
+    für alle Arten von Datensätzen.<br>  
+    Hast du für die Erstellung den "Hinzufügen" Knopf des Dropdown-Menüs benutzt, kannst du auf den Bleistift neben der
+    erstellten Band klicken, um zu der Änderungsseite zu gelangen.
+    
+[comment]: # (@formatter:on)
 
-Danach werden in den jeweiligen Bereichen weiter unten zusätzliche Angaben wie Autor, Musiker, Band, Schlagwort, usw.
-festgehalten.
+[comment]: # (@formatter:off)
+!!! info "Duplikate vermeiden"
+    Grundsätzlich solltest du es vermeiden, Duplikate zu erstellen; ist zum Beispiel eine Band bereits in der Datenbank 
+    eingetragen, so solltest du nicht eine weitere Band mit demselben Namen hinzufügen (es sei denn es ist eine komplett
+    andere Band, die den denselben Namen hat).
 
-Anzumerken ist, dass ihr hier von *anderen* Datensätzen (aus anderen Bereichen der Datenbank, siehe
-[Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")) auswählt und dass ihr mit dieser Auswahl Verbindungen
-zwischen dem Datensatz des Artikels und den anderen Datensätzen herstellt: wenn man dem Artikel die Band "The Beatles"
-zuweist, wird anders herum auch ein Verweis auf diesen Artikel in dem Datensatz der Beatles hinterlegt.
+[comment]: # (@formatter:on)
 
-Wenn ihr mit der Erfassung dieses Artikels fertig seid und direkt den nächsten erfassen wollt, klickt
+### Bearbeitung abschließen {.fs-5}
+
+Wenn du mit der Erfassung dieses Artikels fertig bist und direkt den nächsten erfassen willst, klicke
 auf "[Sichern](sichern.md "Sichern") und neu hinzufügen". Der Artikel wird abgespeichert, es wird ein neues, leeres
-Formular angezeigt und das Magazin und die Ausgabe werden eingefügt (sofern ihr, wie vorgeschlagen, die Suche mit der
-Änderungsliste gemacht habt).
+Formular angezeigt und das Magazin und die Ausgabe werden eingefügt (sofern du, wie vorgeschlagen,
+die [Suche](#vorhandene-artikel-suchen--fs-5-) mit der Übersichtsseite gemacht hast).
 
-### Ausnahmen { .fs-5 }
+Drückst du auf "Sichern und weiterbearbeiten" wird der Artikel abgespeichert und das Formular für den Artikel neu
+geladen.
+Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zurück zu der Übersichtsliste der Artikel.
+
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Speicher Knöpfe](img/sichern.png){ width="300" .mb-1 }  
+  <figcaption>Speicher Knöpfe</figcaption>  
+</figure>
+</div>
+
+## Ausnahmen: Welche Artikel müssen erfasst werden und welche nicht? { .fs-5 }
 
 Prinzipiell kann jeder Text einer Ausgabe erfasst und eingetragen werden. Jedoch haben manche Abschnitte wenig
 Informationsgehalt: News mit einem Umfang von 20 Wörtern haben meist nicht viel Aussagekraft. Aus Zeitgründen ist die
-Richtlinie daher, dass nur echte Artikel erfasst werden
-*müssen* und andere Texte eher nicht erfasst werden
-*sollten.* Ein "echter Artikel" wäre z.B. etwas, das im Inhaltsverzeichnis erwähnt wird, eine Autorenangabe hat oder
-etwas, das über eine gewisse Länge hinaus geht. "Andere Texte" wären dann News oder Rezensionen von Veröffentlichungen (
-also z.B. Reviews von Musikalben). Ob etwas Informationsgehalt hat, bemerkt ihr dann, wenn ihr die Zusammenfassung
-schreiben wollt: fällt die Zusammenfassung sehr dünn aus, ist das ein Indiz dafür, dass ihr den Text nicht aufnehmen
-braucht.
-Am Ende unterliegt es immer eurer Einschätzung, welcher Text erfasst wird. Findet ihr eine News, die ihr für wichtig
-oder erwähnenswert haltet, könnt ihr diese erfassen.
+Richtlinie daher, dass nur echte Artikel erfasst werden *müssen* und andere Texte eher nicht erfasst werden *sollten.*
+Ein "echter Artikel" wäre z.B. etwas, das im Inhaltsverzeichnis erwähnt wird, eine Autorenangabe hat oder etwas, das
+über eine gewisse Länge hinaus geht. "Andere Texte" wären dann News oder Rezensionen von Veröffentlichungen (also z.B.
+Reviews von Musikalben). Ob etwas Informationsgehalt hat, bemerkst du dann, wenn du die Zusammenfassung schreiben
+willst: fällt die Zusammenfassung sehr dünn aus, ist das ein Indiz dafür, dass du den Text nicht aufnehmen brauchst. Am
+Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findest du eine News, die du für wichtig oder
+erwähnenswert hältst, kannst du diese gerne erfassen.
+
+## Über Verknüpfungen { .fs-3 }
+
+- Verknüpfungen gehen in beide Richtungen
+- Änderungen an einem Teil der Verknüpfung wirken sich auf den anderen Teil aus
+- Vorsicht beim Ändern!
 
 ## Formularfelder { .fs-3 }
 
