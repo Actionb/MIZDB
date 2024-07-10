@@ -62,6 +62,7 @@ def copy_base_css(config):
         return
     dst_dir.mkdir(exist_ok=True)
     shutil.copy(css_dir / "base.css", dst_dir / "base.css")
+    shutil.copy(css_dir / "admonitions.css", dst_dir / "admonitions.css")
 
 
 def parse_pages(config):
