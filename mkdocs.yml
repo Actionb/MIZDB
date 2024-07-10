@@ -1,4 +1,6 @@
 site_name: MIZDB - Hilfe
+extra_css:
+  - css/admonitions.css
 theme:
   name: mkdocs
   custom_dir: 'docs_theme/'
