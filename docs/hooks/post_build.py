@@ -46,8 +46,8 @@ def copy_glightbox_assets(config):
     dst_dir = static_root / "help"
     if not assets_dirs.exists():
         return
-    dst_dir.joinpath("js").mkdir(exist_ok=True)
-    dst_dir.joinpath("css").mkdir(exist_ok=True)
+    dst_dir.joinpath("js").mkdir(exist_ok=True, parents=True)
+    dst_dir.joinpath("css").mkdir(exist_ok=True, parents=True)
     try:
         shutil.copy(assets_dirs / "javascripts" / "glightbox.min.js", dst_dir / "js" / "glightbox.min.js")
         shutil.copy(assets_dirs / "stylesheets" / "glightbox.min.css", dst_dir / "css" / "glightbox.min.css")
@@ -60,7 +60,7 @@ def copy_base_css(config):
     dst_dir = static_root / "help" / "css"
     if not css_dir.exists():
         return
-    dst_dir.mkdir(exist_ok=True)
+    dst_dir.mkdir(exist_ok=True, parents=True)
     shutil.copy(css_dir / "base.css", dst_dir / "base.css")
     shutil.copy(css_dir / "admonitions.css", dst_dir / "admonitions.css")
 
@@ -70,10 +70,10 @@ def parse_pages(config):
         out_dir = Path(config.get("templates_out_dir", None))
     else:
         out_dir = project_root / "dbentry" / "site" / "templates" / "help"
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True, parents=True)
     exclude = ("main.html", "404.html")
     for page in Path(config["site_dir"]).iterdir():
-        if page.is_file() and page.suffix == ".html" and not page.name in exclude:
+        if page.is_file() and page.suffix == ".html" and page.name not in exclude:
             with open(page, "r") as f:
                 soup = BeautifulSoup(f.read(), "html.parser")
             content = soup.find(id="help_content")
