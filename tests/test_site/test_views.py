@@ -1,4 +1,5 @@
 """Tests for the dbentry.site base views."""
+
 import re
 from unittest.mock import patch, Mock, call
 from urllib.parse import urlencode, unquote
@@ -8,6 +9,7 @@ from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
+from django.template import TemplateDoesNotExist
 from django.test import override_settings
 from django.urls import path, reverse
 from mizdb_tomselect.views import IS_POPUP_VAR
@@ -24,6 +26,7 @@ from dbentry.site.views.base import (
     SearchableListView,
 )
 from dbentry.site.views.delete import DeleteView, DeleteSelectedView
+from dbentry.site.views.help import HelpView, has_help_page
 from dbentry.site.views.history import HistoryView
 from tests.case import ViewTestCase, DataTestCase
 from tests.model_factory import make
@@ -124,6 +127,8 @@ class URLConf:
             path("", dummy_view, name=name)
             for name in ("index", "site_search", "searchbar_search", "password_change", "logout")
         ],
+        path("help/index/", dummy_view, name="help_index"),
+        path("help/<path:page_name>/", dummy_view, name="help"),
     ]
     app_name = "test_site"
 
@@ -1130,3 +1135,40 @@ class TestSearchableListView(ViewTestCase):
                 ctx["collapsed_fields"], [search_form[f] for f in ("empty_bool", "empty_value", "empty_multi")]
             )
             self.assertEqual(ctx["shown_fields"], [search_form["non_empty"]])
+
+
+class TestHelpView(ViewTestCase):
+    view_class = HelpView
+
+    def test_has_help_page(self):
+        """
+        Assert that has_help_page checks if a help page template with the given
+        name exists.
+        """
+        with patch("dbentry.site.views.help.get_template") as get_template_mock:
+            for has_page in (True, False):
+                if not has_page:
+                    get_template_mock.side_effect = TemplateDoesNotExist("Test")
+                self.assertEqual(has_help_page("foo"), has_page)
+
+    def test(self):
+        """Assert that the GET response uses the expected help page template."""
+        response = self.client.get(reverse("help", kwargs={"page_name": "artikel"}))
+        self.assertTemplateUsed(response, "help/artikel.html")
+
+    def test_help_page_does_not_exist(self):
+        """
+        Assert that a request for a help page that does not exist redirects to
+        the help index.
+        """
+        response = self.client.get(reverse("help", kwargs={"page_name": "__foo__"}), follow=True)
+        self.assertTemplateUsed(response, "help/index.html")
+
+    @patch("dbentry.site.views.help.has_help_page", new=Mock(return_value=False))
+    def test_sends_user_message_if_help_page_does_not_exist(self):
+        """
+        Assert that a messages is send if the requested help page does not
+        exist.
+        """
+        response = self.client.get(reverse("help", kwargs={"page_name": "__foo__"}), follow=True)
+        self.assertMessageSent(response.wsgi_request, "Hilfe Seite für '__foo__' nicht gefunden.")
