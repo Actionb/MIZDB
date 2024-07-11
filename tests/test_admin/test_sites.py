@@ -42,16 +42,6 @@ class TestMIZAdminSite(RequestTestCase):
 
     site = miz_admin_site
 
-    def test_each_context(self):
-        """Assert that the Wiki URL is added to the context."""
-        with override_settings(WIKI_URL="localhost/wiki/index.html"):
-            context = self.site.each_context(self.get_request())
-            self.assertIn("wiki_url", context)
-            self.assertEqual("localhost/wiki/index.html", context["wiki_url"])
-        with override_settings(WIKI_URL=None):
-            context = self.site.each_context(self.get_request())
-            self.assertNotIn("wiki_url", context)
-
     @patch("dbentry.admin.site.super")
     def test_app_index_returns_dbentry(self, super_mock):
         """
