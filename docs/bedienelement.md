@@ -2,190 +2,138 @@ Bedienelement
 =============
 
 
-Die Seiten und Formulare der Datenbank verwenden verschiedene
- [Steuer- oder Bedienelemente](https://en.wikipedia.org/wiki/de:Steuerelement "wikipedia:de:Steuerelement"), deren Funktionsweisen hier kurz erklärt wird.
+Die Seiten und Formulare der Datenbank verwenden
+verschiedene [Steuer- oder Bedienelemente](https://en.wikipedia.org/wiki/de:Steuerelement "wikipedia:de:Steuerelement"),
+deren Funktionsweisen hier kurz erklärt wird.
 
+## Einfache Felder {.fs-3 .mt-5 .mb-3 .border-bottom}
 
+### Textfeld {.fs-5}
 
-### Einfache Felder {.fs-5 .mt-5}
+![Textfeld](img/bedienelemente/textfeld.png)
 
-
-### Textfeld {.fs-5 .mt-5}
-
-
-
-Ein Element, dass jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements und die erlaubte Länge des Textes stehen in keinem Zusammenhang.
-
+Ein Element, das jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements
+und die erlaubte Länge des Textes stehen in keinem Zusammenhang.
 
 ### Textfeld mit variabler Grösse {.fs-5 .mt-5}
 
+![Textarea](img/bedienelemente/textarea.png)
 
-
-Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.
-
+Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren
+rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.
 
 ### Zahlenfeld {.fs-5 .mt-5}
 
+![Zahlenfeld](img/bedienelemente/zahlenfeld.png)
 
+Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manche Werte nicht zu (z.B. negative Zahlen
+für Jahrgang). Mit den kleinen Knöpfchen an der rechten Seite des Elementes lässt sich durch den zulässigen Wertebereich
+scrollen.
 
-Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manche Werte nicht zu (z.B. negative Zahlen für Jahrgang). Mit den kleinen Knöpfchen an der rechten Seite des Elementes lässt sich durch den zulässigen Wertebereich scrollen. Wenn der Fokus im Element liegt (also wenn der
- [Cursor](https://en.wikipedia.org/wiki/de:Cursor "wikipedia:de:Cursor") im Element zu sehen ist), kann auch mit dem Mausrad gescrollt werden.
- 
+[comment]: # (@formatter:off)  
+!!! info "Hinweis: Vorsicht beim Scrollen"  
+    Wenn der Fokus im Zahlenfeld liegt (also wenn der [Cursor](https://en.wikipedia.org/wiki/de:Cursor "wikipedia:de:Cursor") im Element zu sehen ist), kann 
+		Wert verändert werden, indem man das Scrollrad der Maus benutzt. 
+  
+[comment]: # (@formatter:on)
 
+## Auswahlfelder {.fs-3 .mt-5 .mb-3 .border-bottom}
 
+### Einfaches Auswahlfeld/Dropdown {.fs-5}
 
-### Checkbox {.fs-5 .mt-5}
+![Auswahlfeld](img/bedienelemente/auswahlfeld.png)
 
-
-
-Ein Element für Wahrheitswerte. Wenn die Beschriftung des Elementes zutrifft, dann mit Mausklick ein Häkchen setzen.
-
-
-
-### Auswahlfelder {.fs-5 .mt-5}
-
-
-### Einfaches Auswahlfeld/Drop-Down {.fs-5 .mt-5}
-
-
-
-Beim Klicken auf dieses Feld klappt sich ein Menü auf ("drop down"), aus dem man eine der Optionen wählen kann.
-
-
+Beim Klicken auf dieses Feld klappt sich ein Menü auf ("dropdown"), aus dem man eine der Optionen wählen kann.
 
 ### Kombinationsfeld/Combobox {.fs-5 .mt-5}
 
+![Combobox](img/bedienelemente/combobox.png)
 
+Kombination aus einem Textfeld und einem Auswahlfeld/Listenfeld, das mittels Texteingabe das Durchsuchen der
+Listeneinträge möglich macht. Im oberen Bereich kann der Suchtext eingegeben werden, im unteren Bereich werden
+Suchergebnisse angezeigt, von denen dann ein Eintrag per Mausklick ausgewählt werden kann. Per Mausrad lässt sich durch
+die Ergebnisse scrollen.
 
-Kombination aus einem Textfeld und einem Auswahlfeld/Listenfeld, das mittels Texteingabe das Durchsuchen der Listeneinträge möglich macht. Im oberen Bereich kann der Suchtext eingegeben werden, im unteren Bereich werden Suchergebnisse angezeigt, von denen dann ein Eintrag per Mausklick ausgewählt werden kann. Per Mausrad lässt sich durch die Ergebnisse scrollen.
+Die Auswahl kann aufgehoben werden, indem du oben neben dem ausgewählten Eintrag auf das kleine rote "**x**" klickst.
+Mit einem Klick auf den grünen Bleistift kannst du den ausgewählten Eintrag bearbeiten.
 
-  
-
-Die Auswahl kann aufgehoben werden, indem man auf das kleine "**x**" am rechten Ende des Elementes klickt.
-
-[![Combobox mit Auswahl](/mediawiki/images/2/25/Widget_autocomplete_selected.png)](datei:widget_autocomplete_selected.png.md "Combobox mit Auswahl")
-
-  
-
-Manche Combobox Elemente lassen auch die Erstellung von neuen
- [Datensätzen](datensatz.md "Datensatz") zu, sofern zu dem Suchbegriff kein
- *exakter* Eintrag gefunden werden konnte. Am unteren Ende des Elementes erscheint ein Eintrag mit dem Text "Erstelle <Suchtext>". Klickt man auf diesen Eintrag wird ein entsprechender Datensatz zu der Datenbank hinzugefügt.
- 
-
-[![Schnellerstellung](/mediawiki/images/8/88/Widget_autocomplete_create.png)](datei:widget_autocomplete_create.png.md "Schnellerstellung")
-
+Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen. Der Knopf "Änderungsliste" schickt dich zu der
+[Änderungsliste](änderungsliste.md) der zur Auswahl stehenden Einträge.
 
 ### Combobox mit Mehrfachauswahl {.fs-5 .mt-5}
 
+![Combobox mit Mehrfachauswahl](img/bedienelemente/combobox_mehrfach.png)
 
+Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewählt werden. Ausgewählte Einträge können
+durch einen Klick auf das kleine rote "**x**" neben dem Eintrag wieder entfernt werden. Mit einem Klick auf das "**x**"
+am rechten Ende der Combobox lässt sich die gesamte Auswahl aufheben.
 
-Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewählt werden. Ausgewählte Einträge können durch einen Klick auf das kleine "**x**" in der
- ***linken*** Ecke des Eintrages wieder entfernt werden. Wie auch bei der Combobox lässt sich die
- *gesamte* Auswahl durch einen Klick auf das "**x**" am rechten Ende aufheben.
- 
+## Spezialfelder {.fs-3 .mt-5 .mb-3 .border-bottom}
 
+### Datumsfeld {.fs-5}
 
-### gefilterte Mehrfachauswahl {.fs-5 .mt-5}
+![Datumsfeld](img/bedienelemente/datumsfeld.png)
 
-
-
-Dieses Bedienelement erfüllt denselben Zweck wie die Combobox mit Mehrfachauswahl, unterscheidet sich jedoch etwas in der Funktionsweise. In das Textfeld neben dem Lupensymbol kann ein Suchbegriff eingegeben werden, mit welchem die Liste gefiltert wird.
-Auf der linken Seite befinden sich die Ergebnisse, auf der rechten Seite die vorgenommene Auswahl. Einzelne Einträge können mittels Doppelklick in die jeweils andere Liste verschoben werden. Um mehrere Einträge auszuwählen, muss die Strg-Taste während des Klickens gedrückt gehalten werden. Alternativ dazu können mehrere nebeneinander liegende Einträge auch durch Festhalten der linken Maustaste ausgewählt werden. Die Auswahl kann dann mithilfe der Pfeil-Knöpfe verschoben werden.
-
-
-### Spezialfelder {.fs-5 .mt-5}
-
-
-### Datumsfeld {.fs-5 .mt-5}
-
-
-
-Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.JJJJ (Tag.Monat.Jahr) und JJJJ-MM-TT (Jahr-Monat-Tag,
- [ISO 8601](https://en.wikipedia.org/wiki/de:ISO_8601 "wikipedia:de:ISO 8601")). Daneben befinden sich zwei Hilfswerkzeuge; das erste fügt das heutige Datum direkt in das Feld ein, das zweite öffnet einen Kalender zur Auswahl des Tages.
- 
-
+Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.JJJJ (Tag.Monat.Jahr) und JJJJ-MM-TT
+(Jahr-Monat-Tag, [ISO 8601](https://en.wikipedia.org/wiki/de:ISO_8601 "wikipedia:de:ISO 8601")).
+Das Symbol am rechten Ende des Feldes öffnet einen Kalender zur Auswahl des Tages.
 
 ### Feld für partielles Datum {.fs-5 .mt-5}
 
+![Partielles Datumsfeld](img/bedienelemente/partielles_datum.png)
 
-
-Ein Feld mit dem Datumsangaben gemacht werden können, die nicht unbedingt vollständig sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.
-
+Ein Feld für Datumsangaben, die nicht unbedingt sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.
 
 ### Laufzeitfeld {.fs-5 .mt-5}
 
-
+![Laufzeitfeld](img/bedienelemente/laufzeitfeld.png)
 
 Dieses Feld rechnet Angaben in ein zeitliches Format hh:mm:ss (Stunden:Minuten:Sekunden) um.
 
-  
-
 Angaben, die dem Format nicht vollständig entsprechen, werden akzeptiert und ggf. umgerechnet:
 
-
-
-
-
-| Eingabetext | Entspricht | | | | Ergebnis |
-| --- | --- | --- | --- | --- | --- |
-|  | Stunden | Minuten | Sekunden | Anmerkung |  |
-| 20 | 00 | 00 | 20 | 20 Sekunden | 00:00:20 |
-| 120 | 00 | 02 | 00 | 120 Sekunden | 00:02:00 |
-| 1:20 | 00 | 01 | 20 | 1 Minute und 20 Sekunden | 00:01:20 |
-| 1:80 | 00 | 02 | 20 | 1 Minute und 80 Sekunden | 00:02:20 |
-| 90:10 | 01 | 30 | 10 | 90 Minuten und 10 Sekunden | 01:30:10 |
-| 1:30:10 | 01 | 30 | 10 | 1 Stunde, 30 Minuten und 10 Sekunden | 01:30:10 |
-
-
-
+| Eingabetext | Entspricht |         |          |                                      | Ergebnis |
+|-------------|------------|---------|----------|--------------------------------------|----------|
+|             | Stunden    | Minuten | Sekunden | Anmerkung                            |          |
+| 20          | 00         | 00      | 20       | 20 Sekunden                          | 00:00:20 |
+| 120         | 00         | 02      | 00       | 120 Sekunden                         | 00:02:00 |
+| 1:20        | 00         | 01      | 20       | 1 Minute und 20 Sekunden             | 00:01:20 |
+| 1:80        | 00         | 02      | 20       | 1 Minute und 80 Sekunden             | 00:02:20 |
+| 90:10       | 01         | 30      | 10       | 90 Minuten und 10 Sekunden           | 01:30:10 |
+| 1:30:10     | 01         | 30      | 10       | 1 Stunde, 30 Minuten und 10 Sekunden | 01:30:10 |
 
 ### ISSN/ISBN/EAN {.fs-5 .mt-5}
 
-
-
-Ein Feld, welches Angaben für Standardnummern wie ISSN, ISBN oder EAN akzeptiert, validiert und in ein gut lesbares Format umwandelt.
+Ein Feld, welches Angaben für Standardnummern wie ISSN, ISBN oder EAN akzeptiert, validiert und in ein gut lesbares
+Format umwandelt.
 Aus einer ISBN ohne Formatierung:
+
+![ISBN Feld unformatiert](img/bedienelemente/isbn_unformatted.png)
 
 ... wird automatisch nach Speicherung eine ISBN mit Bindestrichen:
 
-[![ISBN Feld mit formatiertem Text](/mediawiki/images/9/97/Widget_isbn_formatted.png)](datei:widget_isbn_formatted.png.md "ISBN Feld mit formatiertem Text")
+![ISBN Feld mit formatiertem Text](img/bedienelemente/isbn_formatted.png)
 
+
+[comment]: # (@formatter:off)  
+!!! info "Info: Umwandlungen zwischen verschiedenen Formaten"  
+    Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automatisch vorgenommen.
   
+[comment]: # (@formatter:on)
 
-Anmerkung: Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automatisch vorgenommen.
+## Inlines {.fs-3 .mt-5 .mb-3 .border-bottom}
 
-### Ändern/Hinzufügen/Löschen
+Viele Formulare enthalten sogenannte Inlines. Inlines sind Formulare von verwandten Datensätzen, die in dem 
+Hauptformular eingebettet sind. 
+Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die 
+Artikel-Musiker Beziehung.
 
+![Musiker Inline](img/bedienelemente/inline.png)
 
-Der Kern der Datenbank sind die
- [Beziehungen](https://en.wikipedia.org/wiki/de:Relationale_Datenbank "wikipedia:de:Relationale Datenbank") zwischen den Tabellen. Ein Musiker kommt aus Dortmund, weil im
- [Datensatz](datensatz.md "Datensatz") des Musikers aus der Musiker Tabelle eine Beziehung zum Datensatz Dortmund aus der Tabelle der Orte existiert. Steuerelemente wie das Auswahlfeld oder die Combobox dienen dazu, die Herstellung und Verwaltung dieser Beziehungen zu vereinfachen. Zu diesem Zweck findet man neben diesen Elementen meist weitere Elemente, die das Hinzufügen eines neuen oder das Bearbeiten/[Löschen](löschen.md "Löschen") eines bereits existierenden "fremden" Datensatzes ermöglichen.
-   
+Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular. 
+Im Falle des Musiker Inlines beinhaltet das Formular nur einziges [Auswahlfeld](#kombinationsfeldcombobox). 
+Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des Inlines hinzugefügt werden.
 
- Für die ausgewählte Ausgabe "2000-1", von links nach rechts: Ausgabe bearbeiten, neue Ausgabe hinzufügen, Ausgabe löschen.
-
-
-
-
-
-
-
-### Inlines {.fs-5 .mt-5}
-
-
-Die meisten Formulare enthalten Inlines. Kurz und knapp gesagt, sind das Formulare von verwandten Datensätzen, die in dem Hauptformular eingebettet sind. Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die Artikel-Musiker Beziehung.
-
-
-
-Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular. Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des Inlines hinzugefügt werden. Diese zusätzlichen, neu hinzugefügten Formulare können mit dem Knopf "**x**" am rechten Ende der Zeile wieder entfernt werden (nicht zu verwechseln mit dem
- **x** der [Combobox Elemente](#Kombinationsfeld.2FCombobox)!).
-
-
-
-Um
- *abgespeicherte* Beziehungen zu entfernen, muss unter "**Löschen**" in der jeweiligen Zeile ein Häkchen gesetzt und der Artikel abgespeichert werden.  
-
- Anmerkung: das x in der Combobox hebt nur die Auswahl des Bedienelementes auf. Das führt nicht nur
- *nicht* zur Löschung der Beziehung, sondern sogar direkt zu folgender Fehlermeldung, da das Element nicht leer - also ohne Auswahl - bleiben darf: "Dieses Feld ist zwingend erforderlich."
-
-
+Zeilen können mit dem Knopf mit dem roten "**x**" am rechten Ende einer Zeile zur Löschung markiert werden. Wird der
+Datensatz gespeichert, werden die markierten Zeilen entfernt; die Beziehungen zwischen den Datensätzen werden dabei 
+gelöscht.
