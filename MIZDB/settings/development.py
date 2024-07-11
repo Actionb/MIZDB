@@ -14,5 +14,3 @@ MIDDLEWARE = MIDDLEWARE + [
 
 # Required for debug_toolbar:
 INTERNAL_IPS = ["127.0.0.1"]
-
-WIKI_URL = "http://127.0.0.1/wiki/Hauptseite"
