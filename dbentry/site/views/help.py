@@ -8,6 +8,12 @@ from django.views.generic import TemplateView
 from dbentry.site.views import BaseViewMixin
 
 
+
+class HelpIndexView(BaseViewMixin, TemplateView):
+    title = "Hilfe"
+    template_name = "help/index.html"
+
+
 class HelpView(BaseViewMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
