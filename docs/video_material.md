@@ -109,7 +109,7 @@ Bezieht sich das Objekt auf
  [Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.
  
 Ist auf dem Cover bzw. der Aufschrift explizit angegeben, welche Instrumente der Musiker in diesem Video Material spielt, so sollten diese angegeben werden (dazu auf "Instrumente" unterhalb der Musiker
- [Combobox](bedienelement.md#Kombinationsfeld.2FCombobox "Bedienelement") klicken).
+ [Combobox](bedienelement.md#kombinationsfeldcombobox "Bedienelement") klicken).
  
 
 ### Bands {.fs-5 .mt-5}

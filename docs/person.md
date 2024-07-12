@@ -35,7 +35,7 @@ Nachname(n) des bürgerlichen Namens der Person.
 
 
 Mit diesem
- [Kombinationsfeld](bedienelement.md#Kombinationsfeld.2FCombobox "Bedienelement") kann die
+ [Kombinationsfeld](bedienelement.md#kombinationsfeldcombobox "Bedienelement") kann die
  [gemeinsame Normdatei (GND)](#Gemeinsame_Normdatei) der deutschen Nationalbibliothek (DNB) durchsucht werden.
  
 Ihr gebt den vollständigen Namen der Person ein und wählt anschließend den passenden Eintrag aus der Auswahlliste aus. Die Normdatei ID wird zwischen den Klammern angezeigt.
