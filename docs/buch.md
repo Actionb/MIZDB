@@ -71,7 +71,7 @@ Soll der Datensatz ein Sammelband beschreiben, so muss hier ein Häkchen gesetzt
 
 Die dreizehn-stellige internationale Standardbuchnummer
  [ISBN](https://en.wikipedia.org/wiki/de:ISBN "wikipedia:de:ISBN"). ISBN-13 und EAN-13 sind identisch. Siehe auch
- [Bedienelement ISBN Feld](bedienelement.md#ISSN.2FISBN.2FEAN "Bedienelement").
+ [Bedienelement ISBN Feld](bedienelement.md#issnisbnean "Bedienelement").
  
 
 ### EAN {.fs-5 .mt-5}
@@ -80,7 +80,7 @@ Die dreizehn-stellige internationale Standardbuchnummer
 
 Die europäische Artikelnummer
  [EAN](https://en.wikipedia.org/wiki/de:EAN "wikipedia:de:EAN"). ISBN-13 und EAN-13 sind identisch. Siehe auch
- [Bedienelement EAN Feld](bedienelement.md#ISSN.2FISBN.2FEAN "Bedienelement")
+ [Bedienelement EAN Feld](bedienelement.md#issnisbnean "Bedienelement")
 
 ### Sprache {.fs-5 .mt-5}
 
@@ -208,7 +208,7 @@ Verweise auf relevante [Verlage](verlag.md "Verlag").
 
 
 [Bestandsangaben](bestand.md "Bestand") zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden. Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
- [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
+ [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
 ### Siehe auch {.fs-5 .mt-5}

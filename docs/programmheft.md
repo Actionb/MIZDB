@@ -93,7 +93,7 @@ Hat das Objekt Bezug zu bestimmten
 
 
 [Bestandsangaben](bestand.md "Bestand") zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden. Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
- [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
+ [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
 ### Siehe auch {.fs-5 .mt-5}

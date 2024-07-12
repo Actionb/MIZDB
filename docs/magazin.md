@@ -14,7 +14,7 @@ Der Name des Magazins.
 ### Ausgaben Merkmal {.fs-5 .mt-5}
 
 Benutzer mit vollen Adminrechten können
-den [Algorithmus zur Erstellung von Ausgabentiteln](ausgabe.md#Textliche_Darstellung "Ausgabe") übergehen und eine
+den [Algorithmus zur Erstellung von Ausgabentiteln](ausgabe.md#textliche-darstellung "Ausgabe") übergehen und eine
 Darstellung für *alle* Ausgaben des Magazins festlegen.
 
 Wenn sich beispielsweise die Titel der Ausgaben aus den Monatsangaben und nicht aus den vom Algorithmus bevorzugten
@@ -32,7 +32,7 @@ Die standardisierte Seriennummer
 [ISSN](https://en.wikipedia.org/wiki/de:ISSN "wikipedia:de:ISSN") der Zeitschrift. Die ISSN ist in der
 [EAN](https://en.wikipedia.org/wiki/de:European_Article_Number "wikipedia:de:European Article Number") mit inbegriffen,
 was die Datenbank erkennen kann. Demnach könnt ihr auch einfach den gesamten Strichcode eingeben. Siehe auch
-[Bedienelement ISSN Feld](bedienelement.md#ISSN.2FISBN.2FEAN "Bedienelement").
+[Bedienelement ISSN Feld](bedienelement.md#issnisbnean "Bedienelement").
 
 ### Beschreibung {.fs-5 .mt-5}
 

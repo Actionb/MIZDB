@@ -53,7 +53,7 @@ Notizen für Archiv-Mitarbeiter.
 
 Die
 [Autoren](autor.md "Autor") des Artikels sollen hier gelistet werden. Zur Erklärung des Such-Dropdowns siehe:
-[Autor#Schnellerstellung mit Dropdown](autor.md#Schnellerstellung_mit_Dropdown "Autor")
+[Autor#Schnellerstellung mit Dropdown](autor.md#schnellerstellung-mit-dropdown "Autor")
 
 ### Musiker {.fs-5 .mt-5}
 
@@ -107,7 +107,7 @@ Hier einige Beispiele, die die Unterschiede zwischen und die Verwendungszwecke v
 
 * ein Artikel über Musikszene in Dortmund
 
-'[Orte](artikel.md#Orte "Artikel")' sollte einen Ort `Dortmund` enthalten.
+'[Orte](artikel.md#orte "Artikel")' sollte einen Ort `Dortmund` enthalten.
 
 * Artikel über den Jazzclub 'domicil' in Dortmund
 

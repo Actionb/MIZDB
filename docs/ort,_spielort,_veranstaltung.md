@@ -12,7 +12,7 @@ Hier einige Beispiele, die die Unterschiede zwischen und die Verwendungszwecke v
 
 
 
-'[Orte](artikel.md#Orte "Artikel")' sollte einen Ort `Dortmund` enthalten.
+'[Orte](artikel.md#orte "Artikel")' sollte einen Ort `Dortmund` enthalten.
 
 * Artikel über den Jazzclub 'domicil' in Dortmund
 

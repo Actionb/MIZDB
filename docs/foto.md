@@ -21,7 +21,7 @@ Ein kurzer Text, der das Foto treffend beschreibt.
 
 
 Ähnlich wie die
- [ID bei Plakaten](plakat.md#Plakat_ID "Plakat"), dient diese Angabe zur eindeutigen Identifizierung des Fotos. Die ID wird von der Datenbank durch
+ [ID bei Plakaten](plakat.md#plakat-id "Plakat"), dient diese Angabe zur eindeutigen Identifizierung des Fotos. Die ID wird von der Datenbank durch
  [das Absichern](sichern.md "Sichern") automatisch erzeugt; d.h. ihr müsst den Datensatz erst einmal abspeichern, bevor in diesem Feld ein Wert angezeigt wird. Diesen Wert verzeichnet ihr dann auf der Rückseite des Fotos mit Bleistift.
  
 
@@ -48,7 +48,7 @@ Wenn das vorliegende Foto ein Farbfoto ist, so bitte ein Häkchen setzen.
 
 
 Angaben zur zeitlichen Einteilung. Siehe
- [Bedienelement für partielle Datumsangaben](bedienelement.md#Feld_f.C3.BCr_partielles_Datum "Bedienelement").
+ [Bedienelement für partielle Datumsangaben](bedienelement.md#feld-fur-partielles-datum "Bedienelement").
  
 
 ### Bildreihe {.fs-5 .mt-5}
@@ -151,5 +151,5 @@ Angaben zu
 
 
 [Bestandsangaben](bestand.md "Bestand") zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden. Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
- [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
+ [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  

@@ -14,7 +14,7 @@ Die ID-Nummer könnt ihr aus der Webadresse eines Datensatzes ableiten:
 
 
 Abgesehen von der Suche nach IDs im
- [Suchformular](suchformular.md#ID "Suchformular"), wird die ID eines Datensatzes zur Kennzeichnung von Foto-Materialien verwendet:
- [Foto#ID](foto.md#ID "Foto")
+ [Suchformular](suchformular.md#id "Suchformular"), wird die ID eines Datensatzes zur Kennzeichnung von Foto-Materialien verwendet:
+ [Foto#ID](foto.md#id "Foto")
 
 

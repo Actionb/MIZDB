@@ -20,7 +20,7 @@ Der Name der Veranstaltung.
 
 
 Angaben zur zeitlichen Einteilung. Siehe
- [Bedienelement für partielle Datumsangaben](bedienelement.md#Feld_f.C3.BCr_partielles_Datum "Bedienelement").
+ [Bedienelement für partielle Datumsangaben](bedienelement.md#feld-fur-partielles-datum "Bedienelement").
  
 
 ### Spielort {.fs-5 .mt-5}

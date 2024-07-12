@@ -26,7 +26,7 @@ Anzahl der Songs.
 
 
 Die Gesamtlaufzeit des Materials. Falls keine solche Zeitangabe auf dem Cover, im Booklet oder im Internet zu finden ist, könnt ihr die Angabe auch weglassen. Siehe
- [Bedienelement#Laufzeitfeld](bedienelement.md#Laufzeitfeld "Bedienelement")
+ [Bedienelement#Laufzeitfeld](bedienelement.md#laufzeitfeld "Bedienelement")
 
 Zusätzlich besteht auch die Möglichkeit die CD/DVD im Laufwerk (falls vorhanden) auszulesen.
 
@@ -216,7 +216,7 @@ Verweise auf Datensätze zu Computerdateien (z.B. Digitalisierungen) dieses Mate
 
 
 [Bestandsangaben](bestand.md "Bestand") zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden. Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
- [Bedienelement#Inlines](bedienelement.md#Inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
+ [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
 ### Weblinks {.fs-5 .mt-5}
