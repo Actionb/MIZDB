@@ -28,11 +28,11 @@ Notizen für Archiv-Mitarbeiter.
 
 Hier kann man angeben, bei welchen [Magazinen](magazin.md "Magazin") der Autor mitwirkt oder mitgewirkt hat.
 
-### Schnellerstellung mit Dropdown {.fs-5 .mt-5}
+## Schnellerstellung mit Dropdown {.fs-3 .mt-5 .border-bottom .mb-3}
 
-Von anderen Formularen (z.B. dem für Artikel) aus, kann mithilfe
-des [Auswahlfelds](bedienelement.md#kombinationsfeldcombobox) für
-Autoren auch direkt ein Datensatz für einen neuen Autor erstellt werden.
+Von anderen Formularen (z.B. dem für Artikel) aus, kann mithilfe des 
+[Auswahlfelds](bedienelement.md#kombinationsfeldcombobox) für Autoren auch direkt ein Datensatz für einen neuen Autor 
+erstellt werden.
 Dabei berücksichtigt das Feld gängige Schreibweisen für bürgerliche Namen, um einen passenden Datensatz erstellen zu
 können.
 
