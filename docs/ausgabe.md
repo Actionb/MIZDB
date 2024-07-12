@@ -109,7 +109,7 @@ Hier kann der Titel einer Sonderausgabe angegeben werden. Wird diese Ausgabe als
 
 
 
-Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
+Notizen für Archiv-Mitarbeiter.
 
 ### Ausgabennummer {.fs-5 .mt-5}
 

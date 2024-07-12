@@ -40,7 +40,7 @@ Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
 ### Bemerkungen {.fs-5 .mt-5}
 
-Notizen für Archiv-Mitarbeiter. Nur Mitarbeiter können dieses Felder sehen.
+Notizen für Archiv-Mitarbeiter.
 
 
 
