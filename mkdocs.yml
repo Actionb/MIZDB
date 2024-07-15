@@ -2,7 +2,7 @@ site_name: MIZDB - Hilfe
 nav:
   - 'Index': index.md
   - Einführung:
-    - 'Einführung': einführung.md
+    - 'Einführung': einfuehrung.md
     - 'Grundsätze': grundsätze.md
     - 'Erfassung': erfassung.md
   - Benutzung:

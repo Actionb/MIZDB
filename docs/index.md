@@ -4,7 +4,7 @@ Willkommen auf der Hilfe-Seite der MIZDB Anwendung!
 
 Hier kannst du mehr über den Umgang mit der Datenbank erfahren.
 
-Neu hier? Dann lese die **[Einführung](einführung.md)**!
+Neu hier? Dann lese die **[Einführung](einfuehrung.md)**!
 
 ## Tabellen
 
