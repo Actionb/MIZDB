@@ -3,7 +3,7 @@ nav:
   - 'Index': index.md
   - Einführung:
     - 'Einführung': einfuehrung.md
-    - 'Grundsätze': grundsätze.md
+    - 'Grundsätze': grundsaetze.md
     - 'Erfassung': erfassung.md
   - Benutzung:
       - 'Oberfläche': oberfläche.md

@@ -6,7 +6,7 @@ Hi! Hallo! Willkommen im Archiv!
 
 Damit du mit der Arbeit im Archiv beginnen kannst, musst du dich zunächst mit der Bedienung der Datenbank vertraut machen.
 Zu diesem Zweck sollte die Hilfe-Seite zur [Oberfläche](oberfläche.md "Oberfläche") durchgelesen werden. Außerdem
-solltest du dir die [Empfehlungen](grundsätze.md "Grundsätze") zum Arbeiten mit der Datenbank anschauen, bevor du
+solltest du dir die [Empfehlungen](grundsaetze.md "Grundsätze") zum Arbeiten mit der Datenbank anschauen, bevor du
 selber mit der Erfassung von Material beginnst.
 
 Zum Einstieg sei die Erfassung von [Artikeln](erfassung.md "Artikel") aus Zeitschriften empfohlen. Der Prozess
@@ -25,7 +25,7 @@ Hier noch eine Auflistung der empfohlenen Seiten zur Einführung in die Arbeit m
 	  [Löschen](löschen.md "Löschen") von
 	  [Datensätzen](datensatz.md "Datensatz")
 2. Einleitung in die Erfassung von Archiv Materialien:
-	* [Grundsätze](grundsätze.md "Grundsätze") zum Arbeiten mit der Datenbank
+	* [Grundsätze](grundsaetze.md "Grundsätze") zum Arbeiten mit der Datenbank
 	* [Erfassung von Artikeln aus Zeitschriften](erfassung.md "Artikel")
 3. Suchen, sortieren und finden:
 	* das [Suchformular](suchformular.md "Suchformular")

@@ -36,7 +36,7 @@ bedeutet es nicht, dass die Ausgabe die Nummer 5 hat. Umgekehrt gilt das natürl
 
 [comment]: <> (@formatter:off)  
 !!! info "Hinweis: nichts erfinden!"  
-    Der [Grundsatz](grundsätze.md "Grundsätze"), **nichts zu erfinden**, greift hier; wenn keine Ausgabennummer angegeben
+    Der [Grundsatz](grundsaetze.md "Grundsätze"), **nichts zu erfinden**, greift hier; wenn keine Ausgabennummer angegeben
 		ist, dann sollte auch keine eingetragen werden.  
   
 [comment]: <> (@formatter:on)

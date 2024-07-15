@@ -186,7 +186,7 @@ Artikel und der Band wird gelöscht.
 !!! warning "Wichtig: Ausreichend Angaben machen"  
     Wenn du eine neue Band erstellst, solltest du mehr Informationen als nur den Namen hinterlegen. Es kommt häufig vor, 
     dass zwei Bands denselben Namen haben. Um diese voneinander unterscheiden zu können, solltest du weitere Angaben wie
-    zum Beispiel Genres, Aliase oder Links zu Wikipedia oder Discogs machen. Dies gilt [grundsätzlich](grundsätze.md) 
+    zum Beispiel Genres, Aliase oder Links zu Wikipedia oder Discogs machen. Dies gilt [grundsätzlich](grundsaetze.md) 
     für alle Arten von Datensätzen.<br>  
     Hast du für die Erstellung den "Hinzufügen" Knopf des Dropdown-Menüs benutzt, kannst du auf den Bleistift neben der
     erstellten Band klicken, um zu der Änderungsseite zu gelangen.

@@ -56,7 +56,7 @@ Informationen zu den Tabellen findest du hier:
 ## Weitere Hilfeseiten
 
 * [Benutzerverwaltung](benutzer.md)
-* [Grundsätze](grundsätze.md)
+* [Grundsätze](grundsaetze.md)
 * [Oberfläche](oberfläche.md)
 * [Bedienelemente](bedienelement.md)
 * [Sichern](sichern.md) & [Löschen](löschen.md)
