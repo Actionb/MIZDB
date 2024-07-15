@@ -33,7 +33,7 @@ nav:
       - 'Schlagwörter': schlagwort.md
       - 'Bestände': bestand.md
       - 'Herausgeber': herausgeber.md
-      - 'Instrumente': instrumente.md
+      - 'Instrumente': instrument.md
       - 'Spielorte': spielort.md
       - 'Veranstaltungen': veranstaltung.md
       - 'Verlage': verlag.md
