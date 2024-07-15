@@ -1,7 +1,6 @@
 Artikel
 =======
 
-
 In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
 ## Erfassung
@@ -63,8 +62,8 @@ Angabe der im Artikel besprochenen [Bands](band.md "Band").
 
 ### Schlagwörter
 
-[Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (
-z.B. '60er Jahre') des Artikels.
+[Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich
+(z.B. '60er Jahre') des Artikels.
 
 ### Genres
 
@@ -102,14 +101,15 @@ Hier einige Beispiele, die die Unterschiede zwischen und die Verwendungszwecke v
 [Veranstaltung](veranstaltung.md "Veranstaltung") deutlich machen sollen.
 
 * **ein Artikel über Musikszene in Dortmund**:  
-	'[Orte](artikel.md#orte "Artikel")' sollte einen Ort `Dortmund` enthalten.
+  '[Orte](artikel.md#orte "Artikel")' sollte einen Ort `Dortmund` enthalten.
 
 * **Artikel über den Jazzclub 'domicil' in Dortmund**:  
-	'Spielorte' sollte einen Spielort `domicil` enthalten. Da im Spielort `domicil` der Ort
-	`Dortmund` bereits vermerkt ist, *muss* der Ort
-	`Dortmund` nicht noch einmal extra unter 'Orte' gelistet werden - der Vollständigkeit halber kann das aber getan werden.
+  'Spielorte' sollte einen Spielort `domicil` enthalten. Da im Spielort `domicil` der Ort
+  `Dortmund` bereits vermerkt ist, *muss* der Ort
+  `Dortmund` nicht noch einmal extra unter 'Orte' gelistet werden - der Vollständigkeit halber kann das aber getan
+  werden.
 
 * **Artikel über ein Konzert im domicil in Dortmund**:  
-	Eine dem Konzert entsprechende Veranstaltung sollte unter 'Veranstaltungen' angegeben werden. Wie auch im vorigen
-	Beispiel müssen Angaben, die in der Veranstaltung bereits enthalten sind (also: der Spielort
-	`domicil` und der Ort des Spielortes `Dortmund`) nicht zwingend zusätzlich gelistet werden.
+  Eine dem Konzert entsprechende Veranstaltung sollte unter 'Veranstaltungen' angegeben werden. Wie auch im vorigen
+  Beispiel müssen Angaben, die in der Veranstaltung bereits enthalten sind (also: der Spielort
+  `domicil` und der Ort des Spielortes `Dortmund`) nicht zwingend zusätzlich gelistet werden.
