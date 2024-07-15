@@ -56,6 +56,6 @@ Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträ
 [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt
 werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
 
-### Siehe auch
+## Siehe auch
 
 * [Wikipedia: Broschüre](https://en.wikipedia.org/wiki/de:Broschüre "wikipedia:de:Broschüre")

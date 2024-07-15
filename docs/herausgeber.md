@@ -10,7 +10,7 @@ In dem einzigen Feld **Herausgeber** muss der Name des Herausgebers angegeben we
 
 
 
-### Siehe auch
+## Siehe auch
 
 
 * [Wikipedia: Herausgeber](https://en.wikipedia.org/wiki/de:Herausgeber "wikipedia:de:Herausgeber")

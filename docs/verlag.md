@@ -22,7 +22,7 @@ Der Name des Verlages.
 
 Angabe zur regionalen Einordnung des Verlages.
 
-### Siehe auch
+## Siehe auch
 
 
 * [Wikipedia: Verlag](https://en.wikipedia.org/wiki/de:Verlag "wikipedia:de:Verlag")

@@ -211,7 +211,7 @@ Verweise auf relevante [Verlage](verlag.md "Verlag").
  [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch
+## Siehe auch
 
 
 * [Wikipedia: Sammelband](https://en.wikipedia.org/wiki/de:Sammelband "wikipedia:de:Sammelband")

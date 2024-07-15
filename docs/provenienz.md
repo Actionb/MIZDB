@@ -21,7 +21,7 @@ Die Art und Weise, wie das Archivgut übergeben bzw. übernommen wurde.
 
 Bezeichnung für die Herkunft des Archivguts (z.B. die Person oder die Organisation, die gespendet hat).
 
-### Siehe auch
+## Siehe auch
 
 
 * [Wikipedia: Provenienz](https://en.wikipedia.org/wiki/de:Provenienz "wikipedia:de:Provenienz")
