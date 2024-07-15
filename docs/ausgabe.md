@@ -1,7 +1,6 @@
 Ausgabe
 =======
 
-
 In dieser Kategorie werden Hefte von [Magazinen](magazin.md "Magazin") (Zeitschriften) gelistet.
 
 ## Erfassung
@@ -68,8 +67,8 @@ Datensatzes (welche u.a. für die [Änderungsliste](aenderungsliste.md "Änderun
 
 ### Erscheinungsdatum
 
-Das Datum, an dem die Ausgabe erschien. Häufig wird am Ende der Ausgabe das Erscheinungsdatum der
-*nächsten* Ausgabe genannt.
+Das Datum, an dem die Ausgabe erschienen ist. Häufig wird am Ende des Heftes das Erscheinungsdatum der *nächsten*
+Ausgabe bekannt gegeben.
 
 Siehe auch [Bedienelement#Datumsfeld](bedienelement.md#datumsfeld "Datumsfeld").
 
@@ -80,8 +79,13 @@ Der Jahrgang der Ausgabe.
 ### Beschreibung
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
-Hier kann der Titel einer Sonderausgabe angegeben werden. Wird diese Ausgabe als
-<#Sonderausgabe> markiert, so wird dieser Titel für die textliche Darstellung dieser Ausgabe benutzt.
+
+[comment]: <> (@formatter:off)  
+!!! tip "Sonderausgabe?"  
+    In der Beschreibung kann der Titel einer Sonderausgabe angegeben werden. Wird diese Ausgabe als
+    [Sonderausgabe](#sonderausgabe) markiert, so wird dieser Titel für die textliche Darstellung dieser Ausgabe benutzt.
+  
+[comment]: <> (@formatter:on)
 
 ### Bemerkungen
 
@@ -91,9 +95,9 @@ Notizen für Archiv-Mitarbeiter.
 
 Die geläufigste numerische Angabe zur Kennzeichnung von Ausgaben.
 Anders als die laufende Nummer beginnt die Ausgabennummer jeden Jahrgang erneut von vorne.
-Häufig geben die letzten zwei Ziffern des
-Strichcodes ([EAN-Code](https://en.wikipedia.org/wiki/de:European_Article_Number "wikipedia:de:European Article Number"))
-der Zeitschrift die Ausgabennummer an.
+Häufig geben die letzten zwei Ziffern des Strichcodes
+([EAN-Code](https://en.wikipedia.org/wiki/de:European_Article_Number "wikipedia:de:European Article Number"),
+sowie [oben](#ausgabennummer-und-die-laufende-nummer)) der Zeitschrift die Ausgabennummer an.
 
 Mehrere Nummern müssen einzeln eingetragen werden (siehe
 [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
@@ -102,16 +106,22 @@ Mehrere Nummern müssen einzeln eingetragen werden (siehe
 
 Die Monate, zu denen die Ausgabe erschienen ist.
 
+Mehrere Monate müssen einzeln eingetragen werden (siehe 
+[Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
+
 ### laufende Nummer
 
 Die Nummer, die seit der (aller-)ersten Ausgabe fortlaufend hochzählt.
+
 Mehrere Nummern müssen einzeln eingetragen werden (siehe
 [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
 
 ### Jahr
 
-Vierstellige Jahresangabe. Mehrere Jahre müssen einzeln eingetragen werden
-(siehe [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
+Vierstellige Jahresangabe. 
+
+Mehrere Jahre müssen einzeln eingetragen werden (siehe 
+[Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
 
 ### Audio Materialien
 
@@ -127,7 +137,7 @@ hinterlegt werden.
 
 [Bestandsangaben](bestand.md "Bestand") zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden.
 Ist beispielsweise dasselbe Heft zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
-[Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt
+[Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter '**Anmerkungen**' können weitere Angaben eingefügt
 werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
 
 ## Textliche Darstellung
@@ -175,9 +185,9 @@ Nachfolgend einige Beispiele. Die Angaben, die letztendlich zum Titel beitragen,
 |                           | 2021     |          |        |             |          | **08.06.2021** | 2021-06-08   |
 |                           | 2021     |          |        |             | Juni     | **08.06.2021** | 2021-06-08   |
 | Monat als Ergebnis:       |          |          |        |             |          |                |              |
-|                           | **2021** | 6        |        |             | **Juni** |                | 2021-Jun     |
-|                           | **6**    |          |        | **Juni**    |          |                | Jg. 6-Jun    |
-|                           |          |          |        | **Juni**    |          |                | k.A.-Jun     |
+|                           | **2021** | 10       |        |             | **Juni** |                | 2021-Jun     |
+|                           |          | **10**   |        |             | **Juni** |                | Jg. 10-Jun   |
+|                           |          |          |        |             | **Juni** |                | k.A.-Jun     |
 
 ## Sortierung
 
@@ -190,7 +200,7 @@ am häufigsten auftreten.
 Ist keine chronologische Ordnung möglich, werden die Datensätze zuerst nach Magazin, dann nach ihrem
 [Titel](#textliche-darstellung) und schließlich nach [ID](id.md "ID") sortiert. Dabei werden die Titel
 [lexikografisch](https://en.wikipedia.org/wiki/de:Lexikographische_Ordnung "wikipedia:de:Lexikographische Ordnung")
-sortiert, was zu einer Ordnung führen kann, die augenscheinlich nicht chronologisch ist ("1970-Dez" kommt vor
+sortiert, was zu einer Ordnung führen kann, die augenscheinlich nicht chronologisch ist ("1970-Dez" kommt dabei dann vor
 "1970-Nov").
 
 Siehe auch: [Änderungsliste#Sortierung](aenderungsliste.md#sortierung "Änderungsliste").
