@@ -96,4 +96,4 @@ Angaben zu
 ### Siehe auch
 
 
-* [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
+* [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstaltung.md "Ort, Spielort, Veranstaltung")

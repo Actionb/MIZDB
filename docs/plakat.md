@@ -105,7 +105,7 @@ Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 
 Auflistung der
  [Orte](ort.md "Ort") (also: Städte, Länder), die für das Objekt relevant sind. Herkunftsorte der Musiker, Bands, Autoren, usw. müssen hier nicht angegeben werden (sofern bereits beim Musiker usw. eingetragen). Siehe auch:
- [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
+ [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
 ### Spielorte
@@ -114,7 +114,7 @@ Auflistung der
 
 Auflistung der
  [Spielorte](spielort.md "Spielort") (also: Venues, Locations), auf die sich das Objekt bezieht. Siehe auch:
- [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
+ [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
 ### Veranstaltungen
@@ -123,7 +123,7 @@ Auflistung der
 
 Hat das Objekt Bezug zu bestimmten
  [Veranstaltungen](veranstaltung.md "Veranstaltung") (also: Konzerte, Festivals), so sollen diese hier angegeben werden. Siehe auch:
- [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
+ [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
 ### Personen

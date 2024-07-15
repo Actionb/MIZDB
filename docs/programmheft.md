@@ -75,7 +75,7 @@ Relevante [Genres](genre.md "Genre") bzgl. des Objektes.
 
 Auflistung der
  [Spielorte](spielort.md "Spielort") (also: Venues, Locations), auf die sich das Objekt bezieht. Siehe auch:
- [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
+ [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
 ### Veranstaltungen
@@ -84,7 +84,7 @@ Auflistung der
 
 Hat das Objekt Bezug zu bestimmten
  [Veranstaltungen](veranstaltung.md "Veranstaltung") (also: Konzerte, Festivals), so sollen diese hier angegeben werden. Siehe auch:
- [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
+ [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
 ### Bestände
