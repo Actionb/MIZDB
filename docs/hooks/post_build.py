@@ -63,6 +63,7 @@ def copy_css(config):
     dst_dir.mkdir(exist_ok=True, parents=True)
     shutil.copy(src_dir / "base.css", dst_dir / "base.css")
     shutil.copy(src_dir / "admonitions.css", dst_dir / "admonitions.css")
+    shutil.copy(src_dir / "toc_scroll.css", dst_dir / "toc_scroll.css")
 
 
 def copy_js(config):

@@ -39,6 +39,7 @@ nav:
       - 'Verlage': verlag.md
 extra_css:
   - css/admonitions.css
+  - css/toc_scroll.css
 extra_javascript:
   - js/style.js
 theme:
