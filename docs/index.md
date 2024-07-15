@@ -18,7 +18,7 @@ Informationen zu den Tabellen findest du hier:
 * [Audio Materialien](audio.md)
 * [Ausgaben](ausgabe.md)
 * [Broschüren](broschüre.md)
-* [Bücher](buc.md)
+* [Bücher](buch.md)
 * [Fotos](foto.md)
 * [Plakate](plakat.md)
 * [Programmhefte](programmheft.md)
@@ -55,10 +55,10 @@ Informationen zu den Tabellen findest du hier:
 
 ## Weitere Hilfeseiten
 
-* [Benutzerverwaltung](benutzerverwaltung.md)
+* [Benutzerverwaltung](benutzer.md)
 * [Grundsätze](grundsätze.md)
 * [Oberfläche](oberfläche.md)
-* [Bedienelemente](bedienelemente.md)
+* [Bedienelemente](bedienelement.md)
 * [Sichern](sichern.md) & [Löschen](löschen.md)
 * [Aktionen](aktionen.md)
 * [Änderungsliste](änderungsliste.md)
