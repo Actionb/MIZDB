@@ -34,12 +34,12 @@ Allerdings lässt sich von der Monatszahl alleine keine Ausgabennummer ableiten:
 bedeutet es nicht, dass die Ausgabe die Nummer 5 hat. Umgekehrt gilt das natürlich genau so: Eine Ausgabe mit der Nummer
 5 muss nicht im Mai erschienen sein.
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! info "Hinweis: nichts erfinden!"  
     Der [Grundsatz](grundsätze.md "Grundsätze"), **nichts zu erfinden**, greift hier; wenn keine Ausgabennummer angegeben
 		ist, dann sollte auch keine eingetragen werden.  
   
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Erscheinungsdatum
 
@@ -256,10 +256,10 @@ Möchtest du einige der ausgewählten Ausgaben doch nicht verschieben, so kannst
 Häkchen aus "Änderungen bestätigen" entfernen. Die Art der Broschüre (also ob Broschüre, Warenkatalog oder Programmheft)
 wählst du am unteren Ende der Bestätigungsseite aus.
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! caution "Achtung: die Ausgaben werden beim Verschieben gelöscht!" 
   
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Status ändern
 

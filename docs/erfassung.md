@@ -45,12 +45,12 @@ So suchst du nach den Artikeln eines Heftes:
 
 Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
 
-[comment]: # (@formatter:off)
+[comment]: <> (@formatter:off)
 !!! tip "Tip: Praktisch"
     Durch die Suche werden die Angaben zu **Magazin** und **Ausgabe** im Suchformular an die Formulare für neue Artikel
     weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch ersparst du dir etwas Arbeit.
 
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Neuen Artikel erstellen
 
@@ -95,14 +95,14 @@ Aufschrift "Sichern und weiterbearbeiten" klickst.
 Da der Datensatz der Ausgabe den [Lagerort](lagerort.md "Lagerort") des Heftes angibt, hat man nun alle Angaben zur
 Hand, die man braucht, um den Artikel im "echten" Heft wiederzufinden.
 
-[comment]: # (@formatter:off)
+[comment]: <> (@formatter:off)
 !!! caution "Achtung: Abspeichern ist notwendig!"
     Änderungen werden nur übernommen, wenn du auf einen der "[Sichern](sichern.md "Sichern")" Knöpfe klickst.
     Verlässt du das Formular (z.B. indem du das Fenster schließt oder zu einer anderen Seite navigierst), ohne es zu
     sichern, geht deine Arbeit verloren!
     Es sollte eine Warnung auftauchen, wenn du versuchst, ein Formular mit ungespeicherten Änderungen zu verlassen.
 
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Artikel Inhalt aufnehmen
 
@@ -118,21 +118,21 @@ leichter fällt, kannst du anstelle von Fließtext auch Stichpunkte benutzen. Di
 in die Datenbank übertragen werden. Die Zusammenfassung wird in die Volltextsuche miteinbezogen; d.h. ein Artikel kann
 anhand der Angaben in der Zusammenfassung wiedergefunden werden.
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! info "Info: Nur Relevantes eintragen"
     Machst du keine Angaben, kann der Artikel auch nie gefunden werden. Machst du hingegen viele ungenaue oder 
     überflüssige Angaben, so kann der Artikel unerwünscht als Ergebnis auftauchen. Trage also nur das ein, was für den
     Artikel relevant ist, oder was für das Thema des Artikels von Bedeutung ist.<br>  
     **Beispiel**: Wird in einem Artikel eine Band nur beiläufig erwähnt, so solltest du diese Band nicht erwähnen.
 
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! tip "Tip: Textfeld zu klein?"  
     Manche Textfelder, wie z.B. "Zusammenfassung", kannst du vergrößern oder verkleinern, in dem du im Textfeld unten 
     rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst. 
 
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Verknüpfungen hinzufügen
 
@@ -182,7 +182,7 @@ Artikel und der Band wird gelöscht.
 </figure>
 </div>
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! warning "Wichtig: Ausreichend Angaben machen"  
     Wenn du eine neue Band erstellst, solltest du mehr Informationen als nur den Namen hinterlegen. Es kommt häufig vor, 
     dass zwei Bands denselben Namen haben. Um diese voneinander unterscheiden zu können, solltest du weitere Angaben wie
@@ -191,15 +191,15 @@ Artikel und der Band wird gelöscht.
     Hast du für die Erstellung den "Hinzufügen" Knopf des Dropdown-Menüs benutzt, kannst du auf den Bleistift neben der
     erstellten Band klicken, um zu der Änderungsseite zu gelangen.
     
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
-[comment]: # (@formatter:off)
+[comment]: <> (@formatter:off)
 !!! warning "Wichtig: Duplikate vermeiden"
     Grundsätzlich solltest du es vermeiden, Duplikate zu erstellen; ist zum Beispiel eine Band bereits in der Datenbank 
     eingetragen, so solltest du nicht eine weitere Band mit demselben Namen hinzufügen (es sei denn es ist eine komplett
     andere Band, die den denselben Namen hat).
 
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Bearbeitung abschließen
 
@@ -219,7 +219,7 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
 </figure>
 </div>
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! tip "Tip: Welchen Knopf soll ich benutzen?"  
     Der "**Sichern und neu hinzufügen**" Knopf bietet sich an, wenn du mit der Erfassung eines Objekts fertig geworden bist
     und direkt mit der Erfassung des nächsten Objekts anfangen möchtest.  
@@ -228,7 +228,7 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
     "**Sichern und weiterbearbeiten**" kannst du während der Erfassung immer wieder mal benutzen, um deine Arbeit 
     abzuspeichern.
   
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ## Welche Artikel müssen erfasst werden und welche nicht?
 
@@ -242,13 +242,13 @@ willst: fällt die Zusammenfassung sehr dünn aus, ist das ein Indiz dafür, das
 Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findest du eine News, die du für wichtig oder
 erwähnenswert hältst, kannst du diese gerne erfassen.
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! info "Info: Zeit"  
     Du stehst hier nicht unter Zeitdruck. Allerdings ist es sinnvoller, mehr Zeit mit der Erfassung von "echten Artikeln"
     zu verbringen als mit der Erfassung von kleinen News-Schnipseln oder Rezensionen, die mehr Werbung als interessanter
     Text sind.
   
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ### Ein Kompromiss, um Rezensionen trotzdem aufzunehmen
 

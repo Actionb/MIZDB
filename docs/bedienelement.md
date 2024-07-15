@@ -30,12 +30,12 @@ Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manc
 für Jahrgang). Mit den kleinen Knöpfchen an der rechten Seite des Elementes lässt sich durch den zulässigen Wertebereich
 scrollen.
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! info "Hinweis: Vorsicht beim Scrollen"  
     Wenn der Fokus im Zahlenfeld liegt (also wenn der [Cursor](https://en.wikipedia.org/wiki/de:Cursor "wikipedia:de:Cursor") im Element zu sehen ist), kann 
 		Wert verändert werden, indem man das Scrollrad der Maus benutzt. 
   
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ## Auswahlfelder
 
@@ -115,11 +115,11 @@ Aus einer ISBN ohne Formatierung:
 ![ISBN Feld mit formatiertem Text](img/bedienelemente/isbn_formatted.png)
 
 
-[comment]: # (@formatter:off)  
+[comment]: <> (@formatter:off)  
 !!! info "Info: Umwandlungen zwischen verschiedenen Formaten"  
     Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automatisch vorgenommen.
   
-[comment]: # (@formatter:on)
+[comment]: <> (@formatter:on)
 
 ## Inlines
 
