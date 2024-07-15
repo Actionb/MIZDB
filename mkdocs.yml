@@ -31,6 +31,7 @@ nav:
       - 'Orte': ort.md
       - 'Personen': person.md
       - 'Schlagwörter': schlagwort.md
+      - 'Bestände': bestand.md
       - 'Herausgeber': herausgeber.md
       - 'Instrumente': instrumente.md
       - 'Spielorte': spielort.md
