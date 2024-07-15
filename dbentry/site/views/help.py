@@ -42,4 +42,4 @@ class HelpView(BaseViewMixin, TemplateView):
 
     @property
     def title(self):
-        return f"{unquote(self.kwargs['page_name']).title()} - Hilfe"
+        return f"{unquote(self.kwargs['page_name']).title().replace('_', ' ')} - Hilfe"
