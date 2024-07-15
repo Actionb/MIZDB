@@ -1,39 +1,79 @@
-Benutzer
+Benutzerverwaltung
 ========
 
+## Anmelden und Abmelden
 
-Zunächst muss ein Benutzername eingegeben werden. Der Benutzername wird hauptsächlich in der Änderungsgeschichte eines Datensatzes verwendet; d.h. Änderungen an Datensätzen werden mit dem Benutzernamen vermerkt.
+Zum Anmelden klicke in der Kopfzeile oben rechts auf **Anmelden** und wähle dann im Dropdown-Menü nochmal
+**Anmelden** aus.
 
+Zum Abmelden klicke wieder auf denselben Knopf und wähle **Abmelden** aus.
 
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Anmeldung](img/benutzer/login.png){ width="300" .mb-1 }  
+  <figcaption>Anmeldung</figcaption>  
+</figure>
+</div>
 
+[comment]: <> (@formatter:off)  
+!!! tip "Passwort vergessen?"  
+    Wende dich an einem Admin. Dieser kann dein [Passwort zurücksetzen](#passwort-zurucksetzen).
+  
+[comment]: <> (@formatter:on)
 
- Es ist also sinnvoll, wenn der Benutzername direkt einem Mitarbeiter zugeordnet werden kann. Darüber hinaus muss jeder Benutzername einzigartig sein. Daher bietet sich eine Kombination von Vor- und Nachname gut als Benutzername an. Da Leerzeichen im Benutzernamen nicht zulässig sind, könnte ein Benutzername z.B. so aussehen:
- `max.mustermann` oder `max_mustermann`. 
+## Passwort ändern
 
+Um dein Passwort zu ändern, klicke auf den Button mit deinem Benutzernamen oben rechts und wähle dann
+**Passwort ändern** aus.
 
- Das Passwort zum Benutzerkonto kann von dem Benutzer nachher frei geändert werden. Daher ist ein vorläufiges, eher generisches Passwort ausreichend.
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Passwort ändern](img/benutzer/change_password.png){ width="300" .mb-1 }  
+  <figcaption>Passwort ändern</figcaption>  
+</figure>
+</div>
 
+## Passwort zurücksetzen
 
+Um ein Passwort zurückzusetzen, muss ein Admin ein neues Passwort vergeben.
 
-Durch einen Klick auf
- **Sichern** wird man auf das nächste Formular weitergeleitet. Hier können Vor- und Nachname noch einmal eingetragen werden. Dies kann nützlich sein, wenn der Benutzername nicht vom Namen abgeleitet ist.
+1. Auf der Admin Seite auf **Benutzer** klicken
+2. Den Benutzer aus der Liste auswählen
+3. Unter **Passwort** auf den Link klicken
+   ![Link zum Passwort zurücksetzen](img/benutzer/reset_password.png)
+4. Neues Passwort vergeben
 
+[comment]: <> (@formatter:off)  
+!!! info "Passwörter"  
+    Die Passwörter werden nicht in Klartext abgespeichert, deswegen können selbst Administratoren das Passwort eines
+    Benutzers nicht einsehen.
 
+[comment]: <> (@formatter:on)
 
-Sofern der Benutzer aktiv an der Datenbank mitarbeiten sollen, so muss ein Häkchen bei Mitarbeiter-Status gesetzt werden. Ohne diesen Status schlägt die Anmeldung an die Adminoberfläche (mit welcher letztlich Bearbeitung der Datensätze durchgeführt wird) mit dieser Fehlermeldung fehl:
+## Benutzer erstellen
 
+1. Auf der Admin Seite auf **Benutzer hinzufügen** klicken
+   ![Benutzer hinzufügen](img/benutzer/benutzer_add.png)
+2. Benutzername eingeben (empfohlenes Schema: `vorname.nachname` also z.B. "max.mustermann")
+   ![Benutzername](img/benutzer/benutzername.png)
+3. Vorläufiges Passwort vergeben (kann von dem Benutzer nachher frei geändert werden)
+4. Auf **Sichern** klicken
 
+In der Detailansicht des neuen Benutzers müssen noch weitere Angaben gemacht werden:
 
+1. Den Namen des Benutzers eintragen
+2. Das Häkchen bei **Aktiv** muss gesetzt sein
+3. Falls der Benutzer Zugriff auf die Admin-Oberfläche haben soll, muss das Häkchen bei **Mitarbeiter** gesetzt werden
+4. Unter **Gruppen** muss die Mitarbeiter Gruppe ausgewählt werden und
+5. In die rechte Spalte verschoben werden (entweder mit dem Knopf oder mit Doppelklick auf "Mitarbeiter")
+6. Unten auf **Sichern** klicken
 
-> Bitte Benutzername und Passwort für einen Staff-Account eingeben. Beide Felder berücksichtigen die Groß-/Kleinschreibung.
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Benutzer Detailansicht](img/benutzer/benutzer_daten.png){ width="300" .mb-1 }  
+  <figcaption>Benutzer Detailansicht</figcaption>  
+</figure>
+</div>
 
-
-Danach müssen dem Benutzer Berechtigungen für die einzelnen Bereiche der Datenbank zugewiesen werden. Zu diesem Zweck gibt es Gruppen, die eine Vielzahl von Berechtigungen enthalten; wird dem Benutzer eine Gruppe zugewiesen, so bekommt der Benutzer alle Berechtigungen dieser Gruppen.
-
-
-
-Eine "Mitarbeiter" Gruppe sollte vorhanden sein: mit Doppelklick kann diese in die Auswahl verschoben werden.
- Für eine Erklärung des Bedienelementes siehe
- [Bedienelement#gefilterte\_Mehrfachauswahl](bedienelement.md#gefilterte_Mehrfachauswahl "Bedienelement").
-
-
+Der Benutzer ist nun eingerichtet. Der Benutzer kann sich jetzt einloggen und ein eigenes Passwort vergeben
+(siehe [Passwort ändern](#passwort-andern)).
