@@ -31,9 +31,11 @@ nav:
       - 'Orte': ort.md
       - 'Personen': person.md
       - 'Schlagwörter': schlagwort.md
+  - Sonstige Tabellen:
       - 'Bestände': bestand.md
       - 'Herausgeber': herausgeber.md
       - 'Instrumente': instrument.md
+      - 'Lagerorte': lagerort.md
       - 'Spielorte': spielort.md
       - 'Veranstaltungen': veranstaltung.md
       - 'Verlage': verlag.md
