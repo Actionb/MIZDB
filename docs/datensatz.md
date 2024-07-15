@@ -14,7 +14,7 @@ Wenn in dieser Hilfe anstelle des gebräuchlichen Namens (also hier: Buch) der B
 
 
 
-### Siehe auch {.fs-5 .mt-5}
+### Siehe auch
 
 
 * [Wikipedia: Datensatz](https://en.wikipedia.org/wiki/de:Datensatz "wikipedia:de:Datensatz")

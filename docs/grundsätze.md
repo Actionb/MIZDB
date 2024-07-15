@@ -2,7 +2,7 @@
 
 Für die Arbeit an der Datenbank gelten folgende grobe Richtlinien:
 
-## Korrektheit der Angaben prüfen {.fs-3 .mt-5 .border-bottom}
+## Korrektheit der Angaben prüfen
 
 [comment]: # (@formatter:off)  
 !!! tip "Es ist wichtig, dass man sich auf die Korrektheit der Informationen in der Datenbank verlassen kann"
@@ -15,7 +15,7 @@ insgesamt getrübt - schließlich könnten andere Angaben auch falsch sein. Bevo
 einfügst, oder Angaben in der Datenbank änderst, sei dir absolut sicher, dass die Angaben, die du machst, korrekt sind.
 Im Zweifelsfall lässt du die Angaben oder Informationen eher weg. Dies geht auch in den nächsten Grundsatz über:
 
-## Nahe am Material arbeiten {.fs-3 .mt-5 .border-bottom}
+## Nahe am Material arbeiten
 
 [comment]: # (@formatter:off)  
 !!! tip "Dinge nur genauso eintragen, wie sie da stehen"  
@@ -31,7 +31,7 @@ Auch solltest du nicht deine persönliche Interpretation zu dem Material einfüg
 erfasst, ist es nicht deine Aufgabe ihn zu interpretieren, sondern lediglich die Informationen aus dem Artikel in die
 Datenbank einzutragen.
 
-## Datensätze müssen aufschlussreich sein {.fs-3 .mt-5 .border-bottom}
+## Datensätze müssen aufschlussreich sein
 
 [comment]: # (@formatter:off)  
 !!! tip "Ein Datensatz ohne Informationen hilft niemanden"
@@ -51,7 +51,7 @@ Beispiel: wenn du einen Personen-Datensatz mit Vorname "A." und Nachname "B." er
 unmöglich, anhand des Datensatzes zu erkennen, welche Person damit gemeint ist. Der Datensatz ist somit ziemlich
 nutzlos.
 
-## So viel Informationen wie nötig (und so wenig wie möglich) {.fs-3 .mt-5 .border-bottom}
+## So viel Informationen wie nötig (und so wenig wie möglich)
 
 [comment]: # (@formatter:off)  
 !!! tip "Die Datenbank soll kein Lexikon sein"
@@ -74,7 +74,7 @@ Beispiel: werden in einem Artikel die Mitglieder einer Band besprochen, so ist e
 auch anzugeben. Damit könnte der Artikel über den Datensatz eines Bandmitglieds gefunden werden. Dagegen wäre eine
 Auflistung aller Mitglieder, die je an der Band beteiligt gewesen waren, unnötig viel Arbeit.
 
-## Nicht an Datenbank-Limitierungen vorbeiarbeiten {.fs-3 .mt-5 .border-bottom}
+## Nicht an Datenbank-Limitierungen vorbeiarbeiten
 
 [comment]: # (@formatter:off)  
 !!! tip "Die Datenbank meckert nur aus gutem Grund"

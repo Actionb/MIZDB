@@ -7,22 +7,22 @@ Ein Unternehmen, das Werke der Literatur, Kunst, Musik oder Unterhaltung verviel
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Verlag {.fs-5 .mt-5}
+### Verlag
 
 
 
 Der Name des Verlages.
 
-### Sitz {.fs-5 .mt-5}
+### Sitz
 
 
 
 Angabe zur regionalen Einordnung des Verlages.
 
-### Siehe auch {.fs-5 .mt-5}
+### Siehe auch
 
 
 * [Wikipedia: Verlag](https://en.wikipedia.org/wiki/de:Verlag "wikipedia:de:Verlag")

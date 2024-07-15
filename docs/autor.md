@@ -4,31 +4,31 @@ Autor
 Hier werden Autorinnen und Autoren von Büchern, Artikel, etc. gelistet. Es muss zumindest ein Kürzel oder die Person des
 Autors angegeben werden.
 
-## Felder {.fs-3 .mt-5 .border-bottom .mb-3}
+## Felder
 
-### Kürzel {.fs-5}
+### Kürzel
 
 Häufig wird der Autor eines [Artikels](artikel.md "Artikel") nur in verkürzter Form angegeben (z.B. Initialen).
 Auch ein kurzer Spitzname kann hier angegeben werden. Maximal 8 Zeichen.
 
-### Person {.fs-5 .mt-5}
+### Person
 
 Verweis auf den [Datensatz](datensatz.md "Datensatz"), der die
 [Person](person.md "Person") dieses Autors repräsentiert.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 Notizen für Archiv-Mitarbeiter.
 
-### Magazine {.fs-5 .mt-5}
+### Magazine
 
 Hier kann man angeben, bei welchen [Magazinen](magazin.md "Magazin") der Autor mitwirkt oder mitgewirkt hat.
 
-## Schnellerstellung mit Dropdown {.fs-3 .mt-5 .border-bottom .mb-3}
+## Schnellerstellung mit Dropdown
 
 Von anderen Formularen (z.B. dem für Artikel) aus, kann mithilfe des 
 [Auswahlfelds](bedienelement.md#kombinationsfeldcombobox) für Autoren auch direkt ein Datensatz für einen neuen Autor 

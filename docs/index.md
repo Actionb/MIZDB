@@ -6,7 +6,7 @@ Hier kannst du mehr über den Umgang mit der Datenbank erfahren.
 
 Neu hier? Dann lese die **[Einführung](einführung.md)**!
 
-## Tabellen {.fs-3 .mt-5 .border-bottom}
+## Tabellen
 
 Informationen zu den Tabellen findest du hier:
 <div markdown class="d-flex justify-content-evenly gap-3 mb-3">
@@ -53,7 +53,7 @@ Informationen zu den Tabellen findest du hier:
 </div>
 </div>
 
-## Weitere Hilfeseiten {.fs-3 .mt-5 .border-bottom}
+## Weitere Hilfeseiten
 
 * [Benutzerverwaltung](benutzerverwaltung.md)
 * [Grundsätze](grundsätze.md)

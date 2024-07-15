@@ -23,7 +23,7 @@ welchen du Datensätze für Aktionen auswählen kannst, mehr dazu hier: [Aktione
 beschriftete Spalten, in denen Daten der gefundenen Ergebnisse angezeigt werden, um einen Überblick über den Inhalt der
 Datensätze zu ermöglichen.
 
-### Sortierung {.fs-5 .mt-5}
+### Sortierung
 
 Mit den kleinen dreieckigen Symbolen (Chevrons) im Spaltenkopf einer Spalte kannst du die Sortierung der Ergebnisse
 einstellen.

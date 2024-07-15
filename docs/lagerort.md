@@ -6,34 +6,34 @@ Der Ort, an dem sich das physikalische Objekt befindet.
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Ort {.fs-5 .mt-5}
+### Ort
 
 
 
 (Umgangssprachlicher) Titel für den Ort.
 
-### Raum {.fs-5 .mt-5}
+### Raum
 
 
 
 Angabe zum Raum (z.B. Raumnummer).
 
-### Regal {.fs-5 .mt-5}
+### Regal
 
 
 
 Regalnummer.
 
-### Fach {.fs-5 .mt-5}
+### Fach
 
 
 
 Nummer des Fachs im Regal.
 
-### Ordner {.fs-5 .mt-5}
+### Ordner
 
 
 

@@ -5,13 +5,13 @@ Magazin
 In dieser Kategorie werden regelmäßig erscheinende Zeitschriften und Zeitungen, unter deren Namen in der Datenbank
 [Ausgaben](ausgabe.md "Ausgabe") gruppiert werden, gelistet.
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
-### Magazin {.fs-5 .mt-5}
+### Magazin
 
 Der Name des Magazins.
 
-### Ausgaben Merkmal {.fs-5 .mt-5}
+### Ausgaben Merkmal
 
 Benutzer mit vollen Adminrechten können
 den [Algorithmus zur Erstellung von Ausgabentiteln](ausgabe.md#textliche-darstellung "Ausgabe") übergehen und eine
@@ -21,12 +21,12 @@ Wenn sich beispielsweise die Titel der Ausgaben aus den Monatsangaben und nicht 
 Ausgabennummern zusammensetzen sollen, dann muss aus dem Dropdown der Eintrag "Monat" ausgewählt werden. Die Titel der
 Ausgaben dieses Magazins verwenden nun Monatsangaben (sofern vorhanden**!**) anstatt Ausgabennummern.
 
-### Fanzine {.fs-5 .mt-5}
+### Fanzine
 
 Ist dieses Magazin ein
 [Fanzine](https://en.wikipedia.org/wiki/de:Fanzine "wikipedia:de:Fanzine"), so bitte hier ein Häkchen setzen.
 
-### ISSN {.fs-5 .mt-5}
+### ISSN
 
 Die standardisierte Seriennummer
 [ISSN](https://en.wikipedia.org/wiki/de:ISSN "wikipedia:de:ISSN") der Zeitschrift. Die ISSN ist in der
@@ -34,11 +34,11 @@ Die standardisierte Seriennummer
 was die Datenbank erkennen kann. Demnach könnt ihr auch einfach den gesamten Strichcode eingeben. Siehe auch
 [Bedienelement ISSN Feld](bedienelement.md#issnisbnean "Bedienelement").
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 Notizen für Archiv-Mitarbeiter.
 
@@ -46,25 +46,25 @@ Notizen für Archiv-Mitarbeiter.
 
 ---
 
-### Web-Adressen {.fs-5 .mt-5}
+### Web-Adressen
 
 Hier können bzgl. des Objektes nennenswerte Web-Adressen hinterlegt werden.
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 Sind bezüglich des Objektes bestimmte
 [Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese
 hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
 
-### Verlage {.fs-5 .mt-5}
+### Verlage
 
 Verweise auf relevante [Verlage](verlag.md "Verlag").
 
-### Herausgeber {.fs-5 .mt-5}
+### Herausgeber
 
 Verweise auf relevante [Herausgeber](herausgeber.md "Herausgeber").
 
-### Assoziierte Orte {.fs-5 .mt-5}
+### Assoziierte Orte
 
 [Orte](ort.md "Ort"), die mit dem Magazin in Verbindung stehen. Zum Beispiel ist die Zeitschrift "Coolibri Bochum"
 spezifisch für Bochum.

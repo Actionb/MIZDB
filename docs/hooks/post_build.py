@@ -55,14 +55,23 @@ def copy_glightbox_assets(config):
         print("Failed to copy glightbox:", e)
 
 
-def copy_base_css(config):
-    css_dir = Path(config["site_dir"]) / "css"
+def copy_css(config):
+    src_dir = Path(config["site_dir"]) / "css"
     dst_dir = static_root / "help" / "css"
-    if not css_dir.exists():
+    if not src_dir.exists():
         return
     dst_dir.mkdir(exist_ok=True, parents=True)
-    shutil.copy(css_dir / "base.css", dst_dir / "base.css")
-    shutil.copy(css_dir / "admonitions.css", dst_dir / "admonitions.css")
+    shutil.copy(src_dir / "base.css", dst_dir / "base.css")
+    shutil.copy(src_dir / "admonitions.css", dst_dir / "admonitions.css")
+
+
+def copy_js(config):
+    src_dir = Path(config["site_dir"]) / "js"
+    dst_dir = static_root / "help" / "js"
+    if not src_dir.exists():
+        return
+    dst_dir.mkdir(exist_ok=True, parents=True)
+    shutil.copy(src_dir / "style.js", dst_dir / "style.js")
 
 
 def parse_pages(config):
@@ -92,4 +101,5 @@ def parse_pages(config):
 def on_post_build(config):
     parse_pages(config)
     copy_glightbox_assets(config)
-    copy_base_css(config)
+    copy_css(config)
+    copy_js(config)

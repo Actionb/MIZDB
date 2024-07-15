@@ -6,23 +6,23 @@ Diese Kategorie enthält (Werbe-)Plakate zu Events, Konzerten und Veranstaltunge
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Titel {.fs-5 .mt-5}
+### Titel
 
 
 
 Ein kurzer Text, der das Plakat treffend beschreibt. Zum Beispiel der Name der Veranstaltung mit Jahresangabe.
 
-### Plakat ID {.fs-5 .mt-5}
+### Plakat ID
 
 
 
 Ziffernfolge mit vorangestelltem "P" zur eindeutigen Identifizierung des Plakats. Die Nummer wird von der Datenbank beim Abspeichern des Datensatzes erzeugt (der Knopf "[Sichern und weiter bearbeiten](sichern.md "Sichern")" ist hier nützlich) und sollte dann auf der Rückseite des Plakats mit Bleistift vermerkt werden.
  
 
-### Größe {.fs-5 .mt-5}
+### Größe
 
 
 
@@ -30,7 +30,7 @@ Abmessungen des Plakats. Angaben in Zentimetern oder - falls zutreffend -
  [DIN-Norm](https://en.wikipedia.org/wiki/de:Papierformat "wikipedia:de:Papierformat").
  
 
-### Zeitangabe {.fs-5 .mt-5}
+### Zeitangabe
 
 
 
@@ -38,13 +38,13 @@ Angaben zur zeitlichen Einteilung. Siehe
  [Bedienelement für partielle Datumsangaben](bedienelement.md#feld-fur-partielles-datum "Bedienelement").
  
 
-### Bildreihe {.fs-5 .mt-5}
+### Bildreihe
 
 
 
 Wenn das vorliegende Plakat einer Bildreihe (z.B. die Plakate eines jährlichen Festivals) angehört, so kann diese hier vermerkt werden.
 
-### Bands/Musiker kopieren {.fs-5 .mt-5}
+### Bands/Musiker kopieren
 
 
 
@@ -52,13 +52,13 @@ Plakate beziehen sich häufig auf Veranstaltungen und für diese Veranstaltungen
  [Datensatz](datensatz.md "Datensatz") angelegt werden. Zu diesem Veranstaltung-Datensatz gehören auch die Musiker und Bands, die an der Veranstaltung teilnehmen. Um zu vermeiden, dass ihr euch doppelte Arbeit machen müsst, indem ihr die Musiker bzw. Bands sowohl bei der Veranstaltung als auch dann wieder bei dem Plakat selber angebt, kann die Datenbank die Musiker und Bands der weiter unten angegebenen Veranstaltungen in den Datensatz des Plakats einfügen. Setzt ihr hier ein Häkchen, so ergänzt die Datenbank beim Abspeichern die direkt unter dem Plakat gelisteten Musiker und Bands um denen, die in den Veranstaltungen gelistet sind.
  
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 
 
@@ -69,7 +69,7 @@ Notizen für Archiv-Mitarbeiter.
 ---
 
 
-### Schlagwörter {.fs-5 .mt-5}
+### Schlagwörter
 
 
 
@@ -77,7 +77,7 @@ Notizen für Archiv-Mitarbeiter.
 [Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (z.B. '60er Jahre') des Objekts.
  
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 
 
@@ -85,7 +85,7 @@ Sind bezüglich des Objektes bestimmte
  [Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
  
 
-### Musiker {.fs-5 .mt-5}
+### Musiker
 
 
 
@@ -93,13 +93,13 @@ Bezieht sich das Objekt auf
  [Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.
  
 
-### Bands {.fs-5 .mt-5}
+### Bands
 
 
 
 Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 
-### Orte {.fs-5 .mt-5}
+### Orte
 
 
 
@@ -108,7 +108,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Spielorte {.fs-5 .mt-5}
+### Spielorte
 
 
 
@@ -117,7 +117,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Veranstaltungen {.fs-5 .mt-5}
+### Veranstaltungen
 
 
 
@@ -126,7 +126,7 @@ Hat das Objekt Bezug zu bestimmten
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Personen {.fs-5 .mt-5}
+### Personen
 
 
 
@@ -134,7 +134,7 @@ Angaben zu
  [Personen](person.md "Person"), auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
  
 
-### Bestände {.fs-5 .mt-5}
+### Bestände
 
 
 

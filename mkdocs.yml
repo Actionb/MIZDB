@@ -1,6 +1,8 @@
 site_name: MIZDB - Hilfe
 extra_css:
   - css/admonitions.css
+extra_javascript:
+  - js/style.js
 theme:
   name: mkdocs
   custom_dir: 'docs_theme/'

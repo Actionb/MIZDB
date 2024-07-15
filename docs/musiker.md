@@ -6,10 +6,10 @@ Sowohl produzierende (Komponisten, Songwriter, usw.), als auch reproduzierende (
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Künstlername {.fs-5 .mt-5}
+### Künstlername
 
 
 
@@ -17,19 +17,19 @@ Bühnenname des Musikers. Wenn ihr auf den "Google Me!" Knopf neben dem Textfeld
  [Tab](https://en.wikipedia.org/wiki/de:Tabbed_Browsing "wikipedia:de:Tabbed Browsing") geöffnet und eine Google-Suche mit dem Text des Feldes aufgerufen.
  
 
-### Person {.fs-5 .mt-5}
+### Person
 
 
 
 Verweis auf die [Person](person.md "Person"), die dem Musiker entspricht.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 
 
@@ -40,25 +40,25 @@ Notizen für Archiv-Mitarbeiter.
 ---
 
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 
 
 Die [Genres](genre.md "Genre") des Musikers.
 
-### Alias {.fs-5 .mt-5}
+### Alias
 
 
 
 Weitere Namen, Pseudonymen und Spitznamen unter denen der Musiker bekannt ist.
 
-### Ist Mitglied in {.fs-5 .mt-5}
+### Ist Mitglied in
 
 
 
 Die Bands, bei denen der Musiker Mitglied ist oder war.
 
-### Assoziierte Orte {.fs-5 .mt-5}
+### Assoziierte Orte
 
 
 

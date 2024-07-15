@@ -6,46 +6,46 @@ Die Kategorie für Druckzeugnisse, welche eine Auflistung von (Verkaufs-)Waren d
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Titel {.fs-5 .mt-5}
+### Titel
 
 
 
 Der Titel des Katalogs.
 
-### Art des Katalogs {.fs-5 .mt-5}
+### Art des Katalogs
 
 
 
 Angabe darüber, welche Art von Produkten in diesem Katalog gelistet werden.
 
-### Zusammenfassung {.fs-5 .mt-5}
+### Zusammenfassung
 
 
 
 Ein kurzer Text, der den Inhalt des Kataloges beschreibt.
 
-### Magazin {.fs-5 .mt-5}
+### Magazin
 
 
 
 (falls zutreffend) Das Magazin der Ausgabe, welcher dieser Katalog bei lag.
 
-### Ausgabe {.fs-5 .mt-5}
+### Ausgabe
 
 
 
 (falls zutreffend) Die Ausgabe, welcher dieser Katalog bei lag.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 
 
@@ -56,25 +56,25 @@ Notizen für Archiv-Mitarbeiter.
 ---
 
 
-### Web-Adressen {.fs-5 .mt-5}
+### Web-Adressen
 
 
 
 Hier können bzgl. des Objektes nennenswerte Web-Adressen hinterlegt werden.
 
-### Jahre {.fs-5 .mt-5}
+### Jahre
 
 
 
 Jahresangaben zur zeitlichen Einordnung des Objektes.
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 
 
 Relevante [Genres](genre.md "Genre") bzgl. des Objektes.
 
-### Bestände {.fs-5 .mt-5}
+### Bestände
 
 
 
@@ -83,7 +83,7 @@ Relevante [Genres](genre.md "Genre") bzgl. des Objektes.
  [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch {.fs-5 .mt-5}
+### Siehe auch
 
 
 * [Wikipedia: Produktkatalog](https://en.wikipedia.org/wiki/de:Produktkatalog "wikipedia:de:Produktkatalog")

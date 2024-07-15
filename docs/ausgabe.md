@@ -4,13 +4,13 @@ Ausgabe
 
 In dieser Kategorie werden Hefte von [Magazinen](magazin.md "Magazin") (Zeitschriften) gelistet.
 
-## Erfassung {.fs-3 .mt-5 .border-bottom .mb-3}
+## Erfassung
 
 Eine Ausgabe kann durch verschiedene Angaben identifiziert werden, die u.a. auf der Titelseite, dem Rücken des Heftes
 oder im Impressum gefunden werden können. Die meisten Angaben sollten selbsterklärend sein, aber es gibt einige
 Feinheiten, auf die geachtet werden muss:
 
-### Ausgabennummer und die laufende Nummer {.fs-5 .mt-5}
+### Ausgabennummer und die laufende Nummer
 
 Mit Ausgabennummer (auch oft auch einfach nur "Nummer") ist die Nummer gemeint, welche bei jedem Jahrgang erneut von
 Eins gezählt wird. Im Vergleich dazu wird die laufende Nummer seit der ersten Ausgabe des Magazins durch jeden Jahrgang
@@ -26,7 +26,7 @@ Die Ausgabennummer kann auch im Strichcode enthalten sein:
 </figure>  
 </div>
 
-### Ausgabennummer entspricht nicht unbedingt der Monatszahl {.fs-5 .mt-5}
+### Ausgabennummer entspricht nicht unbedingt der Monatszahl
 
 Es kommt häufig vor, dass die *angegebene* Ausgabennummer mit der Monatszahl übereinstimmt (Bsp.: Ausgabe mit Nummer 9
 erschien im September).
@@ -41,23 +41,23 @@ bedeutet es nicht, dass die Ausgabe die Nummer 5 hat. Umgekehrt gilt das natürl
   
 [comment]: # (@formatter:on)
 
-### Erscheinungsdatum {.fs-5 .mt-5}
+### Erscheinungsdatum
 
 Das Erscheinungsdatum ist häufig im Impressum oder auf der Seite der Inhaltsangabe zu finden. Darüber hinaus geben viele
 Zeitschriften das Erscheinungsdatum der *nächsten* Ausgabe an - diese Vorschau auf das nächste Heft ist meistens auf
 den letzten Seiten der Ausgabe zu finden.
 
-## Felder {.fs-3 .mt-5 .border-bottom .mb-3}
+## Felder
 
-### Magazin {.fs-5}
+### Magazin
 
 Der Name des [Magazins](magazin.md "Magazin") der Ausgabe.
 
-### Bearbeitungsstatus {.fs-5 .mt-5}
+### Bearbeitungsstatus
 
 Der Stand der Bearbeitung/Erfassung der [Artikel](artikel.md "Artikel") der Ausgabe.
 
-### Sonderausgabe {.fs-5 .mt-5}
+### Sonderausgabe
 
 Für Ausgaben, die außerhalb des üblichen [Turnus](https://en.wikipedia.org/wiki/de:Turnus "wikipedia:de:Turnus")
 veröffentlicht wurden.
@@ -66,28 +66,28 @@ Wird diese Ausgabe als Sonderausgabe markiert, wird für die [textliche Repräse
 Datensatzes (welche u.a. für die [Änderungsliste](änderungsliste.md "Änderungsliste") benutzt wird) die
 [Beschreibung](#beschreibung) benutzt anstatt der numerischen Angaben wie Ausgabennummer.
 
-### Erscheinungsdatum {.fs-5 .mt-5}
+### Erscheinungsdatum
 
 Das Datum, an dem die Ausgabe erschien. Häufig wird am Ende der Ausgabe das Erscheinungsdatum der
 *nächsten* Ausgabe genannt.
 
 Siehe auch [Bedienelement#Datumsfeld](bedienelement.md#datumsfeld "Datumsfeld").
 
-### Jahrgang {.fs-5 .mt-5}
+### Jahrgang
 
 Der Jahrgang der Ausgabe.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 Hier kann der Titel einer Sonderausgabe angegeben werden. Wird diese Ausgabe als
 <#Sonderausgabe> markiert, so wird dieser Titel für die textliche Darstellung dieser Ausgabe benutzt.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 Notizen für Archiv-Mitarbeiter.
 
-### Ausgabennummer {.fs-5 .mt-5}
+### Ausgabennummer
 
 Die geläufigste numerische Angabe zur Kennzeichnung von Ausgaben.
 Anders als die laufende Nummer beginnt die Ausgabennummer jeden Jahrgang erneut von vorne.
@@ -98,39 +98,39 @@ der Zeitschrift die Ausgabennummer an.
 Mehrere Nummern müssen einzeln eingetragen werden (siehe
 [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
 
-### Monate {.fs-5 .mt-5}
+### Monate
 
 Die Monate, zu denen die Ausgabe erschienen ist.
 
-### laufende Nummer {.fs-5 .mt-5}
+### laufende Nummer
 
 Die Nummer, die seit der (aller-)ersten Ausgabe fortlaufend hochzählt.
 Mehrere Nummern müssen einzeln eingetragen werden (siehe
 [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
 
-### Jahr {.fs-5 .mt-5}
+### Jahr
 
 Vierstellige Jahresangabe. Mehrere Jahre müssen einzeln eingetragen werden
 (siehe [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")).
 
-### Audio Materialien {.fs-5 .mt-5}
+### Audio Materialien
 
 Liegen der Ausgabe Audio Materialien (z.B. Compilations) bei, so können hier Verweise auf Datensätze dieser Materialien
 hinterlegt werden.
 
-### Video Materialien {.fs-5 .mt-5}
+### Video Materialien
 
 Liegen der Ausgabe Video Materialien (z.B. DVDs) bei, so können hier Verweise auf Datensätze dieser Materialien
 hinterlegt werden.
 
-### Bestände {.fs-5 .mt-5}
+### Bestände
 
 [Bestandsangaben](bestand.md "Bestand") zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden.
 Ist beispielsweise dasselbe Heft zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
 [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt
 werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
 
-## Textliche Darstellung {.fs-3 .mt-5 .border-bottom .mb-3}
+## Textliche Darstellung
 
 [Datensätze](datensatz.md "Datensatz") brauchen einen Titel; einen Text, der den Datensatz repräsentiert. Dieser Titel
 wird zum Beispiel in der [Änderungsliste](änderungsliste.md "Änderungsliste") und in der Suche mittels
@@ -179,7 +179,7 @@ Nachfolgend einige Beispiele. Die Angaben, die letztendlich zum Titel beitragen,
 |                           | **6**    |          |        | **Juni**    |          |                | Jg. 6-Jun    |
 |                           |          |          |        | **Juni**    |          |                | k.A.-Jun     |
 
-## Sortierung {.fs-3 .mt-5 .border-bottom .mb-3}
+## Sortierung
 
 Datensätze der Ausgaben sollten in einer chronologischen Ordnung gelistet werden; d.h. Ausgaben sollten in derselben
 Reihenfolge, wie sie zeitlich erschienen sind, gelistet werden. Von der Datenbank wird nur dann eine chronologische
@@ -234,9 +234,9 @@ Angaben nicht gut vergleichen. Für eine gemeinsame Auflistung der Ausgaben
 Aus diesem Grund wird die Datenbank grundsätzlich nur versuchen, eine chronologische Ordnung herzustellen, wenn die
 darzustellenden Ausgaben von genau einem Magazin stammen.
 
-## Admin Aktionen {.fs-3 .mt-5 .border-bottom .mb-3}
+## Admin Aktionen
 
-### Jahrgang hinzufügen {.fs-5}
+### Jahrgang hinzufügen
 
 Aktion zur Bearbeitung der Jahrgangsangaben der ausgewählten Ausgaben. Wähle zunächst eine Schlüssel-Ausgabe, die den
 Beginn eines Jahrgangs darstellt, aus und gebe den Jahrgang dieser Schlüssel-Ausgabe an.
@@ -245,7 +245,7 @@ hochgezählt bzw. heruntergezählt. Wird als Jahrgang '0' eingegeben, werden die
 Ausgaben gelöscht.
 Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
 
-### zu Broschüren bewegen {.fs-5 .mt-5}
+### zu Broschüren bewegen
 
 Ausgaben, die keine Artikel besitzen, können zu einer [Broschüre](broschüre.md "Broschüre"), zu einem
 [Warenkatalog](warenkatalog.md "Warenkatalog") oder zu einem [Programmheft](programmheft.md "Programmheft") umgewandelt
@@ -261,7 +261,7 @@ wählst du am unteren Ende der Bestätigungsseite aus.
   
 [comment]: # (@formatter:on)
 
-### Status ändern {.fs-5 .mt-5}
+### Status ändern
 
 Der [Bearbeitungsstatus](#bearbeitungsstatus) der ausgewählten Ausgaben kann hiermit leicht geändert werden.
  

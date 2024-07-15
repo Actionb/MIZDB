@@ -7,7 +7,7 @@ In dieser Kategorie befinden sich Bücher und
 
 
 
-### Sammelbänder {.fs-5 .mt-5}
+### Sammelbänder
 
 
 Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband markiert werden: dazu muss bei "Ist Sammelband" ein Häkchen gesetzt werden. Danach müssen die einzelnen Aufsätze ebenfalls als Buch-[Datensatz](datensatz.md "Datensatz") erfasst werden, wobei unter "Sammelband" das anfangs erstellte Buch ausgewählt werden muss.
@@ -16,28 +16,28 @@ Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband m
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Titel {.fs-5 .mt-5}
+### Titel
 
 
 
 Der Titel des Buches oder des Aufsatzes.
 
-### Seitenumfang {.fs-5 .mt-5}
+### Seitenumfang
 
 
 
 Der Seitenumfang des Buches oder des Aufsatzes.
 
-### Jahr {.fs-5 .mt-5}
+### Jahr
 
 
 
 Erscheinungsjahr oder andere Jahresangaben zur zeitlichen Einordnung des Objektes.
 
-### Auflage {.fs-5 .mt-5}
+### Auflage
 
 
 
@@ -45,19 +45,19 @@ Angabe zur
  [Auflage des Buches](https://en.wikipedia.org/wiki/de:Auflage_(Publikation) "wikipedia:de:Auflage (Publikation)").
  
 
-### Schriftenreihe {.fs-5 .mt-5}
+### Schriftenreihe
 
 
 
 Gehört das Material zu einer Reihe von Büchern, sollte der Titel der Reihe hier angegeben werden.
 
-### Sammelband {.fs-5 .mt-5}
+### Sammelband
 
 
 
 Entspricht der Datensatz einem Aufsatz eines Sammelbands, so muss der Sammelband hier ausgewählt werden.
 
-### Ist Sammelband {.fs-5 .mt-5}
+### Ist Sammelband
 
 
 
@@ -65,7 +65,7 @@ Soll der Datensatz ein Sammelband beschreiben, so muss hier ein Häkchen gesetzt
  <#Sammelband> auf.
  
 
-### ISBN {.fs-5 .mt-5}
+### ISBN
 
 
 
@@ -74,7 +74,7 @@ Die dreizehn-stellige internationale Standardbuchnummer
  [Bedienelement ISBN Feld](bedienelement.md#issnisbnean "Bedienelement").
  
 
-### EAN {.fs-5 .mt-5}
+### EAN
 
 
 
@@ -82,32 +82,32 @@ Die europäische Artikelnummer
  [EAN](https://en.wikipedia.org/wiki/de:EAN "wikipedia:de:EAN"). ISBN-13 und EAN-13 sind identisch. Siehe auch
  [Bedienelement EAN Feld](bedienelement.md#issnisbnean "Bedienelement")
 
-### Sprache {.fs-5 .mt-5}
+### Sprache
 
 
 
 Angaben zur Sprache, in welcher das Buch verfasst wurde.
 
-### Titel (Original) {.fs-5 .mt-5}
+### Titel (Original)
 
 
 
 Der Titel des Buches im nicht übersetzten Original.
 
-### Jahr (Original) {.fs-5 .mt-5}
+### Jahr (Original)
 
 
 
 Erscheinungsjahr des Originals.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
 
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 
 Notizen für Archiv-Mitarbeiter.
@@ -119,13 +119,13 @@ Notizen für Archiv-Mitarbeiter.
 ---
 
 
-### Autoren {.fs-5 .mt-5}
+### Autoren
 
 
 
 Die Autorinnen und Autoren des Buches oder des Aufsatzes.
 
-### Musiker {.fs-5 .mt-5}
+### Musiker
 
 
 
@@ -133,13 +133,13 @@ Bezieht sich das Objekt auf
  [Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.
  
 
-### Bands {.fs-5 .mt-5}
+### Bands
 
 
 
 Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 
-### Schlagwörter {.fs-5 .mt-5}
+### Schlagwörter
 
 
 
@@ -147,7 +147,7 @@ Angaben zu [Bands](band.md "Band"), auf die sich das Objekt bezieht.
 [Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (z.B. '60er Jahre') des Objekts.
  
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 
 
@@ -155,7 +155,7 @@ Sind bezüglich des Objektes bestimmte
  [Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
  
 
-### Orte {.fs-5 .mt-5}
+### Orte
 
 
 
@@ -164,7 +164,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Spielorte {.fs-5 .mt-5}
+### Spielorte
 
 
 
@@ -173,7 +173,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Veranstaltungen {.fs-5 .mt-5}
+### Veranstaltungen
 
 
 
@@ -182,7 +182,7 @@ Hat das Objekt Bezug zu bestimmten
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Personen {.fs-5 .mt-5}
+### Personen
 
 
 
@@ -190,19 +190,19 @@ Angaben zu
  [Personen](person.md "Person"), auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
  
 
-### Herausgeber {.fs-5 .mt-5}
+### Herausgeber
 
 
 
 Verweise auf relevante [Herausgeber](herausgeber.md "Herausgeber").
 
-### Verlage {.fs-5 .mt-5}
+### Verlage
 
 
 
 Verweise auf relevante [Verlage](verlag.md "Verlag").
 
-### Bestände {.fs-5 .mt-5}
+### Bestände
 
 
 
@@ -211,7 +211,7 @@ Verweise auf relevante [Verlage](verlag.md "Verlag").
  [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch {.fs-5 .mt-5}
+### Siehe auch
 
 
 * [Wikipedia: Sammelband](https://en.wikipedia.org/wiki/de:Sammelband "wikipedia:de:Sammelband")

@@ -6,23 +6,23 @@ Die Seiten und Formulare der Datenbank verwenden
 verschiedene [Steuer- oder Bedienelemente](https://en.wikipedia.org/wiki/de:Steuerelement "wikipedia:de:Steuerelement"),
 deren Funktionsweisen hier kurz erklärt wird.
 
-## Einfache Felder {.fs-3 .mt-5 .mb-3 .border-bottom}
+## Einfache Felder
 
-### Textfeld {.fs-5}
+### Textfeld
 
 ![Textfeld](img/bedienelemente/textfeld.png)
 
 Ein Element, das jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements
 und die erlaubte Länge des Textes stehen in keinem Zusammenhang.
 
-### Textfeld mit variabler Grösse {.fs-5 .mt-5}
+### Textfeld mit variabler Grösse
 
 ![Textarea](img/bedienelemente/textarea.png)
 
 Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren
 rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.
 
-### Zahlenfeld {.fs-5 .mt-5}
+### Zahlenfeld
 
 ![Zahlenfeld](img/bedienelemente/zahlenfeld.png)
 
@@ -37,15 +37,15 @@ scrollen.
   
 [comment]: # (@formatter:on)
 
-## Auswahlfelder {.fs-3 .mt-5 .mb-3 .border-bottom}
+## Auswahlfelder
 
-### Einfaches Auswahlfeld/Dropdown {.fs-5}
+### Einfaches Auswahlfeld/Dropdown
 
 ![Auswahlfeld](img/bedienelemente/auswahlfeld.png)
 
 Beim Klicken auf dieses Feld klappt sich ein Menü auf ("dropdown"), aus dem man eine der Optionen wählen kann.
 
-### Kombinationsfeld/Combobox {.fs-5 .mt-5}
+### Kombinationsfeld/Combobox
 
 ![Combobox](img/bedienelemente/combobox.png)
 
@@ -60,7 +60,7 @@ Mit einem Klick auf den grünen Bleistift kannst du den ausgewählten Eintrag be
 Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen. Der Knopf "Änderungsliste" schickt dich zu der
 [Änderungsliste](änderungsliste.md) der zur Auswahl stehenden Einträge.
 
-### Combobox mit Mehrfachauswahl {.fs-5 .mt-5}
+### Combobox mit Mehrfachauswahl
 
 ![Combobox mit Mehrfachauswahl](img/bedienelemente/combobox_mehrfach.png)
 
@@ -68,9 +68,9 @@ Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewä
 durch einen Klick auf das kleine rote "**x**" neben dem Eintrag wieder entfernt werden. Mit einem Klick auf das "**x**"
 am rechten Ende der Combobox lässt sich die gesamte Auswahl aufheben.
 
-## Spezialfelder {.fs-3 .mt-5 .mb-3 .border-bottom}
+## Spezialfelder
 
-### Datumsfeld {.fs-5}
+### Datumsfeld
 
 ![Datumsfeld](img/bedienelemente/datumsfeld.png)
 
@@ -78,13 +78,13 @@ Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.
 (Jahr-Monat-Tag, [ISO 8601](https://en.wikipedia.org/wiki/de:ISO_8601 "wikipedia:de:ISO 8601")).
 Das Symbol am rechten Ende des Feldes öffnet einen Kalender zur Auswahl des Tages.
 
-### Feld für partielles Datum {.fs-5 .mt-5}
+### Feld für partielles Datum
 
 ![Partielles Datumsfeld](img/bedienelemente/partielles_datum.png)
 
 Ein Feld für Datumsangaben, die nicht unbedingt sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.
 
-### Laufzeitfeld {.fs-5 .mt-5}
+### Laufzeitfeld
 
 ![Laufzeitfeld](img/bedienelemente/laufzeitfeld.png)
 
@@ -102,7 +102,7 @@ Angaben, die dem Format nicht vollständig entsprechen, werden akzeptiert und gg
 | 90:10       | 01         | 30      | 10       | 90 Minuten und 10 Sekunden           | 01:30:10 |
 | 1:30:10     | 01         | 30      | 10       | 1 Stunde, 30 Minuten und 10 Sekunden | 01:30:10 |
 
-### ISSN/ISBN/EAN {.fs-5 .mt-5}
+### ISSN/ISBN/EAN
 
 Ein Feld, welches Angaben für Standardnummern wie ISSN, ISBN oder EAN akzeptiert, validiert und in ein gut lesbares
 Format umwandelt.
@@ -121,7 +121,7 @@ Aus einer ISBN ohne Formatierung:
   
 [comment]: # (@formatter:on)
 
-## Inlines {.fs-3 .mt-5 .mb-3 .border-bottom}
+## Inlines
 
 Viele Formulare enthalten sogenannte Inlines. Inlines sind Formulare von verwandten Datensätzen, die in dem 
 Hauptformular eingebettet sind. 

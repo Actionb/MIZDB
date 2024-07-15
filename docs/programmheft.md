@@ -7,40 +7,40 @@ Eine Art von
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Titel {.fs-5 .mt-5}
+### Titel
 
 
 
 Der Titel des Programmhefts.
 
-### Zusammenfassung {.fs-5 .mt-5}
+### Zusammenfassung
 
 
 
 Ein kurzer Text, der den Inhalt des Programmhefts beschreibt.
 
-### Magazin {.fs-5 .mt-5}
+### Magazin
 
 
 
 (falls zutreffend) Das Magazin der Ausgabe, welcher dieses Programmheft bei lag.
 
-### Ausgabe {.fs-5 .mt-5}
+### Ausgabe
 
 
 
 (falls zutreffend) Die Ausgabe, welcher dieses Programmheft bei lag.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 
 
@@ -51,25 +51,25 @@ Notizen für Archiv-Mitarbeiter.
 ---
 
 
-### Web-Adressen {.fs-5 .mt-5}
+### Web-Adressen
 
 
 
 Hier können bzgl. des Objektes nennenswerte Web-Adressen hinterlegt werden.
 
-### Jahre {.fs-5 .mt-5}
+### Jahre
 
 
 
 Jahresangaben zur zeitlichen Einordnung des Objektes.
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 
 
 Relevante [Genres](genre.md "Genre") bzgl. des Objektes.
 
-### Spielorte {.fs-5 .mt-5}
+### Spielorte
 
 
 
@@ -78,7 +78,7 @@ Auflistung der
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Veranstaltungen {.fs-5 .mt-5}
+### Veranstaltungen
 
 
 
@@ -87,7 +87,7 @@ Hat das Objekt Bezug zu bestimmten
  [Erklärung Ort, Spielort und Veranstaltung](ort,_spielort,_veranstaltung.md "Ort, Spielort, Veranstaltung")
 
 
-### Bestände {.fs-5 .mt-5}
+### Bestände
 
 
 
@@ -96,7 +96,7 @@ Hat das Objekt Bezug zu bestimmten
  [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch {.fs-5 .mt-5}
+### Siehe auch
 
 
 * [Wikipedia: Programmheft](https://en.wikipedia.org/wiki/de:Programmheft "wikipedia:de:Programmheft")

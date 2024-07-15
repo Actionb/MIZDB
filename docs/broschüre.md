@@ -8,40 +8,40 @@ In dieser Kategorie werden Schriftwerke von geringem Umfang gelistet. Dazu gehö
 
 
 
-## Felder {.fs-3 .mt-5 .border-bottom}
+## Felder
 
 
-### Titel {.fs-5 .mt-5}
+### Titel
 
 
 
 Der Titel der Broschüre.
 
-### Zusammenfassung {.fs-5 .mt-5}
+### Zusammenfassung
 
 
 
 Ein kurzer Text, der die wichtigsten Aspekte und Themen der Broschüre aufführt.
 
-### Magazin {.fs-5 .mt-5}
+### Magazin
 
 
 
 (falls zutreffend) Das Magazin der Ausgabe, welcher diese Broschüre bei lag.
 
-### Ausgabe {.fs-5 .mt-5}
+### Ausgabe
 
 
 
 (falls zutreffend) Die Ausgabe, welcher diese Broschüre bei lag.
 
-### Beschreibung {.fs-5 .mt-5}
+### Beschreibung
 
 
 
 Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
-### Bemerkungen {.fs-5 .mt-5}
+### Bemerkungen
 
 
 
@@ -52,31 +52,31 @@ Notizen für Archiv-Mitarbeiter.
 ---
 
 
-### Web-Adressen {.fs-5 .mt-5}
+### Web-Adressen
 
 
 
 Hier können bzgl. des Objektes nennenswerte Web-Adressen hinterlegt werden.
 
-### Jahre {.fs-5 .mt-5}
+### Jahre
 
 
 
 Jahresangaben zur zeitlichen Einordnung des Objektes.
 
-### Genres {.fs-5 .mt-5}
+### Genres
 
 
 
 Relevante [Genres](genre.md "Genre") bzgl. des Objektes.
 
-### Schlagwörter {.fs-5 .mt-5}
+### Schlagwörter
 
 
 
 Relevante [Schlagwörter](schlagwort.md "Schlagwort") bzgl. des Objektes.
 
-### Bestände {.fs-5 .mt-5}
+### Bestände
 
 
 
@@ -85,7 +85,7 @@ Relevante [Schlagwörter](schlagwort.md "Schlagwort") bzgl. des Objektes.
  [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")). Unter 'Anmerkungen' können weitere Angaben eingefügt werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.
  
 
-### Siehe auch {.fs-5 .mt-5}
+### Siehe auch
 
 
 * [Wikipedia: Broschüre](https://en.wikipedia.org/wiki/de:Broschüre "wikipedia:de:Broschüre")
