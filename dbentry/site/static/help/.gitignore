@@ -1,0 +1,6 @@
+# These static files will be copied over from the mkdocs output directory by
+# the post build script:
+css/admonitions.css
+css/base.css
+css/glightbox.min.css
+js/glightbox.min.js
