@@ -247,7 +247,7 @@ Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
 
 ### zu Broschüren bewegen
 
-Ausgaben, die keine Artikel besitzen, können zu einer [Broschüre](broschüre.md "Broschüre"), zu einem
+Ausgaben, die keine Artikel besitzen, können zu einer [Broschüre](broschuere.md "Broschüre"), zu einem
 [Warenkatalog](warenkatalog.md "Warenkatalog") oder zu einem [Programmheft](programmheft.md "Programmheft") umgewandelt
 und in die entsprechende Kategorie verschoben werden. Auf der Seite zur Bestätigung der Aktion können die Angaben zu den
 Broschüren eingesehen und überarbeitet werden, bevor die Broschüren erstellt werden.

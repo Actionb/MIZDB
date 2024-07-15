@@ -17,7 +17,7 @@ Informationen zu den Tabellen findest du hier:
 * [Artikel](artikel.md)
 * [Audio Materialien](audio.md)
 * [Ausgaben](ausgabe.md)
-* [Broschüren](broschüre.md)
+* [Broschüren](broschuere.md)
 * [Bücher](buch.md)
 * [Fotos](foto.md)
 * [Plakate](plakat.md)

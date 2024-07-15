@@ -3,7 +3,7 @@ Programmheft
 
 
 Eine Art von
- [Broschüre](broschüre.md "Broschüre"), die Informationen über Veranstaltungen enthält.
+ [Broschüre](broschuere.md "Broschüre"), die Informationen über Veranstaltungen enthält.
 
 
 
