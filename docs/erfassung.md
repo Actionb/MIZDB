@@ -21,7 +21,7 @@ Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.
 
 So suchst du nach den Artikeln eines Heftes:
 
-1. im [Index/Hauptmenü](oberfläche.md#Index "Oberfläche") auf "Artikel" klicken
+1. im [Index/Hauptmenü](oberflaeche.md#Index "Oberfläche") auf "Artikel" klicken
 2. im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
 3. im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
    entsprechende Magazin aus der Liste auswählen

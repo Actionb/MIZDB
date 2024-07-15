@@ -57,7 +57,7 @@ Informationen zu den Tabellen findest du hier:
 
 * [Benutzerverwaltung](benutzer.md)
 * [Grundsätze](grundsaetze.md)
-* [Oberfläche](oberfläche.md)
+* [Oberfläche](oberflaeche.md)
 * [Bedienelemente](bedienelement.md)
 * [Sichern](sichern.md) & [Löschen](loeschen.md)
 * [Aktionen](aktionen.md)
