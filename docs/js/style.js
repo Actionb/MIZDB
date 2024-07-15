@@ -11,4 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Indent the paragraphs
     document.querySelectorAll('[role=main] p').forEach(p => p.classList.add('ps-3'))
+
+    // Hide the toc if it only contains one item
+    const toc = document.querySelector('#help_content .bs-sidebar')
+    if (toc && toc.querySelectorAll('.nav-item').length == 1) {
+        toc.classList.add('d-none')
+    }
 })
