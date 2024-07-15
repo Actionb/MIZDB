@@ -21,7 +21,7 @@ Allgemein stehen die Aktionen "Löschen" und "Zusammenfügen" zur Verfügung. Be
 
 
 Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet. Die Datensätze werden zusammen in einem Zug gelöscht. Siehe auch:
- [Löschen](löschen.md "Löschen")
+ [Löschen](loeschen.md "Löschen")
 
 
 

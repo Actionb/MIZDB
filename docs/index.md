@@ -59,7 +59,7 @@ Informationen zu den Tabellen findest du hier:
 * [Grundsätze](grundsaetze.md)
 * [Oberfläche](oberfläche.md)
 * [Bedienelemente](bedienelement.md)
-* [Sichern](sichern.md) & [Löschen](löschen.md)
+* [Sichern](sichern.md) & [Löschen](loeschen.md)
 * [Aktionen](aktionen.md)
 * [Änderungsliste](änderungsliste.md)
 * [Suchformular](suchformular.md)

@@ -22,7 +22,7 @@ Hier noch eine Auflistung der empfohlenen Seiten zur Einführung in die Arbeit m
 	* die [Oberfläche](oberfläche.md "Oberfläche")
 	* die [Bedienelemente](bedienelement.md "Bedienelement")
 	* [Sichern](sichern.md "Sichern") &
-	  [Löschen](löschen.md "Löschen") von
+	  [Löschen](loeschen.md "Löschen") von
 	  [Datensätzen](datensatz.md "Datensatz")
 2. Einleitung in die Erfassung von Archiv Materialien:
 	* [Grundsätze](grundsaetze.md "Grundsätze") zum Arbeiten mit der Datenbank
