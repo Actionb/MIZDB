@@ -1,10 +1,10 @@
 Einführung
 ==========
 
-
 Hi! Hallo! Willkommen im Archiv!
 
-Damit du mit der Arbeit im Archiv beginnen kannst, musst du dich zunächst mit der Bedienung der Datenbank vertraut machen.
+Damit du mit der Arbeit im Archiv beginnen kannst, musst du dich zunächst mit der Bedienung der Datenbank vertraut
+machen.
 Zu diesem Zweck sollte die Hilfe-Seite zur [Oberfläche](oberflaeche.md "Oberfläche") durchgelesen werden. Außerdem
 solltest du dir die [Empfehlungen](grundsaetze.md "Grundsätze") zum Arbeiten mit der Datenbank anschauen, bevor du
 selber mit der Erfassung von Material beginnst.
@@ -21,6 +21,7 @@ Hier noch eine Auflistung der empfohlenen Seiten zur Einführung in die Arbeit m
 1. Erklärungen zur Benutzung:
 	* die [Oberfläche](oberflaeche.md "Oberfläche")
 	* die [Bedienelemente](bedienelement.md "Bedienelement")
+	* [Anmelden & Abmelden](benutzer.md#anmelden-und-abmelden)
 	* [Sichern](sichern.md "Sichern") &
 	  [Löschen](loeschen.md "Löschen") von
 	  [Datensätzen](datensatz.md "Datensatz")
