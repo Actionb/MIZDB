@@ -63,7 +63,7 @@ Für Ausgaben, die außerhalb des üblichen [Turnus](https://en.wikipedia.org/wi
 veröffentlicht wurden.
 
 Wird diese Ausgabe als Sonderausgabe markiert, wird für die [textliche Repräsentation](#textliche-darstellung) des
-Datensatzes (welche u.a. für die [Änderungsliste](änderungsliste.md "Änderungsliste") benutzt wird) die
+Datensatzes (welche u.a. für die [Änderungsliste](aenderungsliste.md "Änderungsliste") benutzt wird) die
 [Beschreibung](#beschreibung) benutzt anstatt der numerischen Angaben wie Ausgabennummer.
 
 ### Erscheinungsdatum
@@ -133,7 +133,7 @@ werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des O
 ## Textliche Darstellung
 
 [Datensätze](datensatz.md "Datensatz") brauchen einen Titel; einen Text, der den Datensatz repräsentiert. Dieser Titel
-wird zum Beispiel in der [Änderungsliste](änderungsliste.md "Änderungsliste") und in der Suche mittels
+wird zum Beispiel in der [Änderungsliste](aenderungsliste.md "Änderungsliste") und in der Suche mittels
 [Kombinationsfeldern](bedienelement.md#kombinationsfeldcombobox "Bedienelement") verwendet.
 
 Bei Büchern wäre dieser Text der Titel des Buches, bei Artikel ist es die Schlagzeile. Ausgaben besitzen jedoch meistens
@@ -193,7 +193,7 @@ Ist keine chronologische Ordnung möglich, werden die Datensätze zuerst nach Ma
 sortiert, was zu einer Ordnung führen kann, die augenscheinlich nicht chronologisch ist ("1970-Dez" kommt vor
 "1970-Nov").
 
-Siehe auch: [Änderungsliste#Sortierung](änderungsliste.md#sortierung "Änderungsliste").
+Siehe auch: [Änderungsliste#Sortierung](aenderungsliste.md#sortierung "Änderungsliste").
 
 **Ausführliche Erklärung:**
 

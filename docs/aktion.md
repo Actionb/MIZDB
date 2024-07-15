@@ -53,7 +53,7 @@ Mit dieser Aktionen können mehrere Datensätze zu einem einzigen Datensatz zusa
 
 
 Bei der Auswahl des primären Datensatzes werden die Datensätze in derselben Reihenfolge wie in der
- [Änderungsliste](änderungsliste.md "Änderungsliste") dargestellt. Hier soll der oberste Datensatz für dieses Beispiel ausgewählt werden, um das Erweitern der Grunddaten ("Primären Datensatz erweitern") veranschaulichen zu können.
+ [Änderungsliste](aenderungsliste.md "Änderungsliste") dargestellt. Hier soll der oberste Datensatz für dieses Beispiel ausgewählt werden, um das Erweitern der Grunddaten ("Primären Datensatz erweitern") veranschaulichen zu können.
 
 
 

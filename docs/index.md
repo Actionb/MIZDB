@@ -61,6 +61,6 @@ Informationen zu den Tabellen findest du hier:
 * [Bedienelemente](bedienelement.md)
 * [Sichern](sichern.md) & [Löschen](loeschen.md)
 * [Aktionen](aktionen.md)
-* [Änderungsliste](änderungsliste.md)
+* [Änderungsliste](aenderungsliste.md)
 * [Suchformular](suchformular.md)
 

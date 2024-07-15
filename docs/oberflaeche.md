@@ -12,7 +12,7 @@ Archivmaterial erfasst. Darunter, unter "Stammdaten", sind die Kategorien, die b
 werden.
 
 Klickst du auf die Beschriftung einer Kategorie, gelangst du
-zur [Übersichtsseite](änderungsliste.md "Übersichtsseite") (auch "Änderungsliste") dieser Kategorie. Klickst du auf
+zur [Übersichtsseite](aenderungsliste.md "Übersichtsseite") (auch "Änderungsliste") dieser Kategorie. Klickst du auf
 den "Hinzufügen" Link neben der Kategorie, wirst du zu einem leeren Formular der Kategorie geführt, mit welchem du einen
 neuen [Datensatz](datensatz.md "Datensatz") erstellen kannst.
 

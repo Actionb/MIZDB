@@ -58,7 +58,7 @@ Die Auswahl kann aufgehoben werden, indem du oben neben dem ausgewählten Eintra
 Mit einem Klick auf den grünen Bleistift kannst du den ausgewählten Eintrag bearbeiten.
 
 Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen. Der Knopf "Änderungsliste" schickt dich zu der
-[Änderungsliste](änderungsliste.md) der zur Auswahl stehenden Einträge.
+[Änderungsliste](aenderungsliste.md) der zur Auswahl stehenden Einträge.
 
 ### Combobox mit Mehrfachauswahl
 

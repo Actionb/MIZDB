@@ -29,4 +29,4 @@ Hier noch eine Auflistung der empfohlenen Seiten zur Einführung in die Arbeit m
 	* [Erfassung von Artikeln aus Zeitschriften](erfassung.md "Artikel")
 3. Suchen, sortieren und finden:
 	* das [Suchformular](suchformular.md "Suchformular")
-	* die [Änderungsliste](änderungsliste.md "Änderungsliste")
+	* die [Änderungsliste](aenderungsliste.md "Änderungsliste")
