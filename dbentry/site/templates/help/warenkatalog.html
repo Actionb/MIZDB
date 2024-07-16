@@ -1,0 +1,103 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#warenkatalog">Warenkatalog</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#titel">Titel</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#art-des-katalogs">Art des Katalogs</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#zusammenfassung">Zusammenfassung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#magazin">Magazin</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ausgabe">Ausgabe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#beschreibung">Beschreibung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bemerkungen">Bemerkungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#web-adressen">Web-Adressen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#jahre">Jahre</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#genres">Genres</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bestande">Bestände</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#siehe-auch">Siehe auch</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="warenkatalog">Warenkatalog</h1>
+<p>Die Kategorie für Druckzeugnisse, welche eine Auflistung von (Verkaufs-)Waren darstellen. Dazu gehören Kataloge für CDs,
+Instrumente und weitere themenspezifische Produkte wie z.B. Merchandise für Fans.</p>
+<h2 id="felder">Felder</h2>
+<h3 id="titel">Titel</h3>
+<p>Der Titel des Katalogs.</p>
+<h3 id="art-des-katalogs">Art des Katalogs</h3>
+<p>Angabe darüber, welche Art von Produkten in diesem Katalog gelistet werden.</p>
+<h3 id="zusammenfassung">Zusammenfassung</h3>
+<p>Ein kurzer Text, der den Inhalt des Kataloges beschreibt.</p>
+<h3 id="magazin">Magazin</h3>
+<p>Das Magazin der Ausgabe, welcher dieser Katalog beilag (falls zutreffend).</p>
+<h3 id="ausgabe">Ausgabe</h3>
+<p>Die Ausgabe, welcher dieser Katalog beilag (falls zutreffend).</p>
+<h3 id="beschreibung">Beschreibung</h3>
+<p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</p>
+<h3 id="bemerkungen">Bemerkungen</h3>
+<p>Notizen für Archiv-Mitarbeiter.</p>
+<h3 id="web-adressen">Web-Adressen</h3>
+<p>Hier können bzgl. des Objektes nennenswerte Web-Adressen hinterlegt werden.</p>
+<h3 id="jahre">Jahre</h3>
+<p>Jahresangaben zur zeitlichen Einordnung des Objektes.</p>
+<h3 id="genres">Genres</h3>
+<p>Relevante <a href="{% url 'help' page_name='genre'%}" title="Genre">Genres</a> bzgl. des Objektes.</p>
+<h3 id="bestande">Bestände</h3>
+<p><a href="{% url 'help' page_name='bestand'%}" title="Bestand">Bestandsangaben</a> zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden.
+Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>). Unter 'Anmerkungen' können weitere Angaben eingefügt
+werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.</p>
+<h2 id="siehe-auch">Siehe auch</h2>
+<ul>
+<li><a href="https://de.wikipedia.org/wiki/Produktkatalog">Wikipedia: Produktkatalog</a></li>
+</ul></div>
+</div>{% endblock content %}

@@ -1,0 +1,480 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#ausgabe">Ausgabe</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#erfassung">Erfassung</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ausgabennummer-und-die-laufende-nummer">Ausgabennummer und die laufende Nummer</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ausgabennummer-entspricht-nicht-unbedingt-der-monatszahl">Ausgabennummer entspricht nicht unbedingt der Monatszahl</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#erscheinungsdatum">Erscheinungsdatum</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#magazin">Magazin</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bearbeitungsstatus">Bearbeitungsstatus</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#sonderausgabe">Sonderausgabe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#erscheinungsdatum_1">Erscheinungsdatum</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#jahrgang">Jahrgang</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#beschreibung">Beschreibung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bemerkungen">Bemerkungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ausgabennummer">Ausgabennummer</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#monate">Monate</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#laufende-nummer">laufende Nummer</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#jahr">Jahr</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#audio-materialien">Audio Materialien</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#video-materialien">Video Materialien</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bestande">Bestände</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#textliche-darstellung">Textliche Darstellung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#sortierung">Sortierung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#admin-aktionen">Admin Aktionen</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#jahrgang-hinzufugen">Jahrgang hinzufügen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#zu-broschuren-bewegen">zu Broschüren bewegen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#status-andern">Status ändern</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="ausgabe">Ausgabe</h1>
+<p>In dieser Kategorie werden Hefte von <a href="{% url 'help' page_name='magazin'%}" title="Magazin">Magazinen</a> (Zeitschriften) gelistet.</p>
+<h2 id="erfassung">Erfassung</h2>
+<p>Eine Ausgabe kann durch verschiedene Angaben identifiziert werden, die u.a. auf der Titelseite, dem Rücken des Heftes
+oder im Impressum gefunden werden können. Die meisten Angaben sollten selbsterklärend sein, aber es gibt einige
+Feinheiten, auf die geachtet werden muss:</p>
+<h3 id="ausgabennummer-und-die-laufende-nummer">Ausgabennummer und die laufende Nummer</h3>
+<p>Mit Ausgabennummer (auch oft auch einfach nur "Nummer") ist die Nummer gemeint, welche bei jedem Jahrgang erneut von
+Eins gezählt wird. Im Vergleich dazu wird die laufende Nummer seit der ersten Ausgabe des Magazins durch jeden Jahrgang
+hindurch weiter hoch gezählt. Die laufende Nummer ist häufig auf der Seite der Inhaltsangabe oder dem Impressum zu
+finden.</p>
+<p>Die Ausgabennummer kann auch im Strichcode enthalten sein:</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/ausgabe/issn_barcode.png' %}"><img alt='Strichcode mit Ausgabennummer ("Issue Number")' class="mb-1" src="{% static 'img/ausgabe/issn_barcode.png' %}" width="300"/></a><br/>
+<figcaption>Strichcode mit Ausgabennummer ("Issue Number")</figcaption>
+<br/>
+</figure>
+</div>
+<h3 id="ausgabennummer-entspricht-nicht-unbedingt-der-monatszahl">Ausgabennummer entspricht nicht unbedingt der Monatszahl</h3>
+<p>Es kommt häufig vor, dass die <em>angegebene</em> Ausgabennummer mit der Monatszahl übereinstimmt (Bsp.: Ausgabe mit Nummer 9
+erschien im September).
+Allerdings lässt sich von der Monatszahl alleine keine Ausgabennummer ableiten: Nur weil die Ausgabe im Mai erschien,
+bedeutet es nicht, dass die Ausgabe die Nummer 5 hat. Umgekehrt gilt das natürlich genau so: Eine Ausgabe mit der Nummer
+5 muss nicht im Mai erschienen sein.</p>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: nichts erfinden!</p>
+<p>Der <a href="{% url 'help' page_name='grundsaetze'%}" title="Grundsätze">Grundsatz</a>, <strong>nichts zu erfinden</strong>, greift hier; wenn keine Ausgabennummer angegeben
+    ist, dann sollte auch keine eingetragen werden.  </p>
+</div>
+<h3 id="erscheinungsdatum">Erscheinungsdatum</h3>
+<p>Das Erscheinungsdatum ist häufig im Impressum oder auf der Seite der Inhaltsangabe zu finden. Darüber hinaus geben viele
+Zeitschriften das Erscheinungsdatum der <em>nächsten</em> Ausgabe an - diese Vorschau auf das nächste Heft ist meistens auf
+den letzten Seiten der Ausgabe zu finden.</p>
+<h2 id="felder">Felder</h2>
+<h3 id="magazin">Magazin</h3>
+<p>Der Name des <a href="{% url 'help' page_name='magazin'%}" title="Magazin">Magazins</a> der Ausgabe.</p>
+<h3 id="bearbeitungsstatus">Bearbeitungsstatus</h3>
+<p>Der Stand der Bearbeitung/Erfassung der <a href="{% url 'help' page_name='artikel'%}" title="Artikel">Artikel</a> der Ausgabe.</p>
+<h3 id="sonderausgabe">Sonderausgabe</h3>
+<p>Für Ausgaben, die außerhalb des üblichen <a href="https://de.wikipedia.org/wiki/Turnus">Turnus</a> veröffentlicht wurden.</p>
+<p>Wird diese Ausgabe als Sonderausgabe markiert, wird für die <a href="#textliche-darstellung">textliche Repräsentation</a> des
+Datensatzes (welche u.a. für die <a href="{% url 'help' page_name='aenderungsliste'%}" title="Änderungsliste">Änderungsliste</a> benutzt wird) die
+<a href="#beschreibung">Beschreibung</a> benutzt anstatt der numerischen Angaben wie Ausgabennummer.</p>
+<h3 id="erscheinungsdatum_1">Erscheinungsdatum</h3>
+<p>Das Datum, an dem die Ausgabe erschienen ist. Häufig wird am Ende des Heftes das Erscheinungsdatum der <em>nächsten</em>
+Ausgabe bekannt gegeben.</p>
+<p>Siehe auch <a href="{% url 'help' page_name='bedienelement'%}#datumsfeld" title="Datumsfeld">Bedienelement#Datumsfeld</a>.</p>
+<h3 id="jahrgang">Jahrgang</h3>
+<p>Der Jahrgang der Ausgabe.</p>
+<h3 id="beschreibung">Beschreibung</h3>
+<p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</p>
+<div class="admonition tip">
+<p class="admonition-title">Sonderausgabe?</p>
+<p>In der Beschreibung kann der Titel einer Sonderausgabe angegeben werden. Wird diese Ausgabe als
+<a href="#sonderausgabe">Sonderausgabe</a> markiert, so wird dieser Titel für die textliche Darstellung dieser Ausgabe benutzt.</p>
+</div>
+<h3 id="bemerkungen">Bemerkungen</h3>
+<p>Notizen für Archiv-Mitarbeiter.</p>
+<h3 id="ausgabennummer">Ausgabennummer</h3>
+<p>Die geläufigste numerische Angabe zur Kennzeichnung von Ausgaben.
+Anders als die laufende Nummer beginnt die Ausgabennummer jeden Jahrgang erneut von vorne.
+Häufig geben die letzten zwei Ziffern des
+Strichcodes (<a href="https://de.wikipedia.org/wiki/European_Article_Number">EAN-Code</a>,
+sowie <a href="#ausgabennummer-und-die-laufende-nummer">oben</a>) der Zeitschrift die Ausgabennummer an.</p>
+<p>Mehrere Nummern müssen einzeln eingetragen werden (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>).</p>
+<h3 id="monate">Monate</h3>
+<p>Die Monate, zu denen die Ausgabe erschienen ist.</p>
+<p>Mehrere Monate müssen einzeln eingetragen werden (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>).</p>
+<h3 id="laufende-nummer">laufende Nummer</h3>
+<p>Die Nummer, die seit der (aller-)ersten Ausgabe fortlaufend hochzählt.</p>
+<p>Mehrere Nummern müssen einzeln eingetragen werden (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>).</p>
+<h3 id="jahr">Jahr</h3>
+<p>Vierstellige Jahresangabe.</p>
+<p>Mehrere Jahre müssen einzeln eingetragen werden (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>).</p>
+<h3 id="audio-materialien">Audio Materialien</h3>
+<p>Liegen der Ausgabe Audio Materialien (z.B. Compilations) bei, so können hier Verweise auf Datensätze dieser Materialien
+hinterlegt werden.</p>
+<h3 id="video-materialien">Video Materialien</h3>
+<p>Liegen der Ausgabe Video Materialien (z.B. DVDs) bei, so können hier Verweise auf Datensätze dieser Materialien
+hinterlegt werden.</p>
+<h3 id="bestande">Bestände</h3>
+<p><a href="{% url 'help' page_name='bestand'%}" title="Bestand">Bestandsangaben</a> zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden.
+Ist beispielsweise dasselbe Heft zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>). Unter '<strong>Anmerkungen</strong>' können weitere Angaben
+eingefügt
+werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.</p>
+<h2 id="textliche-darstellung">Textliche Darstellung</h2>
+<p><a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensätze</a> brauchen einen Titel; einen Text, der den Datensatz repräsentiert. Dieser Titel
+wird zum Beispiel in der <a href="{% url 'help' page_name='aenderungsliste'%}" title="Änderungsliste">Änderungsliste</a> und in der Suche mittels
+<a href="{% url 'help' page_name='bedienelement'%}#kombinationsfeldcombobox" title="Bedienelement">Kombinationsfeldern</a> verwendet.</p>
+<p>Bei Büchern wäre dieser Text der Titel des Buches, bei Artikel ist es die Schlagzeile. Ausgaben besitzen jedoch meistens
+keinen expliziten Titel. Stattdessen werden bei Ausgaben verschiedenen Angaben zum jeweiligen Datensatz
+benutzt, um einen Titel zu konstruieren.</p>
+<p>Grundsätzlich gilt:</p>
+<ul>
+<li>
+<p><strong>Sonderausgabe</strong>:<br/>
+  Ist die Ausgabe als <strong>Sonderausgabe</strong> markiert und ist eine Beschreibung vorhanden, so wird die Beschreibung als Titel
+  verwendet. Andere Angaben fließen nicht in die Erzeugung des Titels ein.</p>
+</li>
+<li>
+<p><strong>Jahre vor Jahrgang</strong>:<br/>
+  Jahresangaben werden bevorzugt. Besitzt die Ausgabe solche nicht, wird stattdessen der Jahrgang verwendet. Gibt es
+  auch keinen Jahrgang, so wird der Platzhalter "k.A." verwendet.</p>
+</li>
+<li>
+<p><strong>Ausgabennummer vor laufende Nummer vor Datum vor Monat vor Beschreibung</strong>:<br/>
+  Gibt es keine Angabe zur Ausgabennummer, so wird die laufende Nummer verwendet. Gibt es keine laufende Nummer, dann
+  wird das Datum verwendet, und so weiter. Angaben in der Beschreibung sind dann die vorletzte Option.</p>
+</li>
+<li>
+<p><strong>keinerlei Angaben</strong>:<br/>
+  Wenn es aufgrund fehlender Angaben nicht möglich ist, einen Titel zu abzuleiten, so wird als Titel "<strong>Keine Angaben zu
+  Ausgabe</strong>" verwendet.</p>
+</li>
+</ul>
+<p>Nachfolgend einige Beispiele. Die Angaben, die letztendlich zum Titel beitragen, sind in fetter Schrift.</p>
+<table>
+<thead>
+<tr>
+<th>Art</th>
+<th>Angaben</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th>Ergebnis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>Jahr</td>
+<td>Jahrgang</td>
+<td>Nummer</td>
+<td>lfd. Nummer</td>
+<td>Monat</td>
+<td>Datum</td>
+<td>Titel</td>
+</tr>
+<tr>
+<td>Nummer als Ergebnis:</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>2021</strong></td>
+<td>10</td>
+<td><strong>6</strong></td>
+<td>121</td>
+<td>Juni</td>
+<td>08.06.2021</td>
+<td>2021-06</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><strong>10</strong></td>
+<td><strong>6</strong></td>
+<td>121</td>
+<td>Juni</td>
+<td>08.06.2021</td>
+<td>Jg. 10-06</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td><strong>6</strong></td>
+<td>121</td>
+<td>Juni</td>
+<td>08.06.2021</td>
+<td>k.A.-06</td>
+</tr>
+<tr>
+<td>lfd. Nummer als Ergebnis:</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>2021</strong></td>
+<td>10</td>
+<td></td>
+<td><strong>121</strong></td>
+<td>Juni</td>
+<td>08.06.2021</td>
+<td>121 (2021)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><strong>10</strong></td>
+<td></td>
+<td><strong>121</strong></td>
+<td>Juni</td>
+<td>08.06.2021</td>
+<td>121 (Jg. 10)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td><strong>121</strong></td>
+<td>Juni</td>
+<td>08.06.2021</td>
+<td>121</td>
+</tr>
+<tr>
+<td>Datum als Ergebnis:</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>2021</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td><strong>08.06.2021</strong></td>
+<td>2021-06-08</td>
+</tr>
+<tr>
+<td></td>
+<td>2021</td>
+<td></td>
+<td></td>
+<td></td>
+<td>Juni</td>
+<td><strong>08.06.2021</strong></td>
+<td>2021-06-08</td>
+</tr>
+<tr>
+<td>Monat als Ergebnis:</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>2021</strong></td>
+<td>10</td>
+<td></td>
+<td></td>
+<td><strong>Juni</strong></td>
+<td></td>
+<td>2021-Jun</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><strong>10</strong></td>
+<td></td>
+<td></td>
+<td><strong>Juni</strong></td>
+<td></td>
+<td>Jg. 10-Jun</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td><strong>Juni</strong></td>
+<td></td>
+<td>k.A.-Jun</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sortierung">Sortierung</h2>
+<p>Datensätze der Ausgaben sollten in einer chronologischen Ordnung gelistet werden; d.h. Ausgaben sollten in derselben
+Reihenfolge, wie sie zeitlich erschienen sind, gelistet werden. Von der Datenbank wird nur dann eine chronologische
+Ordnung versucht, wenn die Ausgaben-Datensätze, die gelistet werden sollen, von einem einzigen Magazin stammen.
+Dabei richtet sich die Ordnung nach der Art von Angaben (Ausgabennummer, laufende Nummer, etc.), die unter den Ausgaben
+am häufigsten auftreten.</p>
+<p>Ist keine chronologische Ordnung möglich, werden die Datensätze zuerst nach Magazin, dann nach ihrem
+<a href="#textliche-darstellung">Titel</a> und schließlich nach <a href="{% url 'help' page_name='id'%}" title="ID">ID</a> sortiert. Dabei werden die Titel
+<a href="https://de.wikipedia.org/wiki/Lexikographische_Ordnung">lexikografisch</a> sortiert, was zu einer Ordnung führen kann, die
+augenscheinlich nicht chronologisch ist ("1970-Dez" kommt dabei dann vor "1970-Nov").</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='aenderungsliste'%}#sortierung" title="Änderungsliste">Änderungsliste#Sortierung</a>.</p>
+<p><strong>Ausführliche Erklärung:</strong></p>
+<p>Für eine chronologische Sortierung ist es nötig, dass die Datensätze chronologisch sinnvolle Angaben besitzen. Und da
+Sortierung auf dem Vergleichen von Werten basiert ("Alice" kommt alphabetisch vor "Bob" weil "A" kleiner ist als "B"),
+müssen diese verschiedenen Angaben der Ausgaben auch vergleichbar sein, damit am Ende eine sinnvolle Ordnung
+herauskommt.</p>
+<p>Bis auf wenige Ausnahmen besitzt fast jeder Ausgaben-Datensatz eine Jahresangabe, wodurch sich jeder Datensatz mit jedem
+anderen beliebigen Datensatz bezüglich des Jahres vergleichen lässt: Datensätze "jahresmäßig" korrekt zu sortieren ist
+also kein Problem.
+Schwierig wird es erst, Datensätze innerhalb eines Jahres richtig zu sortieren, da hierfür die Angaben wie
+Ausgabennummer oder Monate nötig sind - und hier liegt das Problem.</p>
+<p>Während Monatsangaben sich sehr gut dazu eignen, eine Ausgabe zeitlich einzuschätzen, ist das mithilfe von
+Ausgabennummern nur indirekt möglich. Nur weil die Nummer einer Ausgabe "5" ist, bedeutet das nicht unbedingt, dass sie
+im Mai erschienen ist - und nur weil eine Ausgabe den Monat "April" hat, heißt es nicht, dass sie vor der Ausgabe mit
+Nummer "5" erschienen ist. Die Angabe Ausgabennummer lässt sich mit der Angabe Monat nicht unmittelbar vergleichen und
+eine zeitliche Einordnung ist mit ihr schwierig: Nummer "5" sagt zunächst nur aus, dass die Ausgabe zwischen Nummer "4"
+und Nummer "6" erschienen ist, aber nicht wann genau in einem Jahr dies passiert ist (dafür müsste man u.a. wissen, wie
+viele Hefte pro Jahr erscheinen).</p>
+<p>Besonders deutlich wird diese "Unvergleichbarkeit" wenn man laufende Nummern bedenkt: erschien die Ausgabe mit laufender
+Nummer "256" vor der Ausgabe "2021-Jun"? Diese Frage lässt sich nicht ohne weitere Informationen beantworten - und wenn
+diese weiteren Informationen fehlen, ist eine rein chronologische Ordnung dieser zwei Ausgaben nicht möglich.</p>
+<p>Am besten erstellt man also eine chronologische Ordnung, indem man Angaben derselben Art vergleicht. Zu diesem Zweck
+ermittelt die Datenbank die Angaben, die am häufigsten in den darzustellenden Ausgaben auftauchen, und richtet die
+Ordnung danach aus. Besitzen die meisten der Ausgaben eine Ausgabennummer, und nur einige wenige eine Monatsangabe, so
+wird die Ordnung die Ausgabennummer priorisieren. Die Monatsangabe würde dann herangezogen, wenn Ausgaben dieselbe
+Ausgabennummer hätten.</p>
+<p>Unter den Magazinen herrscht bezüglich der Verwendung von Angaben keine Einheitlichkeit. Jedes Magazin macht ihr eigenes
+Ding, bleibt aber größtenteils konsequent dabei: Magazin "Alice" versieht ihre Ausgaben nur mit Monatsangaben und
+Magazin "Bob" benutzt ausschließlich laufende Nummern. Wie oben erklärt wurde, lassen sich diese beiden Arten von
+Angaben nicht gut vergleichen. Für eine gemeinsame Auflistung der Ausgaben
+<em>beider</em> Magazine ist eine chronologische Ordnung nicht möglich.
+Aus diesem Grund wird die Datenbank grundsätzlich nur versuchen, eine chronologische Ordnung herzustellen, wenn die
+darzustellenden Ausgaben von genau einem Magazin stammen.</p>
+<h2 id="admin-aktionen">Admin Aktionen</h2>
+<h3 id="jahrgang-hinzufugen">Jahrgang hinzufügen</h3>
+<p>Aktion zur Bearbeitung der Jahrgangsangaben der ausgewählten Ausgaben. Wähle zunächst eine Schlüssel-Ausgabe, die den
+Beginn eines Jahrgangs darstellt, aus und gebe den Jahrgang dieser Schlüssel-Ausgabe an.
+Die Jahrgangswerte der anderen Ausgaben werden danach in Abständen von einem Jahr (in Bezug zur Schlüssel-Ausgabe)
+hochgezählt bzw. heruntergezählt. Wird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge aller ausgewählten
+Ausgaben gelöscht.
+Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.</p>
+<h3 id="zu-broschuren-bewegen">zu Broschüren bewegen</h3>
+<p>Ausgaben, die keine Artikel besitzen, können zu einer <a href="{% url 'help' page_name='broschuere'%}" title="Broschüre">Broschüre</a>, zu einem
+<a href="{% url 'help' page_name='warenkatalog'%}" title="Warenkatalog">Warenkatalog</a> oder zu einem <a href="{% url 'help' page_name='programmheft'%}" title="Programmheft">Programmheft</a> umgewandelt
+und in die entsprechende Kategorie verschoben werden. Auf der Seite zur Bestätigung der Aktion können die Angaben zu den
+Broschüren eingesehen und überarbeitet werden, bevor die Broschüren erstellt werden.</p>
+<p>Möchtest du einige der ausgewählten Ausgaben doch nicht verschieben, so kannst du für die entsprechende Broschüre das
+Häkchen aus "Änderungen bestätigen" entfernen. Die Art der Broschüre (also ob Broschüre, Warenkatalog oder Programmheft)
+wählst du am unteren Ende der Bestätigungsseite aus.</p>
+<div class="admonition caution">
+<p class="admonition-title">Achtung: die Ausgaben werden beim Verschieben gelöscht!</p>
+</div>
+<h3 id="status-andern">Status ändern</h3>
+<p>Der <a href="#bearbeitungsstatus">Bearbeitungsstatus</a> der ausgewählten Ausgaben kann hiermit leicht geändert werden.</p></div>
+</div>{% endblock content %}

@@ -1,0 +1,42 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#loschen">Löschen</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#geschutzte-objekte">Geschützte Objekte</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="loschen">Löschen</h1>
+<p>Beim Löschen wird der jeweilige
+ <a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensatz</a> aus der Datenbank entfernt. </p>
+<p>Eine Wiederherstellung ist nicht möglich. Verweise von anderen Datensätzen auf diesen gelöschten Datensatz werden ebenfalls entfernt: löscht man ein Genre, so wird auch bei jedem Musiker der Verweis auf jenes Genre gelöscht.</p>
+<p>Alle von der Löschung betroffenen Objekte und Verweise (Beziehungen) werden in der Zusammenfassung auf der Seite, die die Löschung einleitet, aufgelistet.</p>
+<h3 id="geschutzte-objekte">Geschützte Objekte</h3>
+<p>Manche Datensätze können nur unter bestimmten Umständen gelöscht werden. Versucht man, einen Datensatz mit geschützten Objekten zu löschen, so warnt die Datenbank:</p>
+<pre><code>Kann Ausgabe nicht löschen
+Das Löschen von Ausgabe „2000-1“ würde ein Löschen der folgenden geschützten verwandte Objekte erfordern: Artikel: Testartikel
+
+</code></pre>
+<p>Um das zu erklären, hier eine Beispiel mit <a href="{% url 'help' page_name='artikel'%}" title="Artikel">Artikeln</a> und
+ <a href="{% url 'help' page_name='ausgabe'%}" title="Ausgabe">Ausgaben</a>:</p>
+<p>Ein Artikel erfordert immer eine Angabe zu der Ausgabe einer Zeitschrift, aus der der Artikel stammt. Dementsprechend ist Ausgabe ein notwendig erforderliches Feld (das nicht leer bleiben darf) für jeden Datensatz eines Artikels.</p>
+<p>Wird die Ausgabe eines Artikels gelöscht, würde auch der Verweis auf die Ausgabe aus dem Datensatz des Artikels verschwinden; das Feld Ausgabe würde für den Artikel leer bleiben - dies ist aber nicht erlaubt (<a href="https://en.wikipedia.org/wiki/de:Referentielle_Integrität" title="wikipedia:de:Referentielle Integrität">Referentielle Integrität</a>).</p>
+<p>Die Datenbank würde dieses Beziehungsproblem dadurch lösen, dass sie
+ <strong>den Artikel ebenfalls löscht</strong>. In manchen Fällen ist dieses Verhalten durchaus erwünscht. Bei Ausgaben könnte dies jedoch zur Löschung von vielen Artikeln auf einen Schlag führen.
+ Um eine Löschung mit drastischen Folgen vorzubeugen, ist die Löschung von manchen Arten von Datensätzen (Ausgaben, Magazine) nur dann erlaubt, wenn es keine verwandten Datensätzen gibt, die von dem zu löschenden Datensatz abhängig sind und dementsprechend dann ebenfalls gelöscht werden würden.</p>
+<p>Die Beziehung von Artikel zu Ausgabe gilt als geschützt: eine Ausgabe <em>ohne</em> Artikel kann gelöscht werden. Eine
+ <em>mit</em> Artikeln jedoch nicht.</p></div>
+</div>{% endblock content %}

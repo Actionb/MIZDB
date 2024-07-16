@@ -1,0 +1,124 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#autor">Autor</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#kurzel">Kürzel</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#person">Person</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#beschreibung">Beschreibung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bemerkungen">Bemerkungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#magazine">Magazine</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#schnellerstellung-mit-dropdown">Schnellerstellung mit Dropdown</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="autor">Autor</h1>
+<p>Hier werden Autorinnen und Autoren von Büchern, Artikel, etc. gelistet. Es muss zumindest ein Kürzel oder die Person des
+Autors angegeben werden.</p>
+<h2 id="felder">Felder</h2>
+<h3 id="kurzel">Kürzel</h3>
+<p>Häufig wird der Autor eines <a href="{% url 'help' page_name='artikel'%}" title="Artikel">Artikels</a> nur in verkürzter Form angegeben (z.B. Initialen).
+Auch ein kurzer Spitzname kann hier angegeben werden. Maximal 8 Zeichen.</p>
+<h3 id="person">Person</h3>
+<p>Verweis auf den <a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensatz</a>, der die
+<a href="{% url 'help' page_name='person'%}" title="Person">Person</a> dieses Autors repräsentiert.</p>
+<h3 id="beschreibung">Beschreibung</h3>
+<p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</p>
+<h3 id="bemerkungen">Bemerkungen</h3>
+<p>Notizen für Archiv-Mitarbeiter.</p>
+<h3 id="magazine">Magazine</h3>
+<p>Hier kann man angeben, bei welchen <a href="{% url 'help' page_name='magazin'%}" title="Magazin">Magazinen</a> der Autor mitwirkt oder mitgewirkt hat.</p>
+<h2 id="schnellerstellung-mit-dropdown">Schnellerstellung mit Dropdown</h2>
+<p>Von anderen Formularen (z.B. dem für Artikel) aus, kann mithilfe des 
+<a href="{% url 'help' page_name='bedienelement'%}#kombinationsfeldcombobox">Auswahlfelds</a> für Autoren auch direkt ein Datensatz für einen neuen Autor 
+erstellt werden.
+Dabei berücksichtigt das Feld gängige Schreibweisen für bürgerliche Namen, um einen passenden Datensatz erstellen zu
+können.</p>
+<p>Hier einige Beispiele. Links der Text, der in das Steuerelement eingegeben wird und rechts die Daten, mit denen der
+Datensatz für den Autor erstellt wird.</p>
+<table>
+<thead>
+<tr>
+<th>Eingabetext</th>
+<th>Vorname</th>
+<th>Nachname</th>
+<th>Autoren-Kürzel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mustermann</td>
+<td></td>
+<td>Mustermann</td>
+<td></td>
+</tr>
+<tr>
+<td>Max Mustermann</td>
+<td>Max</td>
+<td>Mustermann</td>
+<td></td>
+</tr>
+<tr>
+<td>Mustermann, Max</td>
+<td>Max</td>
+<td>Mustermann</td>
+<td></td>
+</tr>
+<tr>
+<td>Mustermann (MM)</td>
+<td></td>
+<td>Mustermann</td>
+<td>MM</td>
+</tr>
+<tr>
+<td>Max (MM) Mustermann</td>
+<td>Max</td>
+<td>Mustermann</td>
+<td>MM</td>
+</tr>
+<tr>
+<td>Max "MM" Mustermann</td>
+<td>Max</td>
+<td>Mustermann</td>
+<td>MM</td>
+</tr>
+<tr>
+<td>Mustermann, Max (MM)</td>
+<td>Max</td>
+<td>Mustermann</td>
+<td>MM</td>
+</tr>
+</tbody>
+</table></div>
+</div>{% endblock content %}

@@ -1,0 +1,108 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#veranstaltung">Veranstaltung</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#name">Name</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#datum">Datum</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#spielort">Spielort</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#reihe">Reihe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#beschreibung">Beschreibung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bemerkungen">Bemerkungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#alias">Alias</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#musiker">Musiker</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bands">Bands</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#schlagworter">Schlagwörter</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#genres">Genres</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#personen">Personen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#siehe-auch">Siehe auch</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="veranstaltung">Veranstaltung</h1>
+<p>Ereignisse wie Konzerte und Festivals werden hier gelistet.</p>
+<h2 id="felder">Felder</h2>
+<h3 id="name">Name</h3>
+<p>Der Name der Veranstaltung.</p>
+<h3 id="datum">Datum</h3>
+<p>Angaben zur zeitlichen Einteilung.</p>
+<p>Siehe <a href="{% url 'help' page_name='bedienelement'%}#feld-fur-partielles-datum" title="Bedienelement">Bedienelement für partielle Datumsangaben</a>.</p>
+<h3 id="spielort">Spielort</h3>
+<p>Die Örtlichkeit, wo die Veranstaltung stattfand.</p>
+<p>Siehe <a href="{% url 'help' page_name='spielort'%}" title="Spielort">Spielort</a>.</p>
+<h3 id="reihe">Reihe</h3>
+<p>Gehört die Veranstaltung zu einer Reihe von Veranstaltung (z.B. jährliche Festivals), so kann der Name der Reihe hier
+angegeben werden.</p>
+<h3 id="beschreibung">Beschreibung</h3>
+<p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</p>
+<h3 id="bemerkungen">Bemerkungen</h3>
+<p>Notizen für Archiv-Mitarbeiter.</p>
+<h3 id="alias">Alias</h3>
+<p>Weitere Namen, unter denen die Veranstaltung bekannt ist.</p>
+<h3 id="musiker">Musiker</h3>
+<p>Verweise auf <a href="{% url 'help' page_name='musiker'%}" title="Musiker">Musiker</a>, die an der Veranstaltung mitgewirkt haben.</p>
+<h3 id="bands">Bands</h3>
+<p>Verweise auf <a href="{% url 'help' page_name='band'%}" title="Band">Bands</a>, die an der Veranstaltung mitgewirkt haben.</p>
+<h3 id="schlagworter">Schlagwörter</h3>
+<p><a href="{% url 'help' page_name='schlagwort'%}" title="Schlagwort">Schlagwörter</a>/Deskriptoren/Tags zur Art und zum Themenbereich der Veranstaltung.</p>
+<h3 id="genres">Genres</h3>
+<p>Angaben zu den <a href="{% url 'help' page_name='genre'%}" title="Genre">Genres</a>, die zu der Veranstaltung passen.</p>
+<h3 id="personen">Personen</h3>
+<p>Angaben zu <a href="{% url 'help' page_name='person'%}" title="Person">Personen</a>, die an der Veranstaltung mitgewirkt haben, aber keine Musiker sind.</p>
+<h2 id="siehe-auch">Siehe auch</h2>
+<ul>
+<li><a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></li>
+</ul></div>
+</div>{% endblock content %}

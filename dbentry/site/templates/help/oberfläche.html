@@ -1,0 +1,103 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#oberflache">Oberfläche</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#index">Index</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#kopfzeile">Kopfzeile</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#datenbanksuche">Datenbanksuche</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#anderungsseite">Änderungsseite</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="oberflache">Oberfläche</h1>
+<p>Hier werden einige Aspekte der Benutzeroberfläche erklärt.</p>
+<h3 id="index">Index</h3>
+<p>Nach der Anmeldung an die Datenbank landest du im Hauptmenü, dem Index. Hier werden die verschiedenen Kategorien (also:
+Artikel, Bücher, usw.) der Datenbank angezeigt. Unter "Archivgut" befinden sich die Kategorien, mit denen man
+Archivmaterial erfasst. Darunter, unter "Stammdaten", sind die Kategorien, die bei der Erfassung am häufigst verwendet
+werden.</p>
+<p>Klickst du auf die Beschriftung einer Kategorie, gelangst du
+zur <a href="{% url 'help' page_name='%C3%A4nderungsliste'%}" title="Übersichtsseite">Übersichtsseite</a> (auch "Änderungsliste") dieser Kategorie. Klickst du auf
+den "Hinzufügen" Link neben der Kategorie, wirst du zu einem leeren Formular der Kategorie geführt, mit welchem du einen
+neuen <a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensatz</a> erstellen kannst.</p>
+<p>Rechts auf der Indexseite findest du <a href="https://en.wikipedia.org/wiki/de:Hyperlink" title="wikipedia:de:Hyperlink">Links</a> zu der
+Änderungsseite der Archivgüter (wie z.B. Artikel, Ausgaben oder Bücher), die von dir zuletzt bearbeitet wurden. Darunter
+befinden sich Links zu Änderungsseiten von jeglichen Datensätzen, die von euch erstellt, bearbeitet oder gelöscht
+wurden.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/index.png' %}"><img alt="Der Index" class="mb-1" src="{% static 'img/index.png' %}" width="300"/></a><br/>
+<figcaption>Der Index</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/changelist.png' %}"><img alt="Übersichtsseite der Artikel" class="mb-1" src="{% static 'img/changelist.png' %}" width="300"/></a><br/>
+<figcaption>Übersichtsseite der Artikel</figcaption>
+<br/>
+</figure>
+</div>
+<h3 id="kopfzeile">Kopfzeile</h3>
+<p>In der Kopfzeile findest du die Navigation, die Datenbanksuche und Links zu der Merkliste, der Hilfe und der
+Benutzerverwaltung. Der MIZDB Schriftzug dient als Link zurück zum Index.</p>
+<p>Neben der Merkliste findest du einen Knopf, mit dem du den Farbmodus (hell oder dunkel) wechseln kannst.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/navigation.png' %}"><img alt="Navigation" class="mb-1" src="{% static 'img/navigation.png' %}" width="300"/></a><br/>
+<figcaption>Navigation</figcaption>
+<br/>
+</figure>
+</div>
+<h3 id="datenbanksuche">Datenbanksuche</h3>
+<p>Klickst du auf 'Datenbanksuche' öffnet sich ein kleines Suchformular. Dort gibst du einfach einen Suchbegriff ein und
+die Datenbank wird sofort durchsucht.</p>
+<p>Mit einem Klick auf den Suchbutton oder mit der Eingabetaste wirst du auf die Suchseite weitergeleitet.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/datenbanksuche.png' %}"><img alt="Datenbanksuche" class="mb-1" src="{% static 'img/datenbanksuche.png' %}" width="300"/></a><br/>
+<figcaption>Datenbanksuche</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/datenbanksuche_seite.png' %}"><img alt="Seite der Datenbanksuche" class="mb-1" src="{% static 'img/datenbanksuche_seite.png' %}" width="300"/></a><br/>
+<figcaption>Seite der Datenbanksuche</figcaption>
+<br/>
+</figure>
+</div>
+<h3 id="anderungsseite">Änderungsseite</h3>
+<p>Auf der Änderungsseite könnt ihr neue Datensätze erstellen oder Änderungen an bereits existierenden Datensätzen
+vornehmen. Dies wird mithilfe
+von <a href="https://en.wikipedia.org/wiki/de:Webformular" title="wikipedia:de:Webformular">Webformularen</a> bewerkstelligt. Das
+Formular sammelt die Angaben, die ihr macht, und verschickt diese nach der Aufforderung zu Speicherung an den Server der
+Datenbank, der diese Daten dann schließlich sichert.</p>
+<p>Erklärungen zu den verschiedenen Bedienelementen, die bei der Dateneingabe verwendet werden, findet ihr auf der
+entsprechenden Hilfe-Seite: <a href="{% url 'help' page_name='bedienelement'%}" title="Bedienelement">Bedienelement</a>.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/change_page.png' %}"><img alt="Änderungsseite der Beatles" class="mb-1" src="{% static 'img/change_page.png' %}" width="300"/></a><br/>
+<figcaption>Änderungsseite der Beatles</figcaption>
+<br/>
+</figure>
+</div></div>
+</div>{% endblock content %}

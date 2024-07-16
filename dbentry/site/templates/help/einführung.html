@@ -1,0 +1,51 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#einfuhrung">Einführung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="einfuhrung">Einführung</h1>
+<p>Hi! Hallo! Willkommen im Archiv!</p>
+<p>Damit du mit der Arbeit im Archiv beginnen kannst, musst du dich zunächst mit der Bedienung der Datenbank vertraut machen.
+Zu diesem Zweck sollte die Hilfe-Seite zur <a href="{% url 'help' page_name='oberfl%C3%A4che'%}" title="Oberfläche">Oberfläche</a> durchgelesen werden. Außerdem
+solltest du dir die <a href="{% url 'help' page_name='grunds%C3%A4tze'%}" title="Grundsätze">Empfehlungen</a> zum Arbeiten mit der Datenbank anschauen, bevor du
+selber mit der Erfassung von Material beginnst.</p>
+<p>Zum Einstieg sei die Erfassung von <a href="{% url 'help' page_name='erfassung'%}" title="Artikel">Artikeln</a> aus Zeitschriften empfohlen. Der Prozess
+ist unkompliziert (z.B. da keine Bestandsangaben gemacht werden müssen) und ist bei jedem Artikel gleich, sodass du
+dich gut an die Arbeit mit der Datenbank gewöhnen kannst. Wenn du das Bearbeiten von Artikeln drauf hast, und wenn du
+den Umgang mit den verschiedenen Elementen der Formulare verinnerlicht hast, dann sollten dir die anderen Kategorien
+von Materialien, deren Erfassung wegen Besonderheiten unter Umständen deutlich anspruchsvoller sein kann, weniger
+Probleme machen.</p>
+<p>Hier noch eine Auflistung der empfohlenen Seiten zur Einführung in die Arbeit mit der Datenbank:</p>
+<ol>
+<li>Erklärungen zur Benutzung:<ul>
+<li>die <a href="{% url 'help' page_name='oberfl%C3%A4che'%}" title="Oberfläche">Oberfläche</a></li>
+<li>die <a href="{% url 'help' page_name='bedienelement'%}" title="Bedienelement">Bedienelemente</a></li>
+<li><a href="{% url 'help' page_name='sichern'%}" title="Sichern">Sichern</a> &amp;
+  <a href="{% url 'help' page_name='l%C3%B6schen'%}" title="Löschen">Löschen</a> von
+  <a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensätzen</a></li>
+</ul>
+</li>
+<li>Einleitung in die Erfassung von Archiv Materialien:<ul>
+<li><a href="{% url 'help' page_name='grunds%C3%A4tze'%}" title="Grundsätze">Grundsätze</a> zum Arbeiten mit der Datenbank</li>
+<li><a href="{% url 'help' page_name='erfassung'%}" title="Artikel">Erfassung von Artikeln aus Zeitschriften</a></li>
+</ul>
+</li>
+<li>Suchen, sortieren und finden:<ul>
+<li>das <a href="{% url 'help' page_name='suchformular'%}" title="Suchformular">Suchformular</a></li>
+<li>die <a href="{% url 'help' page_name='%C3%A4nderungsliste'%}" title="Änderungsliste">Änderungsliste</a></li>
+</ul>
+</li>
+</ol></div>
+</div>{% endblock content %}
