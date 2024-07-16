@@ -10,7 +10,7 @@ nav:
       - 'Bedienelemente': bedienelement.md
       - 'Sichern': sichern.md
       - 'Löschen': loeschen.md
-      - 'Aktionen': aktionen.md
+      - 'Aktionen': aktion.md
       - 'Benutzerverwaltung': benutzer.md
   - Tabellen:
       - 'Artikel': artikel.md

@@ -1,72 +1,106 @@
-Aktion
+Aktionen
 ======
 
+Mit Aktionen können mehrere Datensätze gleichzeitig bearbeitet werden.
 
-Mit Aktionen können mehrere Datensätze gleichzeitig bearbeiten werden.
- Ihr wählt aus dem
- [Dropdown-Menü](bedienelement.html#einfaches-auswahlfelddropdown "Bedienelement") die gewünschte Aktion, markiert die zu bearbeitenden Datensätze mithilfe der Checkboxen und klickt dann auf den "Ausführen" Knopf neben dem Dropdown-Menü. Wenn ihr die Checkbox im Spaltenkopf benutzt, werden alle gelisteten Datensätze markiert.
+Dazu musst du zunächst auf der [Übersichtsseite](aenderungsliste.md) Datensätze für die Aktion auswählen.
+Setze dazu neben dem Datensatz, den du mit der Aktion bearbeiten möchtest, ein Häkchen (1). Mit der Checkbox im
+Tabellenkopf fügst du alle momentan sichtbaren Datensätze zu deiner Auswahl hinzu.
 
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Auswahl von Musikern zur Aktion](img/aktion/changelist_selection.png){ width="300" .mb-1 }  
+  <figcaption>Auswahl von Musikern zur Aktion</figcaption>  
+</figure>
+</div>
 
+Die aktuelle Auswahl findest du unten rechts im Fenster. Klicke auf den Knopf "**Ausgewählte ?**" (2), um die Auswahl
+anzuzeigen. Unten in der Auswahl befinden sich die Knöpfe, mit denen du eine Aktion für die ausgewählten Datensätze
+startest (3).
 
+Um einen Datensatz von der Auswahl zu entfernen, klicke auf das rote **X** (4).
+Die gesamte Auswahl kann aufgehoben werden, indem du auf das rote **X** am unteren Ende des Auswahlbereichs klickst.
 
+## Verfügbare Aktionen
 
+Es stehen folgende Aktionen zur Verfügung:
 
-
-Allgemein stehen die Aktionen "Löschen" und "Zusammenfügen" zur Verfügung. Bei Datensätzen, bei denen Bestandsangaben hinterlegt werden, gibt es zusätzlich die "Bestände ändern" Aktion. Daneben bieten manche Änderungslisten auch noch andere Aktionen für Datensätze ihrer Kategorie an; Erklärungen dazu findet ihr auf der Hilfe-Seite der Kategorie (z.B.
- [Ausgabe#Aktionen](ausgabe.md#Aktionen "Ausgabe")).
-
-
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Verfügbare Aktionen](img/aktion/merge_actions.png){ width="300" .mb-1 }  
+  <figcaption>(von links nach rechts) Löschen, Zusammenfügen, Merkliste</figcaption>  
+</figure>
+</div>
 
 ### Löschen
 
+Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet.
 
-Hiermit wird die Löschung der ausgewählten Datensätze eingeleitet. Die Datensätze werden zusammen in einem Zug gelöscht. Siehe auch:
- [Löschen](loeschen.md "Löschen")
-
-
-
-### Bestände bearbeiten
-
-
-Diese Aktion ermöglicht das Bearbeiten der Bestandsangaben von mehreren Datensätzen. Die Bestände der einzelnen Datensätze werden wie aus den
- [Änderungsseiten](oberfläche.html#anderungsseite "Oberfläche") gewohnt angezeigt und können frei verändert werden. Änderungen müssen durch einen Klick auf den roten Knopf "Ja, ich in sicher" bestätigt werden, bevor sie übernommen werden.
-   
-
-
-
+Siehe auch: [Löschen](loeschen.md "Löschen")
 
 ### Zusammenfügen
 
+Mit dieser Aktionen können mehrere Datensätze zu einem einzigen Datensatz zusammengefügt werden. Aus den entsprechenden
+Datensätzen wählst du den Datensatz aus, der am Ende des Prozesses übrig bleiben soll. Dieser "primäre Datensatz" wird
+mit Daten der anderen Datensätze erweitert. Verweise (also z.B. auf Musiker oder Bands, siehe
+[Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")) werden immer übernommen, sofern dem primären
+Datensatz diese Verweise fehlen. Wird bei "Primären Datensatz erweitern" ein Häkchen gesetzt, werden auch Daten, die
+keine Verweise darstellen und die dem primären Datensatz fehlen, dem primären Datensatzes hinzugefügt (wie zum Beispiel
+Beschreibung oder Zusammenfassung).
 
-Mit dieser Aktionen können mehrere Datensätze zu einem einzigen Datensatz zusammengefügt werden. Aus den entsprechenden Datensätzen wählt ihr den Datensatz aus, der am Ende des Prozesses übrig bleiben soll. Dieser "primäre Datensatz" wird mit Daten der anderen Datensätze erweitert. Verweise (also z.B. auf Musiker oder Bands, siehe
- [Bedienelement#Inlines](bedienelement.md#inlines "Bedienelement")) werden immer übernommen, sofern dem primären Datensatz diese Verweise fehlen. Wird bei "Primären Datensatz erweitern" ein Häkchen gesetzt, werden auch Daten, die keine Verweise darstellen und die dem primären Datensatz fehlen, dem primären Datensatzes hinzugefügt.
- Nach dem Erweitern des primären Datensatzes werden die anderen Datensätze gelöscht.
-
-
-
+[comment]: <> (@formatter:off)  
+!!! caution "Achtung: die anderen Datensätze werden gelöscht!"  
+    Nach dem Erweitern des primären Datensatzes werden die anderen Datensätze gelöscht. 
   
-
-**Beispiel:**  
-
- Die folgenden drei Datensätze sollen zusammengefügt werden, da sie denselben Artikel beschreiben.
+[comment]: <> (@formatter:on)
 
 
+**Beispiel:**
 
-Bei der Auswahl des primären Datensatzes werden die Datensätze in derselben Reihenfolge wie in der
- [Änderungsliste](aenderungsliste.md "Änderungsliste") dargestellt. Hier soll der oberste Datensatz für dieses Beispiel ausgewählt werden, um das Erweitern der Grunddaten ("Primären Datensatz erweitern") veranschaulichen zu können.
+Die folgenden drei Datensätze sollen zusammengefügt werden, da sie denselben Artikel beschreiben.
 
+![Artikel für Zusammenfügen Beispiel](img/aktion/merge_1.png)
 
+Klicke auf den Knopf für die "Zusammenfügen" Aktion im Auswahlbereich.
+Danach musst du den primären Datensatz bestimmen.
 
-Dem primären Datensatz fehlte eine Zusammenfassung und bei "Primären Datensatz erweitern" wurde ein Häkchen gesetzt: die fehlende Zusammenfassung soll also durch eine Zusammenfassung der anderen Datensätze ersetzt werden. Jedoch haben die beiden anderen Datensätze unterschiedliche Zusammenfassungen - hier muss zunächst eine der beiden Zusammenfassungen ausgewählt werden.
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Primären Datensatz bestimmen](img/aktion/merge_2.png){ width="300" .mb-1 }  
+  <figcaption>Primären Datensatz bestimmen</figcaption>  
+</figure>
+</div>
 
+Dazu setzt du bei dem primären Datensatz in der Checkbox am linken Rand ein Häkchen (1).
 
+Dem primären Datensatz fehlte eine Zusammenfassung und bei "Primären Datensatz erweitern" wurde ein Häkchen gesetzt (2):
+Die fehlende Zusammenfassung soll also durch eine Zusammenfassung der anderen Datensätze ersetzt werden. Jedoch haben
+die beiden anderen Datensätze unterschiedliche Zusammenfassungen - hier muss zunächst eine der beiden Zusammenfassungen
+ausgewählt werden.
+
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Zusammenfassung festlegen](img/aktion/merge_3.png){ width="300" .mb-1 }  
+  <figcaption>Zusammenfassung festlegen</figcaption>  
+</figure>
+</div>
 
 Das Resultat sieht nun so aus:
 
-
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Ergebnis Zusammenfügung](img/aktion/merge_4.png){ width="300" .mb-1 }  
+  <figcaption>Ergebnis Zusammenfügung</figcaption>  
+</figure>
+</div>
 
 * nur der primäre Datensatz ist übrig geblieben - die anderen beiden wurden gelöscht
 * eine Zusammenfassung wurde hinzugefügt, da sie vorher fehlte
 * die Angabe zur Seite wurde **nicht** verändert, da sie vor dem Zusammenfügen bereits existierte
-* die Schlagwörter des primären Datensatzes wurden um das Schlagwort ("sekundärer Datensatz") der anderen Datensätze erweitert
+* die Schlagwörter des primären Datensatzes wurden um das Schlagwort ("sekundärer Datensatz") der anderen Datensätze
+  erweitert
 * die Künstler des primären Datensatzes wurden um die Künstler der anderen Datensätze erweitert
+
+### Auf Merkliste setzen
+
+Fügt die ausgewählten Datensätze zu deiner [Merkliste](merkliste.md) hinzu.
