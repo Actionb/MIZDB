@@ -10,7 +10,7 @@ Neu hier? Dann lese die **[Einführung](einfuehrung.md)**!
 
 Informationen zu den Tabellen findest du hier:
 <div markdown class="d-flex justify-content-evenly gap-3 mb-3">
-<div markdown class="w-100 p-3 rounded bg-secondary-subtle">
+<div markdown class="w-100 p-3 card bg-body-tertiary">
 
 ##### Archiv Materialien
 
@@ -26,7 +26,7 @@ Informationen zu den Tabellen findest du hier:
 * [Warenkataloge](warenkatalog.md)
 
 </div>
-<div markdown class="w-100 p-3 rounded bg-secondary-subtle">
+<div markdown class="w-100 p-3 card bg-body-tertiary">
 
 ##### Stammdaten
 
@@ -40,7 +40,7 @@ Informationen zu den Tabellen findest du hier:
 * [Schlagwörter](schlagwort.md)
 
 </div>
-<div markdown class="w-100 p-3 rounded bg-secondary-subtle">
+<div markdown class="w-100 p-3 card bg-body-tertiary">
 
 ##### Sonstige
 
