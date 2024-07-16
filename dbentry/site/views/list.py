@@ -33,6 +33,7 @@ from django.contrib.admin.models import LogEntry, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
+from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -229,6 +230,7 @@ class AudioList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.AudioResource
+    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Audio):
@@ -517,6 +519,7 @@ class VideoList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.VideoResource
+    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Video):

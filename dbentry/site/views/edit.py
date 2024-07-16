@@ -18,7 +18,9 @@ To declare inlines for handling relations:
         model = Pizza
         inlines = [ToppingsInline]
 """
+
 from django import forms
+from django.urls import reverse_lazy
 
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
@@ -113,6 +115,7 @@ class AudioView(BaseEditView):
         BestandInline,
     ]
     form = _forms.AudioForm
+    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
 
 @register_edit(_models.Ausgabe)
@@ -629,6 +632,7 @@ class VideoView(BaseEditView):
         BestandInline,
     ]
     form = _forms.VideoForm
+    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
 
 @register_edit(_models.Ort)

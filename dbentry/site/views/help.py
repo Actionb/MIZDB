@@ -31,7 +31,7 @@ class HelpView(BaseViewMixin, TemplateView):
                 return super().get(request, *args, **kwargs)
             else:
                 messages.warning(request, f"Hilfe Seite für '{self.kwargs['page_name']}' nicht gefunden.")
-        except KeyError:  # pragma: no cover
+        except KeyError:
             pass
         # No 'page_name' in kwargs or no template with that name exists.
         return redirect("help_index")
