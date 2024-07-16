@@ -1,7 +1,6 @@
 Oberfläche
 ==========
 
-
 Hier werden einige Aspekte der Benutzeroberfläche erklärt.
 
 ### Index
@@ -23,25 +22,28 @@ wurden.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Der Index](img/index.png){ width="300" .mb-1 }  
+  ![Der Index](img/oberflaeche/index.png){ width="300" .mb-1 }  
   <figcaption>Der Index</figcaption>  
 </figure>  
 <figure markdown="span">  
-  ![Übersichtsseite der Artikel](img/changelist.png){ width="300" .mb-1 }  
+  ![Übersichtsseite der Artikel](img/oberflaeche/changelist.png){ width="300" .mb-1 }  
   <figcaption>Übersichtsseite der Artikel</figcaption>  
 </figure>  
 </div>
 
 ### Kopfzeile
 
-In der Kopfzeile findest du die Navigation, die Datenbanksuche und Links zu der Merkliste, der Hilfe und der
-Benutzerverwaltung. Der MIZDB Schriftzug dient als Link zurück zum Index.
+In der Kopfzeile findest du die Navigation (1), die [Datenbanksuche](#datenbanksuche) (2) und Links zu der
+[Merkliste](merkliste.md), der [Hilfe](index.md) und der [Benutzerverwaltung](benutzer.md) (3). Der MIZDB Schriftzug (4)
+dient als Link zurück zum [Index](#index).
 
-Neben der Merkliste findest du einen Knopf, mit dem du den Farbmodus (hell oder dunkel) wechseln kannst.
+![Kopfzeile](img/oberflaeche/kopfzeile.png)
+
+Neben der Merkliste findest du einen Knopf, mit dem du den Farbmodus (hell oder dunkel) wechseln kannst (5).
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center"> 
 <figure markdown="span">  
-  ![Navigation](img/navigation.png){ width="300" .mb-1 }  
+  ![Navigation](img/oberflaeche/navigation.png){ width="300" .mb-1 }  
   <figcaption>Navigation</figcaption>  
 </figure>  
 </div>
@@ -55,11 +57,11 @@ Mit einem Klick auf den Suchbutton oder mit der Eingabetaste wirst du auf die Su
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Datenbanksuche](img/datenbanksuche.png){ width="300" .mb-1 }  
+  ![Datenbanksuche](img/oberflaeche/datenbanksuche.png){ width="300" .mb-1 }  
   <figcaption>Datenbanksuche</figcaption>  
 </figure>  
 <figure markdown="span">  
-  ![Seite der Datenbanksuche](img/datenbanksuche_seite.png){ width="300" .mb-1 }  
+  ![Seite der Datenbanksuche](img/oberflaeche/datenbanksuche_seite.png){ width="300" .mb-1 }  
   <figcaption>Seite der Datenbanksuche</figcaption>  
 </figure>  
 </div>
@@ -67,8 +69,7 @@ Mit einem Klick auf den Suchbutton oder mit der Eingabetaste wirst du auf die Su
 ### Änderungsseite
 
 Auf der Änderungsseite könnt ihr neue Datensätze erstellen oder Änderungen an bereits existierenden Datensätzen
-vornehmen. Dies wird mithilfe
-von [Webformularen](https://en.wikipedia.org/wiki/de:Webformular "wikipedia:de:Webformular") bewerkstelligt. Das
+vornehmen. Dies wird mithilfe von [Webformularen](https://de.wikipedia.org/wiki/Webformular) bewerkstelligt. Das
 Formular sammelt die Angaben, die ihr macht, und verschickt diese nach der Aufforderung zu Speicherung an den Server der
 Datenbank, der diese Daten dann schließlich sichert.
 
@@ -77,10 +78,7 @@ entsprechenden Hilfe-Seite: [Bedienelement](bedienelement.md "Bedienelement").
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Änderungsseite der Beatles](img/change_page.png){ width="300" .mb-1 }  
+  ![Änderungsseite der Beatles](img/oberflaeche/change_page.png){ width="300" .mb-1 }  
   <figcaption>Änderungsseite der Beatles</figcaption>  
 </figure>  
 </div>
-
-
-

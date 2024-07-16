@@ -8,7 +8,7 @@ Filtern (siehe [Suchformular](suchformular.md "Suchformular")).
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Übersichtsseite der Artikel](img/changelist.png){ width="300" .mb-1 }  
+  ![Übersichtsseite der Artikel](img/oberflaeche/changelist.png){ width="300" .mb-1 }  
   <figcaption>Übersichtsseite der Artikel</figcaption>  
 </figure>  
 <figure markdown="span">  
