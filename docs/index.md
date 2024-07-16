@@ -60,7 +60,7 @@ Informationen zu den Tabellen findest du hier:
 * [Oberfläche](oberflaeche.md)
 * [Bedienelemente](bedienelement.md)
 * [Sichern](sichern.md) & [Löschen](loeschen.md)
-* [Aktionen](aktionen.md)
+* [Aktionen](aktion.md)
 * [Änderungsliste](aenderungsliste.md)
 * [Suchformular](suchformular.md)
 * [Merkliste](merkliste.md)
