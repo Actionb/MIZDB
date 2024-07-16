@@ -20,4 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toc && toc.querySelectorAll('.nav-item').length == 1) {
         toc.classList.add('d-none')
     }
+
+    help_content.querySelector('[role=main]').classList.add('card')
 })
