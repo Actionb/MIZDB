@@ -29,7 +29,7 @@ Das Land, in welchem die Platte gepresst wurde. Nur für Schallplatten relevant.
 
 ### Originalmaterial
 
-Wenn das vorliegende Material eine Originalausgabe ist (also nicht gebrannt o.ä.), so bitte hier ein Häkchen setzen.
+Wenn das vorliegende Material eine Originalausgabe ist (also nicht gebrannt o.ä.), sollte hier "Ja" ausgewählt werden.
 
 ### Quelle
 
@@ -143,10 +143,6 @@ Die Plattenfirmen, die die Produktion und den Vertrieb des Materials betreibt.
 ### Ausgaben
 
 Die [Ausgaben](ausgabe.md "Ausgabe"), denen dieses Material beilag.
-
-### Dateien
-
-Verweise auf Datensätze zu Dateien (z.B. durch Digitalisierungen) dieses Materials.
 
 ### Bestände
 
