@@ -14,7 +14,7 @@
     {% watchlist_link 'admin:watchlist' icon=False %} /
     {% url 'help' page_name='index' as help_url %}
     {% if help_url %}
-        <a href="{{ help_url }} " target="_blank">Hilfe</a> /
+        <a href="{{ help_url }}">Hilfe</a> /
     {% endif %}
     {{ block.super }}
 {% endblock userlinks %}
