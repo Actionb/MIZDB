@@ -1,9 +1,9 @@
 Magazin
 =======
 
+In dieser Kategorie werden regelmäßig erscheinende Zeitschriften und Zeitungen gelistet.
 
-In dieser Kategorie werden regelmäßig erscheinende Zeitschriften und Zeitungen, unter deren Namen in der Datenbank
-[Ausgaben](ausgabe.md "Ausgabe") gruppiert werden, gelistet.
+[Ausgaben](ausgabe.md "Ausgabe") werden nach Magazinen gruppiert gelistet.
 
 ## Felder
 
@@ -13,7 +13,7 @@ Der Name des Magazins.
 
 ### Ausgaben Merkmal
 
-Benutzer mit vollen Adminrechten können
+Benutzer mit Adminrechten können
 den [Algorithmus zur Erstellung von Ausgabentiteln](ausgabe.md#textliche-darstellung "Ausgabe") übergehen und eine
 Darstellung für *alle* Ausgaben des Magazins festlegen.
 
@@ -23,16 +23,16 @@ Ausgaben dieses Magazins verwenden nun Monatsangaben (sofern vorhanden**!**) ans
 
 ### Fanzine
 
-Ist dieses Magazin ein
-[Fanzine](https://en.wikipedia.org/wiki/de:Fanzine "wikipedia:de:Fanzine"), so bitte hier ein Häkchen setzen.
+Ist dieses Magazin ein [Fanzine](https://de.wikipedia.org/wiki/Fanzine), so bitte hier ein Häkchen setzen.
 
 ### ISSN
 
 Die standardisierte Seriennummer
-[ISSN](https://en.wikipedia.org/wiki/de:ISSN "wikipedia:de:ISSN") der Zeitschrift. Die ISSN ist in der
-[EAN](https://en.wikipedia.org/wiki/de:European_Article_Number "wikipedia:de:European Article Number") mit inbegriffen,
-was die Datenbank erkennen kann. Demnach könnt ihr auch einfach den gesamten Strichcode eingeben. Siehe auch
-[Bedienelement ISSN Feld](bedienelement.md#issnisbnean "Bedienelement").
+[ISSN](https://de.wikipedia.org/wiki/Internationale_Standardnummer_f%C3%BCr_fortlaufende_Sammelwerke) der Zeitschrift.
+Die ISSN ist in der [EAN](https://de.wikipedia.org/wiki/European_Article_Number) mit inbegriffen,
+was die Datenbank erkennen kann. Demnach kannst du auch einfach den gesamten Strichcode eingeben.
+
+Siehe auch: [Bedienelement ISSN Feld](bedienelement.md#issnisbnean "Bedienelement").
 
 ### Beschreibung
 
@@ -41,10 +41,6 @@ Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 ### Bemerkungen
 
 Notizen für Archiv-Mitarbeiter.
-
-
-
----
 
 ### Web-Adressen
 
@@ -68,4 +64,3 @@ Verweise auf relevante [Herausgeber](herausgeber.md "Herausgeber").
 
 [Orte](ort.md "Ort"), die mit dem Magazin in Verbindung stehen. Zum Beispiel ist die Zeitschrift "Coolibri Bochum"
 spezifisch für Bochum.
- 
