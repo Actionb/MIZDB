@@ -9,7 +9,7 @@ Erst durch das Betätigen einer der Knöpfe werden die Daten des Formulars auch 
 Verlässt du das Formular, ohne eine Anfrage an den Server geschickt zu haben - z.B. wenn du einfach das Fenster
 schließt - werden Änderungen nicht übernommen.
 
-![Speicherknöpfe](img/sichern.png)
+![Speicherknöpfe](img/sichern/sichern.png)
 
 * **Sichern:**  
   Nachdem der Datensatz abgespeichert wurde, wirst du zur [Übersicht](aenderungsliste.md "Übersicht") weitergeleitet.

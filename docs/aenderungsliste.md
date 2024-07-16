@@ -38,11 +38,11 @@ zurücksetzen". Dieser erscheint über der Tabelle, sobald die Sortierung geänd
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Sortierung (Chevrons)](img/chevrons.png){ width="300" .mb-1 }  
+  ![Sortierung (Chevrons)](img/aenderungsliste/chevrons.png){ width="300" .mb-1 }  
   <figcaption>Sortierung (Chevrons)</figcaption>  
 </figure>  
 <figure markdown="span">  
-  ![Sortierung zurücksetzen](img/reset_sorting.png){ width="300" .mb-1 }  
+  ![Sortierung zurücksetzen](img/aenderungsliste/reset_sorting.png){ width="300" .mb-1 }  
   <figcaption>Sortierung zurücksetzen</figcaption>  
 </figure>  
 </div>

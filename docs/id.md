@@ -4,7 +4,7 @@ ID
 Die ID-Nummer eines [Datensatzes](datensatz.md) findest du neben dem Namen der Kategorie:
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![ID der Beatles](img/id.png){ width="300" .mb-1 }  
+  ![ID der Beatles](img/id/id.png){ width="300" .mb-1 }  
   <figcaption>ID der Beatles</figcaption>  
 </figure> 
 </div>

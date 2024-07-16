@@ -18,11 +18,11 @@ Aufsatz eines Sammelbands erkenntlich.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Sammelband erstellen](img/buch_sammelband_1.png){ width="300" .mb-1 }  
+  ![Sammelband erstellen](img/buch/buch_sammelband_1.png){ width="300" .mb-1 }  
   <figcaption>Sammelband erstellen</figcaption>  
 </figure>  
 <figure markdown="span">  
-  ![Aufsatz zu Sammelband hinzufügen](img/buch_sammelband_2.png){ width="300" .mb-1 }  
+  ![Aufsatz zu Sammelband hinzufügen](img/buch/buch_sammelband_2.png){ width="300" .mb-1 }  
   <figcaption>Aufsatz zu Sammelband hinzufügen</figcaption>  
 </figure> 
 </div>

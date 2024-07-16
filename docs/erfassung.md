@@ -30,15 +30,15 @@ So suchst du nach den Artikeln eines Heftes:
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">
 <figure markdown="span">
-  ![Artikel Suchformular](img/artikel_suchformular.png){ width="300" .mb-1 }
+  ![Artikel Suchformular](img/erfassung/artikel_suchformular.png){ width="300" .mb-1 }
   <figcaption>Artikel Suchformular</figcaption>
 </figure>
 <figure markdown="span">
-  ![Magazin auswählen](img/artikel_magazin_select.png){ width="300" .mb-1 }
+  ![Magazin auswählen](img/erfassung/artikel_magazin_select.png){ width="300" .mb-1 }
   <figcaption>Magazin auswählen</figcaption>
 </figure>
 <figure markdown="span">
-  ![Ausgabe Auswählen](img/artikel_ausgabe_select.png){ width="300" .mb-1 }
+  ![Ausgabe Auswählen](img/erfassung/artikel_ausgabe_select.png){ width="300" .mb-1 }
   <figcaption>Ausgabe Auswählen</figcaption>
 </figure>
 </div>
@@ -60,11 +60,11 @@ Formular angezeigt, in das du die Daten des Artikels eintragen kannst.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Artikel hinzufügen](img/artikel_hinzufügen_btn.png){ width="300" .mb-1 }  
+  ![Artikel hinzufügen](img/erfassung/artikel_hinzufügen_btn.png){ width="300" .mb-1 }  
   <figcaption>Artikel hinzufügen</figcaption>  
 </figure>
 <figure markdown="span">  
-  ![Artikel Formular](img/artikel_formular.png){ width="300" .mb-1 }  
+  ![Artikel Formular](img/erfassung/artikel_formular.png){ width="300" .mb-1 }  
   <figcaption>Artikel Formular</figcaption>  
 </figure>
 </div>
@@ -87,7 +87,7 @@ Aufschrift "Sichern und weiterbearbeiten" klickst.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Speicher Knöpfe](img/sichern.png){ width="300" .mb-1 }  
+  ![Speicher Knöpfe](img/sichern/sichern.png){ width="300" .mb-1 }  
   <figcaption>Speicher Knöpfe</figcaption>  
 </figure>
 </div>
@@ -146,11 +146,11 @@ Auflistung aller Artikeln dieser Ausgabe, indem du unter dem Namen der Ausgabe a
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Ausgabe ändern Knopf](img/artikel_edit_ausgabe.png){ width="300" .mb-1 }  
+  ![Ausgabe ändern Knopf](img/erfassung/artikel_edit_ausgabe.png){ width="300" .mb-1 }  
   <figcaption>Ausgabe ändern Knopf</figcaption>  
 </figure>
 <figure markdown="span">  
-  ![Artikel einer Ausgabe](img/ausgabe_related_link.png){ width="300" .mb-1 }  
+  ![Artikel einer Ausgabe](img/erfassung/ausgabe_related_link.png){ width="300" .mb-1 }  
   <figcaption>Artikel einer Ausgabe</figcaption>  
 </figure>
 </div>
@@ -173,11 +173,11 @@ Artikel und der Band wird gelöscht.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Verknüpfung mit einer Band hinzufügen](img/band_select.png){ width="300" .mb-1 }  
+  ![Verknüpfung mit einer Band hinzufügen](img/erfassung/band_select.png){ width="300" .mb-1 }  
   <figcaption>Verknüpfung mit einer Band hinzufügen</figcaption>  
 </figure>
 <figure markdown="span">  
-  ![Hinzufügen & Löschen](img/band_inline_add_delete.png){ width="300" .mb-1 }  
+  ![Hinzufügen & Löschen](img/erfassung/band_inline_add_delete.png){ width="300" .mb-1 }  
   <figcaption>Hinzufügen & Löschen</figcaption>  
 </figure>
 </div>
@@ -214,7 +214,7 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Speicher Knöpfe](img/sichern.png){ width="300" .mb-1 }  
+  ![Speicher Knöpfe](img/sichern/sichern.png){ width="300" .mb-1 }  
   <figcaption>Speicher Knöpfe</figcaption>  
 </figure>
 </div>
@@ -267,7 +267,7 @@ diesen Künstler.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Beispiel: Rezension](img/artikel_rezension.png){ width="300" .mb-1 }  
+  ![Beispiel: Rezension](img/erfassung/artikel_rezension.png){ width="300" .mb-1 }  
   <figcaption>Beispiel: Rezension</figcaption>  
 </figure>
 </div>

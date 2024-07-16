@@ -12,7 +12,7 @@ Wenn du auf den "**Google Suche**" Knopf neben dem Textfeld klickst, so wird ein
 neuer [Tab](https://de.wikipedia.org/wiki/Tabbed_Browsing) geöffnet und eine Google-Suche mit dem Text des Feldes
 aufgerufen.
 
-![Band Google Button](img/band_google_btn.png)
+![Band Google Button](img/band/band_google_btn.png)
 
 ### Beschreibung
 

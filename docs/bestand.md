@@ -12,7 +12,7 @@ zugewiesen.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Bestand Audio-Material](img/bestand.png){ width="800" .mb-1 }  
+  ![Bestand Audio-Material](img/bestand/bestand.png){ width="800" .mb-1 }  
   <figcaption>Bestand Audio-Material</figcaption>  
 </figure>
 </div>

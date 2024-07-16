@@ -20,7 +20,7 @@ Die Ausgabennummer kann auch im Strichcode enthalten sein:
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Strichcode mit Ausgabennummer ("Issue Number")](img/issn_barcode.png){ width="300" .mb-1 }  
+  ![Strichcode mit Ausgabennummer ("Issue Number")](img/ausgabe/issn_barcode.png){ width="300" .mb-1 }  
   <figcaption>Strichcode mit Ausgabennummer ("Issue Number")</figcaption>  
 </figure>  
 </div>
