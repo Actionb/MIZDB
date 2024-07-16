@@ -18,7 +18,7 @@ Filtern (siehe [Suchformular](suchformular.md "Suchformular")).
 </div>
 
 Darauf folgt die Tabelle, die die Suchergebnisse darstellt. Die erste, unbeschriftete Spalte stellt
-Auswahlkasten ([Checkboxes](https://en.wikipedia.org/wiki/de:Checkbox "wikipedia:de:Checkbox")) zur Verfügung, mit
+Auswahlkasten ([Checkboxes](https://de.wikipedia.org/wiki/Checkbox)) zur Verfügung, mit
 welchen du Datensätze für Aktionen auswählen kannst, mehr dazu hier: [Aktionen](aktion.md "Aktion"). Danach kommen
 beschriftete Spalten, in denen Daten der gefundenen Ergebnisse angezeigt werden, um einen Überblick über den Inhalt der
 Datensätze zu ermöglichen.

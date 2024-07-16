@@ -55,4 +55,4 @@ werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des O
 
 ## Siehe auch
 
-* [Wikipedia: Produktkatalog](https://en.wikipedia.org/wiki/de:Produktkatalog "wikipedia:de:Produktkatalog")
+* [Wikipedia: Produktkatalog](https://de.wikipedia.org/wiki/Produktkatalog)

@@ -46,7 +46,7 @@ So suchst du nach den Artikeln eines Heftes:
 Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
 
 [comment]: <> (@formatter:off)
-!!! tip "Tip: Praktisch"
+!!! tip "Tipp: Praktisch"
     Durch die Suche werden die Angaben zu **Magazin** und **Ausgabe** im Suchformular an die Formulare für neue Artikel
     weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch ersparst du dir etwas Arbeit.
 
@@ -119,7 +119,7 @@ in die Datenbank übertragen werden. Die Zusammenfassung wird in die Volltextsuc
 anhand der Angaben in der Zusammenfassung wiedergefunden werden.
 
 [comment]: <> (@formatter:off)  
-!!! info "Info: Nur Relevantes eintragen"
+!!! info "Information: Nur Relevantes eintragen"
     Machst du keine Angaben, kann der Artikel auch nie gefunden werden. Machst du hingegen viele ungenaue oder 
     überflüssige Angaben, so kann der Artikel unerwünscht als Ergebnis auftauchen. Trage also nur das ein, was für den
     Artikel relevant ist, oder was für das Thema des Artikels von Bedeutung ist.<br>  
@@ -128,7 +128,7 @@ anhand der Angaben in der Zusammenfassung wiedergefunden werden.
 [comment]: <> (@formatter:on)
 
 [comment]: <> (@formatter:off)  
-!!! tip "Tip: Textfeld zu klein?"  
+!!! tip "Tipp: Textfeld zu klein?"  
     Manche Textfelder, wie z.B. "Zusammenfassung", kannst du vergrößern oder verkleinern, in dem du im Textfeld unten 
     rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst. 
 
@@ -220,7 +220,7 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
 </div>
 
 [comment]: <> (@formatter:off)  
-!!! tip "Tip: Welchen Knopf soll ich benutzen?"  
+!!! tip "Tipp: Welchen Knopf soll ich benutzen?"  
     Der "**Sichern und neu hinzufügen**" Knopf bietet sich an, wenn du mit der Erfassung eines Objekts fertig geworden bist
     und direkt mit der Erfassung des nächsten Objekts anfangen möchtest.  
     Wenn du dabei bist, von der Übersichtsseite aus einige Datensätze zu ändern, dann benutze den "**Sichern**" Knopf, um
@@ -239,11 +239,11 @@ Ein "echter Artikel" wäre z.B. etwas, das im Inhaltsverzeichnis erwähnt wird, 
 über einen gewissen Umfang verfügt. "Andere Texte" wären dann News oder Rezensionen von Veröffentlichungen (also z.B.
 Reviews von Musikalben). Ob etwas Informationsgehalt hat, bemerkst du dann, wenn du die Zusammenfassung schreiben
 willst: fällt die Zusammenfassung sehr dünn aus, ist das ein Indiz dafür, dass du den Text nicht aufnehmen brauchst. Am
-Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findest du eine News, die du für wichtig oder
+Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findest du News, die du für wichtig oder
 erwähnenswert hältst, kannst du diese gerne erfassen.
 
 [comment]: <> (@formatter:off)  
-!!! info "Info: Zeit"  
+!!! info "Information: Zeit"  
     Du stehst hier nicht unter Zeitdruck. Allerdings ist es sinnvoller, mehr Zeit mit der Erfassung von "echten Artikeln"
     zu verbringen als mit der Erfassung von kleinen News-Schnipseln oder Rezensionen, die mehr Werbung als interessanter
     Text sind.

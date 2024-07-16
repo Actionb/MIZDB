@@ -13,4 +13,4 @@ Objekt gemeint ist.
 
 ## Siehe auch
 
-* [Wikipedia: Datensatz](https://en.wikipedia.org/wiki/de:Datensatz "wikipedia:de:Datensatz")
+* [Wikipedia: Datensatz](https://de.wikipedia.org/wiki/Datensatz)

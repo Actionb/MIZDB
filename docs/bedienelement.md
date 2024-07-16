@@ -1,10 +1,9 @@
 Bedienelement
 =============
 
-
 Die Seiten und Formulare der Datenbank verwenden
-verschiedene [Steuer- oder Bedienelemente](https://en.wikipedia.org/wiki/de:Steuerelement "wikipedia:de:Steuerelement"),
-deren Funktionsweisen hier kurz erklärt wird.
+verschiedene [Steuer- oder Bedienelemente](https://de.wikipedia.org/wiki/Steuerelement), deren Funktionsweisen hier kurz
+erklärt wird.
 
 ## Einfache Felder
 
@@ -32,8 +31,8 @@ scrollen.
 
 [comment]: <> (@formatter:off)  
 !!! info "Hinweis: Vorsicht beim Scrollen"  
-    Wenn der Fokus im Zahlenfeld liegt (also wenn der [Cursor](https://en.wikipedia.org/wiki/de:Cursor "wikipedia:de:Cursor") im Element zu sehen ist), kann 
-		Wert verändert werden, indem man das Scrollrad der Maus benutzt. 
+    Wenn der Fokus im Zahlenfeld liegt (also wenn der [Cursor](https://de.wikipedia.org/wiki/Cursor) im Element zu 
+		sehen ist), kann Wert verändert werden, indem man das Scrollrad der Maus benutzt. 
   
 [comment]: <> (@formatter:on)
 
@@ -74,8 +73,13 @@ am rechten Ende der Combobox lässt sich die gesamte Auswahl aufheben.
 
 ![Datumsfeld](img/bedienelemente/datumsfeld.png)
 
-Ein Feld für vollständige Datumsangaben. Akzeptiert Angaben in der Form TT.MM.JJJJ (Tag.Monat.Jahr) und JJJJ-MM-TT
-(Jahr-Monat-Tag, [ISO 8601](https://en.wikipedia.org/wiki/de:ISO_8601 "wikipedia:de:ISO 8601")).
+Ein Feld für vollständige Datumsangaben. 
+
+Akzeptiert Angaben in der Form:
+
+* `TT.MM.JJJJ` (Tag.Monat.Jahr)
+* `JJJJ-MM-TT` (Jahr-Monat-Tag, [ISO 8601](https://de.wikipedia.org/wiki/ISO_8601))
+
 Das Symbol am rechten Ende des Feldes öffnet einen Kalender zur Auswahl des Tages.
 
 ### Feld für partielles Datum
@@ -123,17 +127,18 @@ Aus einer ISBN ohne Formatierung:
 
 ## Inlines
 
-Viele Formulare enthalten sogenannte Inlines. Inlines sind Formulare von verwandten Datensätzen, die in dem 
-Hauptformular eingebettet sind. 
-Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die 
+Viele Formulare enthalten sogenannte Inlines. Inlines sind Formulare von verwandten Datensätzen, die in dem
+Hauptformular eingebettet sind.
+Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die
 Artikel-Musiker Beziehung.
 
 ![Musiker Inline](img/bedienelemente/inline.png)
 
-Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular. 
-Im Falle des Musiker Inlines beinhaltet das Formular nur einziges [Auswahlfeld](#kombinationsfeldcombobox). 
-Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des Inlines hinzugefügt werden.
+Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular.
+Im Falle des Musiker Inlines beinhaltet das Formular nur einziges [Auswahlfeld](#kombinationsfeldcombobox).
+Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des
+Inlines hinzugefügt werden.
 
 Zeilen können mit dem Knopf mit dem roten "**x**" am rechten Ende einer Zeile zur Löschung markiert werden. Wird der
-Datensatz gespeichert, werden die markierten Zeilen entfernt; die Beziehungen zwischen den Datensätzen werden dabei 
+Datensatz gespeichert, werden die markierten Zeilen entfernt; die Beziehungen zwischen den Datensätzen werden dabei
 gelöscht.

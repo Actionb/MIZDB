@@ -8,8 +8,8 @@ gemeint, welches mehrere Aufsätze bzw. Einzelschriften zusammenstellt.
 
 ### Sammelbänder
 
-Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband markiert werden: dazu muss bei **Ist
-Sammelband** "Ja" ausgewählt werden. Danach müssen die einzelnen Aufsätze ebenfalls als
+Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband markiert werden: dazu muss bei "**Ist
+Sammelband**" "Ja" ausgewählt werden. Danach müssen die einzelnen Aufsätze ebenfalls als
 Buch-[Datensatz](datensatz.md "Datensatz") erfasst werden, wobei unter **Sammelband** das anfangs erstellte Buch
 ausgewählt werden muss.
 
@@ -163,8 +163,8 @@ werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des O
 
 ## Siehe auch
 
-* [Wikipedia: Sammelband](https://en.wikipedia.org/wiki/de:Sammelband "wikipedia:de:Sammelband")
-* [Wikipedia: Auflage (Publikation)](https://en.wikipedia.org/wiki/de:Auflage_(Publikation) "wikipedia:de:Auflage (Publikation)")
-* [Wikipedia: Schriftenreihe](https://en.wikipedia.org/wiki/de:Schriftenreihe "wikipedia:de:Schriftenreihe")
-* [Wikipedia: Herausgeber](https://en.wikipedia.org/wiki/de:Herausgeber "wikipedia:de:Herausgeber")
-* [Wikipedia: Verlag](https://en.wikipedia.org/wiki/de:Verlag "wikipedia:de:Verlag")
+* [Wikipedia: Sammelband](https://de.wikipedia.org/wiki/Sammelband)
+* [Wikipedia: Auflage (Publikation)](https://de.wikipedia.org/wiki/Auflage_(Publikation))
+* [Wikipedia: Schriftenreihe](https://de.wikipedia.org/wiki/Schriftenreihe)
+* [Wikipedia: Herausgeber](https://de.wikipedia.org/wiki/Herausgeber)
+* [Wikipedia: Verlag](https://de.wikipedia.org/wiki/Verlag)

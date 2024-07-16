@@ -9,8 +9,10 @@ werden hier gelistet.
 
 ### Künstlername
 
-Bühnenname des Musikers. Wenn ihr auf den "**Google Suche**" Knopf neben dem Textfeld klickt, so wird ein neuer
-[Tab](https://de.wikipedia.org/wiki/Tabbed_Browsing) geöffnet und eine Google-Suche mit dem Text des Feldes aufgerufen.
+Bühnenname des Musikers.
+Wenn du auf den "**Google Suche**" Knopf neben dem Textfeld klickst, so wird ein
+neuer [Tab](https://de.wikipedia.org/wiki/Tabbed_Browsing) geöffnet und eine Google-Suche mit dem Text des Feldes
+aufgerufen.
 
 ### Person
 

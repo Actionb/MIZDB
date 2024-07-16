@@ -7,9 +7,10 @@ Eine Gruppe von Musikern, die sich unter einem Bandnamen zusammengeschlossen hab
 
 ### Bandname
 
-Name der Band. Wenn du auf den "Google Me!" Knopf neben dem Textfeld klickst, wird ein neuer
-[Tab](https://en.wikipedia.org/wiki/de:Tabbed_Browsing "wikipedia:de:Tabbed Browsing") mit einer Google-Suche nach dem
-Text des Feldes aufgerufen.
+Name der Band.
+Wenn du auf den "**Google Suche**" Knopf neben dem Textfeld klickst, so wird ein
+neuer [Tab](https://de.wikipedia.org/wiki/Tabbed_Browsing) geöffnet und eine Google-Suche mit dem Text des Feldes
+aufgerufen.
 
 ![Band Google Button](img/band_google_btn.png)
 
@@ -20,8 +21,6 @@ Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 ### Bemerkungen
 
 Notizen für Archiv-Mitarbeiter.
-
----
 
 ### Genres
 

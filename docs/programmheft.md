@@ -65,4 +65,4 @@ werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des O
 
 ## Siehe auch
 
-* [Wikipedia: Programmheft](https://en.wikipedia.org/wiki/de:Programmheft "wikipedia:de:Programmheft")
+* [Wikipedia: Programmheft](https://de.wikipedia.org/wiki/Programmheft)

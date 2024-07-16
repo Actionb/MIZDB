@@ -54,20 +54,20 @@ Notizen für Archiv-Mitarbeiter.
 
 ### Schlagwörter
 
-[Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich (
-z.B. '60er Jahre') des Objekts.
+[Schlagwörter](schlagwort.md "Schlagwort")/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich
+(z.B. '60er Jahre') des Objekts.
 
 ### Genres
 
-Sind bezüglich des Objektes bestimmte
-[Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese
-hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.
+Sind bezüglich des Objektes bestimmte [Genres](genre.md "Genre") besonders relevant (z.B. bei einem Artikel über die
+Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht
+nochmals gelistet werden.
 
 ### Musiker
 
-Bezieht sich das Objekt auf
-[Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese
-Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.
+Bezieht sich das Objekt auf [Musiker](musiker.md "Musiker"), so sollen diese hier angegeben. Bezieht sich das Objekt auf
+eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch
+einmal ausgewählt werden.
 
 ### Bands
 
@@ -95,8 +95,8 @@ Siehe auch: [Erklärung Ort, Spielort und Veranstaltung](ort_spielort_veranstalt
 
 ### Personen
 
-Angaben zu [Personen](person.md "Person"), auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. 
-Also z.B. Produzenten. 
+Angaben zu [Personen](person.md "Person"), auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind.
+Also z.B. Produzenten.
 Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.
 
 ### Bestände

@@ -58,4 +58,4 @@ werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des O
 
 ## Siehe auch
 
-* [Wikipedia: Broschüre](https://en.wikipedia.org/wiki/de:Broschüre "wikipedia:de:Broschüre")
+* [Wikipedia: Broschüre](https://de.wikipedia.org/wiki/Brosch%C3%BCre)

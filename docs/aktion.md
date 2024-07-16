@@ -14,9 +14,9 @@ Tabellenkopf fügst du alle momentan sichtbaren Datensätze zu deiner Auswahl hi
 </figure>
 </div>
 
-Die aktuelle Auswahl findest du unten rechts im Fenster. Klicke auf den Knopf "**Ausgewählte ?**" (2), um die Auswahl
-anzuzeigen. Unten in der Auswahl befinden sich die Knöpfe, mit denen du eine Aktion für die ausgewählten Datensätze
-startest (3).
+Die aktuelle Auswahl findest du unten rechts im Fenster. 
+Klicke auf den Knopf "**Ausgewählte ?**" (2), um die Auswahl anzuzeigen. 
+Unten in der Auswahl befinden sich die Knöpfe, mit denen du eine Aktion für die ausgewählten Datensätze startest (3).
 
 Um einen Datensatz von der Auswahl zu entfernen, klicke auf das rote **X** (4).
 Die gesamte Auswahl kann aufgehoben werden, indem du auf das rote **X** am unteren Ende des Auswahlbereichs klickst.

@@ -15,10 +15,9 @@ zur [Übersichtsseite](aenderungsliste.md "Übersichtsseite") (auch "Änderungsl
 den "Hinzufügen" Link neben der Kategorie, wirst du zu einem leeren Formular der Kategorie geführt, mit welchem du einen
 neuen [Datensatz](datensatz.md "Datensatz") erstellen kannst.
 
-Rechts auf der Indexseite findest du [Links](https://en.wikipedia.org/wiki/de:Hyperlink "wikipedia:de:Hyperlink") zu der
-Änderungsseite der Archivgüter (wie z.B. Artikel, Ausgaben oder Bücher), die von dir zuletzt bearbeitet wurden. Darunter
-befinden sich Links zu Änderungsseiten von jeglichen Datensätzen, die von euch erstellt, bearbeitet oder gelöscht
-wurden.
+Rechts auf der Indexseite findest du [Links](https://de.wikipedia.org/wiki/Hyperlink) zu der Änderungsseite der
+Archivgüter (wie z.B. Artikel, Ausgaben oder Bücher), die von dir zuletzt bearbeitet wurden. Darunter befinden sich
+Links zu Änderungsseiten von jeglichen Datensätzen, die von euch erstellt, bearbeitet oder gelöscht wurden.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
