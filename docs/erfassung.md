@@ -21,7 +21,7 @@ Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.
 
 So suchst du nach den Artikeln eines Heftes:
 
-1. im [Index/Hauptmenü](oberflaeche.md#Index "Oberfläche") auf "Artikel" klicken
+1. im [Index/Hauptmenü](oberflaeche.md#index "Oberfläche") auf "Artikel" klicken
 2. im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
 3. im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
    entsprechende Magazin aus der Liste auswählen
@@ -206,7 +206,7 @@ Artikel und der Band wird gelöscht.
 Wenn du mit der Erfassung dieses Artikels fertig bist und direkt den nächsten erfassen willst, klicke
 auf "[Sichern](sichern.md "Sichern") und neu hinzufügen". Der Artikel wird abgespeichert, es wird ein neues, leeres
 Formular angezeigt und das Magazin und die Ausgabe werden eingefügt (sofern du, wie vorgeschlagen,
-die [Suche](#vorhandene-artikel-suchen--fs-5-) mit der Übersichtsseite gemacht hast).
+die [Suche](#vorhandene-artikel-suchen) mit der Übersichtsseite gemacht hast).
 
 Drückst du auf "Sichern und weiterbearbeiten" wird der Artikel abgespeichert und das Formular für den Artikel neu
 geladen.
