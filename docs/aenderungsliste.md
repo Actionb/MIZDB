@@ -12,7 +12,7 @@ Filtern (siehe [Suchformular](suchformular.md "Suchformular")).
   <figcaption>Übersichtsseite der Artikel</figcaption>  
 </figure>  
 <figure markdown="span">  
-  ![Ein Suchformular](img/suchformular.png){ width="300" .mb-1 }  
+  ![Ein Suchformular](img/suchformular/suchformular.png){ width="300" .mb-1 }  
   <figcaption>Ein Suchformular</figcaption>  
 </figure>  
 </div>
