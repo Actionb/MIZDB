@@ -3,11 +3,15 @@ Einführung
 
 Hi! Hallo! Willkommen im Archiv!
 
+Die Datenbank des Archivs dient als Hilfsmittel, um die vorhandenen Archivmaterialien zu durchsuchen. Als Mitarbeiter
+ist es deine Aufgabe, Informationen der Archivmaterialien in die Datenbank einzutragen, sodass die Materialien bei einer
+Suche wiedergefunden werden können.
+
 Damit du mit der Arbeit im Archiv beginnen kannst, musst du dich zunächst mit der Bedienung der Datenbank vertraut
 machen.
-Zu diesem Zweck sollte die Hilfe-Seite zur [Oberfläche](oberflaeche.md "Oberfläche") durchgelesen werden. Außerdem
-solltest du dir die [Empfehlungen](grundsaetze.md "Grundsätze") zum Arbeiten mit der Datenbank anschauen, bevor du
-selber mit der Erfassung von Material beginnst.
+Zu diesem Zweck sollte die Hilfe-Seite zur [Oberfläche](oberflaeche.md "Oberfläche") durchgelesen werden.
+Außerdem solltest du dir die [Empfehlungen](grundsaetze.md "Grundsätze") zum Arbeiten mit der Datenbank anschauen, bevor
+du selber mit der Erfassung von Material beginnst.
 
 Zum Einstieg sei die Erfassung von [Artikeln](erfassung.md "Artikel") aus Zeitschriften empfohlen. Der Prozess
 ist unkompliziert (z.B. da keine Bestandsangaben gemacht werden müssen) und ist bei jedem Artikel gleich, sodass du
