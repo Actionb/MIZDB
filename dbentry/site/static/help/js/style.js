@@ -21,5 +21,5 @@ document.addEventListener('DOMContentLoaded', () => {
         toc.classList.add('d-none')
     }
 
-    help_content.querySelector('[role=main]').classList.add('card')
+    help_content.querySelector('[role=main]').classList.add('card', 'py-2')
 })
