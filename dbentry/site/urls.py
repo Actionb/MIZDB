@@ -22,6 +22,6 @@ urlpatterns = [
     # Changelist selection
     path("cls_sync/", changelist_selection_sync, name="changelist_selection_sync"),
     path("watchlist/", WatchlistView.as_view(), name="watchlist"),
-    path("help/index/", HelpIndexView.as_view(), name="help_index"),
-    path("help/<path:page_name>/", HelpView.as_view(), name="help"),
+    path("hilfe/index/", HelpIndexView.as_view(), name="help_index"),
+    path("hilfe/<path:page_name>/", HelpView.as_view(), name="help"),
 ]

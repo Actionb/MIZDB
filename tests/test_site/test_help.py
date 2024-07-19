@@ -15,8 +15,8 @@ def dummy_view(*args, **kwargs):
 
 
 urlpatterns = [
-    path("help/index/", dummy_view, name="help_index"),
-    path("help/<path:page_name>/", dummy_view, name="help"),
+    path("hilfe/index/", dummy_view, name="help_index"),
+    path("hilfe/<path:page_name>/", dummy_view, name="help"),
 ]
 
 
