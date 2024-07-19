@@ -106,8 +106,27 @@ Suchergebnisse angezeigt, von denen dann ein Eintrag per Mausklick ausgewählt w
 die Ergebnisse scrollen.</p>
 <p>Die Auswahl kann aufgehoben werden, indem du oben neben dem ausgewählten Eintrag auf das kleine rote "<strong>x</strong>" klickst.
 Mit einem Klick auf den grünen Bleistift kannst du den ausgewählten Eintrag bearbeiten.</p>
-<p>Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen. Der Knopf "Änderungsliste" schickt dich zu der
-<a href="{% url 'help' page_name='aenderungsliste'%}">Änderungsliste</a> der zur Auswahl stehenden Einträge.</p>
+<p>Der Knopf "Änderungsliste" schickt dich zu der <a href="{% url 'help' page_name='aenderungsliste'%}">Änderungsliste</a> der zur Auswahl stehenden Einträge.
+Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen.
+Ist kein Suchbegriff eingegeben, so öffnet der Knopf eine Seite mit einem leeren Formular, mit dem ein neuer Datensatz
+erzeugt wird.
+Ist ein Suchbegriff gegeben, so wird (je nach Tabelle) im Hintergrund ein neuer Datensatz mit dem Suchbegriff als Namen
+erzeugt.</p>
+<div class="admonition warning">
+<p class="admonition-title">Wichtig: Nach Erstellung weitere Informationen hinterlegen</p>
+<p>Wenn du einen Suchbegriff eingibst und dann mit dem "Hinzufügen" Knopf einen neuen Datensatz erstellst, beinhaltet 
+der neue Datensatz lediglich eine Angabe zum Namen. Erstellst du zum Beispiel auf diese Weise eine neue Band, dann 
+ist nur der Bandname gegeben - und das ist in denen meisten Fällen zu wenig Information. 
+Wenn zwei unterschiedliche Bands denselben Namen haben, dann könntest du sie nich voneinander unterscheiden.
+Aus diesem Grund solltest du bei neu erstellten Datensätzen weitere Angaben wie zum Beispiel Genres, Aliase oder 
+Links zu Wikipedia oder Discogs machen.<br/><br>
+Dies gilt <a href="{% url 'help' page_name='grundsaetze'%}#datensatze-mussen-aufschlussreich-sein">grundsätzlich</a> für alle Arten von Datensätzen. 
+Klicke auf den Bleistift neben dem erstellten Eintrag, um zu der Änderungsseite des erstellten Datensatzes zu gelangen.</br></p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Verknüpfungen</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='relationen'%}">Über Verknüpfungen</a></p>
+</div>
 <h3 id="combobox-mit-mehrfachauswahl">Combobox mit Mehrfachauswahl</h3>
 <p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/combobox_mehrfach.png' %}"><img alt="Combobox mit Mehrfachauswahl" src="{% static 'img/bedienelemente/combobox_mehrfach.png' %}"/></a></p>
 <p>Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewählt werden. Ausgewählte Einträge können
@@ -116,7 +135,7 @@ am rechten Ende der Combobox lässt sich die gesamte Auswahl aufheben.</p>
 <h2 id="spezialfelder">Spezialfelder</h2>
 <h3 id="datumsfeld">Datumsfeld</h3>
 <p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/datumsfeld.png' %}"><img alt="Datumsfeld" src="{% static 'img/bedienelemente/datumsfeld.png' %}"/></a></p>
-<p>Ein Feld für vollständige Datumsangaben. </p>
+<p>Ein Feld für vollständige Datumsangaben.</p>
 <p>Akzeptiert Angaben in der Form:</p>
 <ul>
 <li><code>TT.MM.JJJJ</code> (Tag.Monat.Jahr)</li>
@@ -223,5 +242,9 @@ Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hi
 Inlines hinzugefügt werden.</p>
 <p>Zeilen können mit dem Knopf mit dem roten "<strong>x</strong>" am rechten Ende einer Zeile zur Löschung markiert werden. Wird der
 Datensatz gespeichert, werden die markierten Zeilen entfernt; die Beziehungen zwischen den Datensätzen werden dabei
-gelöscht.</p></div>
+gelöscht.</p>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Verknüpfungen</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='relationen'%}">Über Verknüpfungen</a></p>
+</div></div>
 </div>{% endblock content %}

@@ -56,8 +56,31 @@ die Ergebnisse scrollen.
 Die Auswahl kann aufgehoben werden, indem du oben neben dem ausgewählten Eintrag auf das kleine rote "**x**" klickst.
 Mit einem Klick auf den grünen Bleistift kannst du den ausgewählten Eintrag bearbeiten.
 
-Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen. Der Knopf "Änderungsliste" schickt dich zu der
-[Änderungsliste](aenderungsliste.md) der zur Auswahl stehenden Einträge.
+Der Knopf "Änderungsliste" schickt dich zu der [Änderungsliste](aenderungsliste.md) der zur Auswahl stehenden Einträge.
+Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen.
+Ist kein Suchbegriff eingegeben, so öffnet der Knopf eine Seite mit einem leeren Formular, mit dem ein neuer Datensatz
+erzeugt wird.
+Ist ein Suchbegriff gegeben, so wird (je nach Tabelle) im Hintergrund ein neuer Datensatz mit dem Suchbegriff als Namen
+erzeugt.
+
+[comment]: <> (@formatter:off)  
+!!! warning "Wichtig: Nach Erstellung weitere Informationen hinterlegen"  
+    Wenn du einen Suchbegriff eingibst und dann mit dem "Hinzufügen" Knopf einen neuen Datensatz erstellst, beinhaltet 
+    der neue Datensatz lediglich eine Angabe zum Namen. Erstellst du zum Beispiel auf diese Weise eine neue Band, dann 
+    ist nur der Bandname gegeben - und das ist in denen meisten Fällen zu wenig Information. 
+    Wenn zwei unterschiedliche Bands denselben Namen haben, dann könntest du sie nich voneinander unterscheiden.
+    Aus diesem Grund solltest du bei neu erstellten Datensätzen weitere Angaben wie zum Beispiel Genres, Aliase oder 
+    Links zu Wikipedia oder Discogs machen.<br>  
+    Dies gilt [grundsätzlich](grundsaetze.md#datensatze-mussen-aufschlussreich-sein) für alle Arten von Datensätzen. 
+    Klicke auf den Bleistift neben dem erstellten Eintrag, um zu der Änderungsseite des erstellten Datensatzes zu gelangen.
+    
+[comment]: <> (@formatter:on)
+
+[comment]: <> (@formatter:off)  
+!!! info "Hinweis: Verknüpfungen"  
+    Siehe auch: [Über Verknüpfungen](relationen.md)
+  
+[comment]: <> (@formatter:on)
 
 ### Combobox mit Mehrfachauswahl
 
@@ -73,7 +96,7 @@ am rechten Ende der Combobox lässt sich die gesamte Auswahl aufheben.
 
 ![Datumsfeld](img/bedienelemente/datumsfeld.png)
 
-Ein Feld für vollständige Datumsangaben. 
+Ein Feld für vollständige Datumsangaben.
 
 Akzeptiert Angaben in der Form:
 
@@ -142,3 +165,9 @@ Inlines hinzugefügt werden.
 Zeilen können mit dem Knopf mit dem roten "**x**" am rechten Ende einer Zeile zur Löschung markiert werden. Wird der
 Datensatz gespeichert, werden die markierten Zeilen entfernt; die Beziehungen zwischen den Datensätzen werden dabei
 gelöscht.
+
+[comment]: <> (@formatter:off)  
+!!! info "Hinweis: Verknüpfungen"  
+    Siehe auch: [Über Verknüpfungen](relationen.md)
+  
+[comment]: <> (@formatter:on)
