@@ -1,18 +1,19 @@
 Erfassung von Artikeln
 =======
 
-
-
-Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Datenbank
-geeignet.
-
-## Erfassung
-
 Bei der Erfassung ist es deine Aufgabe, die wichtigsten Informationen, die in einem Artikel enthalten sind, in die
-Datenbank einzufügen, sodass der Artikel bei einer Suche wiedergefunden werden kann.
+Datenbank einzufügen, sodass der Artikel bei einer Suche wiedergefunden werden kann; behandelt der Artikel ein
+bestimmtes Thema, so muss der Artikel als Ergebnis bei einer Datenbank-Recherche zu diesem Thema auftauchen. Anhand der
+Daten, die du zu dem Artikel in die Datenbank eingetragen hast, kann der Recherchierende entscheiden, ob der Artikel 
+für sie/ihn interessant sein könnte.
+
+Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Arbeit
+mit der Datenbank geeignet.
+
+## Erklärung an einem Beispiel
 
 Für ein Beispiel nehmen wir mal an, dass du einen Artikel aus einem Heft des "Rolling Stone" Magazins erfassen willst.
-Um mit der Erfassung zu beginnen, solltest du zuerst die Datenbank nach vorhandenen Artikel dieses Heftes durchsuchen.
+Um mit der Erfassung zu beginnen, solltest du zuerst die Datenbank nach vorhandenen Artikeln dieses Heftes durchsuchen.
 
 ### Vorhandene Artikel suchen
 
@@ -25,8 +26,10 @@ So suchst du nach den Artikeln eines Heftes:
 2. im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
 3. im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
    entsprechende Magazin aus der Liste auswählen
-4. danach im Feld "Ausgabe" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen
+4. danach im Feld "[Ausgabe](ausgabe.md)" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen
 5. auf "Suchen" klicken
+
+Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">
 <figure markdown="span">
@@ -43,10 +46,15 @@ So suchst du nach den Artikeln eines Heftes:
 </figure>
 </div>
 
-Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
+[comment]: <> (@formatter:off)  
+!!! info "Hinweis: Dropdown-Feld"  
+    Mehr Informationen zur Verwendung eines Dropdown-Feldes findest du hier:
+    [Bedienelement#Kombinationsfeld](bedienelement.md#kombinationsfeldcombobox).
+  
+[comment]: <> (@formatter:on)
 
 [comment]: <> (@formatter:off)
-!!! tip "Tipp: Praktisch"
+!!! tip "Tipp: Die Suche spart dir Arbeit"
     Durch die Suche werden die Angaben zu **Magazin** und **Ausgabe** im Suchformular an die Formulare für neue Artikel
     weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch ersparst du dir etwas Arbeit.
 
@@ -55,8 +63,9 @@ Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenb
 ### Neuen Artikel erstellen
 
 Nun suchst du dir aus der Zeitschrift den Artikel heraus, **der noch nicht in die Datenbank eingetragen wurde** und den
-du erfassen willst. Um mit der Erfassung zu beginnen, klicke auf den Knopf "Artikel hinzufügen". Es wird ein leeres
-Formular angezeigt, in das du die Daten des Artikels eintragen kannst.
+du erfassen willst (siehe auch: [Welche Artikel müssen erfasst werden](#welche-artikel-mussen-erfasst-werden)).
+Um mit der Erfassung zu beginnen, klicke auf der Übersichtsseite der Artikel auf den Knopf "Artikel hinzufügen".
+Es wird ein leeres Formular angezeigt, in das du die Daten des Artikels eintragen kannst.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
@@ -80,7 +89,8 @@ Trage also das ein, was du als Schlagzeile erachtest. Oder schaue im Inhaltsverz
 Titel angegeben ist.
 
 Anschließend musst du die **Seite**, an der der Artikel beginnt, und den **Seitenumfang** eintragen. Ist der Artikel nur
-eine Seite lang, musst du bei **Seitenumfang** nichts angeben.
+eine Seite lang, musst du bei **Seitenumfang** nichts angeben. Für Artikel, die zwei Seiten umfassen, trägst du hier "f"
+ein, ansonsten "ff".
 
 Hast du diese Angaben gemacht, solltest du erst einmal zwischenspeichern, indem du unten auf den Knopf mit der
 Aufschrift "Sichern und weiterbearbeiten" klickst.
@@ -115,22 +125,24 @@ Anhand der Zusammenfassung werden Recherchierende feststellen können, ob der Ar
 Dementsprechend solltest du dir hier Mühe geben, die relevanten Teile eines Artikels anzugeben. Dabei ist es wichtiger,
 dass alle wichtigen, interessanten Informationen enthalten sind, als dass du einen schönen Text schreibst. Wenn es dir
 leichter fällt, kannst du anstelle von Fließtext auch Stichpunkte benutzen. Die Hauptsache ist, dass die Informationen
-in die Datenbank übertragen werden. Die Zusammenfassung wird in die Volltextsuche miteinbezogen; d.h. ein Artikel kann
-anhand der Angaben in der Zusammenfassung wiedergefunden werden.
+in die Datenbank übertragen werden. Die Zusammenfassung wird in die [Volltextsuche](suchformular.md#textsuche)
+miteinbezogen; d.h. ein Artikel kann anhand der Angaben in der Zusammenfassung wiedergefunden werden.
 
 [comment]: <> (@formatter:off)  
-!!! info "Information: Nur Relevantes eintragen"
+!!! info "Hinweis: Nur Relevantes eintragen"
     Machst du keine Angaben, kann der Artikel auch nie gefunden werden. Machst du hingegen viele ungenaue oder 
     überflüssige Angaben, so kann der Artikel unerwünscht als Ergebnis auftauchen. Trage also nur das ein, was für den
     Artikel relevant ist, oder was für das Thema des Artikels von Bedeutung ist.<br>  
-    **Beispiel**: Wird in einem Artikel eine Band nur beiläufig erwähnt, so solltest du diese Band nicht erwähnen.
+    **Beispiel**: Wird in einem Artikel eine Band nur beiläufig erwähnt, so solltest du diese Band nicht mit in die
+    Zusammenfassung aufnehmen oder eine [Verknüpfung](#verknupfungen-hinzufugen) für diese Band hinzufügen.
 
 [comment]: <> (@formatter:on)
 
 [comment]: <> (@formatter:off)  
 !!! tip "Tipp: Textfeld zu klein?"  
     Manche Textfelder, wie z.B. "Zusammenfassung", kannst du vergrößern oder verkleinern, in dem du im Textfeld unten 
-    rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst. 
+    rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst.  
+    Siehe: [Bedienelement#Textfeld](bedienelement.md#textfeld-mit-variabler-grosse).
 
 [comment]: <> (@formatter:on)
 
@@ -143,7 +155,6 @@ gelangst du auf die Änderungsseite der Ausgabe. Und andersherum gelangst du von
 Auflistung aller Artikeln dieser Ausgabe, indem du unter dem Namen der Ausgabe auf den Link mit der Beschriftung
 "Artikel" klickst.
 
-
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
   ![Ausgabe ändern Knopf](img/erfassung/artikel_edit_ausgabe.png){ width="300" .mb-1 }  
@@ -155,13 +166,28 @@ Auflistung aller Artikeln dieser Ausgabe, indem du unter dem Namen der Ausgabe a
 </figure>
 </div>
 
-Weitere Verknüpfungen kannst du unten auf der Artikelseite hinzufügen. Um beispielsweise eine Verknüpfung zwischen dem
+[comment]: <> (@formatter:off)  
+!!! warning "Wichtig: Verknüpfungen verstehen"  
+    Es ist wichtig, dass du verstehst, wie die Verknüpfungen oder Beziehungen funktionieren und welchen Einfluss 
+    Änderungen an Beziehungen auf die Daten in der Datenbank haben können! <br>  
+    Mehr dazu gibt es hier: [Verknüpfungen](relationen.md).
+  
+[comment]: <> (@formatter:on)
+
+Weitere Verknüpfungen kannst du unten im Formular hinzufügen. Um beispielsweise eine Verknüpfung zwischen dem
 Artikel und der Band "The Rolling Stones" herzustellen, klicke unten auf den Reiter mit der Aufschrift "Band" (1).
 Klicke dann in ein leeres Dropdown-Feld (2) und gebe im Dropdown-Menü den Namen der Band ein (3). Aus der Ergebnisliste
 wählst du dann die entsprechende Band mit einem Klick aus (4).
 Mit dem Knopf "Änderungsliste" (5) rufst du die Ergebnisse in der Bands-Übersichtsseite auf - hier kannst du die
 Ergebnisse genauer anschauen.
 Findest du keine passende Band, kannst du mit dem Knopf "Hinzufügen" (6) eine neue Band erstellen.
+
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
+<figure markdown="span">  
+  ![Verknüpfung mit einer Band hinzufügen](img/erfassung/band_select.png){ width="300" .mb-1 }  
+  <figcaption>Verknüpfung mit einer Band hinzufügen</figcaption>  
+</figure>
+</div>
 
 Um eine weitere Verknüpfung hinzuzufügen, klicke auf den Knopf "Band hinzufügen". Daraufhin erscheint ein weiteres
 Dropdown-Element in einer neuen Zeile.
@@ -170,12 +196,7 @@ Löschung markiert. Wenn du den Artikel abspeicherst, wird die *Verknüpfung* ge
 verknüpft war (also hier die Band "Rolling Stones"), wird dabei *nicht* gelöscht - nur die Verknüpfung zwischen dem
 Artikel und der Band wird gelöscht.
 
-
-<div markdown class="d-flex justify-content-evenly gap-5 text-center">  
-<figure markdown="span">  
-  ![Verknüpfung mit einer Band hinzufügen](img/erfassung/band_select.png){ width="300" .mb-1 }  
-  <figcaption>Verknüpfung mit einer Band hinzufügen</figcaption>  
-</figure>
+<div markdown class="d-flex justify-content-evenly gap-5 text-center">
 <figure markdown="span">  
   ![Hinzufügen & Löschen](img/erfassung/band_inline_add_delete.png){ width="300" .mb-1 }  
   <figcaption>Hinzufügen & Löschen</figcaption>  
@@ -183,22 +204,10 @@ Artikel und der Band wird gelöscht.
 </div>
 
 [comment]: <> (@formatter:off)  
-!!! warning "Wichtig: Ausreichend Angaben machen"  
-    Wenn du eine neue Band erstellst, solltest du mehr Informationen als nur den Namen hinterlegen. Es kommt häufig vor, 
-    dass zwei Bands denselben Namen haben. Um diese voneinander unterscheiden zu können, solltest du weitere Angaben wie
-    zum Beispiel Genres, Aliase oder Links zu Wikipedia oder Discogs machen. Dies gilt [grundsätzlich](grundsaetze.md) 
-    für alle Arten von Datensätzen.<br>  
-    Hast du für die Erstellung den "Hinzufügen" Knopf des Dropdown-Menüs benutzt, kannst du auf den Bleistift neben der
-    erstellten Band klicken, um zu der Änderungsseite zu gelangen.
-    
-[comment]: <> (@formatter:on)
-
-[comment]: <> (@formatter:off)
-!!! warning "Wichtig: Duplikate vermeiden"
-    Grundsätzlich solltest du es vermeiden, Duplikate zu erstellen; ist zum Beispiel eine Band bereits in der Datenbank 
-    eingetragen, so solltest du nicht eine weitere Band mit demselben Namen hinzufügen (es sei denn es ist eine komplett
-    andere Band, die den denselben Namen hat).
-
+!!! info "Hinweis: Inlines"  
+    Der oben beschriebene Bereich, mit dem du Verknüpfungen hinzufügen kannst, ist hier näher beschrieben:
+    [Bedienelement#Inlines](bedienelement.md#inlines).
+  
 [comment]: <> (@formatter:on)
 
 ### Bearbeitung abschließen
@@ -226,11 +235,12 @@ Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zur
     Wenn du dabei bist, von der Übersichtsseite aus einige Datensätze zu ändern, dann benutze den "**Sichern**" Knopf, um
     sofort wieder zu der Übersichtsseite zurückzukehren.  
     "**Sichern und weiterbearbeiten**" kannst du während der Erfassung immer wieder mal benutzen, um deine Arbeit 
-    abzuspeichern.
+    abzuspeichern.<br>  
+    Siehe auch: [Sichern](sichern.md).
   
 [comment]: <> (@formatter:on)
 
-## Welche Artikel müssen erfasst werden und welche nicht?
+## Welche Artikel müssen erfasst werden?
 
 Prinzipiell kann jeder Text einer Ausgabe erfasst und eingetragen werden. Jedoch haben manche Abschnitte wenig
 Informationsgehalt: News mit einem Umfang von 20 Wörtern haben meist nicht viel Aussagekraft. Aus Zeitgründen ist die
@@ -243,7 +253,7 @@ Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findes
 erwähnenswert hältst, kannst du diese gerne erfassen.
 
 [comment]: <> (@formatter:off)  
-!!! info "Information: Zeit"  
+!!! tip "Tipp: beachte den Zeitaufwand"  
     Du stehst hier nicht unter Zeitdruck. Allerdings ist es sinnvoller, mehr Zeit mit der Erfassung von "echten Artikeln"
     zu verbringen als mit der Erfassung von kleinen News-Schnipseln oder Rezensionen, die mehr Werbung als interessanter
     Text sind.
@@ -272,8 +282,6 @@ diesen Künstler.
 </figure>
 </div>
 
-## Über Verknüpfungen
+## Als Nächstes
 
-- Verknüpfungen gehen in beide Richtungen
-- Änderungen an einem Teil der Verknüpfung wirken sich auf den anderen Teil aus
-- Vorsicht beim Ändern!
+* [Über Verknüpfungen](relationen.md)
