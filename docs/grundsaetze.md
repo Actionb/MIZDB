@@ -90,4 +90,6 @@ Dies wäre jedoch falsch, denn eine Angabe zum Nachnamen ist nötig, um von den 
 tatsächliche Person schließen zu können. Umgehst du diese Limitierung, macht der Datensatz insgesamt also wenig Sinn
 (siehe [Datensätze müssen aufschlussreich sein](#datensatze-mussen-aufschlussreich-sein)).
 
+## Als Nächstes
 
+* [Artikel erfassen](erfassung.md)
