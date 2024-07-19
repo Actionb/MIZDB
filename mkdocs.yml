@@ -5,6 +5,7 @@ nav:
     - 'Einführung': einfuehrung.md
     - 'Grundsätze': grundsaetze.md
     - 'Erfassung': erfassung.md
+    - 'Verknüpfungen': relationen.md
   - Benutzung:
       - 'Oberfläche': oberflaeche.md
       - 'Bedienelemente': bedienelement.md
