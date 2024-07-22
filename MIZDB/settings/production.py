@@ -14,11 +14,6 @@ except FileNotFoundError as e:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# URL to the wiki.
-# That URL is displayed in the header on each admin page.
-# See: sites.MIZAdminSite.each_context
-WIKI_URL = os.environ.get('WIKI_URL', "/wiki/Hauptseite")
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
