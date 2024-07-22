@@ -4,7 +4,7 @@ Suchformular
 [Änderungslisten](aenderungsliste.md "Änderungsliste") bieten ein Formular an, mit welchem man genauere Parameter
 (Filter) für eine Suchanfrage an die Datenbank einstellen kann.
 
-Das Formular enthält ein Feld, mit dem ihr einen Suchbegriff für eine [Volltextsuche](#textsuche) durchführen könnt (1).
+Das Formular enthält ein Feld, mit dem du den Suchbegriff für eine [Volltextsuche](#textsuche) definieren kannst (1).
 Darüber hinaus stellen manche Suchformulare noch mehr Felder (3) zur Verfügung, die mit einem Klick auf "Erweiterte
 Suchoptionen anzeigen" (2) angezeigt (und auch wieder versteckt) werden können.
 

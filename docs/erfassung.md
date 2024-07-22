@@ -22,12 +22,12 @@ Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.
 
 So suchst du nach den Artikeln eines Heftes:
 
-1. im [Index/Hauptmenü](oberflaeche.md#index "Oberfläche") auf "Artikel" klicken
-2. im [Suchformular](suchformular.md "Suchformular") auf "Erweiterte Suchoptionen anzeigen" klicken
-3. im Suchformular das Feld "[Magazin](magazin.md "Magazin")" anklicken, den Namen des Magazins eintippen und dann das
-   entsprechende Magazin aus der Liste auswählen
-4. danach im Feld "[Ausgabe](ausgabe.md)" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen
-5. auf "Suchen" klicken
+1. im [Index/Hauptmenü](oberflaeche.md#index "Oberfläche") auf "**Artikel**" klicken
+2. im [Suchformular](suchformular.md "Suchformular") auf "**Erweiterte Suchoptionen anzeigen**" klicken
+3. im Suchformular das Feld "**[Magazin](magazin.md "Magazin")**" anklicken, den Namen des Magazins eintippen und dann
+   das entsprechende Magazin aus der Liste auswählen
+4. danach im Feld "**[Ausgabe](ausgabe.md)**" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen
+5. auf "**Suchen**" klicken
 
 Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.
 
@@ -41,8 +41,8 @@ Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenb
   <figcaption>Magazin auswählen</figcaption>
 </figure>
 <figure markdown="span">
-  ![Ausgabe Auswählen](img/erfassung/artikel_ausgabe_select.png){ width="300" .mb-1 }
-  <figcaption>Ausgabe Auswählen</figcaption>
+  ![Ausgabe auswählen](img/erfassung/artikel_ausgabe_select.png){ width="300" .mb-1 }
+  <figcaption>Ausgabe auswählen</figcaption>
 </figure>
 </div>
 
@@ -283,5 +283,7 @@ diesen Künstler.
 </div>
 
 ## Als Nächstes
+
+Als Nächstes solltest du dich mit Verknüpfungen oder Beziehungen zwischen Datensätzen vertraut machen:
 
 * [Über Verknüpfungen](relationen.md)

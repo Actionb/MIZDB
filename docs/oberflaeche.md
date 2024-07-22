@@ -67,12 +67,12 @@ Mit einem Klick auf den Suchbutton oder mit der Eingabetaste wirst du auf die Su
 
 ### Änderungsseite
 
-Auf der Änderungsseite könnt ihr neue Datensätze erstellen oder Änderungen an bereits existierenden Datensätzen
-vornehmen. Dies wird mithilfe von [Webformularen](https://de.wikipedia.org/wiki/Webformular) bewerkstelligt. Das
-Formular sammelt die Angaben, die ihr macht, und verschickt diese nach der Aufforderung zu Speicherung an den Server der
-Datenbank, der diese Daten dann schließlich sichert.
+Auf der Änderungsseite kannst du neue Datensätze erstellen oder Änderungen an bereits existierenden Datensätzen
+vornehmen. Dies wird mithilfe von [Webformularen](https://de.wikipedia.org/wiki/Webformular) bewerkstelligt.
+Das Formular sammelt die Angaben, die du machst, und verschickt diese nach der Aufforderung zu Speicherung an den Server
+der Datenbank, der diese Daten dann schließlich sichert.
 
-Erklärungen zu den verschiedenen Bedienelementen, die bei der Dateneingabe verwendet werden, findet ihr auf der
+Erklärungen zu den verschiedenen Bedienelementen, die bei der Dateneingabe verwendet werden, findest du auf der
 entsprechenden Hilfe-Seite: [Bedienelement](bedienelement.md "Bedienelement").
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
