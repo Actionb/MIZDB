@@ -45,6 +45,10 @@ nav:
       - 'Spielorte': spielort.md
       - 'Veranstaltungen': veranstaltung.md
       - 'Verlage': verlag.md
+  - Installation & Verwaltung:
+      - 'Installation': install.md
+      - 'Verwaltung': verwaltung.md
+      - 'Deinstallation': deinstall.md
 extra_css:
   - css/admonitions.css
   - css/toc_scroll.css

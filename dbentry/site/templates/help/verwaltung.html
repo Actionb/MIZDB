@@ -1,0 +1,94 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#verwaltung">Verwaltung</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#befehle">Befehle</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#docker-container-webserver">Docker Container &amp; Webserver</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#datenbank-wiederherstellen-pg_restore">Datenbank wiederherstellen (pg_restore)</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#backup-erstellen-pg_dump">Backup erstellen (pg_dump)</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#update">Update</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#django-shell-psql">Django Shell &amp; psql</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#webserver-einhangepunkt-andern">Webserver Einhängepunkt ändern</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="verwaltung">Verwaltung</h1>
+<p>Für die Verwaltung der Anwendung steht das Programm <code>mizdb.sh</code> im MIZDB Verzeichnis zur Verfügung:</p>
+<pre><code class="language-shell">cd MIZDB_VERZEICHNIS &amp;&amp; bash mizdb.sh help
+</code></pre>
+<p>Wurde MIZDB mithilfe <a href="{% url 'help' page_name='install'%}#per-script">des Scripts</a> erstellt, so steht systemweit der Befehl <code>mizdb</code> zu Verfügung:</p>
+<pre><code class="language-shell">mizdb help
+</code></pre>
+<p>Dieser kann anstelle von <code>bash mizdb.sh</code> verwendet werden (also z.B. <code>mizdb reload</code> anstelle
+von <code>bash mizdb.sh reload</code>).</p>
+<h2 id="befehle">Befehle</h2>
+<h3 id="docker-container-webserver">Docker Container &amp; Webserver</h3>
+<ul>
+<li><a href="https://docs.docker.com/engine/reference/commandline/compose_up/">Container starten</a>: <code>bash mizdb.sh start</code></li>
+<li><a href="https://docs.docker.com/engine/reference/commandline/compose_down/">Container stoppen</a>: <code>bash mizdb.sh stop</code></li>
+<li><a href="https://docs.docker.com/engine/reference/commandline/restart/">Container neustarten</a>: <code>bash mizdb.sh restart</code></li>
+<li><a href="https://httpd.apache.org/docs/current/stopping.html#graceful">Webserver neuladen</a>: <code>bash mizdb.sh reload</code></li>
+</ul>
+<p>Mit <a href="https://docs.docker.com/engine/reference/commandline/ps/">docker ps</a> <code>docker ps</code> kann der Zustand der Container
+ermittelt werden.<br/>
+Der Name des Containers der App ist <code>mizdb-app</code> und der Name des Containers der PostgreSQL Datenbank
+ist <code>mizdb-postgres</code>.</p>
+<h3 id="datenbank-wiederherstellen-pg_restore">Datenbank wiederherstellen (<a href="https://www.postgresql.org/docs/current/app-pgrestore.html">pg_restore</a>)</h3>
+<p>Um die Daten der Datenbank aus einer Backup-Datei wiederherzustellen, benutze:</p>
+<pre><code class="language-shell">bash mizdb.sh restore backup_datei 
+</code></pre>
+<h3 id="backup-erstellen-pg_dump">Backup erstellen (<a href="https://www.postgresql.org/docs/current/app-pgdump.html">pg_dump</a>)</h3>
+<p>Um eine Backup-Datei zu erstellen, benutze:</p>
+<pre><code class="language-shell">bash mizdb.sh dump backup_datei
+</code></pre>
+<p>Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis <code>MIZDB/dumps</code> erstellt.</p>
+<h3 id="update">Update</h3>
+<p>Um die Anwendung zu aktualisieren, benutze:</p>
+<pre><code class="language-shell">bash mizdb.sh update
+</code></pre>
+<p>Um die Änderungen für die Benutzer sichtbar zu machen, lade den Webserver neu:</p>
+<pre><code class="language-shell">bash mizdb.sh reload
+</code></pre>
+<h3 id="django-shell-psql">Django Shell &amp; psql</h3>
+<p>Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:<br/>
+<code>bash mizdb shell</code> und dann <code>python manage.py shell</code></p>
+<p>Um das interaktive PostgreSQL Terminal zu öffnen:<br/>
+<code>bash mizdb dbshell</code> und dann <code>psql --user=$POSTGRES_USER $POSTGRES_DB</code></p>
+<h3 id="webserver-einhangepunkt-andern">Webserver Einhängepunkt ändern</h3>
+<p>Standardmäßig ist die Seite der Datenbank unter <code>http://&lt;ServerName&gt;/miz</code> erreichbar, d.h. der Einhängepunkt ist <code>/miz</code>.
+Um einen anderen Einhängepunkt festzulegen, muss in der Datei <code>.env</code> der Wert für <code>MOUNT_POINT</code> geändert werden.<br/>
+Anschließend müssen die Container gestoppt und neu gestartet werden:</p>
+<pre><code class="language-shell">bash mizdb.sh stop &amp;&amp; bash mizdb.sh start
+</code></pre></div>
+</div>{% endblock content %}
