@@ -1,0 +1,20 @@
+{% extends "admin/base.html" %}
+{% load static mizdb_watchlist %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {% comment %}
+        Additional css files should be loaded in the block 'extrastyle' which comes before this block.
+        By adding the mizdb css override to this block, it should come after every  other css file.
+    {% endcomment %}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/base_custom.css" %}"/>
+{% endblock %}
+
+{% block userlinks %}
+    {% watchlist_link 'admin:watchlist' icon=False %} /
+    {% url 'help' page_name='index' as help_url %}
+    {% if help_url %}
+        <a href="{{ help_url }}">Hilfe</a> /
+    {% endif %}
+    {{ block.super }}
+{% endblock userlinks %}

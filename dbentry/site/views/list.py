@@ -25,6 +25,7 @@ Use SearchableListView to add a search form to the changelist:
             "fields": ["name", "field_2"]
         }
 """
+
 import json
 
 from django.apps import apps
@@ -32,6 +33,7 @@ from django.contrib.admin.models import LogEntry, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
+from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -43,7 +45,7 @@ from dbentry.export import resources
 from dbentry.site.forms import null_boolean_select
 from dbentry.site.registry import register_changelist, ModelType
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import BaseViewMixin
+from dbentry.site.views.base import BaseViewMixin, ORDER_VAR
 from dbentry.site.views.base import SearchableListView
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
@@ -228,6 +230,7 @@ class AudioList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.AudioResource
+    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Audio):
@@ -314,6 +317,16 @@ class AusgabeList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.anz_artikel
+
+    def get_queryset(self):
+        """
+        Apply chronological order to the result queryset unless an ordering is
+        specified in the query string.
+        """
+        if ORDER_VAR in self.request.GET:
+            return super().get_queryset()
+        else:
+            return super().get_queryset().chronological_order()
 
 
 @register_changelist(_models.Brochure, category=ModelType.ARCHIVGUT)
@@ -506,6 +519,7 @@ class VideoList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.VideoResource
+    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Video):

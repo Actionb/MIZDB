@@ -1,0 +1,8 @@
+{% extends "mizdb/export.html" %}
+
+{% block hidden_fields %}
+{% comment %}
+Do not add the hidden inputs associated with changelist actions.
+This would add an input element for every object of the model.
+{% endcomment %}
+{% endblock hidden_fields %}

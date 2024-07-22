@@ -1,49 +1,53 @@
 {% extends "mizdb/base.html" %}
-{% load i18n l10n static django_bootstrap5 %}
+{% load l10n static django_bootstrap5 %}
 
 {% block extrahead %}
 <!-- Extrahead -->
-    {{ block.super }}
-    {{ media }}
-    <script src="{% static 'mizdb/js/cancel.js' %}"></script>
+{{ block.super }}
+{{ media }}
+<script src="{% static 'mizdb/js/cancel.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-    {% block view_helptext %}
-        {% if view_helptext %}
-            <p> {{view_helptext|linebreaks}} </p>
-        {% endif %}
-    {% endblock view_helptext %}
-    
-    {% block confirmation_form %}
-    
-        <form method="post">{% csrf_token %}
-            {% bootstrap_form form layout="horizontal"%}
-            <p>
-                {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
-            </p>
-            {% block object_details %}
-                {% if object_list %}
-                <h2>{% trans "Objects" %}</h2>
-                {% for obj in object_list %}
-                    <ul>{{ obj|unordered_list }}</ul>
-                {% endfor %}
-                {% endif %}
-            {% endblock object_details %}
-            
-            {% if non_reversible_warning %}
-                <p> {{non_reversible_warning}}</p>
-            {% endif %}
-            
-            <div>
-                {% for obj in queryset %}
-                    {# The list of selected primary keys #}
-                    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
-                {% endfor %}
-                <input type="hidden" name="changelist_action" value="{{action_name}}" />
-            <input class="btn btn-danger" type="submit" value="Ja, ich bin sicher">
-            <button type="button" class="btn btn-secondary button cancel-link">Nein, bitte abbrechen</button>
-            </div>
-        </form>
-    {% endblock confirmation_form %}
+
+{% block view_helptext %}
+{% if view_helptext %}
+<p> {{view_helptext|linebreaks}} </p>
+{% endif %}
+{% endblock view_helptext %}
+
+{% block confirmation_form %}
+<form method="post">
+  {% csrf_token %}
+
+  {% block form_fields %}
+  {% if form %}{% bootstrap_form form layout="horizontal"%}{% endif %}
+  {% endblock form_fields %}
+
+  <div id="hidden">
+    {% block hidden_fields %}
+    {# This block contains hidden inputs required by the action views. #}
+
+    {# The list of selected primary keys #}
+    {% for obj in queryset %}
+    <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk|unlocalize }}"/>
+    {% endfor %}
+
+    <input type="hidden" name="action_name" value="{{ action_name }}"/>
+    {% endblock hidden_fields %}
+  </div>
+
+  {% block before_submit %}
+  {% endblock before_submit %}
+
+  {% block submit_button %}
+  <input class="btn btn-danger" type="submit" name="{{ action_confirmed_name }}" value="Weiter">
+  {% endblock submit_button %}
+
+  {% block cancel_button %}
+  <button type="button" class="btn btn-secondary button cancel-link">Abbrechen</button>
+  {% endblock cancel_button %}
+</form>
+{% endblock confirmation_form %}
+
 {% endblock content %}

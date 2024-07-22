@@ -1,3 +1,4 @@
+from operator import itemgetter
 from typing import Any
 
 from django import forms
@@ -9,6 +10,7 @@ from django.urls import reverse_lazy
 from dbentry import models as _models
 from dbentry.admin.forms import MIZAdminForm
 from dbentry.base.forms import DynamicChoiceFormMixin
+from dbentry.query import InvalidJahrgangError
 
 
 class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
@@ -34,6 +36,25 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
         help_text="Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.",
         validators=[MinValueValidator(limit_value=0)],
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_id = cleaned_data.get("start")
+        jahrgang = cleaned_data.get("jahrgang")
+        if start_id and jahrgang:
+            pks = list(map(itemgetter(0), self.fields["start"].choices))
+            queryset = _models.Ausgabe.objects.filter(id__in=pks)
+            start_obj = _models.Ausgabe.objects.get(pk=start_id)
+            try:
+                # Run increment_jahrgang, without committing anything, to see
+                # if the jahrgang values are valid for all objects.
+                queryset.increment_jahrgang(start_obj=start_obj, start_jg=jahrgang, commit=False)
+            except InvalidJahrgangError:
+                self.add_error(
+                    "jahrgang",
+                    "Der Jahrgang ist für mind. eine Ausgabe ungültig (Wert wäre kleiner 1)."
+                )
+        return cleaned_data
 
 
 class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):

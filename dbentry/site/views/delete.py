@@ -5,8 +5,9 @@ from django.urls import reverse, NoReverseMatch
 from django.utils.safestring import mark_safe
 from django.views.generic import DeleteView as BaseDeleteView
 
+from dbentry.actions.base import ActionConfirmationView
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import ModelViewMixin, ACTION_SELECTED_ITEM
+from dbentry.site.views.base import ModelViewMixin
 from dbentry.utils import permission as perms
 from dbentry.utils.admin import log_deletion
 from dbentry.utils.models import get_deleted_objects
@@ -72,15 +73,16 @@ class DeleteView(PermissionRequiredMixin, ModelViewMixin, BaseDeleteView):
             }
         )
         if protected or perms_needed:
-            ctx["content_title"] = f"Kann {self.opts.verbose_name} nicht löschen"
+            ctx["title"] = f"Kann {self.opts.verbose_name} nicht löschen"
         else:
-            ctx["content_title"] = "Sind Sie sicher?"
-        ctx["action_selection_name"] = ACTION_SELECTED_ITEM
+            ctx["title"] = "Sind Sie sicher?"
         return ctx
 
 
-class DeleteSelectedView(DeleteView):
+class DeleteSelectedView(DeleteView, ActionConfirmationView):
     """Confirmation for deleting model objects selected on the changelist."""
+
+    action_name = "delete"
 
     def get_objects_for_deletion(self):
         return self.queryset
@@ -92,7 +94,6 @@ class DeleteSelectedView(DeleteView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["queryset"] = self.queryset
         ctx["is_changelist_action"] = True
         return ctx
 
@@ -100,7 +101,7 @@ class DeleteSelectedView(DeleteView):
         deleted_objects, model_count, perms_needed, protected = get_deleted_objects(
             self.request, self.get_objects_for_deletion()
         )
-        if request.POST.get("post") and not protected:
+        if self.action_confirmed(request) and not protected:
             # User confirmed the deletion. Delete the objects (super) and return
             # None to tell the changelist view that the action was completed.
             super().post(request, *args, **kwargs)
@@ -108,4 +109,4 @@ class DeleteSelectedView(DeleteView):
         else:
             # This POST request was issued from the changelist selection panel.
             # Show the confirmation page.
-            return super().get(request, *args, **kwargs)
+            return self.get(request, *args, **kwargs)

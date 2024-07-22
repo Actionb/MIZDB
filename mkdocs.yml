@@ -1,0 +1,75 @@
+site_name: MIZDB - Hilfe
+nav:
+  - 'Index': index.md
+  - Einführung:
+    - 'Einführung': einfuehrung.md
+    - 'Grundsätze': grundsaetze.md
+    - 'Erfassung': erfassung.md
+    - 'Verknüpfungen': relationen.md
+  - Benutzung:
+      - 'Oberfläche': oberflaeche.md
+      - 'Bedienelemente': bedienelement.md
+      - 'Änderungsliste': aenderungsliste.md
+      - 'Suchformular': suchformular.md
+      - 'Aktionen': aktion.md
+      - 'Sichern': sichern.md
+      - 'Löschen': loeschen.md
+      - 'Merkliste': merkliste.md
+      - 'Benutzerverwaltung': benutzer.md
+  - Archiv Materialien:
+      - 'Artikel': artikel.md
+      - 'Audio Materialien': audio.md
+      - 'Ausgaben': ausgabe.md
+      - 'Broschüren': broschuere.md
+      - 'Bücher': buch.md
+      - 'Fotos': foto.md
+      - 'Plakate': plakat.md
+      - 'Programmhefte': programmheft.md
+      - 'Video Materialien': video.md
+      - 'Warenkataloge': warenkatalog.md
+  - Stammdaten:
+      - 'Autoren': autor.md
+      - 'Bands': band.md
+      - 'Genres': genre.md
+      - 'Magazine': magazin.md
+      - 'Musiker': musiker.md
+      - 'Orte': ort.md
+      - 'Personen': person.md
+      - 'Schlagwörter': schlagwort.md
+  - Sonstige Tabellen:
+      - 'Bestände': bestand.md
+      - 'Herausgeber': herausgeber.md
+      - 'Instrumente': instrument.md
+      - 'Lagerorte': lagerort.md
+      - 'Provenienz': provenienz.md
+      - 'Spielorte': spielort.md
+      - 'Veranstaltungen': veranstaltung.md
+      - 'Verlage': verlag.md
+  - Installation & Verwaltung:
+      - 'Installation': install.md
+      - 'Verwaltung': verwaltung.md
+      - 'Deinstallation': deinstall.md
+extra_css:
+  - css/admonitions.css
+  - css/toc_scroll.css
+extra_javascript:
+  - js/style.js
+theme:
+  name: mkdocs
+  custom_dir: 'docs_theme/'
+  navigation_depth: 3
+  locale: de
+use_directory_urls: false
+hooks:
+  - 'docs/hooks/post_build.py'
+plugins:
+  - search
+  - glightbox
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+not_in_nav: |
+  /datensatz.md
+  /id.md
+  /ort_spielort_veranstaltung.md

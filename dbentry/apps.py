@@ -3,6 +3,7 @@ from django.contrib.admin.apps import SimpleAdminConfig
 
 
 class DbentryConfig(AppConfig):
+    default_auto_field = "django.db.models.AutoField"
     name = "dbentry"
 
     def ready(self) -> None:

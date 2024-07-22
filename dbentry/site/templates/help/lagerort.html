@@ -1,0 +1,55 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#lagerort">Lagerort</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ort">Ort</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#raum">Raum</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#regal">Regal</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#fach">Fach</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ordner">Ordner</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="lagerort">Lagerort</h1>
+<p>Der Ort, an dem sich das physikalische Objekt eines Archivgut-Datensatzes befindet.</p>
+<h2 id="felder">Felder</h2>
+<h3 id="ort">Ort</h3>
+<p>(Umgangssprachlicher) Titel für den Ort.</p>
+<h3 id="raum">Raum</h3>
+<p>Angabe zum Raum (z.B. Raumnummer).</p>
+<h3 id="regal">Regal</h3>
+<p>Die Nummer des Regals.</p>
+<h3 id="fach">Fach</h3>
+<p>Nummer des Fachs im Regal.</p>
+<h3 id="ordner">Ordner</h3>
+<p>Angabe, in welchem Ordner das Objekt zu finden ist.</p></div>
+</div>{% endblock content %}

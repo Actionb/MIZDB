@@ -8,7 +8,6 @@
 # 	DB_PORT
 #   DB_PASSWORD
 #   ALLOWED_HOSTS
-#   WIKI_URL
 #   MOUNT_POINT
 #
 # Prompts for the database password if the environment variable DB_PASSWORD
@@ -29,8 +28,9 @@ DB_PORT=${DB_PORT:-5432}
 # e.g.: MOUNT_POINT=/foo => site available under example.com/foo
 MOUNT_POINT=${MOUNT_POINT:-/miz}
 
-# URL at which the WIKI is available
-WIKI_URL=${WIKI_URL}
+# Docker user IDs
+UID=$(id -u)
+GID=$(id -g)
 EOF
 
 # Create a directory for the database data.

@@ -3,6 +3,7 @@ from unittest.mock import patch, Mock, DEFAULT
 from django import forms
 from django.contrib import admin
 from django.contrib.admin import helpers
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.http import HttpResponse
 from django.test import override_settings
 from django.urls import reverse, path
@@ -19,10 +20,11 @@ from dbentry.actions.base import (
     AdminActionConfirmationView,
 )
 from dbentry.admin.forms import MIZAdminForm
+from dbentry.site.views.base import ACTION_SELECTED_ITEM
 from tests.case import DataTestCase, RequestTestCase, AdminTestCase
 from tests.model_factory import make
 from tests.test_actions.case import ActionViewTestCase, AdminActionViewTestCase
-from tests.test_actions.models import Band, Genre
+from tests.test_actions.models import Band
 
 admin_site = admin.AdminSite(name="test_actions")
 
@@ -45,9 +47,10 @@ class RenameBandActionView(AdminActionConfirmationView):
         """Return whether all selected Band objects are active."""
         return not view.queryset.exclude(status=Band.Status.ACTIVE).exists()
 
-    def perform_action(self, cleaned_data) -> None:
+    def form_valid(self, form) -> None:
         """Rename all Band objects in the view's queryset."""
-        self.queryset.update(band_name=cleaned_data["new_name"])
+        self.queryset.update(band_name=form.cleaned_data["new_name"])
+        return None
 
 
 def rename_band(model_admin, request, queryset):
@@ -174,18 +177,12 @@ class TestActionMixin(ActionViewTestCase):
         with patch.object(view, "action_allowed", new=Mock(return_value=False)):
             self.assertIsNone(view.dispatch(self.get_request()))
 
-    def test_get_context_data(self):
-        """
-        Assert that the context data includes items for 'titel' and
-        'non_reversible_warning'.
-        """
+    def test_get_context_data_contains_titel(self):
+        """Assert that the context data includes a 'titel' item."""
         view = self.get_view(self.get_request())
         view.title = "Merge %(verbose_name_plural)s"
-        view.non_reversible_warning = "This action cannot be reversed."
-
         context = view.get_context_data()
         self.assertEqual(context["title"], "Merge Bands")
-        self.assertEqual(context["non_reversible_warning"], "This action cannot be reversed.")
 
     def test_get_context_data_object_name_singular(self):
         """
@@ -208,6 +205,12 @@ class TestActionMixin(ActionViewTestCase):
                 view.queryset = Mock(count=Mock(return_value=count))
                 context = view.get_context_data()
                 self.assertEqual(context["objects_name"], "Bands")
+
+    def test_get_context_data_adds_action_selection_name(self):
+        view = self.get_view(self.post_request(), model=self.model)
+        context_data = view.get_context_data()
+        self.assertIn("action_selection_name", context_data)
+        self.assertEqual(context_data["action_selection_name"], ACTION_SELECTED_ITEM)
 
 
 @override_settings(ROOT_URLCONF=URLConf)
@@ -263,6 +266,12 @@ class TestAdminActionMixin(AdminActionViewTestCase):
             context = view.get_context_data()
             self.assertEqual(str(context["media"]), str(self.model_admin.media + form_media))
 
+    def test_get_context_data_adds_action_selection_name(self):
+        view = self.get_view(self.post_request(), model=self.model)
+        context_data = view.get_context_data()
+        self.assertIn("action_selection_name", context_data)
+        self.assertEqual(context_data["action_selection_name"], ACTION_CHECKBOX_NAME)
+
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestActionConfirmationView(ActionViewTestCase):
@@ -272,101 +281,33 @@ class TestActionConfirmationView(ActionViewTestCase):
     model = Band
     view_class = DummyView
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.genres = genres = [make(Genre, genre="Funk"), make(Genre, genre="Soul")]
-        cls.obj = obj = make(cls.model, band_name="Khruangbin", genres=genres, status=Band.Status.ACTIVE)
-
-        opts = cls.model._meta
-        cls.change_url = reverse(f"{opts.app_label}_{opts.model_name}_change", args=[obj.pk])
-
-        super().setUpTestData()
-
-    def test_get_form_kwargs_data_item(self):
+    @patch("dbentry.actions.base.super")
+    def test_get_form_kwargs(self, super_mock):
         """
-        Assert that the 'data' kwarg is removed, unless the request contains an
-        'action_confirmed' item.
+        Assert that the kwargs returned by get_form_kwargs only includes 'data'
+        if the action was confirmed.
         """
-        view = self.get_view(self.post_request("/"))
-        self.assertNotIn("data", view.get_form_kwargs())
-        self.assertNotIn("files", view.get_form_kwargs())
-        view = self.get_view(self.post_request("/", data={"action_confirmed": "1"}))
-        self.assertIn("data", view.get_form_kwargs())
-        self.assertIn("files", view.get_form_kwargs())
+        super_mock.return_value.get_form_kwargs = Mock(return_value={"data": ""})
+        view = self.get_view(request=self.post_request(), model=self.model)
+        with patch.object(view, "action_confirmed") as action_confirmed_mock:
+            for action_confirmed in (True, False):
+                action_confirmed_mock.return_value = action_confirmed
+                with self.subTest(action_confirmed=action_confirmed):
+                    form_kwargs = view.get_form_kwargs()
+                    if action_confirmed:
+                        self.assertIn("data", form_kwargs)
+                    else:
+                        self.assertNotIn("data", form_kwargs)
 
-    def test_get_objects_list(self):
-        """
-        Assert that the list returned by get_objects_list contains the expected
-        data.
-        """
-        view = self.get_view(
-            self.get_request(), queryset=self.model.objects.all(), display_fields=["band_name", "genres", "status"]
-        )
-        link_list = view.get_objects_list()
+    def test_action_confirmed_true(self):
+        request = self.post_request(data={self.view_class.action_confirmed_name: ""})
+        view = self.get_view(request, model=self.model)
+        self.assertTrue(view.action_confirmed(request))
 
-        # link_list should have a structure like this:
-        # [
-        #       ('Band: <link of obj1>', [<additional info (display_fields)>]),
-        #       ('Band: <link of obj2>', [<additional info (display_fields)>]),
-        #       ...
-        # ]
-        self.assertEqual(len(link_list), 1)
-        self.assertEqual(link_list[0][0], f'Band: <a href="{self.change_url}" target="_blank">{self.obj}</a>')
-
-        # link_list[0][1] is the list of values for the display fields:
-        display_field_values = link_list[0][1]
-        # It should contain 4 items: one for the band name, two for the genres,
-        # and one for the status:
-        self.assertEqual(len(display_field_values), 4)
-
-        # 'band_name' value:
-        self.assertEqual(display_field_values[0], "Bandname: " + self.obj.band_name)
-
-        # links to the genres:
-        genres = Genre.objects.all().order_by("genre")
-        url_name = f"{Genre._meta.app_label}_{Genre._meta.model_name}_change"
-        url = reverse(url_name, args=[genres[0].pk])
-        self.assertEqual(display_field_values[1], f'Genre: <a href="{url}" target="_blank">{genres[0]}</a>')
-        url = reverse(url_name, args=[genres[1].pk])
-        self.assertEqual(display_field_values[2], f'Genre: <a href="{url}" target="_blank">{genres[1]}</a>')
-
-        # 'status' value:
-        self.assertEqual(link_list[0][1][3], "Status: Aktiv")
-
-    def test_get_objects_list_no_display_fields(self):
-        """
-        Assert that the list returned by get_objects_list only contains links
-        if display_fields is not set.
-        """
-        view = self.get_view(self.get_request(), queryset=self.model.objects.all(), display_fields=[])
-        self.assertEqual(
-            view.get_objects_list(), [(f'Band: <a href="{self.change_url}" target="_blank">{self.obj}</a>',)]
-        )
-
-    def test_get_objects_list_no_link(self):
-        """
-        Assert that a string representation of the object is presented, if
-        no link could be created for it.
-        """
-        view = self.get_view(
-            self.get_request(user=self.noperms_user), queryset=self.model.objects.all(), display_fields=[]
-        )
-        self.assertEqual(view.get_objects_list(), [(f"Band: {self.obj}",)])
-
-    def test_form_valid(self):
-        """
-        Assert that form_valid returns None (which will prompt a redirect back
-        to the changelist).
-        """
-        view = self.get_view()
-        view.perform_action = Mock()
-        self.assertIsNone(view.form_valid(Mock()))
-
-    def test_get_context_data_adds_objects_list(self):
-        """Assert that the 'object_list' item is added to the context data."""
-        view = self.get_view(self.get_request())
-        with patch.object(view, "get_objects_list"):
-            self.assertIn("object_list", view.get_context_data())
+    def test_action_confirmed_false(self):
+        request = self.post_request(data={})
+        view = self.get_view(request, model=self.model)
+        self.assertFalse(view.action_confirmed(request))
 
 
 @override_settings(ROOT_URLCONF=URLConf)
@@ -405,20 +346,6 @@ class TestWizardConfirmationView(ActionViewTestCase):
         request = self.post_request(data={normalized_name + "-current_step": "2"})
         with patch.object(SessionWizardView, "post", return_value="WizardForm!"):
             self.assertEqual(view.post(request), "WizardForm!")
-
-    def test_done_returns_none(self):
-        """
-        Assert that done() returns None even if perform_action returns a value
-        or if an exception occurred.
-        """
-        view = self.get_view()
-        # 'implement' perform_action:
-        with patch.object(view, "perform_action") as perform_action_mock:
-            perform_action_mock.return_value = "Not None"
-            self.assertIsNone(view.done())
-            perform_action_mock.side_effect = TypeError
-            with self.assertNotRaises(NotImplementedError):
-                self.assertIsNone(view.done())
 
 
 @override_settings(ROOT_URLCONF=URLConf)

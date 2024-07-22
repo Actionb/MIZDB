@@ -1,18 +1,13 @@
-import logging
 import re
 
 from django import forms
 from django.contrib import messages
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.dispatch import receiver
 from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
 from django.urls import reverse, resolve, Resolver404
 from django.utils.safestring import mark_safe
 from django.views.csrf import csrf_failure as django_csrf_failure
 
 from dbentry.site.registry import miz_site
-
-logger = logging.getLogger(__name__)
 
 CSRF_FORM_DATA_KEY = "_csrf_form_data"
 
@@ -51,7 +46,7 @@ def _restore_formset(formset: forms.BaseInlineFormSet, data: dict):  # type: ign
 
     # Add the rest of the data as initial_extra.
     initial_extra = []
-    pattern = re.compile(f"{formset.prefix}-(?P<index>\d+)-(?P<field>[\w_]+)")  # noqa
+    pattern = re.compile(rf"{formset.prefix}-(?P<index>\d+)-(?P<field>[\w_]+)")
     # Group the data items by index:
     indexes: dict = {}
     for k, v in sorted(data.items()):
@@ -167,23 +162,4 @@ def csrf_failure(request: HttpRequest, reason: str) -> HttpResponse:
         request.session[CSRF_FORM_DATA_KEY] = dict(form_data.lists())
         return HttpResponseRedirect(request.get_full_path())
     else:
-        if user_is_logged_in:
-            logger.warning(f"{reason} user: {request.user} ({request.user.pk})")
         return django_csrf_failure(request, reason)
-
-
-# Log logins and logouts to check if unexpected logouts could be responsible
-# for CSRF failures (CSRF token is rotated on login).
-
-
-@receiver(user_logged_in)
-def log_login(sender, user, **kwargs):  # type: ignore[no-untyped-def]  # noqa
-    logger.info(f"{user} ({user.pk}) logged in.")
-
-
-@receiver(user_logged_out)
-def log_logout(sender, user=None, **kwargs):  # type: ignore[no-untyped-def]  # noqa
-    # user can be None; for example when logging out in one tab and then also
-    # logging out in another tab.
-    if user is not None:
-        logger.info(f"{user} ({user.pk}) logged out.")

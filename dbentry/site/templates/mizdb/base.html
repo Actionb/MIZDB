@@ -7,7 +7,6 @@
     {% block bootstrap %}
         <script src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
         <link id="default_theme" href="{% static 'mizdb/css/mizdb_theme.css' %}" rel="stylesheet">
-        <link id="user_theme" href="" rel="stylesheet" crossorigin="anonymous" type="text/css" media="screen">
         <script src="{% static 'mizdb/js/mode_switch.js' %}"></script>
     {% endblock bootstrap %}
     {% block style %}
@@ -15,7 +14,6 @@
     {% endblock style %}
     {% block script %}
         <script src="{% static 'mizdb/js/search_modal.js' %}"></script>
-        <script src="{% static 'mizdb/js/theme_switch.js' %}"></script>
     {% endblock script %}
     {% block extrastyle %}{% endblock extrastyle %}
     {% block extrahead %}{% endblock extrahead %}
@@ -45,15 +43,6 @@
                 <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                 <svg id="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon d-none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
-            <div id="theme-select" class="dropdown{% if not user.is_superuser %} d-none{% endif %}">
-                <button type="button" class="btn btn-primary border-dark p-2 dropdown-toggle h-100" data-bs-toggle="dropdown" aria-expanded="false" title="Theme">
-                    <span>Theme</span>
-                </button>
-              <ul class="dropdown-menu dropdown-menu-end" id="theme-dropdown">
-                  <li><a href="#" class="change-theme-menu-item dropdown-item" rel="">Default (MIZDB/Flatly)</a></li>
-                  <li><a href="#" class="change-theme-menu-item dropdown-item" rel="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" crossorigin="anonymous">Bootstrap</a></li>
-              </ul>
-            </div>
             {% url 'watchlist' as watchlist_url %}
             {% if watchlist_url %}
                 <a class="btn btn-primary border-dark p-2" href="{{ watchlist_url }}" title="Merkliste">
@@ -61,8 +50,8 @@
                     <span class="nav-text">Merkliste</span>
                 </a>
             {% endif %}
-            {% if wiki_url %}
-                <a class="btn btn-primary border-dark p-2" href="{{ wiki_url }}" target="_blank" title="Hilfe">
+            {% if help_url %}
+                <a class="btn btn-primary border-dark p-2" href="{{ help_url }}" {% if popup_links %}target="_blank"{% endif %} title="Hilfe">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-help-circle"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                     <span class="nav-text">Hilfe</span>
                 </a>
@@ -141,21 +130,7 @@
 {% endblock %}
 </div>
 {% block extrascript %}
-<script>
-// Script for the scroll back to top button:
-let btn = document.getElementById("btn-back-to-top");
-
-// When the user scrolls down 20px from the top of the document, show the button
-window.onscroll = function() {scrollFunction()};
-
-function scrollFunction() {
-  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-    btn.classList.remove("d-none");
-  } else {
-    btn.classList.add("d-none");
-  }
-}
-</script>
+<script src="{% static 'mizdb/js/scrolltop.js' %}"></script>
 {% endblock extrascript %}
 </body>
 </html>

@@ -34,7 +34,7 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if os.environ.get("DJANGO_DEVELOPMENT"):
+if os.environ.get("DJANGO_DEVELOPMENT", False):
     # Add django debug toolbar URLs:
     try:
         # noinspection PyPackageRequirements

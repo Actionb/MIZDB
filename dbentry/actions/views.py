@@ -4,6 +4,7 @@ from django import views
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.admin.options import InlineModelAdmin
+from django.contrib.admin.utils import get_fields_from_path, display_for_field
 from django.db import transaction
 from django.db.models import Count, F, Model, ProtectedError, QuerySet
 from django.forms import ALL_FIELDS, BaseInlineFormSet, Form
@@ -15,7 +16,6 @@ from django.views.generic import FormView
 from dbentry import models as _models
 from dbentry.actions.base import (
     ActionConfirmationView,
-    ActionMixin,
     WizardConfirmationView,
     get_object_link,
     AdminActionMixin,
@@ -62,11 +62,10 @@ def check_same_magazin(view: ActionConfirmationView) -> bool:
 class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
     """View that bulk edits the Jahrgang of a collection of Ausgabe instances."""
 
+    title = "Jahrgang hinzufügen"
     action_name = "bulk_jg"
     action_allowed_checks = [check_same_magazin]
-
     display_fields = ("jahrgang", "ausgabejahr__jahr")
-
     form_class = BulkEditJahrgangForm
 
     view_helptext = (
@@ -94,7 +93,11 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
             "start": self.queryset.values_list("pk", flat=True).first(),
         }
 
-    def perform_action(self, form_cleaned_data: dict) -> None:
+    def form_valid(self, form: Form) -> None:
+        self.perform_action(form)
+        return None
+
+    def perform_action(self, form: Form) -> None:
         """
         Incrementally update the jahrgang for each instance.
 
@@ -102,8 +105,8 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
         values instead.
         """
         qs = self.queryset.order_by().all()
-        jg = form_cleaned_data["jahrgang"]
-        start = self.queryset.get(pk=form_cleaned_data.get("start"))
+        jg = form.cleaned_data["jahrgang"]
+        start = self.queryset.get(pk=form.cleaned_data.get("start"))
 
         if jg == 0:
             # User entered 0 for jahrgang.
@@ -113,6 +116,53 @@ class BulkEditJahrgang(MIZAdminMixin, AdminActionConfirmationView):
             qs.increment_jahrgang(start, jg)
         for obj in self.queryset:
             log_change(user_id=self.request.user.pk, obj=obj, fields=["jahrgang"])
+
+    def get_objects_list(self) -> list:
+        """
+        Compile a list of the objects that would be changed by this action.
+
+        Returns a list of 2-tuples, where the first item is a link to the
+        change page of an object, and the second may be a nested list of the
+        values (which may include yet more links) of fields declared in
+        self.display_fields.
+        """
+        objects = []
+        for obj in self.queryset:
+            # Investigate the field paths in display_fields:
+            # - if the path follows a relation, add a link to each related
+            #   object that is going to be impacted by the action's changes
+            # - if it's a field of the object, get that field's value
+            sub_list = []
+            for field_path in self.display_fields:
+                field = get_fields_from_path(self.opts.model, field_path)[0]
+                if field.is_relation:
+                    related_pks = (
+                        self.queryset.filter(pk=obj.pk).values_list(field.name, flat=True).order_by(field.name)
+                    )
+                    for pk in related_pks:
+                        if not pk:
+                            # values_list() will also gather None values
+                            continue  # pragma: no cover
+                        related_obj = field.related_model.objects.get(pk=pk)
+                        sub_list.append(get_object_link(self.request, related_obj, self.url_namespace))
+                else:
+                    value = display_for_field(getattr(obj, field.name), field, "---")
+                    verbose_name = field.verbose_name
+                    if verbose_name == field.name.replace("_", " "):
+                        # The field has the default django verbose_name
+                        verbose_name = verbose_name.title()
+                    sub_list.append("{}: {}".format(verbose_name, str(value)))
+            if self.display_fields:
+                links = (get_object_link(self.request, obj, self.url_namespace), sub_list)
+            else:
+                links = (get_object_link(self.request, obj, self.url_namespace),)  # type: ignore[assignment]
+            objects.append(links)
+        return objects
+
+    def get_context_data(self, **kwargs: Any) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["object_list"] = self.get_objects_list()
+        return context
 
 
 class MergeView(WizardConfirmationView):
@@ -130,6 +180,7 @@ class MergeView(WizardConfirmationView):
     (merge conflict resolution step) of the process.
     """
 
+    view = None
     template_name = "mizdb/merge_records.html"
     action_name = "merge_records"
     action_allowed_checks = ["check_at_least_two_objects", "check_same_magazin", "check_same_ausgabe"]
@@ -443,8 +494,8 @@ class AdminMergeView(MIZAdminMixin, AdminActionMixin, MergeView):
     def get_context_for_primary_step(self, context: dict) -> dict:
         """Return additional template context for the 'select primary' step."""
         # The template uses the django admin tag 'result_list' so that the
-        # results are displayed as on the changelist. The tag requires the
-        # changelist as an argument.
+        # results are displayed as seen as on the changelist. The tag requires
+        # the changelist as an argument.
         cl = self.model_admin.get_changelist_instance(self.request)
         cl.result_list = self.queryset
         cl.formset = None
@@ -461,7 +512,6 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
     template_name = "admin/movetobrochure.html"
     action_name = "moveto_brochure"
     action_allowed_checks = [check_same_magazin, "check_protected_artikel"]
-
     form_class = BrochureActionFormSet
 
     def check_protected_artikel(self) -> bool:
@@ -537,22 +587,22 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
         if not options_form.is_valid():
             context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
-        self.perform_action(form.cleaned_data, options_form.cleaned_data)
+        self.perform_action(form, options_form)
         # Return to the changelist:
         return None
 
-    def perform_action(self, form_cleaned_data: dict, options_form_cleaned_data: dict) -> None:
+    def perform_action(self, form: Form, options_form: Form) -> None:
         protected = []
-        delete_magazin = options_form_cleaned_data.get("delete_magazin", False)
+        delete_magazin = options_form.cleaned_data.get("delete_magazin", False)
         # brochure_art is guaranteed to be a valid model name due to the
         # form validation.
-        brochure_art = options_form_cleaned_data.get("brochure_art", "")
+        brochure_art = options_form.cleaned_data.get("brochure_art", "")
         brochure_class = get_model_from_string(brochure_art)
         # Must set self._magazin_instance before we begin deleting Ausgabe
         # instances.
         magazin_instance = self.magazin_instance
 
-        for data in form_cleaned_data:
+        for data in form.cleaned_data:
             if not data.get("accept", False):
                 continue
 
@@ -652,13 +702,11 @@ class MoveToBrochure(MIZAdminMixin, AdminActionConfirmationView):
         return context
 
 
-class ChangeBestand(AdminActionMixin, ActionMixin, MIZAdminMixin, views.generic.TemplateView):
+class ChangeBestand(AdminActionMixin, MIZAdminMixin, views.generic.TemplateView):
     """A view to edit the Bestand set of the parent model instance(s)."""
 
     template_name = "admin/change_bestand.html"
-
     action_name = "change_bestand"
-    action_reversible = True
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Optional[HttpResponse]:
         if "action_confirmed" in request.POST:
@@ -751,7 +799,6 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
     title = "%(verbose_name)s ersetzen"
     action_name = "replace"
     action_allowed_checks = ["_check_one_object_only"]
-    action_reversible = True
     view_helptext = (
         'Ersetze %(verbose_name)s "%(object)s" durch die unten ausgewählten '
         "%(verbose_name_plural)s. "
@@ -791,9 +838,13 @@ class Replace(MIZAdminMixin, AdminActionConfirmationView):
         }
         return context
 
-    def perform_action(self, cleaned_data: dict) -> None:  # type: ignore[override]
+    def form_valid(self, form: Form) -> None:
+        self.perform_action(form)
+        return None
+
+    def perform_action(self, form: Form) -> None:  # type: ignore[override]
         obj = self.queryset.get()
-        replacements = self.model.objects.filter(pk__in=cleaned_data["replacements"])
+        replacements = self.model.objects.filter(pk__in=form.cleaned_data["replacements"])
         changes = replace(obj, replacements)
 
         change_message = [{"deleted": {"object": str(obj), "name": obj._meta.verbose_name}}]
