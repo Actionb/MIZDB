@@ -69,7 +69,7 @@ Es wird ein leeres Formular angezeigt, in das du die Daten des Artikels eintrage
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Artikel hinzufügen](img/erfassung/artikel_hinzufügen_btn.png){ width="300" .mb-1 }  
+  ![Artikel hinzufügen](img/erfassung/artikel_hinzufuegen_btn.png){ width="300" .mb-1 }  
   <figcaption>Artikel hinzufügen</figcaption>  
 </figure>
 <figure markdown="span">  
