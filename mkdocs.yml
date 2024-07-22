@@ -9,14 +9,14 @@ nav:
   - Benutzung:
       - 'Oberfläche': oberflaeche.md
       - 'Bedienelemente': bedienelement.md
-      - 'Sichern': sichern.md
-      - 'Löschen': loeschen.md
       - 'Änderungsliste': aenderungsliste.md
       - 'Suchformular': suchformular.md
       - 'Aktionen': aktion.md
-      - 'Benutzerverwaltung': benutzer.md
+      - 'Sichern': sichern.md
+      - 'Löschen': loeschen.md
       - 'Merkliste': merkliste.md
-  - Tabellen:
+      - 'Benutzerverwaltung': benutzer.md
+  - Archiv Materialien:
       - 'Artikel': artikel.md
       - 'Audio Materialien': audio.md
       - 'Ausgaben': ausgabe.md
@@ -27,6 +27,7 @@ nav:
       - 'Programmhefte': programmheft.md
       - 'Video Materialien': video.md
       - 'Warenkataloge': warenkatalog.md
+  - Stammdaten:
       - 'Autoren': autor.md
       - 'Bands': band.md
       - 'Genres': genre.md
