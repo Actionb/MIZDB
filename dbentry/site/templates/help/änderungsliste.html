@@ -1,0 +1,64 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#anderungsliste">Änderungsliste</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#sortierung">Sortierung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="anderungsliste">Änderungsliste</h1>
+<p>Auf der Seite der Änderungsliste (auch "Übersichtsseite") kannst du <a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensätze</a> einer
+Kategorie durchsuchen und ändern. Der obere Teil der Seite dient der Eingabe von Suchparametern bzw. dem Setzen von
+Filtern (siehe <a href="{% url 'help' page_name='suchformular'%}" title="Suchformular">Suchformular</a>).</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/changelist.png' %}"><img alt="Übersichtsseite der Artikel" class="mb-1" src="{% static 'img/changelist.png' %}" width="300"/></a><br/>
+<figcaption>Übersichtsseite der Artikel</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/suchformular.png' %}"><img alt="Ein Suchformular" class="mb-1" src="{% static 'img/suchformular.png' %}" width="300"/></a><br/>
+<figcaption>Ein Suchformular</figcaption>
+<br/>
+</figure>
+</div>
+<p>Darauf folgt die Tabelle, die die Suchergebnisse darstellt. Die erste, unbeschriftete Spalte stellt
+Auswahlkasten (<a href="https://en.wikipedia.org/wiki/de:Checkbox" title="wikipedia:de:Checkbox">Checkboxes</a>) zur Verfügung, mit
+welchen du Datensätze für Aktionen auswählen kannst, mehr dazu hier: <a href="{% url 'help' page_name='aktion'%}" title="Aktion">Aktionen</a>. Danach kommen
+beschriftete Spalten, in denen Daten der gefundenen Ergebnisse angezeigt werden, um einen Überblick über den Inhalt der
+Datensätze zu ermöglichen.</p>
+<h3 id="sortierung">Sortierung</h3>
+<p>Mit den kleinen dreieckigen Symbolen (Chevrons) im Spaltenkopf einer Spalte kannst du die Sortierung der Ergebnisse
+einstellen.</p>
+<p>Mit einem Klick auf ein doppeltes Chevron in einer Spalte kannst du die Sortierung dieser Spalte einschalten oder
+priorisieren.
+Und mit einem Klick auf das einfache Chevron wechselst du die Art der Sortierung, also z.B. von aufsteigender Sortierung
+dieser Spalte zu einer absteigender Sortierung.</p>
+<p>Möchtest du die voreingestellte Sortierung wiederherstellen, dann klicke auf den Link mit der Beschriftung "Sortierung
+zurücksetzen". Dieser erscheint über der Tabelle, sobald die Sortierung geändert wurde.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/chevrons.png' %}"><img alt="Sortierung (Chevrons)" class="mb-1" src="{% static 'img/chevrons.png' %}" width="300"/></a><br/>
+<figcaption>Sortierung (Chevrons)</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/reset_sorting.png' %}"><img alt="Sortierung zurücksetzen" class="mb-1" src="{% static 'img/reset_sorting.png' %}" width="300"/></a><br/>
+<figcaption>Sortierung zurücksetzen</figcaption>
+<br/>
+</figure>
+</div></div>
+</div>{% endblock content %}

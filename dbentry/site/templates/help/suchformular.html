@@ -1,0 +1,87 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#suchformular">Suchformular</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#textsuche">Textsuche</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#von-bis-felder">von - bis Felder</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#partielles-datum">partielles Datum</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#id">ID</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="suchformular">Suchformular</h1>
+<p><a href="{% url 'help' page_name='aenderungsliste'%}" title="Änderungsliste">Änderungslisten</a> bieten ein Formular an, mit welchem man genauere Parameter
+(Filter) für eine Suchanfrage an die Datenbank einstellen kann.</p>
+<p>Das Formular enthält ein Feld, mit dem du den Suchbegriff für eine <a href="#textsuche">Volltextsuche</a> definieren kannst (1).
+Darüber hinaus stellen manche Suchformulare noch mehr Felder (3) zur Verfügung, die mit einem Klick auf "Erweiterte
+Suchoptionen anzeigen" (2) angezeigt (und auch wieder versteckt) werden können.</p>
+<p>Um die Suche zu starten, klicke weiter unten auf den "Suche" Knopf (4).</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/suchformular/suchformular2.png' %}"><img alt="Band Suchformular" class="mb-1" src="{% static 'img/suchformular/suchformular2.png' %}" width="300"/></a><br/>
+<figcaption>Band Suchformular</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/suchformular/suchformular.png' %}"><img alt="Artikel Suchformular" class="mb-1" src="{% static 'img/suchformular/suchformular.png' %}" width="300"/></a><br/>
+<figcaption>Artikel Suchformular</figcaption>
+<br/>
+</figure>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Suchparameter werden logisch mit UND verknüpft</p>
+<p>Das heisst, ein Datensatz muss alle Suchparameter erfüllen, damit er in der Ergebnisliste auftaucht.<br/><br>
+    Zum Beispiel: wählt man die Parameter Band "Rolling Stones" und Ort "Dortmund", so wird die Datenbank nach Datensätzen
+    suchen, welche mit den "Rolling Stones" <strong>und</strong> dem Ort "Dortmund" verknüpft sind.
+    Erfüllt ein Datensatz nur einen der Parameter (also: entweder "Rolling Stones" oder "Dortmund"), wird er nicht in der
+    Ergebnisliste auftauchen.</br></p>
+</div>
+<h3 id="textsuche">Textsuche</h3>
+<p>Bei der Textsuche werden Textfelder (wie z.B. Schlagzeile, Zusammenfassung oder Beschreibung) der Datensätze nach den
+Suchbegriffen durchsucht.</p>
+<p>Um auch Datensätze zu finden, die dem Suchbegriff nur ähnlich sind aber nicht exakt entsprechen, werden
+die Texte der Datensätze und die Suchbegriffe zu ihrem <a href="https://de.wikipedia.org/wiki/Stemming">Wortstamm</a> umgewandelt.
+Die Suche wird dann auf Basis dieser Wortstämme ausgeführt.</p>
+<p>So taucht zum Beispiel ein Datensatz mit dem Wort "Arzt" bei einer Suche nach "Die Ärzte" als Ergebnis auf, da "Arzt"
+und "Ärzte" denselben Wortstamm haben.</p>
+<h2 id="felder">Felder</h2>
+<p>Neben den gewöhnlichen aus den Änderungsformularen bekannten <a href="{% url 'help' page_name='bedienelement'%}" title="Bedienelement">Bedienelementen</a> tauchen
+in Suchformularen auch noch Felder mit Besonderheiten auf.</p>
+<h3 id="von-bis-felder">von - bis Felder</h3>
+<p>Hiermit kann ein Zahlenbereich von einschließlich X bis einschließlich Y (also: "größer gleich X und kleiner gleich Y")
+angegeben werden. 
+Wird nur in dem ersten Feld ein Wert eingetragen, so wird stattdessen nach genau diesem Wert gesucht (also: "gleich X").</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/suchformular/vonbis.png' %}"><img alt="von - bis Felder" src="{% static 'img/suchformular/vonbis.png' %}"/></a></p>
+<h3 id="partielles-datum">partielles Datum</h3>
+<p>Ähnlich wie das "von bis Feld", nur mit teilweisen Datumsangaben.</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/suchformular/part_datum.png' %}"><img alt="Partielles Datum" src="{% static 'img/suchformular/part_datum.png' %}"/></a></p>
+<h3 id="id">ID</h3>
+<p>Ermöglicht es, Datensätze mittels ihrer <a href="{% url 'help' page_name='id'%}" title="ID">ID</a>-Nummer zu finden. Mehrere Nummern mit Kommas trennen.</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/suchformular/id_suchfeld.png' %}"><img alt="ID Suchfeld" src="{% static 'img/suchformular/id_suchfeld.png' %}"/></a></p></div>
+</div>{% endblock content %}
