@@ -164,3 +164,7 @@ ANONYMOUS_CAN_VIEW = True
 
 # Log CSRF failures:
 CSRF_FAILURE_VIEW = "dbentry.csrf.csrf_failure"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "docs",  # include static files for help pages, such as images
+]
