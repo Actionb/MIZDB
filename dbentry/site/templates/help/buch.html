@@ -1,0 +1,241 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#buch">Buch</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#sammelbander">Sammelbänder</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#titel">Titel</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#seitenumfang">Seitenumfang</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#jahr">Jahr</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#auflage">Auflage</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#schriftenreihe">Schriftenreihe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#sammelband">Sammelband</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ist-sammelband">Ist Sammelband</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#isbn">ISBN</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ean">EAN</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#sprache">Sprache</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#titel-original">Titel (Original)</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#jahr-original">Jahr (Original)</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#beschreibung">Beschreibung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bemerkungen">Bemerkungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#autoren">Autoren</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#musiker">Musiker</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bands">Bands</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#schlagworter">Schlagwörter</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#genres">Genres</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#orte">Orte</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#spielorte">Spielorte</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#veranstaltungen">Veranstaltungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#personen">Personen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#herausgeber">Herausgeber</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#verlage">Verlage</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bestande">Bestände</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#siehe-auch">Siehe auch</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="buch">Buch</h1>
+<p>In dieser Kategorie befinden sich Bücher und
+<a href="https://de.wikipedia.org/wiki/Sammelband" title="wikipedia:de:Sammelband">Sammelbänder</a>. Mit Sammelband ist ein Buch
+gemeint, welches mehrere Aufsätze bzw. Einzelschriften zusammenstellt.</p>
+<h3 id="sammelbander">Sammelbänder</h3>
+<p>Bei einem Sammelband muss erst das Buch an sich eingetragen und als Sammelband markiert werden: dazu muss bei "<strong>Ist
+Sammelband</strong>" "Ja" ausgewählt werden. Danach müssen die einzelnen Aufsätze ebenfalls als
+Buch-<a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensatz</a> erfasst werden, wobei unter <strong>Sammelband</strong> das anfangs erstellte Buch
+ausgewählt werden muss.</p>
+<p>Auf diese Weise besitzt jeder Sammelband Verweise auf dessen Aufsätze - und jeder Aufsatz-Datensatz ist als
+Aufsatz eines Sammelbands erkenntlich.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/buch/buch_sammelband_1.png' %}"><img alt="Sammelband erstellen" class="mb-1" src="{% static 'img/buch/buch_sammelband_1.png' %}" width="300"/></a><br/>
+<figcaption>Sammelband erstellen</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/buch/buch_sammelband_2.png' %}"><img alt="Aufsatz zu Sammelband hinzufügen" class="mb-1" src="{% static 'img/buch/buch_sammelband_2.png' %}" width="300"/></a><br/>
+<figcaption>Aufsatz zu Sammelband hinzufügen</figcaption>
+<br/>
+</figure>
+</div>
+<h2 id="felder">Felder</h2>
+<h3 id="titel">Titel</h3>
+<p>Der Titel des Buches oder des Aufsatzes.</p>
+<h3 id="seitenumfang">Seitenumfang</h3>
+<p>Der Seitenumfang des Buches oder des Aufsatzes.</p>
+<h3 id="jahr">Jahr</h3>
+<p>Erscheinungsjahr oder andere Jahresangaben zur zeitlichen Einordnung des Objektes.</p>
+<h3 id="auflage">Auflage</h3>
+<p>Angabe zur
+<a href="https://de.wikipedia.org/wiki/Auflage_(Publikation)" title="wikipedia:de:Auflage (Publikation)">Auflage des Buches</a>.</p>
+<h3 id="schriftenreihe">Schriftenreihe</h3>
+<p>Gehört das Material zu einer Reihe von Büchern, sollte der Titel der Reihe hier angegeben werden.</p>
+<h3 id="sammelband">Sammelband</h3>
+<p>Entspricht der Datensatz einem Aufsatz eines Sammelbands, so muss der Sammelband hier ausgewählt werden.</p>
+<h3 id="ist-sammelband">Ist Sammelband</h3>
+<p>Soll der Datensatz ein Sammelband beschreiben, so muss hier "Ja" ausgewählt werden. Nur Buch-Datensätze mit diesem
+Häkchen tauchen in der Auswahlliste von <a href="#sammelband">Sammelband</a> auf.</p>
+<h3 id="isbn">ISBN</h3>
+<p>Die dreizehn-stellige internationale Standardbuchnummer
+<a href="https://de.wikipedia.org/wiki/Internationale_Standardbuchnummer" title="ISBN">ISBN</a>. ISBN-13 und EAN-13 sind identisch. </p>
+<p>Siehe auch <a href="{% url 'help' page_name='bedienelement'%}#issnisbnean" title="Bedienelement">Bedienelement ISBN Feld</a>.</p>
+<h3 id="ean">EAN</h3>
+<p>Die europäische Artikelnummer
+<a href="https://de.wikipedia.org/wiki/European_Article_Number" title="EAN">EAN</a>. ISBN-13 und EAN-13 sind identisch. </p>
+<p>Siehe auch <a href="{% url 'help' page_name='bedienelement'%}#issnisbnean" title="Bedienelement">Bedienelement EAN Feld</a></p>
+<h3 id="sprache">Sprache</h3>
+<p>Angaben zur Sprache, in welcher das Buch verfasst wurde.</p>
+<h3 id="titel-original">Titel (Original)</h3>
+<p>Der Titel des Buches im nicht übersetzten Original.</p>
+<h3 id="jahr-original">Jahr (Original)</h3>
+<p>Erscheinungsjahr des Originals.</p>
+<h3 id="beschreibung">Beschreibung</h3>
+<p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</p>
+<h3 id="bemerkungen">Bemerkungen</h3>
+<p>Notizen für Archiv-Mitarbeiter.</p>
+<h3 id="autoren">Autoren</h3>
+<p>Die Autorinnen und Autoren des Buches oder des Aufsatzes.</p>
+<h3 id="musiker">Musiker</h3>
+<p>Bezieht sich das Objekt auf
+<a href="{% url 'help' page_name='musiker'%}" title="Musiker">Musiker</a>, so sollen diese hier angegeben. Bezieht sich das Objekt auf eine Band und wird diese
+Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch einmal ausgewählt werden.</p>
+<h3 id="bands">Bands</h3>
+<p>Angaben zu <a href="{% url 'help' page_name='band'%}" title="Band">Bands</a>, auf die sich das Objekt bezieht.</p>
+<h3 id="schlagworter">Schlagwörter</h3>
+<p><a href="{% url 'help' page_name='schlagwort'%}" title="Schlagwort">Schlagwörter</a>/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich 
+(z.B. '60er Jahre') des Objekts.</p>
+<h3 id="genres">Genres</h3>
+<p>Sind bezüglich des Objektes bestimmte
+<a href="{% url 'help' page_name='genre'%}" title="Genre">Genres</a> besonders relevant (z.B. bei einem Artikel über die Geschichte des Jazz), so sollen diese
+hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht nochmals gelistet werden.</p>
+<h3 id="orte">Orte</h3>
+<p>Auflistung der
+<a href="{% url 'help' page_name='ort'%}" title="Ort">Orte</a> (also: Städte, Länder), die für das Objekt relevant sind. Herkunftsorte der Musiker, Bands,
+Autoren, usw. müssen hier nicht angegeben werden (sofern bereits beim Musiker usw. eingetragen). </p>
+<p>Siehe auch: <a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></p>
+<h3 id="spielorte">Spielorte</h3>
+<p>Auflistung der
+<a href="{% url 'help' page_name='spielort'%}" title="Spielort">Spielorte</a> (also: Venues, Locations), auf die sich das Objekt bezieht. </p>
+<p>Siehe auch: <a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></p>
+<h3 id="veranstaltungen">Veranstaltungen</h3>
+<p>Hat das Objekt Bezug zu bestimmten
+<a href="{% url 'help' page_name='veranstaltung'%}" title="Veranstaltung">Veranstaltungen</a> (also: Konzerte, Festivals), so sollen diese hier angegeben werden.</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></p>
+<h3 id="personen">Personen</h3>
+<p>Angaben zu
+<a href="{% url 'help' page_name='person'%}" title="Person">Personen</a>, auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also z.B.
+Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.</p>
+<h3 id="herausgeber">Herausgeber</h3>
+<p>Verweise auf relevante <a href="{% url 'help' page_name='herausgeber'%}" title="Herausgeber">Herausgeber</a>.</p>
+<h3 id="verlage">Verlage</h3>
+<p>Verweise auf relevante <a href="{% url 'help' page_name='verlag'%}" title="Verlag">Verlage</a>.</p>
+<h3 id="bestande">Bestände</h3>
+<p><a href="{% url 'help' page_name='bestand'%}" title="Bestand">Bestandsangaben</a> zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden.
+Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>). Unter 'Anmerkungen' können weitere Angaben eingefügt
+werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.</p>
+<h2 id="siehe-auch">Siehe auch</h2>
+<ul>
+<li><a href="https://de.wikipedia.org/wiki/Sammelband">Wikipedia: Sammelband</a></li>
+<li><a href="https://de.wikipedia.org/wiki/Auflage_(Publikation)">Wikipedia: Auflage (Publikation)</a></li>
+<li><a href="https://de.wikipedia.org/wiki/Schriftenreihe">Wikipedia: Schriftenreihe</a></li>
+<li><a href="https://de.wikipedia.org/wiki/Herausgeber">Wikipedia: Herausgeber</a></li>
+<li><a href="https://de.wikipedia.org/wiki/Verlag">Wikipedia: Verlag</a></li>
+</ul></div>
+</div>{% endblock content %}

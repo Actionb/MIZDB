@@ -1,7 +1,11 @@
+from unittest.mock import Mock, patch
+
 from django.test import TestCase
 from django.urls import reverse
 
-from dbentry.actions.forms import BrochureActionFormOptions, ReplaceForm
+from dbentry import models as _models
+from dbentry.actions.forms import BrochureActionFormOptions, ReplaceForm, BulkEditJahrgangForm
+from dbentry.query import InvalidJahrgangError
 from tests.case import DataTestCase
 from tests.model_factory import make
 from tests.test_actions.models import Band, Genre
@@ -52,3 +56,24 @@ class TestReplaceForm(DataTestCase):
         """
         form = self.form_class(choices={"replacements": self.model.objects.all()})
         self.assertIn(reverse("admin:jsi18n"), form.media._js)
+
+
+class TestBulkEditJahrgangForm(DataTestCase):
+    model = _models.Ausgabe
+    form_class = BulkEditJahrgangForm
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.obj1 = make(_models.Ausgabe)
+        cls.obj2 = make(_models.Ausgabe)
+
+    def test_clean(self):
+        form = self.form_class(
+            data={"start": self.obj1.pk, "jahrgang": "1"},
+            choices={"start": self.queryset.filter(id__in=[self.obj1.pk, self.obj2.pk])},
+        )
+        increment_mock = Mock(side_effect=InvalidJahrgangError)
+        with patch("dbentry.query.AusgabeQuerySet.increment_jahrgang", new=increment_mock):
+            form.full_clean()
+        self.assertIn("jahrgang", form.errors)

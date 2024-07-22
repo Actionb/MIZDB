@@ -4,12 +4,13 @@
 (() => {
   const LIGHT = 'light'
   const DARK = 'dark'
+  const STORAGE_KEY = 'mizdb_color_mode'
 
   /**
    * Return the current color mode as set by the user or by the browser.
    */
   function getMode () {
-    const storedMode = window.localStorage.getItem('mizdb_color_mode')
+    const storedMode = window.localStorage.getItem(STORAGE_KEY)
     if (storedMode) return storedMode
     return window.matchMedia(`(prefers-color-scheme: ${LIGHT})`).matches ? LIGHT : DARK
   }
@@ -25,7 +26,7 @@
    * Store the given color mode.
    */
   function storeMode (mode) {
-    window.localStorage.setItem('mizdb_color_mode', mode)
+    window.localStorage.setItem(STORAGE_KEY, mode)
   }
 
   /**

@@ -20,8 +20,6 @@ class MIZAdminSite(admin.AdminSite):
 
     It rebuilds the index page to group models into categories. The index also
     includes links to 'tool views'.
-    MIZAdminSite adds a link to the site's wiki instance to the context of
-    every page.
 
     Also, links to registered tool views are added to the sidebar of the index
     page.
@@ -29,8 +27,7 @@ class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
     site_title = 'MIZDB'
     index_title = 'Index'
-    # TODO: move tools/index.html stuff into the base admin index.html
-    index_template = 'tools/index.html'
+    index_template = 'admin/index.html'
 
     site_url = reverse_lazy("index")
     # Disable the nav sidebar:
@@ -39,13 +36,6 @@ class MIZAdminSite(admin.AdminSite):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.tools: List[tuple] = []
-
-    def each_context(self, request: HttpRequest) -> dict:
-        context = super().each_context(request)
-        # Add the URL to the wiki for the link in the header:
-        if getattr(settings, 'WIKI_URL', False):
-            context['wiki_url'] = settings.WIKI_URL
-        return context
 
     def app_index(
             self,

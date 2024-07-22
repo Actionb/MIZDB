@@ -1,0 +1,294 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#erfassung-von-artikeln">Erfassung von Artikeln</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#erklarung-an-einem-beispiel">Erklärung an einem Beispiel</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#vorhandene-artikel-suchen">Vorhandene Artikel suchen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#neuen-artikel-erstellen">Neuen Artikel erstellen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#artikel-inhalt-aufnehmen">Artikel Inhalt aufnehmen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#verknupfungen-hinzufugen">Verknüpfungen hinzufügen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bearbeitung-abschlieen">Bearbeitung abschließen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#welche-artikel-mussen-erfasst-werden">Welche Artikel müssen erfasst werden?</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ein-kompromiss-um-rezensionen-trotzdem-aufzunehmen">Ein Kompromiss, um Rezensionen trotzdem aufzunehmen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#als-nachstes">Als Nächstes</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="erfassung-von-artikeln">Erfassung von Artikeln</h1>
+<p>Bei der Erfassung ist es deine Aufgabe, die wichtigsten Informationen, die in einem Artikel enthalten sind, in die
+Datenbank einzufügen, sodass der Artikel bei einer Suche wiedergefunden werden kann; behandelt der Artikel ein
+bestimmtes Thema, so muss der Artikel als Ergebnis bei einer Datenbank-Recherche zu diesem Thema auftauchen. Anhand der
+Daten, die du zu dem Artikel in die Datenbank eingetragen hast, kann der Recherchierende entscheiden, ob der Artikel 
+für sie/ihn interessant sein könnte.</p>
+<p>Die Erfassung der Zeitungsartikel ist recht unkompliziert und ist damit gut für Anfänger als Einleitung in die Arbeit
+mit der Datenbank geeignet.</p>
+<h2 id="erklarung-an-einem-beispiel">Erklärung an einem Beispiel</h2>
+<p>Für ein Beispiel nehmen wir mal an, dass du einen Artikel aus einem Heft des "Rolling Stone" Magazins erfassen willst.
+Um mit der Erfassung zu beginnen, solltest du zuerst die Datenbank nach vorhandenen Artikeln dieses Heftes durchsuchen.</p>
+<h3 id="vorhandene-artikel-suchen">Vorhandene Artikel suchen</h3>
+<p>Bevor du einen neuen Artikel hinzufügst, solltest du erst schauen, ob dieser schon in der Datenbank existiert.
+Ist der Artikel bereits erfasst, solltest du ihn nicht noch einmal eintragen.</p>
+<p>So suchst du nach den Artikeln eines Heftes:</p>
+<ol>
+<li>im <a href="{% url 'help' page_name='oberflaeche'%}#index" title="Oberfläche">Index/Hauptmenü</a> auf "<strong>Artikel</strong>" klicken</li>
+<li>im <a href="{% url 'help' page_name='suchformular'%}" title="Suchformular">Suchformular</a> auf "<strong>Erweiterte Suchoptionen anzeigen</strong>" klicken</li>
+<li>im Suchformular das Feld "<strong><a href="{% url 'help' page_name='magazin'%}" title="Magazin">Magazin</a></strong>" anklicken, den Namen des Magazins eintippen und dann
+   das entsprechende Magazin aus der Liste auswählen</li>
+<li>danach im Feld "<strong><a href="{% url 'help' page_name='ausgabe'%}">Ausgabe</a></strong>" das Jahr der Ausgabe eingeben und die entsprechende Ausgabe auswählen</li>
+<li>auf "<strong>Suchen</strong>" klicken</li>
+</ol>
+<p>Daraufhin werden dir die Artikel des Heftes angezeigt, die bereits in der Datenbank eingetragen wurden.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_suchformular.png' %}"><img alt="Artikel Suchformular" class="mb-1" src="{% static 'img/erfassung/artikel_suchformular.png' %}" width="300"/></a>
+<figcaption>Artikel Suchformular</figcaption>
+</figure>
+<figure>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_magazin_select.png' %}"><img alt="Magazin auswählen" class="mb-1" src="{% static 'img/erfassung/artikel_magazin_select.png' %}" width="300"/></a>
+<figcaption>Magazin auswählen</figcaption>
+</figure>
+<figure>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_ausgabe_select.png' %}"><img alt="Ausgabe auswählen" class="mb-1" src="{% static 'img/erfassung/artikel_ausgabe_select.png' %}" width="300"/></a>
+<figcaption>Ausgabe auswählen</figcaption>
+</figure>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Dropdown-Feld</p>
+<p>Mehr Informationen zur Verwendung eines Dropdown-Feldes findest du hier:
+<a href="{% url 'help' page_name='bedienelement'%}#kombinationsfeldcombobox">Bedienelement#Kombinationsfeld</a>.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tipp: Die Suche spart dir Arbeit</p>
+<p>Durch die Suche werden die Angaben zu <strong>Magazin</strong> und <strong>Ausgabe</strong> im Suchformular an die Formulare für neue Artikel
+weitergereicht und dort in die entsprechenden Felder automatisch eingefügt. Dadurch ersparst du dir etwas Arbeit.</p>
+</div>
+<h3 id="neuen-artikel-erstellen">Neuen Artikel erstellen</h3>
+<p>Nun suchst du dir aus der Zeitschrift den Artikel heraus, <strong>der noch nicht in die Datenbank eingetragen wurde</strong> und den
+du erfassen willst (siehe auch: <a href="#welche-artikel-mussen-erfasst-werden">Welche Artikel müssen erfasst werden</a>).
+Um mit der Erfassung zu beginnen, klicke auf der Übersichtsseite der Artikel auf den Knopf "Artikel hinzufügen".
+Es wird ein leeres Formular angezeigt, in das du die Daten des Artikels eintragen kannst.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_hinzuf%C3%BCgen_btn.png' %}"><img alt="Artikel hinzufügen" class="mb-1" src="{% static 'img/erfassung/artikel_hinzuf%C3%BCgen_btn.png' %}" width="300"/></a><br/>
+<figcaption>Artikel hinzufügen</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_formular.png' %}"><img alt="Artikel Formular" class="mb-1" src="{% static 'img/erfassung/artikel_formular.png' %}" width="300"/></a><br/>
+<figcaption>Artikel Formular</figcaption>
+<br/>
+</figure>
+</div>
+<p>Zunächst solltest du die Grunddaten des Artikels eintragen, damit man anhand der Daten im
+Artikel-<a href="{% url 'help' page_name='datensatz'%}" title="Datensatz">Datensatz</a> zu dem "echten" Artikel in der physischen Zeitschrift gelangen kann. Dazu
+gibst du das <strong>Magazin</strong>, die <strong>Ausgabe</strong> (diese sollten bereits eingetragen sein, sofern du
+die <a href="#vorhandene-artikel-suchen">Suche</a> gemacht hast) und die <strong>Schlagzeile</strong> ein.</p>
+<p>Je nach Artikel ist es manchmal nicht ganz klar, was die Schlagzeile eines Artikels ist. Lasse dich davon nicht
+entmutigen; die Schlagzeile dient schlicht als Erkennungsmerkmal und ist inhaltlich nicht so sehr wichtig.
+Trage also das ein, was du als Schlagzeile erachtest. Oder schaue im Inhaltsverzeichnis der Ausgabe nach, was dort als
+Titel angegeben ist.</p>
+<p>Anschließend musst du die <strong>Seite</strong>, an der der Artikel beginnt, und den <strong>Seitenumfang</strong> eintragen. Ist der Artikel nur
+eine Seite lang, musst du bei <strong>Seitenumfang</strong> nichts angeben. Für Artikel, die zwei Seiten umfassen, trägst du hier "f"
+ein, ansonsten "ff".</p>
+<p>Hast du diese Angaben gemacht, solltest du erst einmal zwischenspeichern, indem du unten auf den Knopf mit der
+Aufschrift "Sichern und weiterbearbeiten" klickst.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/sichern/sichern.png' %}"><img alt="Speicher Knöpfe" class="mb-1" src="{% static 'img/sichern/sichern.png' %}" width="300"/></a><br/>
+<figcaption>Speicher Knöpfe</figcaption>
+<br/>
+</figure>
+</div>
+<p>Da der Datensatz der Ausgabe den <a href="{% url 'help' page_name='lagerort'%}" title="Lagerort">Lagerort</a> des Heftes angibt, hat man nun alle Angaben zur
+Hand, die man braucht, um den Artikel im "echten" Heft wiederzufinden.</p>
+<div class="admonition caution">
+<p class="admonition-title">Achtung: Abspeichern ist notwendig!</p>
+<p>Änderungen werden nur übernommen, wenn du auf einen der "<a href="{% url 'help' page_name='sichern'%}" title="Sichern">Sichern</a>" Knöpfe klickst.
+Verlässt du das Formular (z.B. indem du das Fenster schließt oder zu einer anderen Seite navigierst), ohne es zu
+sichern, geht deine Arbeit verloren!
+Es sollte eine Warnung auftauchen, wenn du versuchst, ein Formular mit ungespeicherten Änderungen zu verlassen.</p>
+</div>
+<h3 id="artikel-inhalt-aufnehmen">Artikel Inhalt aufnehmen</h3>
+<p>Bisher hast du nur Angaben zu dem Heft, der Schlagzeile und der Seitenzahl gemacht. Das ist aber noch nicht
+aussagekräftig genug, denn über den Inhalt des Artikels hast du noch keine Angaben gemacht.
+Also ist es jetzt an der Zeit, dass du dir den Artikel einmal durchliest. Anschließend solltest du eine
+Zusammenfassung des Artikels in das entsprechende Feld des Formulars eintragen.</p>
+<p>Anhand der Zusammenfassung werden Recherchierende feststellen können, ob der Artikel für sie interessant ist oder nicht.
+Dementsprechend solltest du dir hier Mühe geben, die relevanten Teile eines Artikels anzugeben. Dabei ist es wichtiger,
+dass alle wichtigen, interessanten Informationen enthalten sind, als dass du einen schönen Text schreibst. Wenn es dir
+leichter fällt, kannst du anstelle von Fließtext auch Stichpunkte benutzen. Die Hauptsache ist, dass die Informationen
+in die Datenbank übertragen werden. Die Zusammenfassung wird in die <a href="{% url 'help' page_name='suchformular'%}#textsuche">Volltextsuche</a>
+miteinbezogen; d.h. ein Artikel kann anhand der Angaben in der Zusammenfassung wiedergefunden werden.</p>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Nur Relevantes eintragen</p>
+<p>Machst du keine Angaben, kann der Artikel auch nie gefunden werden. Machst du hingegen viele ungenaue oder 
+überflüssige Angaben, so kann der Artikel unerwünscht als Ergebnis auftauchen. Trage also nur das ein, was für den
+Artikel relevant ist, oder was für das Thema des Artikels von Bedeutung ist.<br/><br>
+<strong>Beispiel</strong>: Wird in einem Artikel eine Band nur beiläufig erwähnt, so solltest du diese Band nicht mit in die
+Zusammenfassung aufnehmen oder eine <a href="#verknupfungen-hinzufugen">Verknüpfung</a> für diese Band hinzufügen.</br></p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tipp: Textfeld zu klein?</p>
+<p>Manche Textfelder, wie z.B. "Zusammenfassung", kannst du vergrößern oder verkleinern, in dem du im Textfeld unten 
+rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst.<br/>
+Siehe: <a href="{% url 'help' page_name='bedienelement'%}#textfeld-mit-variabler-grosse">Bedienelement#Textfeld</a>.</p>
+</div>
+<h3 id="verknupfungen-hinzufugen">Verknüpfungen hinzufügen</h3>
+<p>Neben der Volltextsuche lassen sich Artikel auch über Verknüpfungen (oder Beziehungen) mit anderen Datensätzen, wie zum
+Beispiel mit Bands oder Musikern, finden. Eine solche Verknüpfung hast du bereits gesehen: die Ausgabe. Ein Artikel ist
+immer mit einer Ausgabe, dem Heft, verknüpft. Wenn du neben der Ausgabe auf den kleinen grünen Bleistift klickst,
+gelangst du auf die Änderungsseite der Ausgabe. Und andersherum gelangst du von der Änderungsseite der Ausgabe zu einer
+Auflistung aller Artikeln dieser Ausgabe, indem du unter dem Namen der Ausgabe auf den Link mit der Beschriftung
+"Artikel" klickst.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_edit_ausgabe.png' %}"><img alt="Ausgabe ändern Knopf" class="mb-1" src="{% static 'img/erfassung/artikel_edit_ausgabe.png' %}" width="300"/></a><br/>
+<figcaption>Ausgabe ändern Knopf</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/ausgabe_related_link.png' %}"><img alt="Artikel einer Ausgabe" class="mb-1" src="{% static 'img/erfassung/ausgabe_related_link.png' %}" width="300"/></a><br/>
+<figcaption>Artikel einer Ausgabe</figcaption>
+<br/>
+</figure>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Wichtig: Verknüpfungen verstehen</p>
+<p>Es ist wichtig, dass du verstehst, wie die Verknüpfungen oder Beziehungen funktionieren und welchen Einfluss 
+Änderungen an Beziehungen auf die Daten in der Datenbank haben können! <br/><br>
+Mehr dazu gibt es hier: <a href="{% url 'help' page_name='relationen'%}">Verknüpfungen</a>.</br></p>
+</div>
+<p>Weitere Verknüpfungen kannst du unten im Formular hinzufügen. Um beispielsweise eine Verknüpfung zwischen dem
+Artikel und der Band "The Rolling Stones" herzustellen, klicke unten auf den Reiter mit der Aufschrift "Band" (1).
+Klicke dann in ein leeres Dropdown-Feld (2) und gebe im Dropdown-Menü den Namen der Band ein (3). Aus der Ergebnisliste
+wählst du dann die entsprechende Band mit einem Klick aus (4).
+Mit dem Knopf "Änderungsliste" (5) rufst du die Ergebnisse in der Bands-Übersichtsseite auf - hier kannst du die
+Ergebnisse genauer anschauen.
+Findest du keine passende Band, kannst du mit dem Knopf "Hinzufügen" (6) eine neue Band erstellen.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/band_select.png' %}"><img alt="Verknüpfung mit einer Band hinzufügen" class="mb-1" src="{% static 'img/erfassung/band_select.png' %}" width="300"/></a><br/>
+<figcaption>Verknüpfung mit einer Band hinzufügen</figcaption>
+<br/>
+</figure>
+</div>
+<p>Um eine weitere Verknüpfung hinzuzufügen, klicke auf den Knopf "Band hinzufügen". Daraufhin erscheint ein weiteres
+Dropdown-Element in einer neuen Zeile.
+Um eine Verknüpfung zu entfernen, klicke auf das rote "X" in der entsprechenden Zeile. Die Zeile wird daraufhin zur
+Löschung markiert. Wenn du den Artikel abspeicherst, wird die <em>Verknüpfung</em> gelöscht. Der Datensatz, der mit dem Artikel
+verknüpft war (also hier die Band "Rolling Stones"), wird dabei <em>nicht</em> gelöscht - nur die Verknüpfung zwischen dem
+Artikel und der Band wird gelöscht.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/band_inline_add_delete.png' %}"><img alt="Hinzufügen &amp; Löschen" class="mb-1" src="{% static 'img/erfassung/band_inline_add_delete.png' %}" width="300"/></a><br/>
+<figcaption>Hinzufügen &amp; Löschen</figcaption>
+<br/>
+</figure>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Inlines</p>
+<p>Der oben beschriebene Bereich, mit dem du Verknüpfungen hinzufügen kannst, ist hier näher beschrieben:
+<a href="{% url 'help' page_name='bedienelement'%}#inlines">Bedienelement#Inlines</a>.</p>
+</div>
+<h3 id="bearbeitung-abschlieen">Bearbeitung abschließen</h3>
+<p>Wenn du mit der Erfassung dieses Artikels fertig bist und direkt den nächsten erfassen willst, klicke
+auf "<a href="{% url 'help' page_name='sichern'%}" title="Sichern">Sichern</a> und neu hinzufügen". Der Artikel wird abgespeichert, es wird ein neues, leeres
+Formular angezeigt und das Magazin und die Ausgabe werden eingefügt (sofern du, wie vorgeschlagen,
+die <a href="#vorhandene-artikel-suchen">Suche</a> mit der Übersichtsseite gemacht hast).</p>
+<p>Drückst du auf "Sichern und weiterbearbeiten" wird der Artikel abgespeichert und das Formular für den Artikel neu
+geladen.
+Mit dem "Sichern" Knopfs gelangst du, nachdem der Artikel gespeichert wurde, zurück zu der Übersichtsliste der Artikel.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/sichern/sichern.png' %}"><img alt="Speicher Knöpfe" class="mb-1" src="{% static 'img/sichern/sichern.png' %}" width="300"/></a><br/>
+<figcaption>Speicher Knöpfe</figcaption>
+<br/>
+</figure>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tipp: Welchen Knopf soll ich benutzen?</p>
+<p>Der "<strong>Sichern und neu hinzufügen</strong>" Knopf bietet sich an, wenn du mit der Erfassung eines Objekts fertig geworden bist
+und direkt mit der Erfassung des nächsten Objekts anfangen möchtest.<br/>
+Wenn du dabei bist, von der Übersichtsseite aus einige Datensätze zu ändern, dann benutze den "<strong>Sichern</strong>" Knopf, um
+sofort wieder zu der Übersichtsseite zurückzukehren.<br/>
+"<strong>Sichern und weiterbearbeiten</strong>" kannst du während der Erfassung immer wieder mal benutzen, um deine Arbeit 
+abzuspeichern.<br/><br>
+Siehe auch: <a href="{% url 'help' page_name='sichern'%}">Sichern</a>.</br></p>
+</div>
+<h2 id="welche-artikel-mussen-erfasst-werden">Welche Artikel müssen erfasst werden?</h2>
+<p>Prinzipiell kann jeder Text einer Ausgabe erfasst und eingetragen werden. Jedoch haben manche Abschnitte wenig
+Informationsgehalt: News mit einem Umfang von 20 Wörtern haben meist nicht viel Aussagekraft. Aus Zeitgründen ist die
+Richtlinie daher, dass nur echte Artikel erfasst werden <em>müssen</em> und andere Texte eher nicht erfasst werden <em>sollten.</em>
+Ein "echter Artikel" wäre z.B. etwas, das im Inhaltsverzeichnis erwähnt wird, eine Autorenangabe hat oder etwas, das
+über einen gewissen Umfang verfügt. "Andere Texte" wären dann News oder Rezensionen von Veröffentlichungen (also z.B.
+Reviews von Musikalben). Ob etwas Informationsgehalt hat, bemerkst du dann, wenn du die Zusammenfassung schreiben
+willst: fällt die Zusammenfassung sehr dünn aus, ist das ein Indiz dafür, dass du den Text nicht aufnehmen brauchst. Am
+Ende unterliegt es immer deiner Einschätzung, welcher Text erfasst wird. Findest du News, die du für wichtig oder
+erwähnenswert hältst, kannst du diese gerne erfassen.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tipp: beachte den Zeitaufwand</p>
+<p>Du stehst hier nicht unter Zeitdruck. Allerdings ist es sinnvoller, mehr Zeit mit der Erfassung von "echten Artikeln"
+zu verbringen als mit der Erfassung von kleinen News-Schnipseln oder Rezensionen, die mehr Werbung als interessanter
+Text sind.</p>
+</div>
+<h3 id="ein-kompromiss-um-rezensionen-trotzdem-aufzunehmen">Ein Kompromiss, um Rezensionen trotzdem aufzunehmen</h3>
+<p>In Rezensionen können auch Künstler oder Bands erwähnt sein, die zu klein oder zu unbekannt für einen vollständigen
+Artikel sind. Wenn Rezensionen also nicht erfasst werden, dann existiert in der Datenbank auch kein Hinweis auf
+einen Künstler, der nur in einer Rezension aufgetaucht ist. Als Kompromiss bietet es sich hier an, anstatt einem
+Artikel für jede einzelne Rezension nur einen einzigen Artikel für <em>alle</em> Rezensionen einer Ausgabe zu erstellen. Das
+spart Zeit und erzeugt trotzdem Hinweise auf die erwähnten Künstler.</p>
+<p>Als Schlagzeile nimmst du zum Beispiel einfach den Namen der Rubrik mit den Rezensionen. In der Zusammenfassung trägst
+du nun die Namen der Künstler/Bands ein und die Namen der Alben/der Singles. Natürlich kannst du auch explizite
+Verknüpfungen zu den Musikern oder Bands hinzufügen - denke aber daran, hier nicht zu viel Zeit zu verbringen.</p>
+<p>So wird in der Zusammenfassung der Künstler namentlich erwähnt und damit besteht in der Datenbank auch ein Hinweis auf
+diesen Künstler.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/erfassung/artikel_rezension.png' %}"><img alt="Beispiel: Rezension" class="mb-1" src="{% static 'img/erfassung/artikel_rezension.png' %}" width="300"/></a><br/>
+<figcaption>Beispiel: Rezension</figcaption>
+<br/>
+</figure>
+</div>
+<h2 id="als-nachstes">Als Nächstes</h2>
+<p>Als Nächstes solltest du dich mit Verknüpfungen oder Beziehungen zwischen Datensätzen vertraut machen:</p>
+<ul>
+<li><a href="{% url 'help' page_name='relationen'%}">Über Verknüpfungen</a></li>
+</ul></div>
+</div>{% endblock content %}

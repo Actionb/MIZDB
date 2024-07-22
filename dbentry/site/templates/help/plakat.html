@@ -1,0 +1,140 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#plakat">Plakat</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#felder">Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#titel">Titel</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#plakat-id">Plakat ID</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#groe">Größe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#zeitangabe">Zeitangabe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bildreihe">Bildreihe</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#beschreibung">Beschreibung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bemerkungen">Bemerkungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#schlagworter">Schlagwörter</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#genres">Genres</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#musiker">Musiker</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bands">Bands</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#orte">Orte</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#spielorte">Spielorte</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#veranstaltungen">Veranstaltungen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#personen">Personen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#bestande">Bestände</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="plakat">Plakat</h1>
+<p>Diese Kategorie enthält (Werbe-)Plakate zu Events, Konzerten und Veranstaltungen.</p>
+<h2 id="felder">Felder</h2>
+<h3 id="titel">Titel</h3>
+<p>Ein kurzer Text, der das Plakat treffend beschreibt. Zum Beispiel der Name der Veranstaltung mit Jahresangabe.</p>
+<h3 id="plakat-id">Plakat ID</h3>
+<p>Ziffernfolge mit vorangestelltem "P" zur eindeutigen Identifizierung des Plakats. Die Nummer wird von der Datenbank beim
+Abspeichern des Datensatzes erzeugt (der Knopf "<a href="{% url 'help' page_name='sichern'%}" title="Sichern">Sichern und weiter bearbeiten</a>" ist hier
+nützlich) und sollte dann auf der Rückseite des Plakats mit Bleistift vermerkt werden.</p>
+<h3 id="groe">Größe</h3>
+<p>Abmessungen des Plakats. Angaben in Zentimetern oder - falls zutreffend -
+gemäß <a href="https://de.wikipedia.org/wiki/Papierformat">DIN-Norm</a>.</p>
+<h3 id="zeitangabe">Zeitangabe</h3>
+<p>Angaben zur zeitlichen Einteilung.</p>
+<p>Siehe <a href="{% url 'help' page_name='bedienelement'%}#feld-fur-partielles-datum" title="Bedienelement">Bedienelement für partielle Datumsangaben</a>.</p>
+<h3 id="bildreihe">Bildreihe</h3>
+<p>Wenn das vorliegende Plakat einer Bildreihe (z.B. die Plakate eines jährlichen Festivals) angehört, so kann diese hier
+vermerkt werden.</p>
+<h3 id="beschreibung">Beschreibung</h3>
+<p>Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.</p>
+<h3 id="bemerkungen">Bemerkungen</h3>
+<p>Notizen für Archiv-Mitarbeiter.</p>
+<h3 id="schlagworter">Schlagwörter</h3>
+<p><a href="{% url 'help' page_name='schlagwort'%}" title="Schlagwort">Schlagwörter</a>/Deskriptoren/Tags zur Art (Interview, Porträt, usw.) und zum Themenbereich
+(z.B. '60er Jahre') des Objekts.</p>
+<h3 id="genres">Genres</h3>
+<p>Sind bezüglich des Objektes bestimmte <a href="{% url 'help' page_name='genre'%}" title="Genre">Genres</a> besonders relevant (z.B. bei einem Artikel über die
+Geschichte des Jazz), so sollen diese hier angegeben werden. Genres von ausgewählten Musikern oder Bands müssen nicht
+nochmals gelistet werden.</p>
+<h3 id="musiker">Musiker</h3>
+<p>Bezieht sich das Objekt auf <a href="{% url 'help' page_name='musiker'%}" title="Musiker">Musiker</a>, so sollen diese hier angegeben. Bezieht sich das Objekt auf
+eine Band und wird diese Band unter "Bands" angegeben, so müssen die Mitglieder der Band hier nicht zusätzlich noch
+einmal ausgewählt werden.</p>
+<h3 id="bands">Bands</h3>
+<p>Angaben zu <a href="{% url 'help' page_name='band'%}" title="Band">Bands</a>, auf die sich das Objekt bezieht.</p>
+<h3 id="orte">Orte</h3>
+<p>Auflistung der <a href="{% url 'help' page_name='ort'%}" title="Ort">Orte</a> (also: Städte, Länder), die für das Objekt relevant sind. Herkunftsorte der Musiker,
+Bands, Autoren, usw. müssen hier nicht angegeben werden (sofern bereits beim Musiker usw. eingetragen).</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></p>
+<h3 id="spielorte">Spielorte</h3>
+<p>Auflistung der <a href="{% url 'help' page_name='spielort'%}" title="Spielort">Spielorte</a> (also: Venues, Locations), auf die sich das Objekt bezieht.</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></p>
+<h3 id="veranstaltungen">Veranstaltungen</h3>
+<p>Hat das Objekt Bezug zu bestimmten <a href="{% url 'help' page_name='veranstaltung'%}" title="Veranstaltung">Veranstaltungen</a> (also: Konzerte, Festivals), so
+sollen diese hier angegeben werden.</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='ort_spielort_veranstaltung'%}" title="Ort, Spielort, Veranstaltung">Erklärung Ort, Spielort und Veranstaltung</a></p>
+<h3 id="personen">Personen</h3>
+<p>Angaben zu <a href="{% url 'help' page_name='person'%}" title="Person">Personen</a>, auf die sich das Objekt bezieht, die weder Autoren noch Musiker sind. Also
+z.B. Produzenten. Die Personendaten der bereits gelisteten Autoren und Musiker müssen nicht nochmals gelistet werden.</p>
+<h3 id="bestande">Bestände</h3>
+<p><a href="{% url 'help' page_name='bestand'%}" title="Bestand">Bestandsangaben</a> zum Objekt. Für jeden einzelnen Gegenstand muss ein Bestand eingetragen werden.
+Ist beispielsweise dasselbe Buch zweimal vorhanden, so müssen auch zwei Einträge unter Bestand stehen (siehe
+<a href="{% url 'help' page_name='bedienelement'%}#inlines" title="Bedienelement">Bedienelement#Inlines</a>). Unter 'Anmerkungen' können weitere Angaben eingefügt
+werden; so zum Beispiel Vermerke über den Zustand bzw. der Beschaffenheit des Objektes.</p></div>
+</div>{% endblock content %}

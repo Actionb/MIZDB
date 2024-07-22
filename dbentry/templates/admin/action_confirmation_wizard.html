@@ -1,0 +1,41 @@
+{% extends 'admin/action_confirmation.html' %}
+{% load i18n l10n static admin_urls %}
+
+{% block confirmation_form %}
+<form method="post" enctype="multipart/form-data">
+    
+    {% if wizard.steps.prev %}
+        {% if wizard.steps.prev != wizard.steps.first %}
+            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="button">{% trans "first step" %}</button>
+        {% endif %}
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="button">{% trans "prev step" %}</button>
+    {% endif %}
+    
+    {% csrf_token %}
+    {{ wizard.management_form }}
+    {{ wizard.form.non_field_errors }}
+
+    {% if wizard.form.forms %}
+        {{ wizard.form.management_form }}
+        
+        {% for form in wizard.form.forms %}
+            {% for fieldset in form %}
+              {% include "admin/includes/fieldset.html" %}
+            {% endfor %}
+        {% endfor %}
+    {% else %}
+        {% for fieldset in wizard.form %}
+          {% include "admin/includes/fieldset.html" %}
+        {% endfor %}
+    {% endif %}
+    
+    <div>
+        {% for obj in queryset %}
+            <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk|unlocalize }}" />
+        {% endfor %}
+        <input type="hidden" name="action" value="{{action_name}}" />
+        <input type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="{% trans "Continue" %}" />
+        <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
+    </div>
+</form>
+{% endblock confirmation_form %}

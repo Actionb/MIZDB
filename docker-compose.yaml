@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres
+    image: postgres:15-alpine
     container_name: mizdb-postgres
     volumes:
       - ./db/data:/var/lib/postgresql/data
@@ -12,19 +12,23 @@ services:
     restart: always
     secrets:
       - db_password
+    healthcheck:
+      test: ["CMD", "pg_isready", "--username=${UID}"]
+      interval: 5s
+    user: "${UID:-1000}:${GID:-1000}"
 
   web:
     build: .
     container_name: mizdb-app
     volumes:
-      - .:/mizdb
       - ./logs:/var/log/mizdb
     env_file:
       - .env
     ports:
       - 80:8000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
     entrypoint: ["/mizdb/docker-entrypoint.sh"]
     command: ["/etc/mizdb-server/apachectl", "start", "-DFOREGROUND"]

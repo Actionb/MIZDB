@@ -14,33 +14,12 @@ except FileNotFoundError as e:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# URL to the wiki.
-# That URL is displayed in the header on each admin page.
-# See: sites.MIZAdminSite.each_context
-WIKI_URL = os.environ.get('WIKI_URL') or "/wiki/Hauptseite"
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-        },
-        'csrf': {
-            'class': 'logging.FileHandler',
-            'level': 'INFO',
-            'filename': '/var/log/mizdb/csrf.log',
-            'formatter': 'default',
-            'filters': ['not_autoreload'],
-            'delay': True,
-        },
-        'change_confirmation': {
-            'class': 'logging.FileHandler',
-            'level': 'INFO',
-            'filename': '/var/log/mizdb/change_confirmation.log',
-            'formatter': 'default',
-            'filters': ['not_autoreload'],
-            'delay': True,
         },
     },
     'formatters': {
@@ -55,16 +34,5 @@ LOGGING = {
             'callback': lambda record: record.name != 'django.utils.autoreload'
         }
     },
-    'loggers': {
-        'dbentry.csrf': {
-            'handlers': ['csrf'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'change_confirmation': {
-            'handlers': ['change_confirmation'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
+    'loggers': {},
 }

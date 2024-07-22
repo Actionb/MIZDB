@@ -1,5 +1,5 @@
-{% extends "mizdb/base.html" %}
-{% load i18n l10n static django_bootstrap5 %}
+{% extends "mizdb/action_confirmation.html" %}
+{% load i18n static django_bootstrap5 %}
 
 {% block extrahead %}
     <!-- Extrahead -->
@@ -7,79 +7,74 @@
     <script type="text/javascript" src="{% static 'mizdb/js/merge.js' %}"></script>
 {% endblock extrahead %}
 
-{% block content %}
-{% block view_helptext %}
-    {% if view_helptext %}
-        <p> {{view_helptext|linebreaks}} </p>
-    {% endif %}
-{% endblock view_helptext %}
-<form method="post">
-    {% csrf_token %}
-    {{ wizard.management_form }}
-    {{ wizard.form.non_field_errors }}
+{% block form_fields %}
+{{ wizard.management_form }}
+{{ wizard.form.non_field_errors }}
 
-    {% if current_step == '0' %}
-        {# Select primary merge instance #}
-        <div class="select-primary-container">
-            {% for field in wizard.form %}
-                {% if forloop.first %}
-                    {{ field.errors }}
-                    {{ field }}  {# the field is hidden and only stores the id selected in the 'result list' #}
-                    {{ primary_label }}
-                    <table id="result_list" class="table table-hover">
-                        <thead>
-                            <tr class="table-primary">
-                                <th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input d-none" type="checkbox"></th>
-                                {% for header in result_headers %}
-                                    <th scope="col" class="sticky-top z-999">
-                                       <div class="text d-flex justify-content-between">
-                                           <span class="me-2">{{ header.text|capfirst }}</span>
-                                       </div>
-                                    </th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for result_object, result_row in result_rows %}
-                                <tr>
-                                    <td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" name="_selected-item"></td>
-                                    {% for item in result_row %}<td class="text-body">{{ item }}</td>{% endfor %}
-                                </tr>
+{% if current_step == '0' %}
+    {# Select primary merge instance #}
+    <div class="select-primary-container">
+        {% for field in wizard.form %}
+            {% if forloop.first %}
+                {{ field.errors }}
+                {{ field }}  {# the field is hidden and only stores the id selected in the 'result list' #}
+                {{ primary_label }}
+                <table id="result_list" class="table table-hover">
+                    <thead>
+                        <tr class="table-primary">
+                            <th scope="col" class="sticky-top z-999 selection-checkbox-column"><input id="select-all-cb" class="form-check-input d-none" type="checkbox"></th>
+                            {% for header in result_headers %}
+                                <th scope="col" class="sticky-top z-999">
+                                   <div class="text d-flex justify-content-between">
+                                       <span class="me-2">{{ header.text|capfirst }}</span>
+                                   </div>
+                                </th>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                    <hr>
-                {% else %}
-                    {% bootstrap_field field layout="horizontal" horizontal_field_offset_class="ms-2" %}
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% else %}
-        {# Conflict resolution stage #}
-        {{ wizard.form.management_form }}
-
-        {% for form in wizard.form.forms %}
-            {% bootstrap_form form layout="horizontal" %}
-        {% endfor %}
-    {% endif %}
-
-    {% if non_reversible_warning %}
-        <p>{{non_reversible_warning}}</p>
-    {% endif %}
-    
-    <div>
-        {% for obj in queryset %}
-            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
-        {% endfor %}
-        <input type="hidden" name="changelist_action" value="{{action_name}}" />
-        <input class="btn btn-danger" type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="Weiter">
-        <a href=""  class="btn btn-secondary">Abbrechen</a>
-        {% if wizard.steps.prev %}
-            {% if wizard.steps.prev != wizard.steps.first %}
-                <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="btn btn-secondary">{% trans "first step" %}</button>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result_object, result_row in result_rows %}
+                            <tr>
+                                <td><input class="form-check-input selection-cb" type="checkbox" value="{{result_object.pk}}" name="_selected-item"></td>
+                                {% for item in result_row %}<td class="text-body">{{ item }}</td>{% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <hr>
+            {% else %}
+                {% bootstrap_field field layout="horizontal" horizontal_field_offset_class="ms-2" %}
             {% endif %}
-                <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-secondary">{% trans "prev step" %}</button>
-        {% endif %}
+        {% endfor %}
     </div>
-</form>
-{% endblock content %}
+{% else %}
+    {# Conflict resolution stage #}
+    {{ wizard.form.management_form }}
+
+    {% for form in wizard.form.forms %}
+        {% bootstrap_form form layout="horizontal" %}
+    {% endfor %}
+{% endif %}
+{% endblock form_fields %}
+
+{% block submit_button %}
+<input class="btn btn-danger" type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="Weiter">
+
+{% if wizard.steps.prev %}
+    {% if wizard.steps.prev != wizard.steps.first %}
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="btn btn-secondary">{% trans "first step" %}</button>
+    {% endif %}
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-secondary">{% trans "prev step" %}</button>
+{% endif %}
+{% endblock submit_button %}
+
+{% block cancel_button %}
+{% comment %}
+Overwrite the cancel button to send the user back to the changelist.
+
+The default cancel button sends the user back to the previous page. However,
+this is a wizard form with multiple forms, and the previous page might be
+another form, thus the cancel button would not truly be 'cancelling' the action.
+{% endcomment %}
+<a href=""  class="btn btn-secondary">Abbrechen</a>
+{% endblock cancel_button %}

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.18] - 2024-07-22
+
+### Added
+
+- internal documentation and help pages
+
+### Changed
+
+- clean up templates
+  - remove unused files 
+  - move templates from project root into app directory
+- clean up and rework action views
+- remove logging for change confirmations, logins, logouts and CSRF failures
+- reworked docker image: now uses alpine as base images instead of debian
+- many tweaks to the `mizdb.sh` utility script and the installation script  
+
+### Fixed
+
+- BulkEditJahrgang now handles invalid Jahrgang values
+- Ausgabe changelist is now ordered chronologically
+
 ## [0.17] - 2024-05-27
 
 ### Added

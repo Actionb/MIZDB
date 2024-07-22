@@ -1,0 +1,62 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls %}
+
+{% block extrahead %}
+<!-- Extrahead -->
+    {{ block.super }}
+    {{ media }}
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} action-confirmation {% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+        &rsaquo; {{breadcrumbs_title}}
+    </div>
+{% endblock %}
+
+{% block content %}
+    {% block view_helptext %}
+        {% if view_helptext %}
+            <p> {{view_helptext|linebreaks}} </p>
+        {% endif %}
+    {% endblock view_helptext %}
+    
+    {% block confirmation_form %}
+    
+        <form method="post">{% csrf_token %}
+            {% if form %}{{ form.non_field_errors }}{% endif %}
+
+            {% block selection_form %}
+                {% if form %}
+                    {% for fieldset in form %}
+                      {% include "admin/includes/fieldset.html" %}
+                    {% endfor %}
+                {% endif %}
+            {% endblock selection_form %}
+            <p>
+                {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
+            </p>
+            {% block object_details %}
+                {% if object_list %}
+                <h2>{% trans "Objects" %}</h2>
+                {% for obj in object_list %}
+                    <ul>{{ obj|unordered_list }}</ul>
+                {% endfor %}
+                {% endif %}
+            {% endblock object_details %}
+            
+            <div>
+                {% for obj in queryset %}
+                    {# The list of selected primary keys #}
+                    <input type="hidden" name="{{ action_selection_name }}" value="{{ obj.pk|unlocalize }}" />
+                {% endfor %}
+                <input type="hidden" name="action" value="{{action_name}}" />
+                <input type="submit" name="action_confirmed" value="{% trans "Yes, I'm sure" %}" />
+                <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
+            </div>
+        </form>
+    {% endblock confirmation_form %}
+{% endblock content %}

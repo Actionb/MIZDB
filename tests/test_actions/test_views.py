@@ -24,7 +24,8 @@ import dbentry.models as _models
 from dbentry.actions.forms import (
     BrochureActionFormOptions,
     BrochureActionFormSet,
-    MergeFormSelectPrimary, AdminMergeConflictsFormSet,
+    MergeFormSelectPrimary,
+    AdminMergeConflictsFormSet,
 )
 from dbentry.actions.views import (
     BulkEditJahrgang,
@@ -370,7 +371,7 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
     def setUpTestData(cls):
         mag = make(_models.Magazin, magazin_name="Testmagazin")
         # obj1 should be in the initial jahrgang (i.e. jg + 0) starting in year 2000:
-        cls.obj1 = make(
+        obj1 = cls.obj1 = make(
             cls.model,
             magazin=mag,
             ausgabejahr__jahr=[2000, 2001],
@@ -378,7 +379,7 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
             ausgabemonat__monat__ordinal=[6],
         )
         # obj2 should be in the next jahrgang because it's one year later: jg + 1
-        cls.obj2 = make(
+        obj2 = cls.obj2 = make(
             cls.model,
             magazin=mag,
             ausgabejahr__jahr=[2001],
@@ -386,7 +387,16 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
             ausgabemonat__monat__ordinal=[6],
         )
         cls.other = make(cls.model, magazin=make(_models.Magazin, magazin_name="Other"))
+
+        opts = cls.model._meta
+        view_name = f"admin:{opts.app_label}_{opts.model_name}_change"
+        cls.change_url1 = reverse(view_name, args=[obj1.pk])
+        cls.change_url2 = reverse(view_name, args=[obj2.pk])
         super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        self.queryset = self.model.objects.filter(pk__in=(self.obj1.pk, self.obj2.pk)).chronological_order()
 
     def test(self):
         """Request updating the jahrgang values of Ausgabe instances."""
@@ -498,6 +508,75 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
         """Assert that the help text(s) are included in the context data."""
         view = self.get_view(self.get_request())
         self.assertIn("view_helptext", view.get_context_data().keys())
+
+    def test_get_objects_list(self):
+        """
+        Assert that the list returned by get_objects_list contains the expected
+        data.
+        """
+        view = self.get_view(
+            self.get_request(),
+            queryset=self.queryset,
+            display_fields=["jahrgang", "ausgabejahr__jahr"],
+        )
+        link_list = view.get_objects_list()
+
+        # link_list should have a structure like this:
+        # [
+        #       ('Ausgabe: <link of obj1>', [<additional info (display_fields)>]),
+        #       ('Ausgabe: <link of obj2>', [<additional info (display_fields)>]),
+        #       ...
+        # ]
+        self.assertEqual(len(link_list), 2)
+        self.assertEqual(link_list[0][0], f'Ausgabe: <a href="{self.change_url1}" target="_blank">{self.obj1}</a>')
+
+        # link_list[0][1] is the list of values for the display fields:
+        display_field_values = link_list[0][1]
+        # It should contain 3 items: one for the 'jahrgang' value and two for
+        # the year values:
+        self.assertEqual(len(display_field_values), 3)
+
+        # 'jahrgang' value:
+        self.assertEqual(display_field_values[0], f"Jahrgang: ---")
+
+        # 'year' values:
+        # noinspection PyUnresolvedReferences
+        jahre = self.obj1.ausgabejahr_set.all()
+        self.assertEqual(display_field_values[1], f"Jahr: {jahre[0]}")
+        self.assertEqual(display_field_values[2], f"Jahr: {jahre[1]}")
+
+    def test_get_objects_list_no_display_fields(self):
+        """
+        Assert that the list returned by get_objects_list only contains the
+        links to the objects (with no additional nested lists).
+        """
+        view = self.get_view(
+            self.get_request(),
+            queryset=self.queryset,
+            display_fields=[],
+        )
+        object_list = view.get_objects_list()
+        self.assertEqual(len(object_list), 2)
+        for i, obj in enumerate((self.obj1, self.obj2)):
+            with self.subTest(obj=obj):
+                self.assertEqual(len(object_list[i]), 1)
+                change_url = getattr(self, f"change_url{i + 1}")
+                self.assertEqual(object_list[i][0], f'Ausgabe: <a href="{change_url}" target="_blank">{obj}</a>')
+
+    def test_get_context_data_adds_objects_list(self):
+        """Assert that the 'object_list' item is added to the context data."""
+        view = self.get_view(self.get_request())
+        with patch.object(view, "get_objects_list"):
+            self.assertIn("object_list", view.get_context_data())
+
+    def test_form_valid(self):
+        """
+        Assert that form_valid returns None (which will prompt a redirect back
+        to the changelist).
+        """
+        view = self.get_view()
+        with patch.object(view, "perform_action"):
+            self.assertIsNone(view.form_valid(None))
 
 
 class TestMergeViewAusgabe(AdminActionViewTestCase):
@@ -932,6 +1011,8 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         target_model = _models.Brochure
         get_model_mock.return_value = target_model
         obj2 = make(self.model, magazin=self.mag)
+
+        # Set up the 'forms':
         form_data = [
             {
                 "titel": "Foo Brochure",
@@ -946,12 +1027,16 @@ class TestMoveToBrochure(AdminActionViewTestCase):
                 "accept": False,
             },
         ]
+        form = Mock(cleaned_data=form_data)
         options_form_data = {"brochure_art": target_model._meta.model_name, "delete_magazin": False}
+        options_form = Mock(cleaned_data=options_form_data)
+
+        # Set up the view instance:
         view = self.get_view(self.get_request(), queryset=self.model.objects.filter(pk__in=[self.obj1.pk, obj2.pk]))
         view._magazin_instance = self.mag
 
         changed_bestand = self.obj1.bestand_set.first()  # snapshot the bestand
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(form, options_form)
         self.assertTrue(target_model.objects.filter(titel="Foo Brochure").exists())
         new_brochure = target_model.objects.get(titel="Foo Brochure")
 
@@ -988,7 +1073,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view = self.get_view(self.get_request(), queryset=self.queryset)
         # noinspection PyUnresolvedReferences
         with self.assertNotRaises(_models.Ausgabe.DoesNotExist):
-            view.perform_action(form_data, options_form_data)
+            view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
 
     @patch("dbentry.actions.views.log_change")
     @patch("dbentry.actions.views.log_deletion")
@@ -1010,7 +1095,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
 
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         self.assertFalse(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
     @patch("dbentry.actions.views.log_change")
@@ -1036,7 +1121,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
 
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         self.assertTrue(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
     @patch("dbentry.actions.views.log_change")
@@ -1058,7 +1143,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
 
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         new_brochure = target_model.objects.get()
         self.assertQuerySetEqual(new_brochure.jahre.values_list("jahr", flat=True), ["2000", "2001"], transform=str)
 
@@ -1089,7 +1174,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
             f"Hinweis: {target_opts.verbose_name} wurde automatisch erstellt beim "
             f"Verschieben von Ausgabe {self.obj1!s} (Magazin: {self.obj1.magazin!s})."
         )
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         new_brochure = target_model.objects.get()
         ct = ContentType.objects.get_for_model(target_model)
         logentry = LogEntry.objects.get(object_id=new_brochure.pk, content_type=ct)
@@ -1116,7 +1201,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view._magazin_instance = self.mag
 
         changed_bestand = self.obj1.bestand_set.first()
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         self.assertTrue(target_model.objects.filter(titel="Foo Katalog").exists())
         new_brochure = target_model.objects.get(titel="Foo Katalog")
 
@@ -1150,7 +1235,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view._magazin_instance = self.mag
 
         changed_bestand = self.obj1.bestand_set.first()
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         self.assertTrue(target_model.objects.filter(titel="Foo Kalender").exists())
         new_brochure = target_model.objects.get(titel="Foo Kalender")
 
@@ -1195,7 +1280,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
                 # Add an Artikel object to protect the Ausgabe object.
                 make(_models.Artikel, ausgabe_id=self.obj1.pk)
             with self.subTest(is_protected_return_value=is_protected_return_value):
-                view.perform_action(form_data, options_form_data)
+                view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
                 self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
                 self.assertFalse(target_model.objects.filter(titel="Foo Brochure").exists())
                 expected_message = (
@@ -1232,7 +1317,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         make(self.model, magazin=self.mag)
         view._magazin_instance = self.mag
 
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         # The creation of Brochure/deletion of Ausgabe objects should have gone
         # through:
         self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
@@ -1260,7 +1345,7 @@ class TestMoveToBrochure(AdminActionViewTestCase):
         view = self.get_view(self.get_request(), queryset=self.queryset)
         view._magazin_instance = self.mag
 
-        view.perform_action(form_data, options_form_data)
+        view.perform_action(Mock(cleaned_data=form_data), Mock(cleaned_data=options_form_data))
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         self.assertFalse(_models.Brochure.objects.filter(titel="Foo Brochure").exists())
 
@@ -1682,7 +1767,8 @@ class TestReplace(AdminActionViewTestCase, LoggingTestMixin):
 
     def test_get_perform_action_genre(self):
         view = self.get_view(request=self.get_request(), queryset=self.model.objects.filter(pk=self.obj1.pk))
-        view.perform_action(cleaned_data={"replacements": [str(self.obj2.pk)]})
+        form = Mock(cleaned_data={"replacements": [str(self.obj2.pk)]})
+        view.perform_action(form)
         self.assertQuerySetEqual(self.band.genres.all(), [self.obj2])
         change_message = [
             {"deleted": {"object": str(self.obj1), "name": "Genre"}},
@@ -1699,7 +1785,8 @@ class TestReplace(AdminActionViewTestCase, LoggingTestMixin):
             model_admin=BandAdmin(Band, self.admin_site),
             queryset=Band.objects.filter(pk=self.band.pk),
         )
-        view.perform_action(cleaned_data={"replacements": [str(replacement.pk)]})
+        form = Mock(cleaned_data={"replacements": [str(replacement.pk)]})
+        view.perform_action(form)
         self.assertQuerySetEqual(audio.bands.all(), [replacement])
         change_message = [
             {"deleted": {"object": str(self.band), "name": "Band"}},
@@ -1754,6 +1841,15 @@ class TestReplace(AdminActionViewTestCase, LoggingTestMixin):
             with self.subTest(key=key):
                 self.assertIn(key, context)
                 self.assertEqual(context[key], value)
+
+    def test_form_valid(self):
+        """
+        Assert that form_valid returns None (which will prompt a redirect back
+        to the changelist).
+        """
+        view = self.get_view()
+        with patch.object(view, "perform_action"):
+            self.assertIsNone(view.form_valid(None))
 
 
 class TestSummarize(TestCase):

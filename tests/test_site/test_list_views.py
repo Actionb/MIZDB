@@ -1,4 +1,5 @@
 """Tests for the (change)list views."""
+
 import json
 from unittest.mock import patch, Mock
 
@@ -11,6 +12,7 @@ from django.views import View
 from dbentry import models as _models
 from dbentry.site.registry import Registry, register_changelist, ModelType
 from dbentry.site.views import list
+from dbentry.site.views.base import ORDER_VAR
 from dbentry.site.views.list import _get_continue_url
 from tests.case import ViewTestCase, RequestTestCase, DataTestCase
 from tests.model_factory import make
@@ -166,6 +168,29 @@ class TestAudioList(ListViewTestMethodsMixin, ListViewTestCase):
 
 class TestAusgabeList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.AusgabeList
+
+    def test_ordered_chronologically(self):
+        """Assert that the changelist queryset is ordered chronologically."""
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertTrue(view.get_queryset().chronologically_ordered)
+
+    def test_ordered_chronologically_filtered(self):
+        """
+        Assert that the filtered changelist queryset is ordered chronologically.
+        """
+        request = self.get_request(self.url, data={"magazin_id": self.obj.magazin_id})
+        view = self.get_view(request)
+        self.assertTrue(view.get_queryset().chronologically_ordered)
+
+    def test_not_chronologically_ordered_if_order_params(self):
+        """
+        Assert that the changelist queryset is not ordered chronologically if
+        an ordering was specified in the request parameters.
+        """
+        request = self.get_request(self.url, data={ORDER_VAR: "1"})
+        view = self.get_view(request)
+        self.assertFalse(view.get_queryset().chronologically_ordered)
 
 
 class TestAutorList(ListViewTestMethodsMixin, ListViewTestCase):
