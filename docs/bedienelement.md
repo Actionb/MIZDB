@@ -68,7 +68,7 @@ erzeugt.
     Wenn du einen Suchbegriff eingibst und dann mit dem "Hinzufügen" Knopf einen neuen Datensatz erstellst, beinhaltet 
     der neue Datensatz lediglich eine Angabe zum Namen. Erstellst du zum Beispiel auf diese Weise eine neue Band, dann 
     ist nur der Bandname gegeben - und das ist in denen meisten Fällen zu wenig Information. 
-    Wenn zwei unterschiedliche Bands denselben Namen haben, dann könntest du sie nich voneinander unterscheiden.
+    Wenn zwei unterschiedliche Bands denselben Namen haben, dann könntest du sie nicht voneinander unterscheiden.
     Aus diesem Grund solltest du bei neu erstellten Datensätzen weitere Angaben wie zum Beispiel Genres, Aliase oder 
     Links zu Wikipedia oder Discogs machen.<br>  
     Dies gilt [grundsätzlich](grundsaetze.md#datensatze-mussen-aufschlussreich-sein) für alle Arten von Datensätzen. 
