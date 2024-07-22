@@ -9,7 +9,7 @@ mizdb-inlines==0.2.8
 mizdb-tomselect==0.10.0
 mod_wsgi==5.0.0
 nameparser==1.1.3
-requests==2.31.0
+requests==2.32.0
 psycopg2==2.9.9
 python-stdnum==1.19
 mizdb-watchlist==1.0.1
