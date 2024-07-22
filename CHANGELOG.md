@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+- internal documentation and help pages
+
 ### Changed
 
 - clean up templates
