@@ -12,6 +12,10 @@
   numerical values, but they actually are text and thus order lexicographically if sorted against, which ends up looking
   wrong and confusing to the user.
 
+### Fixed
+
+- delete view: non-admin users were required to have "delete" permissions for auto created M2M tables.
+
 ## [0.18] - 2024-07-22
 
 ### Added
