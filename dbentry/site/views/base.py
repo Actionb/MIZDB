@@ -603,6 +603,9 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         - prioritize_search_ordering (bool): if True, do not override the
           ordering set by queryset.search()
         - actions (list): a list of changelist action callables
+        - sortable_by (list): defines which list_display fields the changelist
+          can be sorted against. If left empty, the changelist can be sorted
+          against all fields.
     """
 
     template_name = "mizdb/changelist.html"
@@ -615,6 +618,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
     order_unfiltered_results = True
     prioritize_search_ordering = True
     actions = []
+    sortable_by = ()
 
     def has_permission(self):
         return has_view_permission(self.request.user, self.opts)
@@ -849,9 +853,12 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 headers.append({"text": self.model._meta.verbose_name})
             else:
                 attr, label = self._lookup_field(name)
-                if callable(attr) and not hasattr(attr, "ordering"):
-                    # A view method without an ordering field: not sortable.
-                    headers.append({"text": label})
+                sortable_by = self.get_sortable_by()
+                if sortable_by and name not in sortable_by or callable(attr) and not hasattr(attr, "ordering"):
+                    # Either this list_display item is not included in
+                    # sortable_by, or the item is a view method without an
+                    # ordering field; not sortable.
+                    headers.append({"text": label, "sortable": False})
                     continue
                 # Either a model field (which we assume to be sortable) or a
                 # view method that declares an ordering field.
@@ -1021,6 +1028,9 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
             # The action did not return a response; redirect back to the
             # changelist.
             return redirect(request.get_full_path())
+
+    def get_sortable_by(self):
+        return self.sortable_by
 
 
 class SearchableListView(SearchFormMixin, BaseListView):

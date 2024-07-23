@@ -570,6 +570,17 @@ class TestBaseListView(DataTestCase, ViewTestCase):
             with self.subTest(index=i, label=expected_label):
                 self.assertEqual(headers[i]["text"], expected_label)
 
+    def test_get_result_headers_field_not_in_sortable_by(self):
+        """
+        Assert that a header is flagged as not sortable if the field is not
+        included in the view's ``sortable_by``.
+        """
+        view = self.get_view(self.get_request())
+        view.sortable_by = ["name"]
+        headers = view.get_result_headers()
+        self.assertFalse(headers[1].get("sortable", False))
+        self.assertTrue(headers[0].get("sortable", False))  # name should still be sortable
+
     def test_get_result_headers_no_list_display(self):
         """
         Assert that get_result_headers returns some default when the view does
