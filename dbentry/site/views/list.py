@@ -279,6 +279,14 @@ class AusgabeList(SearchableListView):
         "widgets": {"sonderausgabe": null_boolean_select},
     }
     resource_class = resources.AusgabeResource
+    sortable_by = [
+        "ausgabe_name",
+        "jahrgang",
+        "magazin_name",
+        "e_datum",
+        "anz_artikel",
+        "status",
+    ]
 
     @add_attrs(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:

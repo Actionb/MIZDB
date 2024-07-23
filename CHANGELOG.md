@@ -6,6 +6,12 @@
 
 - date picker for Ausgabe Erscheinungsdatum field
 
+### Changed
+
+- made some columns in the Ausgabe changelist unsortable. Columns like the one for the "Ausgabenummer" contain mostly
+  numerical values, but they actually are text and thus order lexicographically if sorted against, which ends up looking
+  wrong and confusing to the user.
+
 ## [0.18] - 2024-07-22
 
 ### Added
@@ -15,12 +21,12 @@
 ### Changed
 
 - clean up templates
-  - remove unused files 
-  - move templates from project root into app directory
+	- remove unused files
+	- move templates from project root into app directory
 - clean up and rework action views
 - remove logging for change confirmations, logins, logouts and CSRF failures
 - reworked docker image: now uses alpine as base images instead of debian
-- many tweaks to the `mizdb.sh` utility script and the installation script  
+- many tweaks to the `mizdb.sh` utility script and the installation script
 
 ### Fixed
 
