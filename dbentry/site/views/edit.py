@@ -162,7 +162,10 @@ class AusgabeView(BaseEditView):
     model = _models.Ausgabe
     fields = ["magazin", "status", "sonderausgabe", "e_datum", "jahrgang", "beschreibung", "bemerkungen"]
     inlines = [NumInline, MonatInline, LNumInline, JahrInline, AudioInline, VideoInline, BestandInline]
-    widgets = {"sonderausgabe": forms.Select(choices=[(True, "Ja"), (False, "Nein")])}
+    widgets = {
+        "sonderausgabe": forms.Select(choices=[(True, "Ja"), (False, "Nein")]),
+        "e_datum": forms.DateInput(attrs={"type": "date"}),
+    }
     require_confirmation = True
     confirmation_threshold = 0.8
 

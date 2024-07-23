@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+- date picker for Ausgabe Erscheinungsdatum field
+
 ## [0.18] - 2024-07-22
 
 ### Added
