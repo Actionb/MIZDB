@@ -617,7 +617,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
 
     order_unfiltered_results = True
     prioritize_search_ordering = True
-    actions = []
+    actions = ()
     sortable_by = ()
 
     def has_permission(self):
@@ -994,7 +994,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         base_actions = [_actions.delete, _actions.merge_records, _actions.watchlist]
         if getattr(self, "resource_class", None):
             base_actions.append(_actions.export)
-        for action in base_actions + self.actions:
+        for action in base_actions + list(self.actions):
             name = action.__name__
             has_permission = getattr(action, "has_permission", None)
             label = getattr(action, "label", name)
