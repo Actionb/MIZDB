@@ -25,9 +25,13 @@ from django.views import defaults
 from dbentry.admin.site import miz_site
 
 urlpatterns = [
-    path("admin/", include("dbentry.urls")),  # TODO: tool views should be accessible outside of admin/
+    # admin autocomplete and admin tool views:
+    path("admin/", include("dbentry.admin.urls")),
+    # admin site:
     path("admin/", miz_site.urls),
+    # MIZDB site (non-admin):
     path("", include("dbentry.site.urls")),
+    # watchlist URLs:
     path("mizdb_watchlist/", include("mizdb_watchlist.urls")),
 ]
 
