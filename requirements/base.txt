@@ -4,7 +4,7 @@ django-autocomplete-light==3.9.7
 django-bootstrap5==24.2
 django-formtools==2.5.1
 git+https://github.com/Actionb/django-tsvector-field-dj4.git#egg=django-tsvector-field  # Fork of django-tsvector-field updated for Django 4.0+
-Levenshtein==0.24.0
+Levenshtein==0.25.1
 mizdb-inlines==0.2.8
 mizdb-tomselect==0.10.0
 mod_wsgi==5.0.0
