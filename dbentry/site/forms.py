@@ -191,7 +191,7 @@ class FotoForm(MIZEditForm):
 
 class InlineForm(InlineFormBase):
     class Media:
-        js = ["mizdb/js/inlines_scroll.js"]
+        js = ["mizdb/js/inlines_scroll.js", "mizdb/js/inlines_changelist_btn.js"]
 
     class Meta:
         formfield_callback = inline_formfield_callback
