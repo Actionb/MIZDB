@@ -149,8 +149,8 @@
              id="{{inline_opts.model_name}}-tab-pane"
              {% if inline_opts.changelist_url %}
              data-cl-url="{{ inline_opts.changelist_url }}"
-             {% if inline_opts.changelist_id_field %}
-             data-cl-field="{{ inline_opts.changelist_id_field }}"
+             {% if inline_opts.changelist_fk_field %}
+             data-cl-field="{{ inline_opts.changelist_fk_field }}"
              {% endif %}
              {% endif %}>
             {% if inline_opts.tabular %}

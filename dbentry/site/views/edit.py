@@ -44,7 +44,7 @@ class AudioView(BaseEditView):
         model = _models.Audio.musiker.through
         verbose_model = _models.Musiker
         tabular = False
-        changelist_id_field = "musiker"
+        changelist_fk_field = "musiker"
 
     class BandInline(Inline):
         model = _models.Audio.band.through
@@ -573,7 +573,7 @@ class VideoView(BaseEditView):
         model = _models.Video.musiker.through
         verbose_model = _models.Musiker
         tabular = False
-        changelist_id_field = "musiker"
+        changelist_fk_field = "musiker"
 
     class BandInline(Inline):
         model = _models.Video.band.through

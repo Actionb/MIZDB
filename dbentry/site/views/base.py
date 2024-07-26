@@ -155,19 +155,19 @@ class Inline:
     The inline will be rendered in tabular form if attribute `tabular` is True.
 
     If the inline model is an M2M table, the inline will include template
-    context items `changelist_url` and `changelist_id_field`. Together with some
+    context items `changelist_url` and `changelist_fk_field`. Together with some
     javascript (added by InlineForm), this will add a link to the changelist
     of the related model.
 
-    For most inlines, `changelist_url` and `changelist_id_field` will be guessed
+    For most inlines, `changelist_url` and `changelist_fk_field` will be guessed
     correctly. If the inline model has more than three model fields, you will
-    have to set `changelist_id_field` attribute to the name of the ForeignKey
+    have to set `changelist_fk_field` attribute to the name of the ForeignKey
     field to the target model.
-    Set `changelist_id_field` to None to not have the link added.
+    Set `changelist_fk_field` to None to not have the link added.
 
-    If a `changelist_id_field` can be guessed from the inline model, or if it
+    If a `changelist_fk_field` can be guessed from the inline model, or if it
     is set explicitly, the changelist will be filtered to only include the
-    items selected in the inline (the changelist_id_field must be rendered with
+    items selected in the inline (the changelist_fk_field must be rendered with
     a MIZSelect widget for this to work).
 
     The other attributes (model, form, fields, exclude, widgets) are arguments
@@ -187,7 +187,7 @@ class Inline:
     tabular = True
 
     changelist_url = ""
-    changelist_id_field = ""
+    changelist_fk_field = ""
 
     def __init__(self, parent_model):
         self.parent_model = parent_model
@@ -213,7 +213,7 @@ class Inline:
             "add_text": f"{self.verbose_name} hinzufügen",
             "tabular": self.tabular,
             "changelist_url": self.get_changelist_url(),
-            "changelist_id_field": self.get_changelist_id_field(),
+            "changelist_fk_field": self.get_changelist_fk_field(),
         }
 
     def get_formset_class(self):
@@ -236,8 +236,8 @@ class Inline:
         """Return the URL for the changelist button for this inline."""
         if self.changelist_url:
             return self.changelist_url
-        if changelist_id_field := self.get_changelist_id_field():
-            field = self.model._meta.get_field(changelist_id_field)
+        if changelist_fk_field := self.get_changelist_fk_field():
+            field = self.model._meta.get_field(changelist_fk_field)
             try:
                 return reverse(urlname("changelist", field.related_model._meta))
             except NoReverseMatch:
@@ -245,16 +245,16 @@ class Inline:
         else:
             return ""
 
-    def get_changelist_id_field(self):
+    def get_changelist_fk_field(self):
         """
         Return the name of the field that contains the ids to be used in the
         URL of the changelist button.
         """
-        if self.changelist_id_field is None:
+        if self.changelist_fk_field is None:
             # Do not create a changelist button.
             return ""
-        if self.changelist_id_field:
-            return self.changelist_id_field
+        if self.changelist_fk_field:
+            return self.changelist_fk_field
         fields = self.model._meta.get_fields()
         if len(fields) == 3:
             # Can guess the field, assuming that the model contains these
