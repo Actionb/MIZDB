@@ -10,8 +10,8 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.template import TemplateDoesNotExist
-from django.test import override_settings
-from django.urls import path, reverse
+from django.test import override_settings, TestCase
+from django.urls import path, reverse, NoReverseMatch
 from mizdb_tomselect.views import IS_POPUP_VAR
 
 from dbentry.site.views.base import (
@@ -981,8 +981,8 @@ class TestDeleteView(ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj = make(Country)
-        cls.band = make(Band, origin=cls.obj)
+        cls.obj = obj = make(Country)
+        cls.band = make(Band, origin=obj)
         super().setUpTestData()
 
     def setUp(self):
@@ -1100,8 +1100,8 @@ class TestSearchableListView(ViewTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.fighters = make(Band, name="Foo Fighters")
-        cls.obj = make(cls.model, name="Foo Fighter", band=cls.fighters)
+        cls.fighters = fighters = make(Band, name="Foo Fighters")
+        cls.obj = make(cls.model, name="Foo Fighter", band=fighters)
 
     def test_get_search_results(self):
         """Assert that get_search_results returns the expected queryset result."""
@@ -1201,3 +1201,83 @@ class TestHelpView(ViewTestCase):
         """
         response = self.client.get(reverse("help", kwargs={"page_name": "__foo__"}), follow=True)
         self.assertMessageSent(response.wsgi_request, "Hilfe Seite für '__foo__' nicht gefunden.")
+
+
+@override_settings(ROOT_URLCONF=URLConf)
+class TestInline(TestCase):
+    class GenreInline(Inline):
+        model = Band.genres.through
+
+    def test_get_changelist_url_attr_set(self):
+        """
+        Assert that ``get_changelist_url`` returns the value of the
+        `changelist_url` attribute if it is set.
+        """
+        inline = self.GenreInline(Band)
+        inline.changelist_url = "foo"
+        with patch.object(inline, "get_changelist_id_field", Mock(return_value="genre")):
+            self.assertEqual(inline.get_changelist_url(), "foo")
+
+    def test_get_changelist_url_id_field_set(self):
+        """
+        Assert that ``get_changelist_url`` returns the expected URL if a
+        changelist_id_field could be found.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline, "get_changelist_id_field", Mock(return_value="genre")):
+            self.assertEqual(inline.get_changelist_url(), "/genre/")
+
+    def test_get_changelist_url_no_reverse_match(self):
+        """
+        Assert that ``get_changelist_url`` returns an empty string if the URL
+        could not be reversed.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline, "get_changelist_id_field", Mock(return_value="genre")):
+            with patch("dbentry.site.views.base.reverse") as reverse_mock:
+                reverse_mock.side_effect = NoReverseMatch
+                self.assertEqual(inline.get_changelist_url(), "")
+
+    def test_get_changelist_url_field_is_none(self):
+        """
+        Assert that ``get_changelist_url`` returns an empty string if
+        get_changelist_id_field returns None.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline, "get_changelist_id_field", Mock(return_value=None)):
+            self.assertEqual(inline.get_changelist_url(), "")
+
+    def test_get_changelist_id_field_none(self):
+        """
+        Assert that ``get_changelist_id_field`` returns an empty string if
+        changelist_id_field is set to None.
+        """
+        inline = self.GenreInline(Band)
+        inline.changelist_id_field = None
+        self.assertEqual(inline.get_changelist_id_field(), "")
+
+    def test_get_changelist_id_field_attr_set(self):
+        """
+        Assert that ``get_changelist_id_field`` returns the value of the
+        changelist_id_field attribute if it is set.
+        """
+        inline = self.GenreInline(Band)
+        inline.changelist_id_field = "foo"
+        self.assertEqual(inline.get_changelist_id_field(), "foo")
+
+    def test_get_changelist_id_field_more_than_three_fields(self):
+        """
+        Assert that ``get_changelist_id_field`` returns an empty string if the
+        inline model has more than three model fields.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline.model._meta, "get_fields", Mock(return_value=[1, 2, 3, 4])):
+            self.assertEqual(inline.get_changelist_id_field(), "")
+
+    def test_get_changelist_id_field(self):
+        """
+        Assert that ``get_changelist_id_field`` returns the name of the
+        ForeignKey field to the target model.
+        """
+        inline = self.GenreInline(Band)
+        self.assertEqual(inline.get_changelist_id_field(), "genre")
