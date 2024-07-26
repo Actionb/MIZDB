@@ -14,6 +14,7 @@ from django.test import override_settings, TestCase
 from django.urls import path, reverse, NoReverseMatch
 from mizdb_tomselect.views import IS_POPUP_VAR
 
+from dbentry.site.forms import InlineForm
 from dbentry.site.views.base import (
     BaseEditView,
     Inline,
@@ -1207,6 +1208,42 @@ class TestHelpView(ViewTestCase):
 class TestInline(TestCase):
     class GenreInline(Inline):
         model = Band.genres.through
+        verbose_model = Genre
+
+    def test_get_name_verbose_name_set(self):
+        with patch.object(self.GenreInline, "verbose_name", new="Foo"):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name"), "Foo")
+
+    def test_get_name_verbose_name_plural_set(self):
+        with patch.object(self.GenreInline, "verbose_name_plural", new="Foo Plural"):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name_plural"), "Foo Plural")
+
+    def test_get_name_verbose_model_set(self):
+        with patch.object(self.GenreInline, "verbose_model", new=Genre):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name"), Genre._meta.verbose_name)
+            self.assertEqual(inline._get_name("verbose_name_plural"), Genre._meta.verbose_name_plural)
+
+    def test_get_no_attr_or_verbose_model_set(self):
+        with patch.object(self.GenreInline, "verbose_model", new=None):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name"), inline.model._meta.verbose_name)
+            self.assertEqual(inline._get_name("verbose_name_plural"), inline.model._meta.verbose_name_plural)
+
+    def test_init_sets_verbose_names(self):
+        inline = self.GenreInline(Band)
+        self.assertEqual(inline.verbose_name, Genre._meta.verbose_name)
+        self.assertEqual(inline.verbose_name_plural, Genre._meta.verbose_name_plural)
+
+    def test_get_formset_class(self):
+        inline = self.GenreInline(Band)
+        formset_class = inline.get_formset_class()
+        self.assertEqual(formset_class.model, inline.model)
+        self.assertEqual(formset_class.fk.related_model, Band)
+        self.assertTrue(issubclass(formset_class.form, InlineForm))
+        self.assertEqual(formset_class.extra, 1)
 
     def test_get_changelist_url_attr_set(self):
         """
@@ -1281,3 +1318,16 @@ class TestInline(TestCase):
         """
         inline = self.GenreInline(Band)
         self.assertEqual(inline.get_changelist_fk_field(), "genre")
+
+    def test_get_context_data(self):
+        inline = self.GenreInline(Band)
+        expected = {
+            "verbose_name": "Genre",
+            "verbose_name_plural": "Genres",
+            "model_name": "band_genres",
+            "add_text": "Genre hinzufügen",
+            "tabular": True,
+            "changelist_url": "/genre/",
+            "changelist_fk_field": "genre",
+        }
+        self.assertEqual(inline.get_context_data(), expected)
