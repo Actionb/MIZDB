@@ -456,7 +456,7 @@ class BaseEditView(
         for rel in self.get_changelist_link_relations():
             url, count, label = get_changelist_url_for_relation(rel, self.model, self.object.pk, url_callback, labels)
             if url and count:
-                links.append((url, f"{label} ({count})"))
+                links.append((url, label, count))
         return links
 
     def handle_require_confirmation(self, request, *args, **kwargs):

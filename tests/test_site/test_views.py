@@ -297,21 +297,21 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         view = self.get_view(self.get_request(), add=False)
         view.object = self.obj
         links = view.get_changelist_links()
-        self.assertIn((f"/musician/?band={self.obj.pk}", "Musicians (1)"), links)
+        self.assertIn((f"/musician/?band={self.obj.pk}", "Musicians", 1), links)
 
     def test_get_changelist_links_ignores_relations_with_inlines(self):
         """No changelist_links should be created for relations handled by inlines."""
         view = self.get_view(self.get_request(), add=False)
         view.object = self.obj
         links = view.get_changelist_links()
-        self.assertNotIn((f"/genre/?band={self.obj.pk}", "Genres (1)"), links)
+        self.assertNotIn((f"/genre/?band={self.obj.pk}", "Genres", 1), links)
 
     def test_get_changelist_links_prefer_labels_arg(self):
         """Passed in labels should be used over the model's verbose name."""
         view = self.get_view(self.get_request(), add=False)
         view.object = self.obj
         links = view.get_changelist_links(labels={"musician": "Hovercrafts"})
-        self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts (1)"), links)
+        self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts", 1), links)
 
     def test_get_changelist_links_uses_related_name(self):
         """If the relation has a related_name, it should be used as the label."""
@@ -320,7 +320,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
             view = self.get_view(self.get_request(), add=False)
             view.object = self.obj
             links = view.get_changelist_links()
-            self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts Full Of Eels (1)"), links)
+            self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts Full Of Eels", 1), links)
 
     def test_initial_adds_preserved_filters(self):
         """
