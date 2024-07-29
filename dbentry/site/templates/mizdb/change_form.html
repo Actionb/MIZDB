@@ -50,16 +50,29 @@
                     <a id="unpop" class="btn btn-primary w-100 mx-auto" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
                 </div>
             {% endif %}
+            {% if changelist_links %}
+                <div id="show-related-container" class="mb-1">
+                    <button id="show-related-canvas" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#related-objects">Verwandte Objekte anzeigen</button>
+                </div>
+            {% endif %}
         </div>
     {% endif %}
 </div>
 {% if changelist_links %}
-<div id="related-objects" class="mb-3 px-1 py-3 border rounded">
-    <h2 class="fs-5 ps-2">Verwandte Objekte</h2>
-    <div class="d-flex gap-2 row row-cols-auto mx-2">
+<div id="related-objects" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="related-canvas-title">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="related-canvas-title" class="offcanvas-title">Verwandte Objekte</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Schließen"></button>
+    </div>
+    <div class="offcanvas-body">
+    <div class="d-flex flex-column gap-3">
     {% for url, label, count in changelist_links %}
-        <a href="{{ url }}" class="btn btn-outline-success px-1"><span class="w-100 d-inline-block text-nowrap">{{ label }}</span><span class="badge bg-secondary d-inline-block">{{ count }}</span></a>
+        <a href="{{ url }}" class="ms-5 me-5 btn btn-outline-success">
+            <span class="w-100 d-inline-block">{{ label }}</span>
+            <span class="badge text-bg-primary">{{ count }}</span>
+        </a>
     {% endfor %}
+    </div>
     </div>
 </div>
 {% endif %}
