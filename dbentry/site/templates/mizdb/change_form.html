@@ -145,7 +145,14 @@
     </ul>
     {% for formset, inline_opts in inlines %}
     <div class="tab-content">
-        <div class="tab-pane pt-1 px-3{% if forloop.first%} show active{% endif %} border border-top-0 rounded-bottom" id="{{inline_opts.model_name}}-tab-pane">
+        <div class="tab-pane pt-1 px-3{% if forloop.first%} show active{% endif %} border border-top-0 rounded-bottom"
+             id="{{inline_opts.model_name}}-tab-pane"
+             {% if inline_opts.changelist_url %}
+             data-cl-url="{{ inline_opts.changelist_url }}"
+             {% if inline_opts.changelist_fk_field %}
+             data-cl-field="{{ inline_opts.changelist_fk_field }}"
+             {% endif %}
+             {% endif %}>
             {% if inline_opts.tabular %}
                 <div class="row mb-1">
                     {% for name, field in formset.empty_form.fields.items %}
