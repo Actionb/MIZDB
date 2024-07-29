@@ -54,10 +54,13 @@
     {% endif %}
 </div>
 {% if changelist_links %}
-<div id="related-objects">
-    {% for url, label in changelist_links %}
-        <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
+<div id="related-objects" class="mb-3 px-1 py-3 border rounded">
+    <h2 class="fs-5 ps-2">Verwandte Objekte</h2>
+    <div class="d-flex gap-2 row row-cols-auto mx-2">
+    {% for url, label, count in changelist_links %}
+        <a href="{{ url }}" class="btn btn-outline-success px-1"><span class="w-100 d-inline-block text-nowrap">{{ label }}</span><span class="badge bg-secondary d-inline-block">{{ count }}</span></a>
     {% endfor %}
+    </div>
 </div>
 {% endif %}
 {% endblock content_head %}
