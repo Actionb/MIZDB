@@ -4,6 +4,7 @@
 /.idea/
 /db/data/
 /.secrets
+/.passwd
 /dumps/
 
 # Byte-compiled / optimized / DLL files
