@@ -6,6 +6,7 @@ from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
 from dbentry.base.forms import DiscogsFormMixin, MinMaxRequiredFormMixin, InlineFormBase
 from dbentry.forms import AusgabeMagazinFieldForm
+from dbentry.search.forms import SearchForm
 from dbentry.site.widgets import MIZURLInput
 
 boolean_select = forms.Select(choices=[(True, "Ja"), (False, "Nein")])
@@ -216,3 +217,29 @@ class AusgabeInlineForm(InlineForm):
 
     class Meta(InlineForm.Meta):
         widgets = {"ausgabe": make_widget(_models.Ausgabe, tabular=True)}
+
+
+################################################################################
+# SEARCH FORMS
+################################################################################
+
+
+class MusikerSearchForm(SearchForm):
+    """
+    Search form for the Musiker changelist with an additional search field for
+    'Bands'.
+    """
+
+    # The search form's algorithm for finding relations ignores the relation
+    # from Musiker to Band (flags it as "reverse" and "not supported"). Instead
+    # of reworking the algorithm, declare the field separately:
+    band = forms.ModelMultipleChoiceField(
+        required=False,
+        label="Bands",
+        queryset=_models.Band.objects.all(),
+        widget=make_widget(_models.Band, multiple=True),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lookups["band"] = ["in"]
