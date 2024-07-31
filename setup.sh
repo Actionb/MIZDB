@@ -59,7 +59,7 @@ fi
 secret_key=$(python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));')
 
 cat << EOF > .secrets
-ALLOWED_HOSTS: $hosts
-DATABASE_PASSWORD: $password
-SECRET_KEY: $secret_key
+ALLOWED_HOSTS: "$hosts"
+DATABASE_PASSWORD: "$password"
+SECRET_KEY: "$secret_key"
 EOF
