@@ -39,17 +39,15 @@ mkdir -p db/data
 # Create a directory for log files.
 mkdir -p logs
 
-# Create the secrets directory and secret files.
-mkdir -p .secrets
-python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));' > .secrets/.key
-
+# Create the secrets file.
 if [ -n "$DB_PASSWORD" ]; then
   password=$DB_PASSWORD
 else
   printf "Please enter database password: "
   read -r password
 fi
-echo "$password" > .secrets/.passwd
+# Create .passwd file for the postgres container (can't use a secrets yaml file)
+echo "$password" > .passwd
 
 if [ -n "$ALLOWED_HOSTS" ]; then
   hosts=$ALLOWED_HOSTS
@@ -57,4 +55,11 @@ else
   printf "Please enter hostname: "
   read -r hosts
 fi
-echo "$hosts" > .secrets/.allowedhosts
+
+secret_key=$(python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));')
+
+cat << EOF > .secrets
+ALLOWED_HOSTS: $hosts
+DATABASE_PASSWORD: $password
+SECRET_KEY: $secret_key
+EOF

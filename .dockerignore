@@ -9,3 +9,4 @@ scss/
 static/
 venv/
 .coverage
+.passwd

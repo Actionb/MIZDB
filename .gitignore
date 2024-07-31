@@ -3,7 +3,8 @@
 /.vscode/
 /.idea/
 /db/data/
-/.secrets/
+/.secrets
+/.passwd
 /dumps/
 
 # Byte-compiled / optimized / DLL files

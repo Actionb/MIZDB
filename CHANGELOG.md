@@ -13,6 +13,7 @@
 - made some columns in the Ausgabe changelist unsortable. Columns like the one for the "Ausgabenummer" contain mostly
   numerical values, but they actually are text and thus order lexicographically if sorted against, which ends up looking
   wrong and confusing to the user.
+- store secrets in a single yaml file instead of multiple files in a `.secret` directory
 
 ### Fixed
 
