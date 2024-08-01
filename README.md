@@ -45,7 +45,7 @@ Datenbank in der neuen Installation sofort wiederhergestellt wird.
 
 ```shell
 sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://gist.githubusercontent.com/Actionb/76babf08b35acc0f94a679e63d979d3a/raw/706b9c22efc46200d066e6307b861868ad9ed359/get-mizdb.sh -o get-mizdb.sh
+curl -fsSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/get-mizdb.sh -o get-mizdb.sh
 sh get-mizdb.sh database_backup
 ```
 
