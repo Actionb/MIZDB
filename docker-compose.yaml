@@ -6,7 +6,7 @@ services:
       - "$DATA_DIR:/var/lib/postgresql/data"
       - "$BACKUP_DIR:/var/lib/mizdb/backups"
       # Mount the directory that contains the restore and dump scripts:
-      - ./db:/mizdb
+      - ./scripts/db:/mizdb
     environment:
       POSTGRES_DB: mizdb
       POSTGRES_USER: mizdb_user
