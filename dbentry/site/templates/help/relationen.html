@@ -1,0 +1,139 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#uber-verknupfungen">Über Verknüpfungen</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#erklarung">Erklärung</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#verknupfungen-im-formular">Verknüpfungen im Formular</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#verknupfung-hinzufugen">Verknüpfung hinzufügen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#verknupfung-anden">Verknüpfung änden</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#verknupfung-entfernen">Verknüpfung entfernen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#datensatz-mit-verknupfungen-loschen">Datensatz mit Verknüpfungen löschen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="uber-verknupfungen">Über Verknüpfungen</h1>
+<h2 id="erklarung">Erklärung</h2>
+<p>In der Datenbank können Datensätze miteinander in <strong>Beziehung</strong> stehen. So hat zum Beispiel ein Artikel immer eine
+Beziehung zu der Ausgabe, die den Artikel enthält. Anhand der Beziehung kommt man vom Artikel zu der Ausgabe, und von
+der Ausgabe gelangt man so an alle Artikel dieser Ausgabe. Der Artikel und die Ausgabe sind miteinander <strong>verknüpft</strong>
+oder <strong>verwandt</strong>. Andere Beziehungen wären zum Beispiel ein Buch und die Autoren, oder ein Musikalbum und die Künstler.</p>
+<p>Auf der <a href="{% url 'help' page_name='oberflaeche'%}#anderungsseite">Änderungsseite</a> eines Datensatzes findest du Links, die dich zu den verwandten
+Datensätzen führen. Klicke auf den Knopf mit der Aufschrift "Verwandte Objekte anzeigen" (1), um die Liste 
+anzuzeigen.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/relationen/changelist_links.png' %}"><img alt="Links zu verwandten Datensätzen" class="mb-1" src="{% static 'img/relationen/changelist_links.png' %}" width="300"/></a><br/>
+<figcaption>Links zu verwandten Datensätzen</figcaption>
+<br/>
+</figure>
+</div>
+<h2 id="verknupfungen-im-formular">Verknüpfungen im Formular</h2>
+<h3 id="verknupfung-hinzufugen">Verknüpfung hinzufügen</h3>
+<p>In den Formularen werden diese Beziehungen dadurch realisiert, dass du den anderen Datensatz, den du verknüpfen
+möchtest, in einem <a href="{% url 'help' page_name='bedienelement'%}#kombinationsfeldcombobox">Auswahlfeld</a> auswählst. Je nach Art der Beziehung
+geschieht dies direkt über ein Feld im Formular oder über ein Feld in einem <a href="{% url 'help' page_name='bedienelement'%}#inlines">Inline</a>.
+Je eine Zeile in einem Inline repräsentiert je eine Verknüpfung zu einem anderen Datensatz.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/combobox.png' %}"><img alt="Auswahlfeld" class="mb-1" src="{% static 'img/bedienelemente/combobox.png' %}" width="300"/></a><br/>
+<figcaption>Auswahlfeld</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/inline.png' %}"><img alt="Inline" class="mb-1" src="{% static 'img/bedienelemente/inline.png' %}" width="300"/></a><br/>
+<figcaption>Inline</figcaption>
+<br/>
+</figure>
+</div>
+<h3 id="verknupfung-anden">Verknüpfung änden</h3>
+<p>Um eine existierende Verknüpfung zu ändern, wähle im Auswahlfeld aus der Liste einen <em>anderen</em> Datensatz aus.</p>
+<div class="admonition caution">
+<p class="admonition-title ps-3">
+Achtung: Was du <u>nicht</u> machen darfst, ist einfach den Namen des verknüpften Datensatzes ändern!
+</p>
+<p>Möchtest du zum Beispiel in einem Artikel den Verweis auf die Band "The Beatles" auf einen Verweis auf die Band
+"A Completely Different Band" ändern, so darfst du nicht über die Änderungsseite der Beatles den Bandnamen einfach zu
+"A Completely Different Band" umändern.</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/relationen/change_before.png' %}"><img alt="Artikel vor der Änderung" class="mb-1" src="{% static 'img/relationen/change_before.png' %}" width="300"/></a><br/>
+<figcaption>Artikel vor der Änderung</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/relationen/change_rename.png' %}"><img alt="Bandname wird geändert" class="mb-1" src="{% static 'img/relationen/change_rename.png' %}" width="300"/></a><br/>
+<figcaption>Bandname wird geändert</figcaption>
+<br/>
+</figure>
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/relationen/change_result.png' %}"><img alt="Artikel nach der Änderung" class="mb-1" src="{% static 'img/relationen/change_result.png' %}" width="300"/></a><br/>
+<figcaption>Artikel nach der Änderung</figcaption>
+<br/>
+</figure>
+</div>
+<p>Zwar wird im Formular des Artikels dann eine Band mit dem erwarteten Namen
+angezeigt, aber <strong>dies gilt auch für jeden anderen Datensatz, der mit dem (ehemaligen) Beatles-Datensatz verknüpft ist:
+auch dort hat sich der Name geändert!</strong></p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/relationen/change_aftermath.png' %}"><img alt="Andere Artikel der ehemaligen Beatles" class="mb-1" src="{% static 'img/relationen/change_aftermath.png' %}" width="300"/></a><br/>
+<figcaption>Andere Artikel der ehemaligen Beatles verweisen jetzt auf die neue Band?</figcaption>
+<br/>
+</figure>
+</div>
+<p>Dies hat offensichtlich weitreichende Folgen, und aus diesem Grund warnt dich die Datenbank, wenn du den Namen eines
+Datensatzes stark veränderst. Um Fehler zu vermeiden, musst du solche Änderungen explizit bestätigten:</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/relationen/change_confirmation.png' %}"><img alt="Bestätigung einer Änderung" class="mb-1" src="{% static 'img/relationen/change_confirmation.png' %}" width="300"/></a><br/>
+<figcaption>Bestätigung einer Änderung</figcaption>
+<br/>
+</figure>
+</div>
+</div>
+<h3 id="verknupfung-entfernen">Verknüpfung entfernen</h3>
+<p>Um eine Verknüpfung zu entfernen:</p>
+<ul>
+<li><strong>Auswahlfeld</strong>: drücke auf den Button mit dem roten <strong>X</strong> neben dem ausgewählten Eintrag.</li>
+<li><strong>Inline</strong>: markiere die Zeile durch einen Klick auf das rote <strong>X</strong> zur Löschung</li>
+</ul>
+<p>Speicherst du danach den Datensatz ab, so wird die Verknüpfung - und nur die Verknüpfung - entfernt; der Datensatz, auf
+den die Verknüpfung verwies, wird nicht gelöscht.</p>
+<h3 id="datensatz-mit-verknupfungen-loschen">Datensatz mit Verknüpfungen löschen</h3>
+<p>Wenn du einen Datensatz mit aktiven Beziehungen löscht, werden die Beziehungen ebenfalls gelöscht:</p>
+<div class="d-flex justify-content-evenly gap-5 text-center">
+<figure><br/>
+<a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/loeschen/delete_summary.png' %}"><img alt="Löschung Zusammenfassung" class="mb-1" src="{% static 'img/loeschen/delete_summary.png' %}" width="300"/></a><br/>
+<figcaption>In der Zusammenfassung einer Löschung werden die Beziehungen gelistet</figcaption>
+<br/>
+</figure>
+</div></div>
+</div>{% endblock content %}

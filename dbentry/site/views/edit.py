@@ -18,7 +18,9 @@ To declare inlines for handling relations:
         model = Pizza
         inlines = [ToppingsInline]
 """
+
 from django import forms
+from django.urls import reverse_lazy
 
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
@@ -42,6 +44,7 @@ class AudioView(BaseEditView):
         model = _models.Audio.musiker.through
         verbose_model = _models.Musiker
         tabular = False
+        changelist_fk_field = "musiker"
 
     class BandInline(Inline):
         model = _models.Audio.band.through
@@ -113,6 +116,7 @@ class AudioView(BaseEditView):
         BestandInline,
     ]
     form = _forms.AudioForm
+    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
 
 @register_edit(_models.Ausgabe)
@@ -159,7 +163,10 @@ class AusgabeView(BaseEditView):
     model = _models.Ausgabe
     fields = ["magazin", "status", "sonderausgabe", "e_datum", "jahrgang", "beschreibung", "bemerkungen"]
     inlines = [NumInline, MonatInline, LNumInline, JahrInline, AudioInline, VideoInline, BestandInline]
-    widgets = {"sonderausgabe": forms.Select(choices=[(True, "Ja"), (False, "Nein")])}
+    widgets = {
+        "sonderausgabe": forms.Select(choices=[(True, "Ja"), (False, "Nein")]),
+        "e_datum": forms.DateInput(attrs={"type": "date"}),
+    }
     require_confirmation = True
     confirmation_threshold = 0.8
 
@@ -566,6 +573,7 @@ class VideoView(BaseEditView):
         model = _models.Video.musiker.through
         verbose_model = _models.Musiker
         tabular = False
+        changelist_fk_field = "musiker"
 
     class BandInline(Inline):
         model = _models.Video.band.through
@@ -629,6 +637,7 @@ class VideoView(BaseEditView):
         BestandInline,
     ]
     form = _forms.VideoForm
+    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
 
 @register_edit(_models.Ort)

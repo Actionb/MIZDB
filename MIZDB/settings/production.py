@@ -1,27 +1,12 @@
 from .defaults import *  # noqa
+from .defaults import secrets
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR/MIZDB project dir/settings dir/__file__
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-try:
-    with open(BASE_DIR / ".secrets" / ".allowedhosts") as f:
-        ALLOWED_HOSTS = f.readline().strip().split(",")
-except FileNotFoundError as e:
-    raise FileNotFoundError(
-        "No allowed hosts file found. Create a file called '.allowedhosts' "
-        "in the '.secrets' subdirectory that contains a list of allowed "
-        "host names.\n"
-        "HINT: run setup.sh"
-    ) from e
+ALLOWED_HOSTS = secrets["ALLOWED_HOSTS"].split(",")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# URL to the wiki.
-# That URL is displayed in the header on each admin page.
-# See: sites.MIZAdminSite.each_context
-WIKI_URL = os.environ.get("WIKI_URL", "/wiki/Hauptseite")
+DEBUG = True
 
 LOGGING = {
     "version": 1,

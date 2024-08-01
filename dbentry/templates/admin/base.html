@@ -12,8 +12,9 @@
 
 {% block userlinks %}
     {% watchlist_link 'admin:watchlist' icon=False %} /
-    {% if wiki_url %}
-        <a href="{{ wiki_url }} " target="_blank">Wiki</a> /
+    {% url 'help' page_name='index' as help_url %}
+    {% if help_url %}
+        <a href="{{ help_url }}">Hilfe</a> /
     {% endif %}
     {{ block.super }}
 {% endblock userlinks %}

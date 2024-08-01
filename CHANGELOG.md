@@ -2,15 +2,38 @@
 
 ## [unreleased]
 
+### Added
+
+- added date picker for Ausgabe Erscheinungsdatum field
+- added button to inlines that sends the user to the changelist of the items selected in the inline forms
+- added 'Band' search field to Musiker changelist
+
+### Changed
+
+- made some columns in the Ausgabe changelist unsortable. Columns like the one for the "Ausgabenummer" contain mostly
+  numerical values, but they actually are text and thus order lexicographically if sorted against, which ends up looking
+  wrong and confusing to the user.
+- store secrets in a single yaml file instead of multiple files in a `.secret` directory
+
+### Fixed
+
+- delete view: non-admin users were required to have "delete" permissions for auto created M2M tables.
+
+## [0.18] - 2024-07-22
+
+### Added
+
+- internal documentation and help pages
+
 ### Changed
 
 - clean up templates
-  - remove unused files 
-  - move templates from project root into app directory
+	- remove unused files
+	- move templates from project root into app directory
 - clean up and rework action views
 - remove logging for change confirmations, logins, logouts and CSRF failures
 - reworked docker image: now uses alpine as base images instead of debian
-- many tweaks to the `mizdb.sh` utility script and the installation script  
+- many tweaks to the `mizdb.sh` utility script and the installation script
 
 ### Fixed
 

@@ -50,14 +50,30 @@
                     <a id="unpop" class="btn btn-primary w-100 mx-auto" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
                 </div>
             {% endif %}
+            {% if changelist_links %}
+                <div id="show-related-container" class="mb-1">
+                    <button id="show-related-canvas" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#related-objects">Verwandte Objekte anzeigen</button>
+                </div>
+            {% endif %}
         </div>
     {% endif %}
 </div>
 {% if changelist_links %}
-<div id="related-objects">
-    {% for url, label in changelist_links %}
-        <a href="{{ url }}" class="btn btn-link">{{ label }}</a>
+<div id="related-objects" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="related-canvas-title">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="related-canvas-title" class="offcanvas-title">Verwandte Objekte</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Schließen"></button>
+    </div>
+    <div class="offcanvas-body">
+    <div class="d-flex flex-column gap-3">
+    {% for url, label, count in changelist_links %}
+        <a href="{{ url }}" class="ms-5 me-5 btn btn-outline-success">
+            <span class="w-100 d-inline-block">{{ label }}</span>
+            <span class="badge text-bg-primary">{{ count }}</span>
+        </a>
     {% endfor %}
+    </div>
+    </div>
 </div>
 {% endif %}
 {% endblock content_head %}
@@ -129,7 +145,14 @@
     </ul>
     {% for formset, inline_opts in inlines %}
     <div class="tab-content">
-        <div class="tab-pane pt-1 px-3{% if forloop.first%} show active{% endif %} border border-top-0 rounded-bottom" id="{{inline_opts.model_name}}-tab-pane">
+        <div class="tab-pane pt-1 px-3{% if forloop.first%} show active{% endif %} border border-top-0 rounded-bottom"
+             id="{{inline_opts.model_name}}-tab-pane"
+             {% if inline_opts.changelist_url %}
+             data-cl-url="{{ inline_opts.changelist_url }}"
+             {% if inline_opts.changelist_fk_field %}
+             data-cl-field="{{ inline_opts.changelist_fk_field }}"
+             {% endif %}
+             {% endif %}>
             {% if inline_opts.tabular %}
                 <div class="row mb-1">
                     {% for name, field in formset.empty_form.fields.items %}

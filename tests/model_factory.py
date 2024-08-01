@@ -619,6 +619,15 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         instance.refresh_from_db()
         return instance
 
+    @classmethod
+    def _after_postgeneration(cls, instance, create, results=None):
+        # Override _after_postgeneration to suppress a deprecation warning:
+        # factory-boy will stop saving the instance after postgeneration hooks
+        # in the next major release.
+        if create and results:
+            # Some post-generation hooks ran, and may have modified us.
+            instance.save()  # noqa
+
 
 # Store the factories created via modelfactory_factory
 # so that sequences are shared.

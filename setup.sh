@@ -1,5 +1,5 @@
 #!/bin/sh
-# Create secret files and the .env file for the docker container.
+# Create the .secret, and .env file for the docker container.
 #
 # Parameters read from the environment:
 # 	DB_NAME         -- name of the database (defaults to mizdb)
@@ -8,11 +8,14 @@
 # 	DB_PORT         -- port of the database (defaults to 5432)
 #   DB_PASSWORD     -- database password (will ask if not set)
 #   ALLOWED_HOSTS   -- value for ALLOWED_HOSTS Django setting (will ask if not set)
-#   WIKI_URL        -- URL to the MIZDB WIKI
 #   MOUNT_POINT     -- mount point for the apache server (defaults to /miz)
 #   DATA_DIR        -- directory for the database data (defaults to /var/lib/mizdb/pgdata)
 #   BACKUP_DIR      -- directory for the database backups (defaults to /var/lib/mizdb/backups)
 #   LOG_DIR         -- directory for the log files (defaults to /var/log/mizdb)
+#
+# Prompts for the database password if the environment variable DB_PASSWORD
+# is not set.
+# Prompts for the hostname if the environment variable ALLOWED_HOSTS is not set.
 #
 # USAGE:
 # 	DB_PASSWORD=supersecret DB_NAME=my_db ALLOWED_HOSTS=example.com sh setup.sh
@@ -28,26 +31,21 @@ DB_PORT=${DB_PORT:-5432}
 # e.g.: MOUNT_POINT=/foo => site available under example.com/foo
 MOUNT_POINT=${MOUNT_POINT:-/miz}
 
-# URL at which the WIKI is available
-WIKI_URL=${WIKI_URL}
-
 # Mounted Directories
 DATA_DIR=${DATA_DIR:-/var/lib/mizdb/pgdata}
 BACKUP_DIR=${BACKUP_DIR:-/var/lib/mizdb/backups}
 LOG_DIR=${LOG_DIR:-/var/log/mizdb}
 EOF
 
-# Create the secrets directory and secret files.
-mkdir -p .secrets
-python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));' > .secrets/.key
-
+# Create the secrets file.
 if [ -n "$DB_PASSWORD" ]; then
   password=$DB_PASSWORD
 else
   printf "Please enter database password: "
   read -r password
 fi
-echo "$password" > .secrets/.passwd
+# Create .passwd file for the postgres container (can't use a secrets yaml file)
+echo "$password" > .passwd
 
 if [ -n "$ALLOWED_HOSTS" ]; then
   hosts=$ALLOWED_HOSTS
@@ -55,4 +53,11 @@ else
   printf "Please enter hostname: "
   read -r hosts
 fi
-echo "$hosts" > .secrets/.allowedhosts
+
+secret_key=$(python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));')
+
+cat << EOF > .secrets
+ALLOWED_HOSTS: "$hosts"
+DATABASE_PASSWORD: "$password"
+SECRET_KEY: "$secret_key"
+EOF

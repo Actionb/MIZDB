@@ -37,4 +37,4 @@ services:
 
 secrets:
   db_password:
-    file: .secrets/.passwd
+    file: .passwd

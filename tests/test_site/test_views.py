@@ -1,4 +1,5 @@
 """Tests for the dbentry.site base views."""
+
 import re
 from unittest.mock import patch, Mock, call
 from urllib.parse import urlencode, unquote
@@ -8,10 +9,12 @@ from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
-from django.test import override_settings
-from django.urls import path, reverse
+from django.template import TemplateDoesNotExist
+from django.test import override_settings, TestCase
+from django.urls import path, reverse, NoReverseMatch
 from mizdb_tomselect.views import IS_POPUP_VAR
 
+from dbentry.site.forms import InlineForm
 from dbentry.site.views.base import (
     BaseEditView,
     Inline,
@@ -24,6 +27,7 @@ from dbentry.site.views.base import (
     SearchableListView,
 )
 from dbentry.site.views.delete import DeleteView, DeleteSelectedView
+from dbentry.site.views.help import HelpView, has_help_page
 from dbentry.site.views.history import HistoryView
 from tests.case import ViewTestCase, DataTestCase
 from tests.model_factory import make
@@ -124,6 +128,8 @@ class URLConf:
             path("", dummy_view, name=name)
             for name in ("index", "site_search", "searchbar_search", "password_change", "logout")
         ],
+        path("help/index/", dummy_view, name="help_index"),
+        path("help/<path:page_name>/", dummy_view, name="help"),
     ]
     app_name = "test_site"
 
@@ -155,6 +161,7 @@ class TestModelViewMixin(ViewTestCase):
 
     def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
         self.view_class.model = Band
+        self.view_class.request = request
         return self.view_class()
 
     def test_get_preserved_filters_no_match(self):
@@ -193,6 +200,23 @@ class TestModelViewMixin(ViewTestCase):
         view = self.get_view()
         request = self.get_response(reverse("test_site_band_add"), data={"_changelist_filters": "foo=bar"}).wsgi_request
         self.assertEqual(view.get_preserved_filters(request), "_changelist_filters=foo%3Dbar")
+
+    def test_get_context_data_adds_help_url(self):
+        """
+        Assert that get_context_data overrides the 'help_url' context item if a
+        help page for the given model exists.
+        """
+        view = self.get_view(request=self.get_request())
+        with patch.object(view, "_get_admin_url"):
+            for help_page_exists in (True, False):
+                with self.subTest(help_page_exists=help_page_exists):
+                    with patch("dbentry.site.views.help.has_help_page") as has_help_page_mock:
+                        has_help_page_mock.return_value = help_page_exists
+                        context = view.get_context_data()
+                    if help_page_exists:
+                        self.assertEqual(context["help_url"], "/help/band/")
+                    else:
+                        self.assertEqual(context["help_url"], "/help/index/")
 
 
 @override_settings(ROOT_URLCONF=URLConf)
@@ -274,21 +298,21 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         view = self.get_view(self.get_request(), add=False)
         view.object = self.obj
         links = view.get_changelist_links()
-        self.assertIn((f"/musician/?band={self.obj.pk}", "Musicians (1)"), links)
+        self.assertIn((f"/musician/?band={self.obj.pk}", "Musicians", 1), links)
 
     def test_get_changelist_links_ignores_relations_with_inlines(self):
         """No changelist_links should be created for relations handled by inlines."""
         view = self.get_view(self.get_request(), add=False)
         view.object = self.obj
         links = view.get_changelist_links()
-        self.assertNotIn((f"/genre/?band={self.obj.pk}", "Genres (1)"), links)
+        self.assertNotIn((f"/genre/?band={self.obj.pk}", "Genres", 1), links)
 
     def test_get_changelist_links_prefer_labels_arg(self):
         """Passed in labels should be used over the model's verbose name."""
         view = self.get_view(self.get_request(), add=False)
         view.object = self.obj
         links = view.get_changelist_links(labels={"musician": "Hovercrafts"})
-        self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts (1)"), links)
+        self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts", 1), links)
 
     def test_get_changelist_links_uses_related_name(self):
         """If the relation has a related_name, it should be used as the label."""
@@ -297,7 +321,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
             view = self.get_view(self.get_request(), add=False)
             view.object = self.obj
             links = view.get_changelist_links()
-            self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts Full Of Eels (1)"), links)
+            self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts Full Of Eels", 1), links)
 
     def test_initial_adds_preserved_filters(self):
         """
@@ -546,6 +570,17 @@ class TestBaseListView(DataTestCase, ViewTestCase):
         for i, expected_label in enumerate(expected_labels):
             with self.subTest(index=i, label=expected_label):
                 self.assertEqual(headers[i]["text"], expected_label)
+
+    def test_get_result_headers_field_not_in_sortable_by(self):
+        """
+        Assert that a header is flagged as not sortable if the field is not
+        included in the view's ``sortable_by``.
+        """
+        view = self.get_view(self.get_request())
+        view.sortable_by = ["name"]
+        headers = view.get_result_headers()
+        self.assertFalse(headers[1].get("sortable", False))
+        self.assertTrue(headers[0].get("sortable", False))  # name should still be sortable
 
     def test_get_result_headers_no_list_display(self):
         """
@@ -947,8 +982,8 @@ class TestDeleteView(ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj = make(Country)
-        cls.band = make(Band, origin=cls.obj)
+        cls.obj = obj = make(Country)
+        cls.band = make(Band, origin=obj)
         super().setUpTestData()
 
     def setUp(self):
@@ -1066,8 +1101,8 @@ class TestSearchableListView(ViewTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.fighters = make(Band, name="Foo Fighters")
-        cls.obj = make(cls.model, name="Foo Fighter", band=cls.fighters)
+        cls.fighters = fighters = make(Band, name="Foo Fighters")
+        cls.obj = make(cls.model, name="Foo Fighter", band=fighters)
 
     def test_get_search_results(self):
         """Assert that get_search_results returns the expected queryset result."""
@@ -1130,3 +1165,169 @@ class TestSearchableListView(ViewTestCase):
                 ctx["collapsed_fields"], [search_form[f] for f in ("empty_bool", "empty_value", "empty_multi")]
             )
             self.assertEqual(ctx["shown_fields"], [search_form["non_empty"]])
+
+
+class TestHelpView(ViewTestCase):
+    view_class = HelpView
+
+    def test_has_help_page(self):
+        """
+        Assert that has_help_page checks if a help page template with the given
+        name exists.
+        """
+        with patch("dbentry.site.views.help.get_template") as get_template_mock:
+            for has_page in (True, False):
+                if not has_page:
+                    get_template_mock.side_effect = TemplateDoesNotExist("Test")
+                self.assertEqual(has_help_page("foo"), has_page)
+
+    def test(self):
+        """Assert that the GET response uses the expected help page template."""
+        response = self.client.get(reverse("help", kwargs={"page_name": "artikel"}))
+        self.assertTemplateUsed(response, "help/artikel.html")
+
+    def test_help_page_does_not_exist(self):
+        """
+        Assert that a request for a help page that does not exist redirects to
+        the help index.
+        """
+        response = self.client.get(reverse("help", kwargs={"page_name": "__foo__"}), follow=True)
+        self.assertTemplateUsed(response, "help/index.html")
+
+    @patch("dbentry.site.views.help.has_help_page", new=Mock(return_value=False))
+    def test_sends_user_message_if_help_page_does_not_exist(self):
+        """
+        Assert that a messages is send if the requested help page does not
+        exist.
+        """
+        response = self.client.get(reverse("help", kwargs={"page_name": "__foo__"}), follow=True)
+        self.assertMessageSent(response.wsgi_request, "Hilfe Seite für '__foo__' nicht gefunden.")
+
+
+@override_settings(ROOT_URLCONF=URLConf)
+class TestInline(TestCase):
+    class GenreInline(Inline):
+        model = Band.genres.through
+        verbose_model = Genre
+
+    def test_get_name_verbose_name_set(self):
+        with patch.object(self.GenreInline, "verbose_name", new="Foo"):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name"), "Foo")
+
+    def test_get_name_verbose_name_plural_set(self):
+        with patch.object(self.GenreInline, "verbose_name_plural", new="Foo Plural"):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name_plural"), "Foo Plural")
+
+    def test_get_name_verbose_model_set(self):
+        with patch.object(self.GenreInline, "verbose_model", new=Genre):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name"), Genre._meta.verbose_name)
+            self.assertEqual(inline._get_name("verbose_name_plural"), Genre._meta.verbose_name_plural)
+
+    def test_get_no_attr_or_verbose_model_set(self):
+        with patch.object(self.GenreInline, "verbose_model", new=None):
+            inline = self.GenreInline(Band)
+            self.assertEqual(inline._get_name("verbose_name"), inline.model._meta.verbose_name)
+            self.assertEqual(inline._get_name("verbose_name_plural"), inline.model._meta.verbose_name_plural)
+
+    def test_init_sets_verbose_names(self):
+        inline = self.GenreInline(Band)
+        self.assertEqual(inline.verbose_name, Genre._meta.verbose_name)
+        self.assertEqual(inline.verbose_name_plural, Genre._meta.verbose_name_plural)
+
+    def test_get_formset_class(self):
+        inline = self.GenreInline(Band)
+        formset_class = inline.get_formset_class()
+        self.assertEqual(formset_class.model, inline.model)
+        self.assertEqual(formset_class.fk.related_model, Band)
+        self.assertTrue(issubclass(formset_class.form, InlineForm))
+        self.assertEqual(formset_class.extra, 1)
+
+    def test_get_changelist_url_attr_set(self):
+        """
+        Assert that ``get_changelist_url`` returns the value of the
+        `changelist_url` attribute if it is set.
+        """
+        inline = self.GenreInline(Band)
+        inline.changelist_url = "foo"
+        with patch.object(inline, "get_changelist_fk_field", Mock(return_value="genre")):
+            self.assertEqual(inline.get_changelist_url(), "foo")
+
+    def test_get_changelist_url_id_field_set(self):
+        """
+        Assert that ``get_changelist_url`` returns the expected URL if a
+        changelist_fk_field could be found.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline, "get_changelist_fk_field", Mock(return_value="genre")):
+            self.assertEqual(inline.get_changelist_url(), "/genre/")
+
+    def test_get_changelist_url_no_reverse_match(self):
+        """
+        Assert that ``get_changelist_url`` returns an empty string if the URL
+        could not be reversed.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline, "get_changelist_fk_field", Mock(return_value="genre")):
+            with patch("dbentry.site.views.base.reverse") as reverse_mock:
+                reverse_mock.side_effect = NoReverseMatch
+                self.assertEqual(inline.get_changelist_url(), "")
+
+    def test_get_changelist_url_field_is_none(self):
+        """
+        Assert that ``get_changelist_url`` returns an empty string if
+        get_changelist_fk_field returns None.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline, "get_changelist_fk_field", Mock(return_value=None)):
+            self.assertEqual(inline.get_changelist_url(), "")
+
+    def test_get_changelist_fk_field_none(self):
+        """
+        Assert that ``get_changelist_fk_field`` returns an empty string if
+        changelist_fk_field is set to None.
+        """
+        inline = self.GenreInline(Band)
+        inline.changelist_fk_field = None
+        self.assertEqual(inline.get_changelist_fk_field(), "")
+
+    def test_get_changelist_fk_field_attr_set(self):
+        """
+        Assert that ``get_changelist_fk_field`` returns the value of the
+        changelist_fk_field attribute if it is set.
+        """
+        inline = self.GenreInline(Band)
+        inline.changelist_fk_field = "foo"
+        self.assertEqual(inline.get_changelist_fk_field(), "foo")
+
+    def test_get_changelist_fk_field_more_than_three_fields(self):
+        """
+        Assert that ``get_changelist_fk_field`` returns an empty string if the
+        inline model has more than three model fields.
+        """
+        inline = self.GenreInline(Band)
+        with patch.object(inline.model._meta, "get_fields", Mock(return_value=[1, 2, 3, 4])):
+            self.assertEqual(inline.get_changelist_fk_field(), "")
+
+    def test_get_changelist_fk_field(self):
+        """
+        Assert that ``get_changelist_fk_field`` returns the name of the
+        ForeignKey field to the target model.
+        """
+        inline = self.GenreInline(Band)
+        self.assertEqual(inline.get_changelist_fk_field(), "genre")
+
+    def test_get_context_data(self):
+        inline = self.GenreInline(Band)
+        expected = {
+            "verbose_name": "Genre",
+            "verbose_name_plural": "Genres",
+            "model_name": "band_genres",
+            "add_text": "Genre hinzufügen",
+            "tabular": True,
+            "changelist_url": "/genre/",
+            "changelist_fk_field": "genre",
+        }
+        self.assertEqual(inline.get_context_data(), expected)
