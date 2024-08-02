@@ -64,11 +64,15 @@ restore() {
 update() {
   git remote update
   if python scripts/update_available.py; then
-    git pull || exit 1
-    docker exec -i $app_container pip install --quiet --upgrade -r requirements.txt --root-user-action=ignore
+    git pull -q || exit 1
+    echo "Stoppe Container..."
+    docker compose down
+    echo "Erzeuge Container..."
+    docker compose up -d --build
+    echo "Abschließende Checks..."
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
     docker exec -i $app_container python manage.py check
-    echo "Updated. Lade den Webserver neu, damit die Änderungen sichtbar werden: mizdb reload"
+    echo "Update abgeschlossen."
   else
     echo "Bereits aktuell."
   fi
