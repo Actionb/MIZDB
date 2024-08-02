@@ -10,7 +10,7 @@ API_URL = "https://api.github.com/repos/Actionb/MIZDB/tags"
 def _get_current_version() -> str:
     """Return the current version string of the MIZDB app."""
     current_tag = subprocess.run(["git", "describe"], capture_output=True).stdout.decode("utf-8")
-    pattern = re.compile(r"^(\d+\.\d+.\d+)?.*")
+    pattern = re.compile(r"^(\d+\.\d+\.\d+)?.*")
     return pattern.match(current_tag).group(1)
 
 
