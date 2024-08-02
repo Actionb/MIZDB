@@ -1,7 +1,7 @@
-import json
 import re
 import subprocess
 
+import requests
 import semver
 
 API_URL = "https://api.github.com/repos/Actionb/MIZDB/tags"
@@ -16,9 +16,15 @@ def _get_current_version() -> str:
 
 def _get_remote_version() -> str:
     """Return the latest version string of the MIZDB app in the GitHub repo."""
-    command = f'curl -L -H "Accept: application/vnd.github+json" -H "X-Github-Api-Version: 2022-11-28" {API_URL}'
-    remote_tags = json.loads(subprocess.run(command.split(" "), capture_output=True).stdout.decode("utf-8"))
-    return remote_tags[0]["name"]
+    response = requests.get(
+        url=API_URL,
+        headers={"Accept": "application/vnd.github+json", "X-Github-Api-Version": "2022-11-28"},
+    )
+    if response.ok:
+        return response.json()[0]["name"]
+    else:
+        # TODO: emit an error message
+        return "0.0.0"
 
 
 def update_available():
