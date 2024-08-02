@@ -63,14 +63,7 @@ restore() {
 
 update() {
   git remote update
-  # Note that git commands output a lot of information ("chatty feedback") into
-  # stderr instead of stdin:
-  # https://github.com/git/git/commit/e258eb4800e30da2adbdb2df8d8d8c19d9b443e4
-  # This includes the relevant information from `git fetch --dry-run`, so we
-  # can't use that command to check whether the local branch can be updated.
-  # Use `git rev-list HEAD..@{u}` instead:
-  # https://stackoverflow.com/a/20562900/9313033
-  if [ -n "$(git rev-list HEAD..@\{u\})" ]; then
+  if python scripts/update_available.py; then
     git pull || exit 1
     docker exec -i $app_container pip install --quiet --upgrade -r requirements.txt --root-user-action=ignore
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
