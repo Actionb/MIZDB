@@ -65,6 +65,7 @@ update() {
   if scripts/update_available.py; then
     read -r -p "Ein Update ist verfügbar. Installieren? [j/n]: "
     if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+      echo "Abgebrochen."
       exit 1
     fi
     git pull -q || exit 1
