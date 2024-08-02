@@ -7,8 +7,7 @@ Exits with code 0 if an update is available. Exits with code 1 if no update is
 available.
 """
 
-import re
-import subprocess
+from pathlib import Path
 
 import requests
 import semver
@@ -18,10 +17,8 @@ API_URL = "https://api.github.com/repos/Actionb/MIZDB/tags"
 
 def _get_current_version() -> str:
     """Return the current version string of the MIZDB app."""
-    current_tag = subprocess.run(["git", "describe"], capture_output=True).stdout.decode("utf-8")
-    pattern = re.compile(r"^(\d+\.\d+\.\d+)?.*")
-    # TODO: add error handling if no match
-    return pattern.match(current_tag).group(1)
+    with open(Path(__file__).parent.parent.joinpath("VERSION"), "r") as f:
+        return f.read().strip()
 
 
 def _get_remote_version() -> str:
