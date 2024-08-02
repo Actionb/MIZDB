@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Compare the version numbers of the current local git tag and the latest git tag
-of the remote.
+Check if an update is available.
+
+Compares the version numbers of the current local git tag and the latest git
+tag of the remote.
 
 Exits with code 0 if an update is available. Exits with code 1 if no update is
 available.
