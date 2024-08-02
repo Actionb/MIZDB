@@ -23,7 +23,7 @@ BEFEHLE:
   stop          MIZDB App Container beenden
   restart       MIZDB App Container neustarten
   reload        Apache Webserver unterbrechungsfrei neustarten (Verbindungen bleiben erhalten)
-  update        Update MIZDB (git pull)
+  update        Nach Updates suchen und installieren
   restore       Datenbank aus einer Backup-Datei wiederherstellen
   dump          Daten der Datenbank in eine Backup-Datei übertragen
   shell         Kommandozeile des MIZDB App Containers aufrufen
@@ -62,8 +62,11 @@ restore() {
 }
 
 update() {
-  git remote update
   if python scripts/update_available.py; then
+    read -r -p "Ein Update ist verfügbar. Installieren? [j/n]: "
+    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+      exit 1
+    fi
     git pull -q || exit 1
     echo "Stoppe Container..."
     docker compose down
