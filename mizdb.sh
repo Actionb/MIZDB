@@ -30,12 +30,14 @@ BEFEHLE:
   dbshell       Kommandozeile des Postgresql Containers aufrufen
   check         MIZDB/Django checks ausführen
   migrate       Datenbankmigrationen ausführen
+  uninstall     MIZDB deinstallieren
 EOF
 }
 
 dump() {
   file="$1"
   if [ -z "$file" ]; then
+    # TODO: read directory for dumps from .env file?
     mkdir -p dumps
     dir=$(readlink -f ./dumps)
     file="$dir/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"
@@ -118,7 +120,60 @@ collectstatic() {
 }
 
 migrate() {
-  docker exec -i $app_container python manage.py migrate
+  docker exec -i $app_container python manage.py migrate --no-input
+}
+
+uninstall() {
+  set -e
+  MIZDB_DIR="$(dirname -- "$( readlink -f -- "$0"; )"; )"
+  set +a
+  source "$MIZDB_DIR/.env"
+  set -a
+
+  echo "MIZDB wird deinstalliert."
+  echo "WARNUNG: Dabei werden alle Daten gelöscht!"
+
+  read -r -p "Bitte geben Sie 'MIZDB löschen' ein, um zu bestätigen: "
+  if [[ ! $REPLY = "MIZDB löschen" ]]; then
+    echo "Abgebrochen."
+    exit 1
+  fi
+
+  echo "Lösche Docker Container..."
+  set +e
+  docker stop $app_container $db_container
+  docker container rm $app_container $db_container
+  docker image prune -a
+  set -e
+  printf "Docker Container gelöscht.\n\n"
+
+  echo "Lösche Datenbankverzeichnis: $(dirname "$DATA_DIR")"
+  read -r -p "Fortfahren? [j/N]: "
+  if [[ $REPLY =~ ^[jJyY]$ ]]; then
+    sudo rm -rf "$(dirname "$DATA_DIR")"
+  fi
+  echo "Lösche Log Verzeichnis: ${LOG_DIR}"
+  read -r -p "Fortfahren? [j/N]: "
+  if [[ $REPLY =~ ^[jJyY]$ ]]; then
+    sudo rm -rf "$LOG_DIR"
+  fi
+
+  echo "Lösche Management Skript."
+  sudo rm -f /usr/local/bin/mizdb
+
+  echo "Entferne Backup cronjob."
+  # https://askubuntu.com/a/719877
+  sudo crontab -l 2>/dev/null | grep -v 'docker exec mizdb-postgres sh /mizdb/backup.sh' | grep -v "Backup der MIZDB Datenbank" | sudo crontab -u root -
+
+  echo "Lösche MIZDB Source Verzeichnis ${MIZDB_DIR}"
+  read -r -p "Fortfahren? [j/N]: "
+  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+    exit 1
+  fi
+  cd ..
+  rm -rf "$MIZDB_DIR"
+  set +e
+  printf "\nFertig!\n"
 }
 
 case "$1" in
@@ -134,5 +189,6 @@ case "$1" in
   check) check ;;
   collectstatic) collectstatic ;;
   migrate) migrate;;
+  uninstall) uninstall;;
   *) show_help ;;
 esac

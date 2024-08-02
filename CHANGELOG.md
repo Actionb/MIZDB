@@ -14,6 +14,13 @@
   numerical values, but they actually are text and thus order lexicographically if sorted against, which ends up looking
   wrong and confusing to the user.
 - store secrets in a single yaml file instead of multiple files in a `.secret` directory
+- reworked docker setup:
+    - volume source directories are read from environment (`DATA_DIR`, `LOG_DIR`, `BACKUP_DIR`)
+    - volume source directories default to `/var/lib/mizdb/` and `/var/log/mizdb`
+    - $UID and $GID are no longer used to define the container user: containers are run as root and the webserver is
+      run as apache
+- add scripts: uninstall script, backup script and get-mizdb script
+- moved database scripts into `scripts` directory
 
 ### Fixed
 
@@ -28,8 +35,8 @@
 ### Changed
 
 - clean up templates
-	- remove unused files
-	- move templates from project root into app directory
+    - remove unused files
+    - move templates from project root into app directory
 - clean up and rework action views
 - remove logging for change confirmations, logins, logouts and CSRF failures
 - reworked docker image: now uses alpine as base images instead of debian
@@ -67,16 +74,16 @@
 ### Changed
 
 - updated dependencies:
-	- updated to Django 4.2.9. Notable
-	  change: [set formfield_callback](https://docs.djangoproject.com/en/5.0/releases/4.2/#forms) in `MIZEditForm.Meta`
-	- removed unused dependencies PyYAML, pipreqs and pylint
+    - updated to Django 4.2.9. Notable
+      change: [set formfield_callback](https://docs.djangoproject.com/en/5.0/releases/4.2/#forms) in `MIZEditForm.Meta`
+    - removed unused dependencies PyYAML, pipreqs and pylint
 - admin refactor:
-	- moved modules specific to admin to `dbentry/admin`
-	- added `DbentryAdminConfig` app config. With the above change, Django's autodiscovery for the admin _module_
-	  containing the model admin classes will no longer work (it will try to import `dbentry.admin`, which is now a
-	  package). `DbentryAdminConfig` is a config that disables the autodiscovery and imports the admin module.
-	- moved dal package `ac` to `dbentry/admin/autocomplete`
-	- moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
+    - moved modules specific to admin to `dbentry/admin`
+    - added `DbentryAdminConfig` app config. With the above change, Django's autodiscovery for the admin _module_
+      containing the model admin classes will no longer work (it will try to import `dbentry.admin`, which is now a
+      package). `DbentryAdminConfig` is a config that disables the autodiscovery and imports the admin module.
+    - moved dal package `ac` to `dbentry/admin/autocomplete`
+    - moved some static files that were not exclusively for admin to `dbentry/static/mizdb`
 - changelist action refactor: make action base views compatible with non-admin views
 - re-enable "View on site" link in admin user links
 
@@ -85,13 +92,13 @@
 ### Changed
 
 - changed handling of requests with invalid CSRF tokens:
-	- invalid login requests by authenticated users will cause a redirect to the login page so that the user can confirm
-	  the login with a refreshed token
-	- invalid logout requests by authenticated users will cause a redirect to the index page with a warning message, but
-	  will not log out the user
-	- invalid logout requests by _unauthenticated_ users will cause a redirect to the login page like a normal logout
-	- invalid add/change page requests will redirect back to the page, preserving the previous form data, for the user
-	  to try again with a refreshed token
+    - invalid login requests by authenticated users will cause a redirect to the login page so that the user can confirm
+      the login with a refreshed token
+    - invalid logout requests by authenticated users will cause a redirect to the index page with a warning message, but
+      will not log out the user
+    - invalid logout requests by _unauthenticated_ users will cause a redirect to the login page like a normal logout
+    - invalid add/change page requests will redirect back to the page, preserving the previous form data, for the user
+      to try again with a refreshed token
 
 ### Fixed
 
@@ -129,9 +136,9 @@
 ### Added
 
 - Docker support
-	- added new installation methods
-	- added management utility script `mizdb.sh`
-	- reworked handling of secret files and database connection parameters
+    - added new installation methods
+    - added management utility script `mizdb.sh`
+    - reworked handling of secret files and database connection parameters
 
 ### Changed
 
@@ -177,10 +184,10 @@
 ### Other
 
 - updated package versions:
-	- Django updated to version 4.1
-	- `django-autocomplete-light` updated to verson 3.9.4
-	- use own fork of `django-tsvector-field` to make it compatible with Django 4
-	- other minor package updates
+    - Django updated to version 4.1
+    - `django-autocomplete-light` updated to verson 3.9.4
+    - use own fork of `django-tsvector-field` to make it compatible with Django 4
+    - other minor package updates
 
 - updated tox tests
 - force using jQuery version 3.5.1 (due to a bug with select2 and jQuery 3.6)
@@ -194,9 +201,9 @@
 ### Changed
 
 - unified 'maint' and 'bulk' package into a 'tools' package. That change includes:
-	- URLs for 'maint' and 'bulk' views are now configured in tools.urls (from dbentry.urls)
-	- moved templates for 'maint' and 'bulk' views into dbentry.templates.tools (from
-	  MIZDB.templates.admin)
+    - URLs for 'maint' and 'bulk' views are now configured in tools.urls (from dbentry.urls)
+    - moved templates for 'maint' and 'bulk' views into dbentry.templates.tools (from
+      MIZDB.templates.admin)
 
 ### Changed
 

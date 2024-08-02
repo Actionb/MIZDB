@@ -4,17 +4,34 @@ Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
 <!-- TOC -->
 
-* [Installation Debian (Docker)](#installation-debian-docker)
-    * [Per script](#per-script)
-    * [Manuell](#manuell)
-* [Verwaltung](#verwaltung)
-    * [Docker Container & Webserver](#docker-container--webserver)
-    * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pgrestore)
-    * [Backup erstellen (pg_dump)](#backup-erstellen-pgdump)
-    * [Update](#update)
-    * [Django Shell & psql](#django-shell--psql)
-    * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
-* [Installation (ohne Docker)](#installation-ohne-docker)
+* [MIZDB - Musikarchiv Datenbank](#mizdb---musikarchiv-datenbank)
+    * [Installation Debian (Docker)](#installation-debian-docker)
+        * [Per script](#per-script)
+        * [Manuell](#manuell)
+    * [Verwaltung](#verwaltung)
+        * [Docker Container & Webserver](#docker-container--webserver)
+        * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pg_restore)
+        * [Backup erstellen (pg_dump)](#backup-erstellen-pg_dump)
+        * [Backups automatisieren](#backups-automatisieren)
+            * [Cronjob](#cronjob)
+            * [rclone](#rclone)
+                * [rclone mit Google Service Account](#rclone-mit-google-service-account)
+        * [Update](#update)
+        * [Django Shell & psql](#django-shell--psql)
+        * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
+    * [Installation (ohne Docker)](#installation-ohne-docker)
+        * [1. Erforderliche Pakete installieren](#1-erforderliche-pakete-installieren)
+        * [2. Postgres Datenbank einrichten](#2-postgres-datenbank-einrichten)
+        * [3. MIZDB Dateien herunterladen und einrichten](#3-mizdb-dateien-herunterladen-und-einrichten)
+            * [Python Module installieren:](#python-module-installieren)
+            * [Ordner für Log-Dateien einrichten:](#ordner-für-log-dateien-einrichten)
+        * [4. Apache einrichten](#4-apache-einrichten)
+        * [Datenbank wiederherstellen](#datenbank-wiederherstellen)
+        * [MIZDB testen](#mizdb-testen)
+        * [PostgreSQL Terminal aufrufen](#postgresql-terminal-aufrufen)
+    * [Deinstallation (Docker)](#deinstallation-docker)
+    * [Development](#development)
+        * [CSS, Sass & Theme](#css-sass--theme)
 
 <!-- TOC -->
 
@@ -28,7 +45,7 @@ Datenbank in der neuen Installation sofort wiederhergestellt wird.
 
 ```shell
 sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://gist.githubusercontent.com/Actionb/76babf08b35acc0f94a679e63d979d3a/raw/706b9c22efc46200d066e6307b861868ad9ed359/get-mizdb.sh -o get-mizdb.sh
+curl -fsSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/get-mizdb.sh -o get-mizdb.sh
 sh get-mizdb.sh database_backup
 ```
 
@@ -50,9 +67,9 @@ sh get-mizdb.sh database_backup
   # Docker Container erstellen und starten: 
   docker compose up -d
   # Statische Dateien sammeln:
-  docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
+  docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0  
   # Log-Verzeichnis Besitzer einrichten:
-  docker exec -i mizdb-app chown -R apache:apache logs
+  docker exec -i mizdb-app sh -c 'chown -R apache:apache $LOG_DIR'
   ```
 
 Wenn eine Backup-Datei (hier: `database_backup`) vorhanden ist, kann die Datenbank wiederhergestellt werden:
@@ -62,6 +79,7 @@ bash mizdb.sh restore database_backup
 ```
 
 Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
+
 ```shell
 bash mizdb.sh migrate
 ```
@@ -112,6 +130,89 @@ bash mizdb.sh dump backup_datei
 ```
 
 Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis `MIZDB/dumps` erstellt.
+
+### Backups automatisieren
+
+#### Cronjob
+
+Crontab des root users öffnen:
+
+```shell
+sudo crontab -e
+```
+
+Und folgenden cronjob hinzufügen:
+
+```
+# Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
+51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+```
+
+#### rclone
+
+Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.
+
+1. rclone installieren: https://rclone.org/install/
+2. rclone für Google Drive konfigurieren: https://rclone.org/drive/
+3. crontab öffnen:
+    ```shell
+    sudo crontab -e
+    ```
+   und dann den cronjob definieren, zum Beispiel:
+    ```shell
+   # Backups mit rclone hochladen:
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups <remote_name>:backups
+    ```
+
+Die Standardkonfiguration erfordert einen Webbrowser.
+Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: https://rclone.org/remote_setup/
+
+##### rclone mit Google Service Account
+
+Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:
+
+https://rclone.org/drive/#service-account-support
+
+Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:
+
+1. Falls nicht der bereits existierende Service "dbbackup-service" benutzt werden soll, muss
+   vorerst ein Service Account angelegt werden:
+    1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+    2. Service Accounts > Create Service Account
+    3. im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
+       Account freigeben
+
+2. Service Account Key (`credentials.json`) generieren, falls nicht vorhanden:
+    1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+    2. Service Accounts > dbbackup-service > KEYS
+    3. Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen
+
+3. Root Folder ID des Backup-Ordners herausfinden:
+    1. In Google Drive einloggen
+    2. Unter "Meine Ablage" den entsprechenden Ordner anklicken
+    3. die ID ist am Ende der URL nach `/folders/` zu finden; also
+       z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
+       ID `10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa`
+
+4. rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support
+
+Mit einer solchen rclone.conf, zu finden unter `/home/my_user/.config/rclone/`:
+
+```
+[dbbackup]
+type = drive
+scope = drive
+root_folder_id = 10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa
+service_account_file = /pfad/zu/service/account/credentials.json
+```
+
+müsste der cronjob so aussehen:
+
+```
+53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
+```
+
+Weitere Links: [Gdrive access via service account](https://forum.rclone.org/t/gdrive-access-via-service-account/17926)
 
 ### Update
 
@@ -301,7 +402,7 @@ sudo a2ensite mizdb
 sudo service apache2 restart   
 ```
 
-Jetzt sollte MIZDB unter `http://<ServerName>/miz/admin` (also z.B http://localhost/miz/admin) erreichbar sein.
+Jetzt sollte MIZDB unter `http://<ServerName>/miz/admin` (also z.B. http://localhost/miz/admin) erreichbar sein.
 
 ### Datenbank wiederherstellen
 
@@ -323,9 +424,33 @@ python manage.py test --settings=tests.settings tests
 psql --username=mizdb_user --host=localhost mizdb
 ```
 
-## Development 
+## Deinstallation (Docker)
+
+Bei der Deinstallation werden folgende Verzeichnisse und Dateien gelöscht:
+
+- das MIZDB Source Verzeichnis
+- das Datenbank Verzeichnis (standardmäßig: `/var/lib/mizdb`)
+- das Log Verzeichnis (standardmäßig: `/var/log/mizdb`)
+- das Management Skript (standardmäßig: `/usr/local/bin/mizdb`)
+
+Außerdem wird der Backup cronjob aus der root crontab entfernt.
+
+Mit Management Skript:
+
+```shell
+mizdb uninstall
+```
+
+oder aus dem MIZDB Verzeichnis:
+
+```shell
+bash mizdb.sh uninstall
+```
+
+## Development
 
 Installiere zusätzliche Dependencies:
+
 ```shell
 pip install -r requirements/dev.txt
 npm install
@@ -334,26 +459,32 @@ npm install
 ### CSS, Sass & Theme
 
 Benutze
+
 ```shell
 npm run sass-build
 ```
+
 oder
+
 ```shell
 npm run sass-watch
 ```
-Um die CSS Dateien zu erstellen. 
+
+Um die CSS Dateien zu erstellen.
 
 Links:
- - https://getbootstrap.com/
- - https://bootswatch.com/flatly/
- - https://sass-lang.com/
+
+- https://getbootstrap.com/
+- https://bootswatch.com/flatly/
+- https://sass-lang.com/
 
 ### Hilfe Seiten erzeugen
 
 Um die Hilfe Seiten der MIZDB "site" app zu erzeugen, benutze:
+
 ```shell
 mkdocs build
 ```
 
-Ein [post build hook](https://www.mkdocs.org/dev-guide/plugins/#on_post_build) 
+Ein [post build hook](https://www.mkdocs.org/dev-guide/plugins/#on_post_build)
 erzeugt aus den mkdocs html Dateien Django Templates und legt sie unter `dbentry/site/templates/help` ab. 
