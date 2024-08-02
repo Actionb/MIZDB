@@ -1,9 +1,11 @@
 """Tests for the edit views."""
+
 from urllib.parse import unquote
 
 from django.forms import ModelChoiceField
 from django.urls import reverse, NoReverseMatch
 
+from dbentry import models as _models
 from dbentry.site.views import edit
 from tests.case import ViewTestCase
 from tests.model_factory import make
@@ -157,6 +159,35 @@ class TestBuchView(EditViewTestMethodsMixin, EditViewTestCase):
 
 class TestGenreView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.GenreView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        obj = cls.obj  # noqa
+        cls.brochure = make(_models.Brochure, genre=obj)
+        cls.kalender = make(_models.Kalender, genre=obj)
+        cls.katalog = make(_models.Katalog, genre=obj)
+
+    def test_get_changelist_links_contains_brochure_models(self):
+        """
+        Assert that the changelist links can contain links to the three
+        Brochure models (Brochure, Kalender, Katalog).
+        """
+        # Links to these models were unavailable since
+        # get_changelist_url_for_relation resolves the relation to the abstract
+        # BaseBrochure model (instead of the concrete child models) which does
+        # not have a view and thus no URL.
+        expected_urls = [
+            (model, reverse(f"dbentry_{model._meta.model_name}_changelist") + f"?genre={self.obj.pk}")
+            for model in (_models.Brochure, _models.Kalender, _models.Katalog)
+        ]
+
+        view = self.get_edit_view(self.obj)
+        view.object = self.obj
+        urls = [url for url, *_ in view.get_changelist_links()]
+        for model, expected_url in expected_urls:
+            with self.subTest(model=model):
+                self.assertIn(expected_url, urls)
 
 
 class TestMagazinView(EditViewTestMethodsMixin, EditViewTestCase):

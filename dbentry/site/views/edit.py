@@ -20,7 +20,7 @@ To declare inlines for handling relations:
 """
 
 from django import forms
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse, NoReverseMatch
 
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
@@ -28,6 +28,7 @@ from dbentry.forms import GoogleBtnWidget
 from dbentry.site import forms as _forms
 from dbentry.site.registry import register_edit
 from dbentry.site.views.base import BaseEditView, Inline
+from dbentry.utils.url import urlname
 
 
 class BestandInline(Inline):
@@ -420,6 +421,23 @@ class GenreView(BaseEditView):
     model = _models.Genre
     inlines = [AliasInline]
     require_confirmation = True
+
+    def get_changelist_links(self, labels=None):
+        links = super().get_changelist_links(labels)
+        # Add links to the Brochure models, if any.
+        # Links to these models are ignored by the default implementation in
+        # super() because the relation only exists on the BaseBrochure model
+        # (and not the concrete child models that "inherit" the relation)
+        # which does not have a changelist view and thus no URL.
+        for model in (_models.Brochure, _models.Kalender, _models.Katalog):
+            qs = model.objects.filter(genre=self.object)
+            if c := qs.count():
+                try:
+                    url = reverse(urlname("changelist", model._meta))
+                except NoReverseMatch:  # pragma: no cover
+                    continue
+                links.append((f"{url}?genre={self.object.pk}", model._meta.verbose_name_plural, c))
+        return links
 
 
 @register_edit(_models.Magazin)
