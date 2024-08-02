@@ -42,7 +42,5 @@ def update_available():
 
 
 if __name__ == "__main__":
-    if update_available():
-        exit(0)
-    else:
-        exit(1)
+    # Invert the return values to exit with expected appropriate exit code:
+    exit(bool(not update_available()))
