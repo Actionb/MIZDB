@@ -1,4 +1,4 @@
-FROM python:3.11-alpine as build
+FROM python:3.11-alpine AS build
 
 RUN ["apk", "update"]
 RUN ["apk", "add", "build-base", "apache2-dev", "git"]
@@ -8,7 +8,7 @@ WORKDIR /mizdb
 COPY requirements requirements
 RUN ["python3", "-m", "pip", "install", "-r", "requirements/base.txt"]
 
-FROM python:3.11-alpine as final
+FROM python:3.11-alpine AS final
 
 RUN ["apk", "update", "&&", "upgrade"]
 # libpq required by psycopg2
