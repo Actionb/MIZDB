@@ -36,10 +36,7 @@ DATABASES = {
 
 # Application definition
 INSTALLED_APPS = [
-    # Inject jQuery 3.5.1 as a workaround to a bug with select2 and jQuery 3.6:
-    # https://github.com/select2/select2/issues/5993
-    # https://github.com/yourlabs/django-autocomplete-light/issues/1283
-    "jquery_351",
+    "dbentry.admin.autocomplete.jquery_351",  # see dbentry.admin.autocomplete.jquery_351.README for details
     "dbentry.apps.DbentryConfig",
     "dbentry.apps.DbentryAdminConfig",
     "dal",
