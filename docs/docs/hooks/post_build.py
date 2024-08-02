@@ -4,7 +4,8 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-project_root = Path(__file__).parent.parent.parent
+# project_root/docs/docs/hooks
+project_root = Path(__file__).parents[3]
 site_root = project_root / "dbentry" / "site"
 static_root = site_root / "static"
 
