@@ -1,3 +1,11 @@
+"""
+Compare the version numbers of the current local git tag and the latest git tag
+of the remote.
+
+Exits with code 0 if an update is available. Exits with code 1 if no update is
+available.
+"""
+
 import re
 import subprocess
 
@@ -11,6 +19,7 @@ def _get_current_version() -> str:
     """Return the current version string of the MIZDB app."""
     current_tag = subprocess.run(["git", "describe"], capture_output=True).stdout.decode("utf-8")
     pattern = re.compile(r"^(\d+\.\d+\.\d+)?.*")
+    # TODO: add error handling if no match
     return pattern.match(current_tag).group(1)
 
 
