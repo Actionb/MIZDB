@@ -62,7 +62,7 @@ restore() {
 }
 
 update() {
-  if python scripts/update_available.py; then
+  if scripts/update_available.py; then
     read -r -p "Ein Update ist verfügbar. Installieren? [j/n]: "
     if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
       exit 1

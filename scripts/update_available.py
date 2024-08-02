@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Compare the version numbers of the current local git tag and the latest git tag
 of the remote.
