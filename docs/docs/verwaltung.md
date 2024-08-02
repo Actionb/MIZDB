@@ -56,10 +56,15 @@ Um die Anwendung zu aktualisieren, benutze:
 bash mizdb.sh update
 ```
 
-Um die Änderungen für die Benutzer sichtbar zu machen, lade den Webserver neu:
+[comment]: <> (@formatter:off)  
+!!! warning "Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!""  
+  
+[comment]: <> (@formatter:on)
+
+Eventuell muss anschließend noch eine Datenbank-Migration ausgeführt werden:
 
 ```shell
-bash mizdb.sh reload
+bash mizdb.sh migrate
 ```
 
 ### Django Shell & psql

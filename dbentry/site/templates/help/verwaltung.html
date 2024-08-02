@@ -77,8 +77,11 @@ ist <code>mizdb-postgres</code>.</p>
 <p>Um die Anwendung zu aktualisieren, benutze:</p>
 <pre><code class="language-shell">bash mizdb.sh update
 </code></pre>
-<p>Um die Änderungen für die Benutzer sichtbar zu machen, lade den Webserver neu:</p>
-<pre><code class="language-shell">bash mizdb.sh reload
+<div class="admonition warning">
+<p class="admonition-title">Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!"</p>
+</div>
+<p>Eventuell muss anschließend noch eine Datenbank-Migration ausgeführt werden:</p>
+<pre><code class="language-shell">bash mizdb.sh migrate
 </code></pre>
 <h3 id="django-shell-psql">Django Shell &amp; psql</h3>
 <p>Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:<br/>
