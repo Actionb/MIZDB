@@ -154,5 +154,5 @@ ANONYMOUS_CAN_VIEW = True
 CSRF_FAILURE_VIEW = "dbentry.csrf.csrf_failure"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "docs",  # include static files for help pages, such as images
+    BASE_DIR / "docs" / "docs",  # include static files for help pages, such as images
 ]

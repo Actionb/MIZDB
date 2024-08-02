@@ -1,0 +1,250 @@
+{% extends "help/base.html" %}{% load static %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#bedienelement">Bedienelement</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#einfache-felder">Einfache Felder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#textfeld">Textfeld</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#textfeld-mit-variabler-grosse">Textfeld mit variabler Grösse</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#zahlenfeld">Zahlenfeld</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#auswahlfelder">Auswahlfelder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#einfaches-auswahlfelddropdown">Einfaches Auswahlfeld/Dropdown</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#kombinationsfeldcombobox">Kombinationsfeld/Combobox</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#combobox-mit-mehrfachauswahl">Combobox mit Mehrfachauswahl</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#spezialfelder">Spezialfelder</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#datumsfeld">Datumsfeld</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#feld-fur-partielles-datum">Feld für partielles Datum</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#laufzeitfeld">Laufzeitfeld</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#issnisbnean">ISSN/ISBN/EAN</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#inlines">Inlines</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="bedienelement">Bedienelement</h1>
+<p>Die Seiten und Formulare der Datenbank verwenden
+verschiedene <a href="https://de.wikipedia.org/wiki/Steuerelement">Steuer- oder Bedienelemente</a>, deren Funktionsweisen hier kurz
+erklärt wird.</p>
+<h2 id="einfache-felder">Einfache Felder</h2>
+<h3 id="textfeld">Textfeld</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/textfeld.png' %}"><img alt="Textfeld" src="{% static 'img/bedienelemente/textfeld.png' %}"/></a></p>
+<p>Ein Element, das jede Form von Text bis zu einer bestimmten Länge (meist 200 Zeichen) annimmt. Die Größe des Elements
+und die erlaubte Länge des Textes stehen in keinem Zusammenhang.</p>
+<h3 id="textfeld-mit-variabler-grosse">Textfeld mit variabler Grösse</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/textarea.png' %}"><img alt="Textarea" src="{% static 'img/bedienelemente/textarea.png' %}"/></a></p>
+<p>Ein Textfeld, das praktisch unbegrenzt ist, was die Länge des Textes betrifft. Wenn man auf das Symbol in der unteren
+rechten Ecke klickt und festhält, kann man die Grösse des Elementes frei verändern.</p>
+<h3 id="zahlenfeld">Zahlenfeld</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/zahlenfeld.png' %}"><img alt="Zahlenfeld" src="{% static 'img/bedienelemente/zahlenfeld.png' %}"/></a></p>
+<p>Ein Element das nur Zahlenwerte akzeptiert. Je nach Konfiguration lässt es manche Werte nicht zu (z.B. negative Zahlen
+für Jahrgang). Mit den kleinen Knöpfchen an der rechten Seite des Elementes lässt sich durch den zulässigen Wertebereich
+scrollen.</p>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Vorsicht beim Scrollen</p>
+<p>Wenn der Fokus im Zahlenfeld liegt (also wenn der <a href="https://de.wikipedia.org/wiki/Cursor">Cursor</a> im Element zu 
+    sehen ist), kann Wert verändert werden, indem man das Scrollrad der Maus benutzt. </p>
+</div>
+<h2 id="auswahlfelder">Auswahlfelder</h2>
+<h3 id="einfaches-auswahlfelddropdown">Einfaches Auswahlfeld/Dropdown</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/auswahlfeld.png' %}"><img alt="Auswahlfeld" src="{% static 'img/bedienelemente/auswahlfeld.png' %}"/></a></p>
+<p>Beim Klicken auf dieses Feld klappt sich ein Menü auf ("dropdown"), aus dem man eine der Optionen wählen kann.</p>
+<h3 id="kombinationsfeldcombobox">Kombinationsfeld/Combobox</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/combobox.png' %}"><img alt="Combobox" src="{% static 'img/bedienelemente/combobox.png' %}"/></a></p>
+<p>Kombination aus einem Textfeld und einem Auswahlfeld/Listenfeld, das mittels Texteingabe das Durchsuchen der
+Listeneinträge möglich macht. Im oberen Bereich kann der Suchtext eingegeben werden, im unteren Bereich werden
+Suchergebnisse angezeigt, von denen dann ein Eintrag per Mausklick ausgewählt werden kann. Per Mausrad lässt sich durch
+die Ergebnisse scrollen.</p>
+<p>Die Auswahl kann aufgehoben werden, indem du oben neben dem ausgewählten Eintrag auf das kleine rote "<strong>x</strong>" klickst.
+Mit einem Klick auf den grünen Bleistift kannst du den ausgewählten Eintrag bearbeiten.</p>
+<p>Der Knopf "Änderungsliste" schickt dich zu der <a href="{% url 'help' page_name='aenderungsliste'%}">Änderungsliste</a> der zur Auswahl stehenden Einträge.
+Mit dem "Hinzufügen" Knopf kannst du einen neuen Eintrag erstellen.
+Ist kein Suchbegriff eingegeben, so öffnet der Knopf eine Seite mit einem leeren Formular, mit dem ein neuer Datensatz
+erzeugt wird.
+Ist ein Suchbegriff gegeben, so wird (je nach Tabelle) im Hintergrund ein neuer Datensatz mit dem Suchbegriff als Namen
+erzeugt.</p>
+<div class="admonition warning">
+<p class="admonition-title">Wichtig: Nach Erstellung weitere Informationen hinterlegen</p>
+<p>Wenn du einen Suchbegriff eingibst und dann mit dem "Hinzufügen" Knopf einen neuen Datensatz erstellst, beinhaltet 
+der neue Datensatz lediglich eine Angabe zum Namen. Erstellst du zum Beispiel auf diese Weise eine neue Band, dann 
+ist nur der Bandname gegeben - und das ist in denen meisten Fällen zu wenig Information. 
+Wenn zwei unterschiedliche Bands denselben Namen haben, dann könntest du sie nicht voneinander unterscheiden.
+Aus diesem Grund solltest du bei neu erstellten Datensätzen weitere Angaben wie zum Beispiel Genres, Aliase oder 
+Links zu Wikipedia oder Discogs machen.<br/><br>
+Dies gilt <a href="{% url 'help' page_name='grundsaetze'%}#datensatze-mussen-aufschlussreich-sein">grundsätzlich</a> für alle Arten von Datensätzen. 
+Klicke auf den Bleistift neben dem erstellten Eintrag, um zu der Änderungsseite des erstellten Datensatzes zu gelangen.</br></p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Verknüpfungen</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='relationen'%}">Über Verknüpfungen</a></p>
+</div>
+<h3 id="combobox-mit-mehrfachauswahl">Combobox mit Mehrfachauswahl</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/combobox_mehrfach.png' %}"><img alt="Combobox mit Mehrfachauswahl" src="{% static 'img/bedienelemente/combobox_mehrfach.png' %}"/></a></p>
+<p>Im Gegensatz zur normalen Combobox können hier mehrere Listeneinträge ausgewählt werden. Ausgewählte Einträge können
+durch einen Klick auf das kleine rote "<strong>x</strong>" neben dem Eintrag wieder entfernt werden. Mit einem Klick auf das "<strong>x</strong>"
+am rechten Ende der Combobox lässt sich die gesamte Auswahl aufheben.</p>
+<h2 id="spezialfelder">Spezialfelder</h2>
+<h3 id="datumsfeld">Datumsfeld</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/datumsfeld.png' %}"><img alt="Datumsfeld" src="{% static 'img/bedienelemente/datumsfeld.png' %}"/></a></p>
+<p>Ein Feld für vollständige Datumsangaben.</p>
+<p>Akzeptiert Angaben in der Form:</p>
+<ul>
+<li><code>TT.MM.JJJJ</code> (Tag.Monat.Jahr)</li>
+<li><code>JJJJ-MM-TT</code> (Jahr-Monat-Tag, <a href="https://de.wikipedia.org/wiki/ISO_8601">ISO 8601</a>)</li>
+</ul>
+<p>Das Symbol am rechten Ende des Feldes öffnet einen Kalender zur Auswahl des Tages.</p>
+<h3 id="feld-fur-partielles-datum">Feld für partielles Datum</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/partielles_datum.png' %}"><img alt="Partielles Datumsfeld" src="{% static 'img/bedienelemente/partielles_datum.png' %}"/></a></p>
+<p>Ein Feld für Datumsangaben, die nicht unbedingt sein müssen: zum Beispiel Monat 8 und Jahr 1986 aber ohne Tag.</p>
+<h3 id="laufzeitfeld">Laufzeitfeld</h3>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/laufzeitfeld.png' %}"><img alt="Laufzeitfeld" src="{% static 'img/bedienelemente/laufzeitfeld.png' %}"/></a></p>
+<p>Dieses Feld rechnet Angaben in ein zeitliches Format hh:mm:ss (Stunden:Minuten:Sekunden) um.</p>
+<p>Angaben, die dem Format nicht vollständig entsprechen, werden akzeptiert und ggf. umgerechnet:</p>
+<table>
+<thead>
+<tr>
+<th>Eingabetext</th>
+<th>Entspricht</th>
+<th></th>
+<th></th>
+<th></th>
+<th>Ergebnis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>Stunden</td>
+<td>Minuten</td>
+<td>Sekunden</td>
+<td>Anmerkung</td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td>00</td>
+<td>00</td>
+<td>20</td>
+<td>20 Sekunden</td>
+<td>00:00:20</td>
+</tr>
+<tr>
+<td>120</td>
+<td>00</td>
+<td>02</td>
+<td>00</td>
+<td>120 Sekunden</td>
+<td>00:02:00</td>
+</tr>
+<tr>
+<td>1:20</td>
+<td>00</td>
+<td>01</td>
+<td>20</td>
+<td>1 Minute und 20 Sekunden</td>
+<td>00:01:20</td>
+</tr>
+<tr>
+<td>1:80</td>
+<td>00</td>
+<td>02</td>
+<td>20</td>
+<td>1 Minute und 80 Sekunden</td>
+<td>00:02:20</td>
+</tr>
+<tr>
+<td>90:10</td>
+<td>01</td>
+<td>30</td>
+<td>10</td>
+<td>90 Minuten und 10 Sekunden</td>
+<td>01:30:10</td>
+</tr>
+<tr>
+<td>1:30:10</td>
+<td>01</td>
+<td>30</td>
+<td>10</td>
+<td>1 Stunde, 30 Minuten und 10 Sekunden</td>
+<td>01:30:10</td>
+</tr>
+</tbody>
+</table>
+<h3 id="issnisbnean">ISSN/ISBN/EAN</h3>
+<p>Ein Feld, welches Angaben für Standardnummern wie ISSN, ISBN oder EAN akzeptiert, validiert und in ein gut lesbares
+Format umwandelt.
+Aus einer ISBN ohne Formatierung:</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/isbn_unformatted.png' %}"><img alt="ISBN Feld unformatiert" src="{% static 'img/bedienelemente/isbn_unformatted.png' %}"/></a></p>
+<p>... wird automatisch nach Speicherung eine ISBN mit Bindestrichen:</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/isbn_formatted.png' %}"><img alt="ISBN Feld mit formatiertem Text" src="{% static 'img/bedienelemente/isbn_formatted.png' %}"/></a></p>
+<div class="admonition info">
+<p class="admonition-title">Info: Umwandlungen zwischen verschiedenen Formaten</p>
+<p>Umwandlungen von ISBN-10 zu ISBN-13 und von EAN zu ISSN werden automatisch vorgenommen.</p>
+</div>
+<h2 id="inlines">Inlines</h2>
+<p>Viele Formulare enthalten sogenannte Inlines. Inlines sind Formulare von verwandten Datensätzen, die in dem
+Hauptformular eingebettet sind.
+Wenn man beispielsweise einem Artikel einen Musiker hinzufügt, so tut man dies mithilfe vom Inline für die
+Artikel-Musiker Beziehung.</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-type="image" data-width="auto" href="{% static 'img/bedienelemente/inline.png' %}"><img alt="Musiker Inline" src="{% static 'img/bedienelemente/inline.png' %}"/></a></p>
+<p>Dabei werden einzelne Musiker zeilenweise angegeben; jede Zeile entspricht dabei einem kleinen Formular.
+Im Falle des Musiker Inlines beinhaltet das Formular nur einziges <a href="#kombinationsfeldcombobox">Auswahlfeld</a>.
+Neue Zeilen - und damit ein neues, leeres Formular - können mit dem "Musiker hinzufügen" Knopf am unteren Ende des
+Inlines hinzugefügt werden.</p>
+<p>Zeilen können mit dem Knopf mit dem roten "<strong>x</strong>" am rechten Ende einer Zeile zur Löschung markiert werden. Wird der
+Datensatz gespeichert, werden die markierten Zeilen entfernt; die Beziehungen zwischen den Datensätzen werden dabei
+gelöscht.</p>
+<div class="admonition info">
+<p class="admonition-title">Hinweis: Verknüpfungen</p>
+<p>Siehe auch: <a href="{% url 'help' page_name='relationen'%}">Über Verknüpfungen</a></p>
+</div></div>
+</div>{% endblock content %}
