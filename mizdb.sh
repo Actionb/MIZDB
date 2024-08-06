@@ -62,7 +62,7 @@ restore() {
 }
 
 update() {
-  if docker exec -i $app_container scripts/update_available.py; then
+  if docker exec -i $app_container scripts/check_update.py; then
     read -r -p "Ein Update ist verfügbar. Installieren? [j/n]: "
     if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
       echo "Abgebrochen."
