@@ -25,11 +25,11 @@ class UpdateCheckFailed(Exception):
     pass
 
 
-def _get_current_version() -> str:
+def _get_local_version() -> str:
     """
-    Return the current version string of the MIZDB app.
+    Return the local version string of the MIZDB app.
 
-    The current version is stored in the VERSION file in the project root.
+    The local version is stored in the VERSION file in the project root.
 
     Raises an UpdateCheckFailed exception if the VERSION files does not exist or
     if it could not be read.
@@ -76,21 +76,21 @@ def check_for_update() -> (bool, str, str):
     """
     try:
         remote = _get_remote_version()
-        current = _get_current_version()
+        local = _get_local_version()
     except UpdateCheckFailed as e:
         print(f"Fehler: {str(e)}")
         exit(1)
-    if semver.compare(remote, current) > 0:
-        return True, remote, current
+    if semver.compare(remote, local) > 0:
+        return True, remote, local
     else:
-        return False, remote, current
+        return False, remote, local
 
 
 if __name__ == "__main__":
-    update_available, remote_version, current_version = check_for_update()
+    update_available, remote_version, local_version = check_for_update()
     if update_available:
-        print(f"Ein Update ist verfügbar (Version '{current_version}' -> '{remote_version}').")
+        print(f"Ein Update ist verfügbar (Version '{local_version}' -> '{remote_version}').")
         exit(0)
     else:
-        print(f"Bereits aktuell (Version '{current_version}'.")
+        print(f"Bereits aktuell (Version '{local_version}'.")
         exit(1)
