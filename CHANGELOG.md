@@ -21,6 +21,7 @@
 	  run as apache
 - add scripts: uninstall script, backup script and get-mizdb script
 - moved database scripts into `scripts` directory
+- changed update process: update now checks against GitHub API and rebuilds containers after pulling the update
 
 ### Fixed
 
