@@ -64,7 +64,7 @@ restore() {
 update() {
   git remote update
   # TODO: checkout master branch first to make sure we are on it?
-  if docker exec -i $app_container scripts/check_update.py; then
+  if docker exec -i $app_container scripts/app/check_update.py; then
     read -r -p "Soll das Update installiert werden? [j/n]: "
     if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
       echo "Abgebrochen."
