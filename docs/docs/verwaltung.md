@@ -61,12 +61,6 @@ bash mizdb.sh update
   
 [comment]: <> (@formatter:on)
 
-Eventuell muss anschließend noch eine Datenbank-Migration ausgeführt werden:
-
-```shell
-bash mizdb.sh migrate
-```
-
 ### Django Shell & psql
 
 Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:  
