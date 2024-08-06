@@ -77,8 +77,6 @@ update() {
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
     docker exec -i $app_container python manage.py check
     echo "Update abgeschlossen."
-  else
-    echo "Bereits aktuell."
   fi
 }
 

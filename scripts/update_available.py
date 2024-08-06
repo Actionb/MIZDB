@@ -7,40 +7,74 @@ tag of the remote.
 
 Exits with code 0 if an update is available. Exits with code 1 if no update is
 available.
-"""
 
+Note that this is expected to run inside the Docker container.
+"""
 from pathlib import Path
 
 import requests
 import semver
 
 API_URL = "https://api.github.com/repos/Actionb/MIZDB/tags"
+# Currently supported API versions:
+# https://docs.github.com/de/rest/about-the-rest-api/api-versions?apiVersion=2022-11-28#supported-api-versions
+API_VERSION = "2022-11-28"
+
+
+class UpdateCheckFailed(Exception):
+    pass
 
 
 def _get_current_version() -> str:
-    """Return the current version string of the MIZDB app."""
-    with open(Path(__file__).parent.parent.joinpath("VERSION"), "r") as f:
-        return f.read().strip()
+    """
+    Return the current version string of the MIZDB app.
+
+    The current version is stored in the VERSION file in the project root.
+
+    Raises an UpdateCheckFailed exception if the VERSION files does not exist or
+    if it could not be read.
+    """
+    file_path = Path(__file__).parent.parent.joinpath("VERSION")
+    try:
+        with open(file_path, "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        raise UpdateCheckFailed(f"Versions Datei konnte nicht gefunden werden. (Pfad: {file_path})")
+    except PermissionError:
+        raise UpdateCheckFailed(f"Versions Datei konnte nicht gelesen werden. (Pfad: {file_path})")
 
 
 def _get_remote_version() -> str:
-    """Return the latest version string of the MIZDB app in the GitHub repo."""
+    """
+    Return the latest version string of the MIZDB app in the GitHub repo.
+
+    Fetches the list of tags from the repo and returns the name of the latest
+    one.
+
+    Raises an UpdateCheckFailed exception if the API response was not ok.
+    """
     response = requests.get(
         url=API_URL,
-        headers={"Accept": "application/vnd.github+json", "X-Github-Api-Version": "2022-11-28"},
+        headers={"Accept": "application/vnd.github+json", "X-Github-Api-Version": API_VERSION},
     )
     if response.ok:
         return response.json()[0]["name"]
     else:
-        # TODO: emit an error message
-        return "0.0.0"
+        raise UpdateCheckFailed(f"Anfrage an GitHub fehlgeschlagen: (Status Code: {response.status_code})")
 
 
 def update_available():
     """Return whether an update is available from the repo."""
-    return semver.compare(_get_remote_version(), _get_current_version()) > 0
+    try:
+        return semver.compare(_get_remote_version(), _get_current_version()) > 0
+    except UpdateCheckFailed as e:
+        print(f"Fehler: {str(e)}")
+        exit(1)
 
 
 if __name__ == "__main__":
-    # Invert the return values to exit with expected appropriate exit code:
-    exit(bool(not update_available()))
+    if update_available():
+        exit(0)
+    else:
+        print("Bereits aktuell.")
+        exit(1)
