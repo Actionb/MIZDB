@@ -63,7 +63,7 @@ def _get_remote_version() -> str:
         raise UpdateCheckFailed(f"Anfrage an GitHub fehlgeschlagen: (Status Code: {response.status_code})")
 
 
-def check_for_update() -> (bool, str, str):
+def check_for_update() -> tuple[bool, str, str]:
     """
     Return whether an update is available from the repo.
 
@@ -80,17 +80,14 @@ def check_for_update() -> (bool, str, str):
     except UpdateCheckFailed as e:
         print(f"Fehler: {str(e)}")
         exit(1)
-    if semver.compare(remote, local) > 0:
-        return True, remote, local
-    else:
-        return False, remote, local
+    return semver.compare(remote, local) > 0, remote, local
 
 
 if __name__ == "__main__":
     update_available, remote_version, local_version = check_for_update()
     if update_available:
-        print(f"Ein Update ist verfügbar (Version '{local_version}' -> '{remote_version}').")
+        print(f"Ein Update ist verfügbar: Version '{local_version}' -> '{remote_version}'")
         exit(0)
     else:
-        print(f"Bereits aktuell (Version '{local_version}'.")
+        print(f"Bereits aktuell: Version '{local_version}'")
         exit(1)
