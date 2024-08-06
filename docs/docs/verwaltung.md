@@ -57,7 +57,7 @@ bash mizdb.sh update
 ```
 
 [comment]: <> (@formatter:off)  
-!!! warning "Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!""  
+!!! warning "Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!"  
   
 [comment]: <> (@formatter:on)
 
