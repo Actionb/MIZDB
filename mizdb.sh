@@ -68,7 +68,8 @@ update() {
       echo "Abgebrochen."
       exit 1
     fi
-    git pull -q || exit 1
+    set -e
+    git pull -q
     echo "Stoppe Container..."
     docker compose down
     echo "Erzeuge Container..."
@@ -77,6 +78,7 @@ update() {
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
     docker exec -i $app_container python manage.py check
     echo "Update abgeschlossen."
+    set +e
   fi
 }
 
