@@ -69,15 +69,36 @@ update() {
       exit 1
     fi
     set -e
+
+    # Pull the update:
     git pull -q
+
+    # Rebuild containers:
     echo "Stoppe Container..."
     docker compose down
     echo "Erzeuge Container..."
     docker compose up -d --build
+    echo ""
+
+    # Run migrations, if necessary:
+    if ! docker exec -i $app_container python manage.py migrate --check; then
+      read -r -p "Es gibt ausstehende Datenbankmigrationen. Sollen diesen nun angewendet werden? [j/n]: "
+      if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+        echo "Migrationen nicht angewendet. Um diese später anzuwenden: bash mizdb.sh migrate"
+      else
+        dump
+        migrate
+      fi
+      echo ""
+    fi
+
+    # Collect static files and run checks:
     echo "Abschließende Checks..."
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
     docker exec -i $app_container python manage.py check
-    echo "Update abgeschlossen."
+    echo ""
+
+    echo "Update abgeschlossen!"
     set +e
   fi
 }
