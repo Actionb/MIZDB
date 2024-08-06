@@ -4,9 +4,9 @@ RUN ["apk", "update"]
 RUN ["apk", "add", "build-base", "apache2-dev", "git"]
 RUN ["python3", "-m", "pip", "install", "--upgrade", "pip", "wheel"]
 
-WORKDIR /mizdb
-COPY requirements requirements
-RUN ["python3", "-m", "pip", "install", "-r", "requirements/base.txt"]
+# Temporarily mount the requirements:
+# https://docs.docker.com/build/building/best-practices/#add-or-copy
+RUN --mount=type=bind,source=requirements,target=/tmp/requirements ["python3", "-m", "pip", "install", "-r", "/tmp/requirements/base.txt"]
 
 FROM python:3.11-alpine AS final
 
