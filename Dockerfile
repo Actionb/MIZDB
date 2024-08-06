@@ -17,5 +17,6 @@ RUN ["apk", "add", "libpq", "apache2"]
 COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 WORKDIR /mizdb
+# NOTE: check the dockerignore file to see which files and directories will be copied to the image
 COPY . /mizdb
 EXPOSE 80

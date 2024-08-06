@@ -1,12 +1,13 @@
-db/data
-.tox/
-.venv/
-.mypy_cache/
-.pytest_cache/
-htmlcov/
-node_modules/
-scss/
-static/
-venv/
-.coverage
-.passwd
+# Exclude everything by default:
+*
+# Except for these:
+!dbentry/
+!docs/
+!locale/
+!MIZDB/
+!requirements/
+!.secrets
+!.env
+!docker-entrypoint.sh
+!manage.py
+!README.md
