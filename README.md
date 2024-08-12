@@ -493,7 +493,11 @@ erzeugt aus den mkdocs html Dateien Django Templates und legt sie unter `dbentry
     ```
     (siehe [hier](https://www.atlassian.com/de/git/tutorials/comparing-workflows/gitflow-workflow) für mehr Informationen)
 2. Versionsdatei aktualisieren.  
-    Dazu können Git-Flow Hooks verwendet werden: https://github.com/jaspernbrouwer/git-flow-hooks.  
+    Dazu können Git-Flow Hooks verwendet werden: https://github.com/jaspernbrouwer/git-flow-hooks. 
+    Der folgende Befehl installiert die notwendigen Hooks im lokalen git Verzeichnis:
+    ```shell
+    ./scripts/git-flow-hooks.sh
+    ```
     Siehe auch: [Git-Flow Hooks with smartgit](https://smartgit.userecho.com/communities/1/topics/1726-git-flow-support-hooks)
     
     Alternativ steht ein Skript zur Verfügung, um die Versionsdatei zu aktualisieren:
