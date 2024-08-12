@@ -33,6 +33,7 @@ Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
   * [Development](#development)
     * [CSS, Sass & Theme](#css-sass--theme)
     * [Hilfe Seiten erzeugen](#hilfe-seiten-erzeugen)
+    * [Release erstellen](#release-erstellen)
 <!-- TOC -->
 [comment]: <> (@formatter:off)
 
@@ -482,4 +483,28 @@ mkdocs build
 ```
 
 Ein [post build hook](https://www.mkdocs.org/dev-guide/plugins/#on_post_build)
-erzeugt aus den mkdocs html Dateien Django Templates und legt sie unter `dbentry/site/templates/help` ab. 
+erzeugt aus den mkdocs html Dateien Django Templates und legt sie unter `dbentry/site/templates/help` ab.
+
+### Release erstellen
+
+1. Git-Flow `release` branch erzeugen:
+    ```shell
+    git flow release start '1.0.1'
+    ```
+    (siehe [hier](https://www.atlassian.com/de/git/tutorials/comparing-workflows/gitflow-workflow) für mehr Informationen)
+2. Versionsdatei aktualisieren.  
+    Dazu können Git-Flow Hooks verwendet werden: https://github.com/jaspernbrouwer/git-flow-hooks.  
+    Siehe auch: [Git-Flow Hooks with smartgit](https://smartgit.userecho.com/communities/1/topics/1726-git-flow-support-hooks)
+    
+    Alternativ steht ein Skript zur Verfügung, um die Versionsdatei zu aktualisieren:
+    ```shell
+    ./scripts/bump_version.py {major,minor,patch}
+    ```
+3. `release` branch beenden:
+    ```shell
+    git flow release finish '1.0.1'
+    ```
+    
+> [!NOTE]  
+> Wird git-flow-hooks benutzt, um die Versionsdatei zu aktualisieren, muss bei dem Befehl `git flow release start` keine
+> Version angegeben werden; git-flow-hooks ermittelt die neue Version aus der Versionsdatei. 
