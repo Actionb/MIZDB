@@ -2,38 +2,39 @@
 
 Datenbankverwaltung für das Musikarchiv http://miz-ruhr.de/
 
+[comment]: <> (@formatter:off)  
 <!-- TOC -->
-
 * [MIZDB - Musikarchiv Datenbank](#mizdb---musikarchiv-datenbank)
-    * [Installation Debian (Docker)](#installation-debian-docker)
-        * [Per script](#per-script)
-        * [Manuell](#manuell)
-    * [Verwaltung](#verwaltung)
-        * [Docker Container & Webserver](#docker-container--webserver)
-        * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pg_restore)
-        * [Backup erstellen (pg_dump)](#backup-erstellen-pg_dump)
-        * [Backups automatisieren](#backups-automatisieren)
-            * [Cronjob](#cronjob)
-            * [rclone](#rclone)
-                * [rclone mit Google Service Account](#rclone-mit-google-service-account)
-        * [Update](#update)
-        * [Django Shell & psql](#django-shell--psql)
-        * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
-    * [Installation (ohne Docker)](#installation-ohne-docker)
-        * [1. Erforderliche Pakete installieren](#1-erforderliche-pakete-installieren)
-        * [2. Postgres Datenbank einrichten](#2-postgres-datenbank-einrichten)
-        * [3. MIZDB Dateien herunterladen und einrichten](#3-mizdb-dateien-herunterladen-und-einrichten)
-            * [Python Module installieren:](#python-module-installieren)
-            * [Ordner für Log-Dateien einrichten:](#ordner-für-log-dateien-einrichten)
-        * [4. Apache einrichten](#4-apache-einrichten)
-        * [Datenbank wiederherstellen](#datenbank-wiederherstellen)
-        * [MIZDB testen](#mizdb-testen)
-        * [PostgreSQL Terminal aufrufen](#postgresql-terminal-aufrufen)
-    * [Deinstallation (Docker)](#deinstallation-docker)
-    * [Development](#development)
-        * [CSS, Sass & Theme](#css-sass--theme)
-
+  * [Installation Debian (Docker)](#installation-debian-docker)
+    * [Per script](#per-script)
+    * [Manuell](#manuell)
+  * [Verwaltung](#verwaltung)
+    * [Docker Container & Webserver](#docker-container--webserver)
+    * [Datenbank wiederherstellen (pg_restore)](#datenbank-wiederherstellen-pg_restore)
+    * [Backup erstellen (pg_dump)](#backup-erstellen-pg_dump)
+    * [Backups automatisieren](#backups-automatisieren)
+      * [Cronjob](#cronjob)
+      * [rclone](#rclone)
+        * [rclone mit Google Service Account](#rclone-mit-google-service-account)
+    * [Update](#update)
+    * [Django Shell & psql](#django-shell--psql)
+    * [Webserver Einhängepunkt ändern](#webserver-einhängepunkt-ändern)
+  * [Installation (ohne Docker)](#installation-ohne-docker)
+    * [1. Erforderliche Pakete installieren](#1-erforderliche-pakete-installieren)
+    * [2. Postgres Datenbank einrichten](#2-postgres-datenbank-einrichten)
+    * [3. MIZDB Dateien herunterladen und einrichten](#3-mizdb-dateien-herunterladen-und-einrichten)
+      * [Python Module installieren:](#python-module-installieren)
+      * [Ordner für Log-Dateien einrichten:](#ordner-für-log-dateien-einrichten)
+    * [4. Apache einrichten](#4-apache-einrichten)
+    * [Datenbank wiederherstellen](#datenbank-wiederherstellen)
+    * [MIZDB testen](#mizdb-testen)
+    * [PostgreSQL Terminal aufrufen](#postgresql-terminal-aufrufen)
+  * [Deinstallation (Docker)](#deinstallation-docker)
+  * [Development](#development)
+    * [CSS, Sass & Theme](#css-sass--theme)
+    * [Hilfe Seiten erzeugen](#hilfe-seiten-erzeugen)
 <!-- TOC -->
+[comment]: <> (@formatter:off)
 
 ## Installation Debian (Docker)
 
@@ -177,22 +178,22 @@ Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:
 
 1. Falls nicht der bereits existierende Service "dbbackup-service" benutzt werden soll, muss
    vorerst ein Service Account angelegt werden:
-    1. in die Google Cloud Console einloggen: https://console.cloud.google.com
-    2. Service Accounts > Create Service Account
-    3. im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
-       Account freigeben
+   1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+   2. Service Accounts > Create Service Account
+   3. im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
+      Account freigeben
 
 2. Service Account Key (`credentials.json`) generieren, falls nicht vorhanden:
-    1. in die Google Cloud Console einloggen: https://console.cloud.google.com
-    2. Service Accounts > dbbackup-service > KEYS
-    3. Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen
+   1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+   2. Service Accounts > dbbackup-service > KEYS
+   3. Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen
 
 3. Root Folder ID des Backup-Ordners herausfinden:
-    1. In Google Drive einloggen
-    2. Unter "Meine Ablage" den entsprechenden Ordner anklicken
-    3. die ID ist am Ende der URL nach `/folders/` zu finden; also
-       z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
-       ID `10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa`
+   1. In Google Drive einloggen
+   2. Unter "Meine Ablage" den entsprechenden Ordner anklicken
+   3. die ID ist am Ende der URL nach `/folders/` zu finden; also
+      z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
+      ID `10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa`
 
 4. rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support
 
@@ -222,14 +223,8 @@ Um die Anwendung zu aktualisieren, benutze:
 bash mizdb.sh update
 ```
 
-Um die Änderungen für die Benutzer sichtbar zu machen, lade den Webserver neu:
-
-```shell
-bash mizdb.sh reload
-```
-
-`mizdb.sh update` führt `git pull` aus, um den lokalen Branch auf den Stand des Upstream-Branches zu bringen.
-Anschließend werden die statischen Dateien gesammelt und ein Django Systemcheck ausgeführt.
+> [!WARNING]  
+> Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!"
 
 ### Django Shell & psql
 
@@ -297,9 +292,9 @@ die folgenden Dateien:
 
 - im Stammverzeichnis wird die Datei `.env` mit den Werten für Umgebungsvariablen erstellt
 - im Unterverzeichnis `.secrets` werden die folgenden Dateien erstellt:
-    - `.passwd`: beinhaltet das Passwort der Datenbank
-    - `.key`: beinhaltet einen kryptografischen Schlüssel
-    - `.allowedhosts`: beinhaltet die erwarteten Hostnamen
+	- `.passwd`: beinhaltet das Passwort der Datenbank
+	- `.key`: beinhaltet einen kryptografischen Schlüssel
+	- `.allowedhosts`: beinhaltet die erwarteten Hostnamen
 
 #### Python Module installieren:
 
@@ -388,10 +383,10 @@ UndefMacro VHost
 * In der Zeile mit `ServerName` muss der Hostname des Servers eingefügt werden. Dieser Name muss auch in der `.env`
   Datei unter `ALLOWED_HOSTS` auftauchen.
 * In der Zeile `USE VHOST` müssen gegebenenfalls die zwei Pfade angepasst werden.
-    * der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung
-    * der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch `manage.py` zu finden ist.
+	* der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung
+	* der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch `manage.py` zu finden ist.
 
-  Also beispielsweise: `USE VHost /opt/archiv/venv /opt/archiv`
+	Also beispielsweise: `USE VHost /opt/archiv/venv /opt/archiv`
 
 Danach:
 

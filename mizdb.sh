@@ -23,7 +23,7 @@ BEFEHLE:
   stop          MIZDB App Container beenden
   restart       MIZDB App Container neustarten
   reload        Apache Webserver unterbrechungsfrei neustarten (Verbindungen bleiben erhalten)
-  update        Update MIZDB (git pull)
+  update        Nach Updates suchen und installieren
   restore       Datenbank aus einer Backup-Datei wiederherstellen
   dump          Daten der Datenbank in eine Backup-Datei übertragen
   shell         Kommandozeile des MIZDB App Containers aufrufen
@@ -63,21 +63,45 @@ restore() {
 
 update() {
   git remote update
-  # Note that git commands output a lot of information ("chatty feedback") into
-  # stderr instead of stdin:
-  # https://github.com/git/git/commit/e258eb4800e30da2adbdb2df8d8d8c19d9b443e4
-  # This includes the relevant information from `git fetch --dry-run`, so we
-  # can't use that command to check whether the local branch can be updated.
-  # Use `git rev-list HEAD..@{u}` instead:
-  # https://stackoverflow.com/a/20562900/9313033
-  if [ -n "$(git rev-list HEAD..@\{u\})" ]; then
-    git pull || exit 1
-    docker exec -i $app_container pip install --quiet --upgrade -r requirements.txt --root-user-action=ignore
+  git checkout master -q
+  if docker exec -i $app_container scripts/app/check_update.py; then
+    read -r -p "Soll das Update installiert werden? [j/n]: "
+    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+      echo "Abgebrochen."
+      exit 1
+    fi
+    set -e
+
+    # Pull the update:
+    git pull -q
+
+    # Rebuild containers:
+    echo "Stoppe Container..."
+    docker compose down
+    echo "Erzeuge Container..."
+    docker compose up -d --build
+    echo ""
+
+    # Run migrations, if necessary:
+    if ! docker exec -i $app_container python manage.py migrate --check; then
+      read -r -p "Es gibt ausstehende Datenbankmigrationen. Sollen diesen nun angewendet werden? [j/n]: "
+      if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+        echo "Migrationen nicht angewendet. Um diese später anzuwenden: bash mizdb.sh migrate"
+      else
+        dump
+        migrate
+      fi
+      echo ""
+    fi
+
+    # Collect static files and run checks:
+    echo "Führe abschließende Checks aus..."
     docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
     docker exec -i $app_container python manage.py check
-    echo "Updated. Lade den Webserver neu, damit die Änderungen sichtbar werden: mizdb reload"
-  else
-    echo "Bereits aktuell."
+    echo ""
+
+    echo "Update abgeschlossen!"
+    set +e
   fi
 }
 
