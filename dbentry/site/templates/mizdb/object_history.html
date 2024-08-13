@@ -39,7 +39,7 @@
                     </ul>
                 </nav>
                 {% endif %}
-                <span>{{ paginator.count }} {% if paginator.count == 1 %}{% translate "entry" %}{% else %}{% translate "entries" %}{% endif %}</span>
+                <span>{{ paginator.count }} {% blocktranslate count counter=paginator.count %}entry{% plural %}entries{% endblocktranslate %}</span>
             </div>
         {% else %}
         <p>{% translate 'This object doesn’t have a change history. It probably wasn’t added via this admin site.' %}</p>
