@@ -7,6 +7,7 @@
 - added date picker for Ausgabe Erscheinungsdatum field
 - added button to inlines that sends the user to the changelist of the items selected in the inline forms
 - added 'Band' search field to Musiker changelist
+- added 'Ergebnisse exportieren' button to changelist that exports the current search results
 
 ### Changed
 
