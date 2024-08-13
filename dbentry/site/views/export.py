@@ -36,7 +36,7 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
 
 
 class ExportActionView(BaseExportView, ActionConfirmationView):
-    """Export a queryset."""
+    """Export a queryset via a changelist action."""
 
     action_name = "export"
     template_name = "mizdb/export.html"
@@ -46,7 +46,7 @@ class ExportActionView(BaseExportView, ActionConfirmationView):
             # User confirmed the export.
             return super().post(request, *args, **kwargs)
         else:
-            # This POST request was issued from the changelist selection panel.
+            # This POST request was issued from the changelist.
             # Show the confirmation page.
             return self.get(request, *args, **kwargs)
 
