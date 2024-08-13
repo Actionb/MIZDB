@@ -73,3 +73,13 @@ def watchlist(view, request, queryset):
 def export(view, request, queryset):
     view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_class=view.resource_class)
     return view(request)
+
+
+@action(
+    permission_func=has_export_permission,  # TODO: set to has_view_permission to enable export action for all users
+    label="Ergebnisse exportieren",
+    description="Die gefundenen Objekte exportieren",
+)
+def export_results(view, request, queryset):
+    view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_class=view.resource_class)
+    return view(request)
