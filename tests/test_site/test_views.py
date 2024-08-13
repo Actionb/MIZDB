@@ -974,6 +974,19 @@ class TestBaseListView(DataTestCase, ViewTestCase):
         self.assertMessageSent(response.wsgi_request, "Abgebrochen")
         self.assertRedirects(response, self.url)
 
+    def test_post_export_results(self):
+        """Assert that the export_results action is called with the view's queryset."""
+        request = self.post_request(data={"action_name": "export_results"})
+        view = self.get_view(request=request)
+        queryset_mock = Mock()
+        export_results_mock = Mock()
+        export_results_mock.__name__ = "export_results"
+        with patch.object(view, "get_queryset", new=Mock(return_value=queryset_mock)):
+            with patch.object(view, "get_actions") as get_actions_mock:
+                get_actions_mock.return_value = {"export_results": (export_results_mock, "foo", "bar")}
+                view.post(request)
+                export_results_mock.assert_called_with(view, request, queryset_mock)
+
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestDeleteView(ViewTestCase):

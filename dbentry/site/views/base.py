@@ -785,8 +785,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
 
         # Collect the actions.
         # Differentiate between the standard actions (delete, merge, watchlist
-        # export) and other, additional actions.
-        delete_action = merge_action = watchlist_action = export_action = None
+        # export, export_results) and other, additional actions.
+        delete_action = merge_action = watchlist_action = export_action = export_results_action = None
         other_actions = []
         for name, (_func, text, title) in self.get_actions().items():
             action = {"name": name, "text": text, "title": title}
@@ -798,6 +798,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 watchlist_action = action
             elif name == "export":
                 export_action = action
+            elif name == "export_results":
+                export_results_action = action
             else:
                 other_actions.append(action)
         actions = {
@@ -805,6 +807,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
             "merge_action": merge_action,
             "watchlist_action": watchlist_action,
             "export_action": export_action,
+            "export_results_action": export_results_action,
             "other_actions": other_actions,
         }
 
@@ -1048,7 +1051,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         actions = OrderedDict()
         base_actions = [_actions.delete, _actions.merge_records, _actions.watchlist]
         if getattr(self, "resource_class", None):
-            base_actions.append(_actions.export)
+            base_actions.extend([_actions.export, _actions.export_results])
         for action in base_actions + list(self.actions):
             name = action.__name__
             has_permission = getattr(action, "has_permission", None)
@@ -1069,8 +1072,13 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
             messages.warning(request, "Abgebrochen: unbekannte Aktion ausgewählt.")
             return redirect(request.get_full_path())
 
-        selected = request.POST.getlist(ACTION_SELECTED_ITEM)
-        queryset = self.model.objects.filter(pk__in=selected)
+        if func.__name__ == "export_results":
+            # This is the 'export all search results' action which is applied
+            # to all search results and not just the selected items.
+            queryset = self.get_queryset()
+        else:
+            selected = request.POST.getlist(ACTION_SELECTED_ITEM)
+            queryset = self.model.objects.filter(pk__in=selected)
         if not queryset.exists():
             messages.warning(request, "Abgebrochen: keine Objekte ausgewählt.")
             return redirect(request.get_full_path())
