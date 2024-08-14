@@ -4,14 +4,8 @@ import dbentry.fields
 from django.conf import settings
 import django.core.validators
 from django.db import migrations, models
-import django.db.migrations.operations.special
 import django.db.models.deletion
 
-
-# Functions from the following migrations need manual copying.
-# Move them and any dependencies into this file, then update the
-# RunPython operations to refer to the local versions:
-# dbentry.migrations.0017_removed_alter_bestand_permission
 
 class Migration(migrations.Migration):
 
@@ -45,7 +39,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Audio Materialien',
                 'verbose_name': 'Audio Material',
                 'abstract': False,
-                'permissions': [('alter_bestand_audio', 'Aktion: Bestand/Dublette hinzufügen.')],
                 'ordering': ['titel'],
                 'default_permissions': ('add', 'change', 'delete', 'merge', 'view'),
             },
@@ -67,7 +60,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Ausgaben',
                 'verbose_name': 'Ausgabe',
                 'abstract': False,
-                'permissions': [('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.')],
                 'ordering': ['magazin'],
                 'default_permissions': ('add', 'change', 'delete', 'merge', 'view'),
             },
@@ -137,7 +129,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Bild Materialien',
                 'verbose_name': 'Bild Material',
                 'abstract': False,
-                'permissions': [('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.')],
                 'ordering': ['titel'],
                 'default_permissions': ('add', 'change', 'delete', 'merge', 'view'),
             },
@@ -180,7 +171,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Bücher',
                 'verbose_name': 'Buch',
                 'abstract': False,
-                'permissions': [('alter_bestand_buch', 'Aktion: Bestand/Dublette hinzufügen.')],
                 'ordering': ['titel'],
                 'default_permissions': ('add', 'change', 'delete', 'merge', 'view'),
             },
@@ -233,7 +223,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Dokumente',
                 'verbose_name': 'Dokument',
                 'abstract': False,
-                'permissions': [('alter_bestand_dokument', 'Aktion: Bestand/Dublette hinzufügen.')],
                 'ordering': ['titel'],
                 'default_permissions': ('add', 'change', 'delete', 'merge', 'view'),
             },
@@ -557,7 +546,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Video Materialien',
                 'verbose_name': 'Video Material',
                 'abstract': False,
-                'permissions': [('alter_bestand_video', 'Aktion: Bestand/Dublette hinzufügen.')],
                 'ordering': ['titel'],
                 'default_permissions': ('add', 'change', 'delete', 'merge', 'view'),
             },
@@ -1500,10 +1488,6 @@ class Migration(migrations.Migration):
             name='video',
             options={'default_permissions': ('add', 'change', 'delete', 'merge', 'view'), 'ordering': ['titel'], 'verbose_name': 'Video Material', 'verbose_name_plural': 'Video Materialien'},
         ),
-        # migrations.RunPython(
-        #     code=dbentry.migrations.0017_removed_alter_bestand_permission.delete_permissions,
-        #     reverse_code=django.db.migrations.operations.special.RunPython.noop,
-        # ),
         migrations.AlterModelOptions(
             name='brochure',
             options={'default_permissions': ('add', 'change', 'delete', 'merge', 'view'), 'verbose_name': 'Broschüre', 'verbose_name_plural': 'Broschüren'},
