@@ -475,7 +475,7 @@ class TestModelAusgabe(MIZTestCase):
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
         test_data = [
-            ('_name', ('_name', 'A', SIMPLE)),
+            ('_fts_name', ('_fts_name', 'A', SIMPLE)),
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]

@@ -324,9 +324,14 @@ class Ausgabe(ComputedNameModel):
     audio = models.ManyToManyField('Audio')
     video = models.ManyToManyField('Video')
 
+    # Add a field that stores the computed name without any forward slashes
+    # specifically for the full text search.
+    # See: https://github.com/Actionb/MIZDB/issues/14
+    _fts_name = models.CharField(max_length=200, editable=False, default="")
+
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', SIMPLE),
+            WeightedColumn('_fts_name', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
         ]
@@ -346,6 +351,11 @@ class Ausgabe(ComputedNameModel):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
         ordering = ['magazin']
+
+    def save(self, update=True, *args, **kwargs):
+        super().save()
+        if update and self._name.replace("/", "+") != self._fts_name:
+            self.qs().update(_fts_name=self._name.replace("/", "+"), _changed_flag=False)
 
     @classmethod
     def _get_name(cls, **data: tuple) -> str:

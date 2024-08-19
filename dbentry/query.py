@@ -267,6 +267,9 @@ class AusgabeQuerySet(CNQuerySet):
         return super().update(**kwargs)
 
     def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> 'AusgabeQuerySet':
+        # Replace the forward slashes in the query term. Otherwise, postgres
+        # would treat the search term as a file path.
+        q = q.replace("/", "+")
         # Always apply the chronological ordering to the search results.
         return super().search(q, ranked=False).chronological_order()
 
