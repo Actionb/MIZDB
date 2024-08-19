@@ -99,6 +99,7 @@
 {% endblock nav-sidebar %}
 
 <main id="main" class="p-1 pb-0 {% block mainclass %}container-lg{% endblock %}">
+    {% block messages %}
     {% if messages %}
     <div id="messages-container" class="messages">
         {% for message in messages %}
@@ -109,6 +110,7 @@
         {% endfor %}
     </div>
     {% endif %}
+    {% endblock messages %}
     <!-- Content -->
     <div id="content" class="mt-2">
         {% block content_head %}

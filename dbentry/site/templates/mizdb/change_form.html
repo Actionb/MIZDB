@@ -12,6 +12,22 @@
 {{ combined_media }}
 {% endblock extrahead %}
 
+{% block messages %}
+    {{ block.super }}
+    {% if is_popup %}
+        <div class="alert alert-info alert-dismissible" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-info"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span class="ms-2">
+                Seite ist im Popup-Modus (<a id="popup-modus-popover" tabindex="0" class="text-decoration-underline" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-title="Popup-Modus" data-bs-placement="bottom" data-bs-content="Im Popup-Modus wird die Seite beim Speichern geschlossen. Außerdem sind die anderen Knöpfe zum Speichern und Löschen nicht verfügbar.">was bedeutet das?</a>).
+                Um die Seite ohne Popup-Eigenschaften anzuzeigen, hier klicken:
+                <a id="unpop" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">als normale Seite anzeigen</a>
+                <script> new bootstrap.Popover(document.querySelector("#popup-modus-popover"))</script>
+            </span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+{% endblock messages %}
+
 {% block content_head %}
 <div id="content-head" class="d-flex justify-content-between{% if not changelist_links %} mb-3{% endif %}">
     <div id="object-info">
@@ -45,11 +61,6 @@
                     </button>
                 {% endif %}
             </div>
-            {% if is_popup %}
-                <div id="unpop-link-container" class="mb-1">
-                    <a id="unpop" class="btn btn-primary w-100 mx-auto" href="{% remove_popup_param view.request %}" title="Als normale Seite ohne Popup Eigenschaften anzeigen">Ohne Popup anzeigen</a>
-                </div>
-            {% endif %}
             {% if changelist_links %}
                 <div id="show-related-container" class="mb-1">
                     <button id="show-related-canvas" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#related-objects">Verwandte Objekte anzeigen</button>
