@@ -763,6 +763,21 @@ class TestBaseListView(DataTestCase, ViewTestCase):
             with self.subTest(context_item=context_item):
                 self.assertIn(context_item, context)
 
+    def test_get_context_data_is_filtered(self):
+        """
+        Assert that the context data contains the 'is_filtered' item that
+        indicates whether the result list is filtered.
+        """
+        request = self.get_response(reverse("test_site_band_changelist")).wsgi_request
+        for is_filtered in (True, False):
+            with self.subTest(is_filtered=is_filtered):
+                view = self.get_view(request)
+                view.object_list = view.get_queryset().order_by("id")
+                if is_filtered:
+                    view.object_list = view.object_list.filter(pk=self.obj.pk)
+                ctx = view.get_context_data()
+                self.assertEqual(ctx["is_filtered"], is_filtered)
+
     def test_order_queryset_order_unfiltered_results_filtered(self):
         """
         Assert that order_queryset applies extended ordering when the queryset

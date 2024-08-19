@@ -826,6 +826,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 "total_count": self.model.objects.count(),
                 "search_term": self.request.GET.get(SEARCH_VAR, ""),
                 "actions": actions,
+                "is_filtered": bool(ctx["object_list"].query.has_filters()),
             }
         )
         # Provide the template with the URL for the view that syncs the
