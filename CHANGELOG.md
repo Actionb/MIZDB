@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+- fixed text search with search terms that contain forward slashes (#14)
+
 ## [0.19.0] - 2024-08-19
 
 ### Added

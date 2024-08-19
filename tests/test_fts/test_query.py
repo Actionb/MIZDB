@@ -505,3 +505,18 @@ class TestProvenienzSearch(DataTestCase):
 
     def test_search(self):
         self.assertIn(self.obj, self.model.objects.search("Foo Bar"))
+
+
+class TestAusgabeFTS(DataTestCase):
+
+    model = _models.Ausgabe
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model, ausgabejahr__jahr=[2001, 2002], ausgabenum__num=[2, 3])
+        super().setUpTestData()
+
+    def test_search_forward_slashes(self):
+        """Assert that forward slashes can be used in a search term."""
+        # See: https://github.com/Actionb/MIZDB/issues/14
+        self.assertTrue(self.model.objects.search("2001/02-02/03").exists())
