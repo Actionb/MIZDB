@@ -379,7 +379,7 @@ class Migration(migrations.Migration):
                 ('beschreibung', models.TextField(blank=True, help_text='Beschreibung bzgl. des Musikers')),
                 ('bemerkungen', models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')),
                 ('genre', models.ManyToManyField(through='dbentry.m2m_musiker_genre', to='dbentry.genre')),
-                ('instrument', models.ManyToManyField(through='dbentry.m2m_musiker_instrument', to='dbentry.instrument')),
+                ('instrument', models.ManyToManyField(to='dbentry.instrument')),
             ],
             options={
                 'verbose_name_plural': 'Musiker',
@@ -534,7 +534,7 @@ class Migration(migrations.Migration):
                 ('bemerkungen', models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')),
                 ('band', models.ManyToManyField(to='dbentry.band')),
                 ('genre', models.ManyToManyField(to='dbentry.genre')),
-                ('musiker', models.ManyToManyField(through='dbentry.m2m_video_musiker', to='dbentry.musiker')),
+                ('musiker', models.ManyToManyField(to='dbentry.musiker')),
                 ('person', models.ManyToManyField(to='dbentry.person')),
                 ('schlagwort', models.ManyToManyField(to='dbentry.schlagwort')),
                 ('spielort', models.ManyToManyField(to='dbentry.spielort')),
