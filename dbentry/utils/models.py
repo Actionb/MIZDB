@@ -378,7 +378,7 @@ def get_deleted_objects(
         try:
             # Try to get a link to the object's edit page.
             obj_description = create_hyperlink(get_change_url(request, related_obj, namespace), obj_description)
-            if not request.user.has_perm(get_perm("delete", obj._meta)):  # pragma: no cover
+            if not obj._meta.auto_created and not request.user.has_perm(get_perm("delete", obj._meta)):
                 perms_needed.add(obj_verbose_name)
         except NoReverseMatch:
             # obj has no edit page.

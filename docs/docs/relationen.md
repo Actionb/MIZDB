@@ -9,11 +9,12 @@ der Ausgabe gelangt man so an alle Artikel dieser Ausgabe. Der Artikel und die A
 oder **verwandt**. Andere Beziehungen wären zum Beispiel ein Buch und die Autoren, oder ein Musikalbum und die Künstler.
 
 Auf der [Änderungsseite](oberflaeche.md#anderungsseite) eines Datensatzes findest du Links, die dich zu den verwandten
-Datensätzen führt:
+Datensätzen führen. Klicke auf den Knopf mit der Aufschrift "Verwandte Objekte anzeigen" (1), um die Liste 
+anzuzeigen.
 
 <div markdown class="d-flex justify-content-evenly gap-5 text-center">  
 <figure markdown="span">  
-  ![Links zu verwandten Datensätzen](img/relationen/changelist_links.png){ width="600" .mb-1 }  
+  ![Links zu verwandten Datensätzen](img/relationen/changelist_links.png){ width="300" .mb-1 }  
   <figcaption>Links zu verwandten Datensätzen</figcaption>  
 </figure>
 </div>

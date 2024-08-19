@@ -24,4 +24,5 @@ urlpatterns = [
     path("watchlist/", WatchlistView.as_view(), name="watchlist"),
     path("hilfe/index/", HelpIndexView.as_view(), name="help_index"),
     path("hilfe/<path:page_name>/", HelpView.as_view(), name="help"),
+    path("autocomplete/", include("dbentry.autocomplete.urls")),
 ]

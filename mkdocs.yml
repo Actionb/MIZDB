@@ -1,4 +1,5 @@
 site_name: MIZDB - Hilfe
+docs_dir: 'docs/docs/'
 nav:
   - 'Index': index.md
   - Einführung:
@@ -56,12 +57,12 @@ extra_javascript:
   - js/style.js
 theme:
   name: mkdocs
-  custom_dir: 'docs_theme/'
+  custom_dir: 'docs/docs_theme/'
   navigation_depth: 3
   locale: de
 use_directory_urls: false
 hooks:
-  - 'docs/hooks/post_build.py'
+  - 'docs/docs/hooks/post_build.py'
 plugins:
   - search
   - glightbox

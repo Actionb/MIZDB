@@ -3,25 +3,27 @@ services:
     image: postgres:15-alpine
     container_name: mizdb-postgres
     volumes:
-      - ./db/data:/var/lib/postgresql/data
-      - ./db:/mizdb
+      - "$DATA_DIR:/var/lib/postgresql/data"
+      - "$BACKUP_DIR:/var/lib/mizdb/backups"
+      # Mount the directory that contains the restore and dump scripts:
+      - ./scripts/db:/mizdb
     environment:
       POSTGRES_DB: mizdb
       POSTGRES_USER: mizdb_user
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-    restart: always
+    restart: unless-stopped
     secrets:
       - db_password
     healthcheck:
-      test: ["CMD", "pg_isready", "--username=${UID}"]
+      test: ["CMD", "pg_isready"]
       interval: 5s
-    user: "${UID:-1000}:${GID:-1000}"
+    shm_size: 128mb
 
   web:
     build: .
     container_name: mizdb-app
     volumes:
-      - ./logs:/var/log/mizdb
+      - "$LOG_DIR:/var/log/mizdb"
     env_file:
       - .env
     ports:
@@ -29,10 +31,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
     entrypoint: ["/mizdb/docker-entrypoint.sh"]
     command: ["/etc/mizdb-server/apachectl", "start", "-DFOREGROUND"]
 
 secrets:
   db_password:
-    file: .secrets/.passwd
+    file: .passwd

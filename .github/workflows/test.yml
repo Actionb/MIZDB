@@ -1,0 +1,49 @@
+# Run tests (excluding playwright tests), containerized
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+name: Run tests
+on: [push]
+
+jobs:
+  tests:
+    services:
+      db:
+        # https://docs.github.com/en/actions/using-containerized-services/creating-postgresql-service-containers
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: mizdb
+          POSTGRES_USER: mizdb_user
+          POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+        ports:
+          - 5432:5432
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    container:
+      # Use debian-based python image instead of alpine, since playwright is not
+      # available for alpine.
+      # https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
+      image: python:${{ matrix.python-version }}
+      env:
+        DB_NAME: mizdb
+        DB_USER: mizdb_user
+        DB_HOST: db
+        DB_PORT: 5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run setup
+        run: sh setup.sh
+        env:
+          # Provide environment variables so setup.sh does not ask for them:
+          DB_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          ALLOWED_HOSTS: localhost
+      - name: Install dependencies
+        run: apt -qq update && apt -qq install -y apache2-dev libpq-dev
+      - name: Install Python requirements
+        run: pip install -U -r requirements/dev.txt
+      - name: Run tests
+        run: pytest -m "not e2e" tests

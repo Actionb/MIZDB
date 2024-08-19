@@ -42,7 +42,7 @@ from django.views.generic import TemplateView
 
 from dbentry import models as _models
 from dbentry.export import resources
-from dbentry.site.forms import null_boolean_select
+from dbentry.site.forms import null_boolean_select, MusikerSearchForm
 from dbentry.site.registry import register_changelist, ModelType
 from dbentry.site.templatetags.mizdb import add_preserved_filters
 from dbentry.site.views.base import BaseViewMixin, ORDER_VAR
@@ -51,12 +51,11 @@ from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
 from dbentry.utils.url import get_change_url
 
-BOOLEAN_TRUE = mark_safe(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>'  # noqa
-)
-BOOLEAN_FALSE = mark_safe(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'  # noqa
-)
+# @formatter:off
+# A green checkmark icon and a red X to use as representation of boolean values:
+BOOLEAN_TRUE = mark_safe('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>')  # noqa
+BOOLEAN_FALSE = mark_safe('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>')  # noqa
+# @formatter:on
 
 
 def changelist_selection_sync(request):
@@ -279,6 +278,14 @@ class AusgabeList(SearchableListView):
         "widgets": {"sonderausgabe": null_boolean_select},
     }
     resource_class = resources.AusgabeResource
+    sortable_by = [
+        "ausgabe_name",
+        "jahrgang",
+        "magazin_name",
+        "e_datum",
+        "anz_artikel",
+        "status",
+    ]
 
     @add_attrs(description="Ausgabe", ordering="_name")
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
@@ -648,7 +655,10 @@ class MusikerList(SearchableListView):
     model = _models.Musiker
     ordering = ["kuenstler_name"]
     list_display = ["kuenstler_name", "genre_string", "band_string", "orte_string"]
-    search_form_kwargs = {"fields": ["person", "genre", "instrument", "orte__land", "orte"]}
+    search_form_kwargs = {
+        "fields": ["band", "person", "genre", "instrument", "orte__land", "orte"],
+        "form": MusikerSearchForm,
+    }
     resource_class = resources.MusikerResource
 
     @add_attrs(description="Genres", ordering="genre_list")

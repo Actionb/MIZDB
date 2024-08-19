@@ -154,6 +154,22 @@ class Inline:
 
     The inline will be rendered in tabular form if attribute `tabular` is True.
 
+    If the inline model is an M2M table, the inline will include template
+    context items `changelist_url` and `changelist_fk_field`. Together with some
+    javascript (added by InlineForm), this will add a link to the changelist
+    of the related model.
+
+    For most inlines, `changelist_url` and `changelist_fk_field` will be guessed
+    correctly. If the inline model has more than three model fields, you will
+    have to set `changelist_fk_field` attribute to the name of the ForeignKey
+    field to the target model.
+    Set `changelist_fk_field` to None to not have the link added.
+
+    If a `changelist_fk_field` can be guessed from the inline model, or if it
+    is set explicitly, the changelist will be filtered to only include the
+    items selected in the inline (the changelist_fk_field must be rendered with
+    a MIZSelect widget for this to work).
+
     The other attributes (model, form, fields, exclude, widgets) are arguments
     for the inline formset factory.
     """
@@ -163,10 +179,15 @@ class Inline:
     fields = None
     exclude = None
     widgets = None
+
     verbose_name = ""
     verbose_name_plural = ""
     verbose_model = None
+
     tabular = True
+
+    changelist_url = ""
+    changelist_fk_field = ""
 
     def __init__(self, parent_model):
         self.parent_model = parent_model
@@ -191,6 +212,8 @@ class Inline:
             "model_name": self.model._meta.model_name,
             "add_text": f"{self.verbose_name} hinzufügen",
             "tabular": self.tabular,
+            "changelist_url": self.get_changelist_url(),
+            "changelist_fk_field": self.get_changelist_fk_field(),
         }
 
     def get_formset_class(self):
@@ -208,6 +231,38 @@ class Inline:
             widgets=self.widgets,
             extra=1,
         )
+
+    def get_changelist_url(self):
+        """Return the URL for the changelist button for this inline."""
+        if self.changelist_url:
+            return self.changelist_url
+        if changelist_fk_field := self.get_changelist_fk_field():
+            field = self.model._meta.get_field(changelist_fk_field)
+            try:
+                return reverse(urlname("changelist", field.related_model._meta))
+            except NoReverseMatch:
+                return ""
+        else:
+            return ""
+
+    def get_changelist_fk_field(self):
+        """
+        Return the name of the field that contains the ids to be used in the
+        URL of the changelist button.
+        """
+        if self.changelist_fk_field is None:
+            # Do not create a changelist button.
+            return ""
+        if self.changelist_fk_field:
+            return self.changelist_fk_field
+        fields = self.model._meta.get_fields()
+        if len(fields) == 3:
+            # Can guess the field, assuming that the model contains these
+            # fields: ID field, FK to parent, FK to target model
+            for field in fields:
+                if field.is_relation and field.related_model != self.parent_model:
+                    return field.name
+        return ""
 
 
 class BaseEditView(
@@ -456,7 +511,7 @@ class BaseEditView(
         for rel in self.get_changelist_link_relations():
             url, count, label = get_changelist_url_for_relation(rel, self.model, self.object.pk, url_callback, labels)
             if url and count:
-                links.append((url, f"{label} ({count})"))
+                links.append((url, label, count))
         return links
 
     def handle_require_confirmation(self, request, *args, **kwargs):
@@ -603,6 +658,9 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         - prioritize_search_ordering (bool): if True, do not override the
           ordering set by queryset.search()
         - actions (list): a list of changelist action callables
+        - sortable_by (list): defines which list_display fields the changelist
+          can be sorted against. If left empty, the changelist can be sorted
+          against all fields.
     """
 
     template_name = "mizdb/changelist.html"
@@ -614,7 +672,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
 
     order_unfiltered_results = True
     prioritize_search_ordering = True
-    actions = []
+    actions = ()
+    sortable_by = ()
 
     def has_permission(self):
         return has_view_permission(self.request.user, self.opts)
@@ -726,8 +785,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
 
         # Collect the actions.
         # Differentiate between the standard actions (delete, merge, watchlist
-        # export) and other, additional actions.
-        delete_action = merge_action = watchlist_action = export_action = None
+        # export, export_results) and other, additional actions.
+        delete_action = merge_action = watchlist_action = export_action = export_results_action = None
         other_actions = []
         for name, (_func, text, title) in self.get_actions().items():
             action = {"name": name, "text": text, "title": title}
@@ -739,6 +798,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 watchlist_action = action
             elif name == "export":
                 export_action = action
+            elif name == "export_results":
+                export_results_action = action
             else:
                 other_actions.append(action)
         actions = {
@@ -746,6 +807,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
             "merge_action": merge_action,
             "watchlist_action": watchlist_action,
             "export_action": export_action,
+            "export_results_action": export_results_action,
             "other_actions": other_actions,
         }
 
@@ -849,9 +911,12 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 headers.append({"text": self.model._meta.verbose_name})
             else:
                 attr, label = self._lookup_field(name)
-                if callable(attr) and not hasattr(attr, "ordering"):
-                    # A view method without an ordering field: not sortable.
-                    headers.append({"text": label})
+                sortable_by = self.get_sortable_by()
+                if sortable_by and name not in sortable_by or callable(attr) and not hasattr(attr, "ordering"):
+                    # Either this list_display item is not included in
+                    # sortable_by, or the item is a view method without an
+                    # ordering field; not sortable.
+                    headers.append({"text": label, "sortable": False})
                     continue
                 # Either a model field (which we assume to be sortable) or a
                 # view method that declares an ordering field.
@@ -986,8 +1051,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         actions = OrderedDict()
         base_actions = [_actions.delete, _actions.merge_records, _actions.watchlist]
         if getattr(self, "resource_class", None):
-            base_actions.append(_actions.export)
-        for action in base_actions + self.actions:
+            base_actions.extend([_actions.export, _actions.export_results])
+        for action in base_actions + list(self.actions):
             name = action.__name__
             has_permission = getattr(action, "has_permission", None)
             label = getattr(action, "label", name)
@@ -1007,8 +1072,13 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
             messages.warning(request, "Abgebrochen: unbekannte Aktion ausgewählt.")
             return redirect(request.get_full_path())
 
-        selected = request.POST.getlist(ACTION_SELECTED_ITEM)
-        queryset = self.model.objects.filter(pk__in=selected)
+        if func.__name__ == "export_results":
+            # This is the 'export all search results' action which is applied
+            # to all search results and not just the selected items.
+            queryset = self.get_queryset()
+        else:
+            selected = request.POST.getlist(ACTION_SELECTED_ITEM)
+            queryset = self.model.objects.filter(pk__in=selected)
         if not queryset.exists():
             messages.warning(request, "Abgebrochen: keine Objekte ausgewählt.")
             return redirect(request.get_full_path())
@@ -1021,6 +1091,9 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
             # The action did not return a response; redirect back to the
             # changelist.
             return redirect(request.get_full_path())
+
+    def get_sortable_by(self):
+        return self.sortable_by
 
 
 class SearchableListView(SearchFormMixin, BaseListView):

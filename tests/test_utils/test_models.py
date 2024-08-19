@@ -3,6 +3,7 @@ from io import StringIO
 from unittest.mock import Mock, patch
 
 from django.contrib import auth
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
@@ -13,7 +14,7 @@ from django.urls import path
 from dbentry.utils import models as utils
 from tests.case import MIZTestCase, RequestTestCase
 from tests.model_factory import make
-from tests.test_utils.models import Band, Genre
+from tests.test_utils.models import Audio, Band, Genre, Musiker
 
 
 class M2MTarget(models.Model):
@@ -343,3 +344,21 @@ class TestGetDeletedObjects(RequestTestCase):
             request = self.get_request("/")
             to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [self.obj])
             self.assertFalse(to_delete)
+
+    def test_perms_needed_auto_created_m2m(self):
+        """
+        Assert that delete permissions are not required for auto created m2m
+        tables (these tables can't have permissions set).
+        """
+        ct = ContentType.objects.get_for_model(Audio)
+        delete_perm = Permission.objects.get(
+            codename=get_permission_codename("delete", Audio._meta),
+            content_type=ct,
+        )
+        self.staff_user.user_permissions.add(delete_perm)
+        obj = make(Audio, genre=make(Genre), musiker=make(Musiker))
+
+        request = self.get_request("", user=self.staff_user)  # requires a user that isn't a superuser
+        to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [obj])
+        self.assertNotIn("Genre Beziehung", perms_needed)  # auto created
+        self.assertIn("Audio-Musiker", perms_needed)  # not auto created

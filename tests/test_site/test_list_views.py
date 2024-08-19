@@ -224,6 +224,20 @@ class TestMagazinList(ListViewTestMethodsMixin, ListViewTestCase):
 class TestMusikerList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.MusikerList
 
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.band = band = make(_models.Band)
+        cls.found = make(_models.Musiker, band=band)
+        cls.not_found = make(_models.Musiker)
+
+    def test_search_form_bands(self):
+        """Assert that the user can filter the changelist by Bands."""
+        response = self.get_response(reverse("dbentry_musiker_changelist"), data={"band": self.band.pk})
+        results = [r for r, _ in response.context_data["result_rows"]]
+        self.assertIn(self.found, results)
+        self.assertNotIn(self.not_found, results)
+
 
 class TestPersonList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.PersonList

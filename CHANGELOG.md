@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.19.0] - 2024-08-19
+
+### Added
+
+- added date picker for Ausgabe Erscheinungsdatum field
+- added button to inlines that sends the user to the changelist of the items selected in the inline forms
+- added 'Band' search field to Musiker changelist
+- added 'Ergebnisse exportieren' button to changelist that exports the current search results
+
+### Changed
+
+- made some columns in the Ausgabe changelist unsortable. Columns like the one for the "Ausgabenummer" contain mostly
+  numerical values, but they actually are text and thus order lexicographically if sorted against, which ends up looking
+  wrong and confusing to the user.
+- store secrets in a single yaml file instead of multiple files in a `.secret` directory
+- reworked docker setup:
+	- volume source directories are read from environment (`DATA_DIR`, `LOG_DIR`, `BACKUP_DIR`)
+	- volume source directories default to `/var/lib/mizdb/` and `/var/log/mizdb`
+	- $UID and $GID are no longer used to define the container user: containers are run as root and the webserver is
+	  run as apache
+- add scripts: uninstall script, backup script and get-mizdb script
+- moved database scripts into `scripts` directory
+- changed update process:
+	- update now checks against GitHub API
+	- rebuilds containers after pulling the update
+	- applies migrations if necessary
+
+### Fixed
+
+- delete view: non-admin users were required to have "delete" permissions for auto created M2M tables.
+- Genre edit page now includes links to the changelists of related Brochure models (Broschüre, Programmheft,
+  Warenkatalog)
+
 ## [0.18] - 2024-07-22
 
 ### Added
@@ -9,12 +42,12 @@
 ### Changed
 
 - clean up templates
-  - remove unused files 
-  - move templates from project root into app directory
+	- remove unused files
+	- move templates from project root into app directory
 - clean up and rework action views
 - remove logging for change confirmations, logins, logouts and CSRF failures
 - reworked docker image: now uses alpine as base images instead of debian
-- many tweaks to the `mizdb.sh` utility script and the installation script  
+- many tweaks to the `mizdb.sh` utility script and the installation script
 
 ### Fixed
 
