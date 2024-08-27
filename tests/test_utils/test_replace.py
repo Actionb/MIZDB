@@ -1,6 +1,7 @@
 from dbentry.utils.replace import _replace, replace
 from tests.case import DataTestCase
 from tests.model_factory import make
+
 from .models import Audio, Band, Genre, Musiker
 
 
@@ -64,8 +65,8 @@ class TestReplace(DataTestCase):
     def test_replace_reverse_relation_declared_on_obj(self):
         """
         Assert that replace can handle if obj has a relation that classifies as
-        'reverse' but is declared on the model of obj itself.
-        (i.e. a 'forward' ManyToMany)
+        'reverse' but is declared on the model of obj itself (i.e. a 'forward'
+        ManyToMany).
         """
         changes = replace(self.band1, [self.band2, self.band3])
         self.assertQuerySetEqual(

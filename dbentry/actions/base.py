@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterable, Optional, Sequence, Type, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Sequence, Type, Union
 
 from django import views
 from django.contrib import messages
@@ -191,7 +191,7 @@ class ActionConfirmationView(ActionMixin, views.generic.FormView):
     def action_confirmed(self, request: HttpRequest) -> bool:
         """
         Return whether the action was confirmed by the user.
-        
+
         This is indicated by the POST data containing a value for the key
         given by ``self.action_confirmed_name``, which is the case if the user
         submitted the confirmation form.

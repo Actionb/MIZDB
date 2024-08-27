@@ -1,5 +1,5 @@
 from django_bootstrap5.renderers import FieldRenderer
-from mizdb_inlines.renderers import InlineFormsetRenderer, InlineFormRenderer
+from mizdb_inlines.renderers import InlineFormRenderer, InlineFormsetRenderer
 
 IS_INVALID_CLASS = "is-invalid"
 

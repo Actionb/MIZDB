@@ -1,4 +1,4 @@
-from mizdb_tomselect.widgets import MIZSelect, MIZSelectTabular, MIZSelectTabularMultiple, MIZSelectMultiple
+from mizdb_tomselect.widgets import MIZSelect, MIZSelectMultiple, MIZSelectTabular, MIZSelectTabularMultiple
 
 from dbentry.autocomplete.widgets import make_widget
 from tests.case import MIZTestCase

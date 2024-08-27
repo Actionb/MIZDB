@@ -64,7 +64,7 @@ class TestMIZChangeList(AdminTestCase):
     def test_get_results_not_empty_when_no_search_form(self):
         """
         Assert that the result_list is not an EmptyQuerySet if the model admin
-        has no search form. (even when the changelist queryset is unfiltered)
+        has no search form (even when the changelist queryset is unfiltered).
         """
         request = self.get_request()
         changelist = self.model_admin.get_changelist_instance(request)
@@ -83,7 +83,10 @@ class TestMIZChangeList(AdminTestCase):
         self.assertNotIsInstance(changelist.result_list, EmptyQuerySet)
 
     def test_get_show_all_url(self):
-        """Assert that get_show_all_url returns a query string that contains the ALL_VAR."""
+        """
+        Assert that get_show_all_url returns a query string that contains the
+        ALL_VAR.
+        """
         changelist = self.model_admin.get_changelist_instance(self.get_request())
         self.assertIn(ALL_VAR, changelist.get_show_all_url())
 

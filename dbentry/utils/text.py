@@ -32,9 +32,7 @@ def snake_case_to_spaces(value: str) -> str:
 
 
 def parse_name(full_name: Union[str, HumanName]) -> Tuple[str, str]:
-    """
-    Return a two-tuple of first names (including middle names) and last name.
-    """
+    """Return a two-tuple of first names (including middle names) and last name."""
     if isinstance(full_name, str):
         full_name = full_name.strip()
         if len(full_name.split()) == 1:

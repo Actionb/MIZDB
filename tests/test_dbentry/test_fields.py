@@ -13,8 +13,19 @@ from django_bootstrap5.templatetags.django_bootstrap5 import bootstrap_field
 from stdnum import isbn, issn
 
 from dbentry.fields import (
-    EANField, ISBNField, ISBNFormField, ISSNField, ISSNFormField, PartialDate, PartialDateField,
-    PartialDateFormField, PartialDateWidget, StdNumField, StdNumFormField, StdNumWidget, YearField
+    EANField,
+    ISBNField,
+    ISBNFormField,
+    ISSNField,
+    ISSNFormField,
+    PartialDate,
+    PartialDateField,
+    PartialDateFormField,
+    PartialDateWidget,
+    StdNumField,
+    StdNumFormField,
+    StdNumWidget,
+    YearField,
 )
 from dbentry.site.renderer import IS_INVALID_CLASS
 from tests.case import DataTestCase, MIZTestCase
@@ -88,7 +99,10 @@ class TestStdNumFormField(MIZTestCase):
         self.assertEqual(StdNumFormField(stdnum=self.StdNumModule).stdnum, self.StdNumModule)
 
     def test_to_python(self):
-        """Assert that to_python uses the compact function of the assigned stdnum module."""
+        """
+        Assert that to_python uses the compact function of the assigned stdnum
+        module.
+        """
         self.assertEqual(StdNumFormField(stdnum=self.StdNumModule).to_python('foo-bar'), 'foobar')
 
 
@@ -240,7 +254,10 @@ class StdNumFieldTestsMixin(object):
                         model_instance.save()
 
     def test_no_query_with_invalid_data(self: TestCaseType):
-        """Assert that no query can be attempted with invalid data (much like DateFields)."""
+        """
+        Assert that no query can be attempted with invalid data (much like
+        DateFields).
+        """
         for invalid_number in self.invalid:
             with self.subTest(invalid_number=invalid_number):
                 msg = "for invalid input: %s" % invalid_number
@@ -587,7 +604,7 @@ class TestPartialDate(MIZTestCase):
         )
 
     def test_new_validates_date(self):
-        """Assert that PartialDate does not accept invalid dates (31st of February, etc.)."""
+        """Assert that PartialDate does not accept invalid dates."""
         invalid_dates = ('02-31', '04-31')
         for date in invalid_dates:
             with self.subTest():
@@ -663,7 +680,10 @@ class TestPartialDate(MIZTestCase):
         self.assertEqual(pd.__len__(), len("2022-05-21"))
 
     def test_bool(self):
-        """Assert that bool returns False for an empty PartialDate, and True otherwise."""
+        """
+        Assert that bool returns False for an empty PartialDate, and True
+        otherwise.
+        """
         self.assertFalse(PartialDate().__bool__())
         self.assertTrue(PartialDate(2022).__bool__())
 
@@ -762,7 +782,10 @@ class TestPartialDateFormField(MIZTestCase):
 
     @patch("django.forms.fields.MultiValueField.__init__")
     def test_init_removes_max_length_kwarg(self, super_init_mock):
-        """Assert that init removes any 'max_length' kwarg (added by CharField.formfield)."""
+        """
+        Assert that init removes any 'max_length' kwarg added by
+        CharField.formfield.
+        """
         PartialDateFormField(max_length=1)
         super_init_mock.assert_called()
         _args, kwargs = super_init_mock.call_args
@@ -840,7 +863,10 @@ class TestPartialDateField(MIZTestCase):
         self.assertEqual(PartialDateField(max_length=1).max_length, 10)
 
     def test_to_python_empty_value(self):
-        """Assert that to_python returns an empty partial date if the value is 'empty'."""
+        """
+        Assert that to_python returns an empty partial date if the value is
+        'empty'.
+        """
         for value in (None, ''):
             with self.subTest(value=value):
                 self.assertEqual(PartialDateField().to_python(value), PartialDate())
@@ -890,7 +916,10 @@ class TestPartialDateField(MIZTestCase):
                 self.assertEqual(prepped_value, data)
 
     def test_formfield(self):
-        """Assert that PartialDateField's formfield is a PartialDateFormField instance."""
+        """
+        Assert that PartialDateField's formfield is a PartialDateFormField
+        instance.
+        """
         self.assertIsInstance(PartialDateField().formfield(), PartialDateFormField)
 
 

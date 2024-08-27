@@ -1,7 +1,7 @@
 from typing import Union
 
 from django.contrib.admin.helpers import AdminField
-from django.contrib.admin.views.main import ChangeList, ORDER_VAR
+from django.contrib.admin.views.main import ORDER_VAR, ChangeList
 from django.template.library import Library
 from django.utils.html import format_html
 from django.utils.safestring import SafeText

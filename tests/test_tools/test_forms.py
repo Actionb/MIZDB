@@ -5,10 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.test import TestCase
 
-from dbentry.tools.forms import (
-    DuplicateFieldsSelectForm, ModelSelectForm,
-    get_dupe_field_choices
-)
+from dbentry.tools.forms import DuplicateFieldsSelectForm, ModelSelectForm, get_dupe_field_choices
+
 from .admin import admin_site
 from .models import Kalender, Musiker, Person, Unregistered
 
@@ -95,12 +93,18 @@ class TestGetDupeFieldChoices(TestCase):
         self.assertNotIn(('id', 'Id'), display)
 
     def test_display_choices_include_concrete_m2m(self):
-        """Assert that the choices for the 'display' field include concrete M2M fields."""
+        """
+        Assert that the choices for the 'display' field include concrete M2M
+        fields.
+        """
         _select, display = get_dupe_field_choices(self.model)
         self.assertIn(('concrete_m2m__title', 'Concrete m2m'), display)
 
     def test_display_choices_include_reverse_m2m(self):
-        """Assert that the choices for the 'display' field include reverse M2M relations."""
+        """
+        Assert that the choices for the 'display' field include reverse M2M
+        relations.
+        """
         _select, display = get_dupe_field_choices(self.model)
         self.assertIn(('reverse_m2m__title', 'Reverse M2M'), display)
 
@@ -137,7 +141,10 @@ class TestModelSelectForm(TestCase):
             self.assertEqual(form.get_model_list(), [('musiker', 'Musiker')])
 
     def test_get_model_list_filters_out_non_registered_models(self):
-        """Assert that models not registered with the given admin site are filtered out."""
+        """
+        Assert that models not registered with the given admin site are
+        filtered out.
+        """
         form = self.form_class(app_label="test_tools", admin_site=admin_site)
         with patch('dbentry.tools.forms.apps.get_models') as get_models_mock:
             get_models_mock.return_value = [

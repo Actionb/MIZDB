@@ -10,12 +10,17 @@ from django.urls import reverse
 
 from dbentry import models as _models
 from dbentry.tools.views import (
-    DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, ModelSelectView, SiteSearchView,
+    DuplicateModelSelectView,
+    DuplicateObjectsView,
+    MIZSiteSearch,
+    ModelSelectView,
+    SiteSearchView,
     UnusedObjectsView,
-    find_duplicates
+    find_duplicates,
 )
 from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
+
 from .models import Band, Genre, Musiker, Person
 
 
@@ -226,7 +231,10 @@ class TestDuplicateObjectsView(ViewTestCase):
 
     @patch('dbentry.admin.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
     def test_headers(self):
-        """Assert that the headers for the overview table are added to the template context."""
+        """
+        Assert that the headers for the overview table are added to the
+        template context.
+        """
         request_data = {
             'get_duplicates': '1',
             'select': ['kuenstler_name'],
@@ -371,7 +379,10 @@ class TestFindDuplicates(DataTestCase):
         self.assertEqual(len(duplicates), 0)
 
     def test_relations(self):
-        """Assert that values from relations can be included when checking for duplicates."""
+        """
+        Assert that values from relations can be included when checking for
+        duplicates.
+        """
         self.dupe_1.genres.create(genre='Foo')
         duplicates = find_duplicates(
             self.model.objects.all(), fields=['kuenstler_name', 'genres__genre']
@@ -525,7 +536,7 @@ class TestMIZSiteSearch(ViewTestCase):
         """Assert that _get_models filters out models subclassing BaseM2MModel."""
         view = self.get_view(self.get_request())
         models = view._get_models('dbentry')
-        from dbentry.base.models import BaseModel, BaseM2MModel
+        from dbentry.base.models import BaseM2MModel, BaseModel
         self.assertFalse(any(issubclass(m, BaseM2MModel) for m in models))
         self.assertTrue(all(issubclass(m, BaseModel) for m in models))
 
@@ -543,7 +554,6 @@ class TestMIZSiteSearch(ViewTestCase):
         Assert that site search does not include results for models that the
         user lacks permission for.
         """
-        app_label = 'dbentry'
         model = _models.Musiker
         ct = ContentType.objects.get_for_model(model)
 

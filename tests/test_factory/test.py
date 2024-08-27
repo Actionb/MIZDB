@@ -8,9 +8,16 @@ from stdnum import issn
 from dbentry import models as _models
 from tests.case import MIZTestCase
 from tests.model_factory import (
-    M2MFactory, MIZDjangoOptions, RelatedFactory, RuntimeFactoryMixin, SelfFactory, UniqueFaker,
-    factory, modelfactory_factory
+    M2MFactory,
+    MIZDjangoOptions,
+    RelatedFactory,
+    RuntimeFactoryMixin,
+    SelfFactory,
+    UniqueFaker,
+    factory,
+    modelfactory_factory,
 )
+
 from .models import Ancestor, Audio, Ausgabe, Band, Bestand, Magazin
 
 
@@ -258,9 +265,7 @@ class TestM2MFactory(MIZTestCase):
         self.assertIn(b, a.band.all())
 
     def test_m2m_instance_list(self):
-        """
-        M2MFactory should be able to handle lists of model instance parameters.
-        """
+        """M2MFactory should be able to handle lists of model instance parameters."""
         b1 = BandFactory()
         b2 = BandFactory()
         a = AudioFactory(band=[b1, b2])
@@ -390,9 +395,7 @@ class TestMIZDjangoOptions(MIZTestCase):
         self.assertEqual(getattr(opts.factory, 'audio').related_model, Audio)
 
     def test_add_m2m_factories_inherited_relation(self):
-        """
-        Assert that add_m2m_factories can handle inherited ManyToManyRelations.
-        """
+        """Assert that add_m2m_factories can handle inherited ManyToManyRelations."""
 
         class Fan(models.Model):
             clubs = models.ManyToManyField('BaseClub', related_name='fans')

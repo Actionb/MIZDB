@@ -285,9 +285,7 @@ class ACBand(ACTabular):
 
 
 class ACBuchband(ACBase):
-    """
-    Autocomplete view that queries buch instances that are defined as buchband.
-    """
+    """Autocomplete view that queries buch instances that are defined as buchband."""
 
     model = _models.Buch
     queryset = _models.Buch.objects.filter(is_buchband=True)

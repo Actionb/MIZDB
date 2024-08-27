@@ -68,7 +68,7 @@ def EANValidator(raw_ean: str) -> bool:
 
 
 class DiscogsURLValidator(RegexValidator):
-    """Validator that checks that the given URL's host is discogs.com"""
+    """Validator that checks that the given URL's host is 'discogs.com'."""
 
     regex = r'^([a-z][a-z0-9+\-.]*://)?(www.)?discogs.com'
     message = "Bitte nur Adressen von discogs.com eingeben."

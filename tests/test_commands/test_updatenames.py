@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from django.test import TestCase
 
 from dbentry.management.commands.updatenames import Command
+
 from .models import UpdateCNModel, UpdateNormalModel
 
 models_list_mock = Mock(return_value=[UpdateCNModel, UpdateNormalModel])
@@ -21,7 +22,10 @@ class TestCommand(TestCase):
 
     @patch("dbentry.query.CNQuerySet.update")
     def test_handle_force_option(self, update_mock):
-        """Assert that an update is forced on ComputedNameModels if using force=True as option."""
+        """
+        Assert that an update is forced on ComputedNameModels if using
+        force=True as option.
+        """
         cmd = Command(stdout=io.StringIO())
         cmd.handle(force=True)
         update_mock.assert_called_with(_changed_flag=True)

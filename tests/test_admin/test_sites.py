@@ -6,7 +6,7 @@ from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core import checks
 from django.test import override_settings
-from django.urls import reverse, path
+from django.urls import path, reverse
 from django.views import View
 
 from dbentry import models as _models

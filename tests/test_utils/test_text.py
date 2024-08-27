@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from dbentry.utils.text import parse_name, concat_limit
+from dbentry.utils.text import concat_limit, parse_name
 
 
 class TestTextUtils(TestCase):

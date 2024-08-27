@@ -363,9 +363,7 @@ class MIZModelAdmin(ExportMixin, WatchlistMixin, AutocompleteMixin, MIZAdminSear
             self, request: HttpRequest, form: forms.ModelForm, formsets: List[forms.BaseInlineFormSet],
             add: bool = False
     ) -> List[dict]:
-        """
-        Construct a JSON structure describing changes from a changed object.
-        """
+        """Construct a JSON structure describing changes from a changed object."""
         return construct_change_message(form, formsets, add)
 
     def has_module_permission(self, request: HttpRequest) -> bool:

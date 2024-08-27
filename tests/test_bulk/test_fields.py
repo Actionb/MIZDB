@@ -34,7 +34,7 @@ class TestBulkField(MIZTestCase):
         Assert that clean():
             - strips values
             - removes empty values
-            - returns a string of comma separated values with no whitespaces
+            - returns a string of comma separated values with no whitespaces.
         """
         field = BulkField()
         test_data = [

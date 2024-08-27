@@ -1,4 +1,4 @@
-from django.db.models import Func, Subquery, Count, Exists
+from django.db.models import Count, Exists, Func, Subquery
 from django.utils.translation import override as translation_override
 
 from dbentry import m2m as _m2m
@@ -780,7 +780,7 @@ class TestModelArtikel(MIZTestCase):
         )
 
     def test_meta_ordering(self):
-        """Assert that the ordering includes magazin_name and Ausgabe._name"""
+        """Assert that the ordering includes magazin_name and Ausgabe._name."""
         self.assertEqual(
             self.model._meta.ordering,
             ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
@@ -1389,7 +1389,7 @@ class TestModelBaseBrochure(MIZTestCase):
         self.assertEqual(obj.__str__(), "Model Inheritance Is Funky")
 
     def test_resolve_child_no_children(self):
-        """ resolve_child should return None, if the object has no children."""
+        """resolve_child should return None, if the object has no children."""
         obj = make(self.model)
         self.assertIsNone(obj.resolve_child())
 

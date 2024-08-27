@@ -1,9 +1,7 @@
 from django.urls import path
 
 from dbentry.tools.bulk.views import BulkAusgabe
-from dbentry.tools.views import (
-    DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, UnusedObjectsView
-)
+from dbentry.tools.views import DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, UnusedObjectsView
 
 app_name = "tools"
 urlpatterns = [

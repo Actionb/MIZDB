@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from dbentry import models as _models
-from dbentry.actions.forms import BrochureActionFormOptions, ReplaceForm, BulkEditJahrgangForm
+from dbentry.actions.forms import BrochureActionFormOptions, BulkEditJahrgangForm, ReplaceForm
 from dbentry.query import InvalidJahrgangError
 from tests.case import DataTestCase
 from tests.model_factory import make

@@ -1,15 +1,13 @@
 import calendar
 import datetime
 from collections import OrderedDict
-from typing import (
-    Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Sequence,
-    Tuple, Union
-)
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import OrderedDict as OrderedDictType
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import transaction
-from django.db.models import Count, Max, Min, Model, QuerySet, OuterRef, Exists, Q
+from django.db.models import Count, Exists, Max, Min, Model, OuterRef, Q, QuerySet
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.fts.query import TextSearchQuerySetMixin
@@ -477,7 +475,7 @@ class AusgabeQuerySet(CNQuerySet):
         # Find the best (annotated) fields to order against.
         # Sort the fields e_datum, lnum, monat and num by how often the objects
         # of the queryset have values in those fields.
-        from dbentry.models import AusgabeLnum, AusgabeNum, AusgabeMonat
+        from dbentry.models import AusgabeLnum, AusgabeMonat, AusgabeNum
         counted = (
             self
             .annotate(

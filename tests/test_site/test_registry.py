@@ -2,7 +2,8 @@
 from django.test import TestCase
 from django.views import View
 
-from dbentry.site.registry import register_edit, register_changelist, Registry, ModelType
+from dbentry.site.registry import ModelType, Registry, register_changelist, register_edit
+
 from .models import Foo
 
 test_site = Registry()

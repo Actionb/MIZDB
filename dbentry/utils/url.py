@@ -1,17 +1,17 @@
-from typing import Optional, Type, Callable, Sequence, Union
+from typing import Callable, Optional, Sequence, Type, Union
 
 from django.db import models
 from django.db.models import ForeignObjectRel
 from django.db.models.options import Options
 from django.http import HttpRequest
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
 
 from dbentry.utils import permission as perms
 
-
 # TODO: check if anything actually uses the get_x_url functions
-#  all they do is include a permission check and it might be better to do that explicitly where needed anyway
+#  all they do is include a permission check and it might be better to do that
+#  explicitly where needed anyway
 
 
 def urlname(name: str, opts: Optional[Options] = None, namespace: str = "") -> str:

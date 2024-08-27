@@ -2,9 +2,10 @@ from django.test import override_settings
 from django.urls import include, path
 
 from dbentry.utils import url
-from tests.case import RequestTestCase, DataTestCase
-from .models import Musiker
+from tests.case import DataTestCase, RequestTestCase
+
 from ..model_factory import make
+from .models import Musiker
 
 
 def dummy_view(*args, **kwargs):

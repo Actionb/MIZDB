@@ -90,9 +90,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         css = {"all": ("admin/css/changelists.css",)}
 
     def expand_primary_fieldset(self) -> Fieldset:
-        """
-        Provide a Fieldset object of the expand_primary field for the template.
-        """
+        """Provide a Fieldset object of the expand_primary field for the template."""
         return Fieldset(self, fields=["expand_primary"])
 
 

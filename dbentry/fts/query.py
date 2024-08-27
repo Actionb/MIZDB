@@ -11,9 +11,7 @@ STEMMING = 'german_unaccent'
 
 
 def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
-    """
-    Return the first SearchVectorField instance found for the given model.
-    """
+    """Return the first SearchVectorField instance found for the given model."""
     # noinspection PyUnresolvedReferences
     opts = model._meta
     # exclude inherited search vector fields:

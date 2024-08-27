@@ -1,4 +1,4 @@
-from typing import Any, List, Iterable
+from typing import Any, Iterable, List
 
 from django.core import checks, exceptions
 from django.db import models
@@ -83,7 +83,10 @@ class BaseModel(models.Model):
 
     @staticmethod
     def get_overview_annotations() -> dict:
-        """Return a dictionary of queryset annotations required for a changelist view."""
+        """
+        Return a dictionary of queryset annotations required for a changelist
+        view.
+        """
         return {}
 
     @classmethod
@@ -180,12 +183,12 @@ class ComputedNameModel(BaseModel):
 
     Attributes:
         - ``_name`` (CharField): the field that contains the computed name
-        - ``name_default`` (str): the default value for the _name field, if no 
+        - ``name_default`` (str): the default value for the _name field, if no
           name can be composed (missing data/new instance)
-        - ``_changed_flag`` (boolean): if True, a new name will be computed the 
+        - ``_changed_flag`` (boolean): if True, a new name will be computed the
           next time the model object is instantiated
         - ``name_composing_fields`` (list): a sequence of names of fields
-          whose data make up the name. Values of these fields are retrieved 
+          whose data make up the name. Values of these fields are retrieved
           from the database and passed to the '_get_name' method
     """
 

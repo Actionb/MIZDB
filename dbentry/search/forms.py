@@ -3,7 +3,8 @@ from typing import Any, List, Optional, Type, Union
 
 from django import forms
 from django.core import exceptions
-from django.db.models import Field, Model, lookups as django_lookups
+from django.db.models import Field, Model
+from django.db.models import lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 

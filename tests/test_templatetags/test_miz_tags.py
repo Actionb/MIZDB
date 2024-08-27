@@ -5,6 +5,7 @@ from django.test import override_settings
 
 from dbentry.templatetags.miz_tags import checkbox_label, reset_ordering
 from tests.case import AdminTestCase
+
 from .admin import FooAdmin, admin_site
 from .models import Foo
 
@@ -23,7 +24,7 @@ class TestTags(AdminTestCase):
         request = self.get_request(self.changelist_path + f'?all=&{ORDER_VAR}=1.2')
         self.assertEqual(
             reset_ordering(self.get_changelist(request)),
-            f'<span class="small quiet"><a href=?all=>Sortierung zurücksetzen</a></span>'
+            '<span class="small quiet"><a href=?all=>Sortierung zurücksetzen</a></span>'
         )
 
     def test_reset_ordering_no_ordering(self):
@@ -31,7 +32,7 @@ class TestTags(AdminTestCase):
         Assert that reset_ordering returns an empty string if the changelist
         does not have manually-specified ordering.
         """
-        request = self.get_request(self.changelist_path + f'?all')
+        request = self.get_request(self.changelist_path + '?all')
         self.assertFalse(reset_ordering(self.get_changelist(request)))
 
     def test_checkbox_label(self):

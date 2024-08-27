@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from dbentry.admin.base import MIZModelAdmin
-from tests.test_admin.models import Audio, Band, Musiker, MusikerAudioM2M, Veranstaltung, Person
+from tests.test_admin.models import Audio, Band, Musiker, MusikerAudioM2M, Person, Veranstaltung
 
 admin_site = admin.AdminSite(name="test_admin")
 

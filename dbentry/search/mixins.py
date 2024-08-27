@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type, Callable
+from typing import Any, Callable, List, Optional, Type
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
@@ -8,8 +8,8 @@ from django.db.models.lookups import LessThanOrEqual, Range
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDict
 
 from dbentry.search import utils as search_utils
-from dbentry.search.forms import MIZAdminSearchForm, SearchForm, SearchFormFactory, DALSearchFormFactory
-from dbentry.utils.models import get_model_fields, get_fields_and_lookups
+from dbentry.search.forms import DALSearchFormFactory, MIZAdminSearchForm, SearchForm, SearchFormFactory
+from dbentry.utils.models import get_fields_and_lookups, get_model_fields
 
 
 class SearchFormMixin(object):

@@ -8,6 +8,7 @@ from dbentry import models as _models
 from dbentry.utils.summarize import Parser, get_summaries, registry
 from tests.case import DataTestCase
 from tests.model_factory import make
+
 from .models import Veranstaltung
 
 
@@ -31,15 +32,13 @@ class DummyParser(Parser):
 class TestGetSummaries(TestCase):
 
     def test_get_summaries(self):
-        registry_mock = {Veranstaltung: DummyParser}
-        with mock.patch('dbentry.utils.summarize.registry', new=registry_mock):
+        with mock.patch('dbentry.utils.summarize.registry', new={Veranstaltung: DummyParser}):
             with mock.patch.object(DummyParser, 'get_summaries') as get_summaries_mock:
                 get_summaries(Veranstaltung.objects.all())
                 get_summaries_mock.assert_called()
 
     def test_get_summaries_model_not_registered(self):
-        with mock.patch('dbentry.utils.summarize.registry') as registry_mock:
-            registry_mock = {}
+        with mock.patch('dbentry.utils.summarize.registry', new={}):
             with self.assertRaises(KeyError):
                 get_summaries(Veranstaltung.objects.all())
 

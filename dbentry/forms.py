@@ -242,7 +242,7 @@ class PersonForm(forms.ModelForm):
                     gnd_id = gnd_id_from_url
                     self.cleaned_data['gnd_id'] = gnd_id
                 elif gnd_id_from_url != gnd_id:
-                    # The values of both fields have changed, but the IDs do 
+                    # The values of both fields have changed, but the IDs do
                     # not match.
                     raise ValidationError(
                         "Die angegebene GND ID (%s) stimmt nicht mit der ID im "

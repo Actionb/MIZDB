@@ -10,10 +10,8 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
 from django.db import transaction
-from django.db.models import (
-    Count, Field as ModelField, IntegerField, ManyToManyField,
-    Model, Min, OuterRef, QuerySet, Subquery, Value
-)
+from django.db.models import Count, IntegerField, ManyToManyField, Min, Model, OuterRef, QuerySet, Subquery, Value
+from django.db.models import Field as ModelField
 from django.db.models.functions import Coalesce
 from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest
@@ -28,8 +26,14 @@ import dbentry.m2m as _m2m
 import dbentry.models as _models
 from dbentry.admin.autocomplete.widgets import make_widget
 from dbentry.admin.base import (
-    BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseOrtInLine, BaseSchlagwortInline,
-    BaseStackedInline, BaseTabularInline, MIZModelAdmin
+    BaseAliasInline,
+    BaseAusgabeInline,
+    BaseGenreInline,
+    BaseOrtInLine,
+    BaseSchlagwortInline,
+    BaseStackedInline,
+    BaseTabularInline,
+    MIZModelAdmin,
 )
 from dbentry.admin.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.admin.site import miz_site
@@ -39,7 +43,6 @@ from dbentry.utils.admin import log_change
 from dbentry.utils.copyrelated import copy_related_set
 from dbentry.utils.html import get_obj_link
 from dbentry.utils.text import concat_limit
-
 
 # FIXME: deleting a related m2m object and then saving the parent form results
 #  in a form error since the select for that relation still references the
@@ -1416,7 +1419,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
     def get_fieldsets(self, request: HttpRequest, obj: Optional[Model] = None) -> list:
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
         # TODO: why do this in get_fieldsets instead of declaring the fieldsets
-        #  via fields attribute? fields = [(None, ...), ..., ('Beilage von Ausgabe', {...})]
+        #  via fields attribute?
+        #  fields = [(None, ...), ..., ('Beilage von Ausgabe', {...})]
         fieldsets = super().get_fieldsets(request, obj)
         # django default implementation adds at minimum:
         # [(None, {'fields': self.get_fields()})]

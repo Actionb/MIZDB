@@ -5,15 +5,15 @@ from mizdb_tomselect.views import SEARCH_VAR
 
 from dbentry import models as _models
 from dbentry.autocomplete.views import (
-    MIZAutocompleteView,
     AutocompleteAusgabe,
     AutocompleteAutor,
     AutocompleteBuchband,
     AutocompleteMagazin,
-    AutocompletePerson,
     AutocompleteMostUsed,
+    AutocompletePerson,
+    MIZAutocompleteView,
 )
-from tests.case import ViewTestCase, DataTestCase
+from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
 from tests.test_autocomplete.models import Ausgabe
 
@@ -121,9 +121,7 @@ class TestAutocompleteAutor(ViewTestCase):
         self.assertEqual(autor_call.args, (request.user.pk, obj))
 
     def test_create_object_only_kuerzel(self):
-        """
-        Assert that no Person instance is created if only the kuerzel is given.
-        """
+        """Assert that no Person instance is created if only the kuerzel is given."""
         request = self.get_request(
             data={"create-field": "cf", "model": f"{self.model._meta.app_label}.{self.model._meta.model_name}"}
         )

@@ -3,6 +3,7 @@ from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.search import utils
 from tests.case import MIZTestCase
+
 from .models import Artikel, Ausgabe, Magazin
 
 

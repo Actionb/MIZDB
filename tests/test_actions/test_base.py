@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock, DEFAULT
+from unittest.mock import DEFAULT, Mock, patch
 
 from django import forms
 from django.contrib import admin
@@ -6,22 +6,22 @@ from django.contrib.admin import helpers
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.http import HttpResponse
 from django.test import override_settings
-from django.urls import reverse, path
+from django.urls import path, reverse
 from django.views import View
 from django.views.generic.base import ContextMixin
 from formtools.wizard.views import SessionWizardView
 
 from dbentry.actions.base import (
-    get_object_link,
-    ActionMixin,
     ActionConfirmationView,
-    WizardConfirmationView,
-    AdminActionMixin,
+    ActionMixin,
     AdminActionConfirmationView,
+    AdminActionMixin,
+    WizardConfirmationView,
+    get_object_link,
 )
 from dbentry.admin.forms import MIZAdminForm
 from dbentry.site.views.base import ACTION_SELECTED_ITEM
-from tests.case import DataTestCase, RequestTestCase, AdminTestCase
+from tests.case import AdminTestCase, DataTestCase, RequestTestCase
 from tests.model_factory import make
 from tests.test_actions.case import ActionViewTestCase, AdminActionViewTestCase
 from tests.test_actions.models import Band
@@ -383,7 +383,10 @@ class TestConfirmationViewsIntegrated(AdminTestCase):
         self.assertEqual(self.obj.band_name, "RENAMED")
 
     def test_action_not_allowed(self):
-        """The user should be redirected back to the changelist, if the action is not allowed."""
+        """
+        The user should be redirected back to the changelist, if the action is
+        not allowed.
+        """
         request_data = {
             "action": "rename_band",
             helpers.ACTION_CHECKBOX_NAME: [str(self.inactive.pk)],  # selected objects

@@ -1,14 +1,12 @@
 from collections import OrderedDict
-from typing import Any, Dict, List, OrderedDict as OrderedDictType, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, Sequence, Tuple, Type, Union
+from typing import OrderedDict as OrderedDictType
 
 from django import views
 from django.apps import apps
 from django.contrib.admin.utils import get_fields_from_path
 from django.contrib.auth import get_permission_codename
-from django.db.models import (
-    Count, F, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet,
-    Window
-)
+from django.db.models import Count, F, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet, Window
 from django.db.models.query import RawQuerySet
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -18,10 +16,8 @@ from django.utils.safestring import SafeString, SafeText
 
 from dbentry.admin.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.tools.decorators import register_tool
-from dbentry.tools.forms import (
-    DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
-)
-from dbentry.utils.html import get_obj_link, create_hyperlink
+from dbentry.tools.forms import DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
+from dbentry.utils.html import create_hyperlink, get_obj_link
 from dbentry.utils.models import get_model_from_string, get_model_relations
 from dbentry.utils.query import string_list
 from dbentry.utils.url import get_changelist_url
@@ -227,7 +223,10 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
 
         # noinspection PyShadowingNames
         def get_cl_link(dupe_group: List[Tuple[Model, SafeString, list[str]]]) -> SafeString:
-            """Provide a link to the changelist page for this group of duplicate items."""
+            """
+            Provide a link to the changelist page for this group of duplicate
+            items.
+            """
             cl_url = get_changelist_url(
                 self.request,
                 self.model,
@@ -473,7 +472,7 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
 
     def _get_models(self, app_label: str = '') -> List[Model]:
         # Limit the models to those subclassing BaseModel only.
-        from dbentry.base.models import BaseModel, BaseM2MModel  # avoid circular imports
+        from dbentry.base.models import BaseM2MModel, BaseModel  # avoid circular imports
         # noinspection PyTypeChecker
         return [
             m for m in super()._get_models(app_label)

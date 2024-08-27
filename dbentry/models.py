@@ -3,26 +3,23 @@ from typing import Optional
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import OuterRef, Subquery, Count, Exists
+from django.db.models import Count, Exists, OuterRef, Subquery
 
 import dbentry.m2m as _m2m
-from dbentry.base.models import (
-    AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
-)
-from dbentry.fields import (
-    EANField, ISBNField, ISSNField, PartialDateField, YearField
-)
+from dbentry.base.models import AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
+from dbentry.fields import EANField, ISBNField, ISSNField, PartialDateField, YearField
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
 from dbentry.query import AusgabeQuerySet
 from dbentry.utils.models import get_model_fields, get_model_relations
-from dbentry.utils.query import to_array, array_to_string, limit, string_list
+from dbentry.utils.query import array_to_string, limit, string_list, to_array
 from dbentry.utils.text import concat_limit
 
 BESTAND_MODEL_NAME = 'dbentry.Bestand'  # TODO: move to models.py
 
 
-# TODO: use Func(<concatenated array>, Value(50), function="left") in place of "concat_limit()"
+# TODO: use Func(<concatenated array>, Value(50), function="left") in place of
+#  "concat_limit()"
 
 
 class Person(ComputedNameModel):

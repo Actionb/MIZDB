@@ -4,7 +4,7 @@ from django.contrib.admin.utils import unquote
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic.list import ListView
 
-from dbentry.site.views.base import ModelViewMixin, PAGE_VAR
+from dbentry.site.views.base import PAGE_VAR, ModelViewMixin
 from dbentry.utils import permission as perms
 
 

@@ -8,9 +8,10 @@ from django.db import models
 from django.db.models import Count
 
 from dbentry import models as _models
-from dbentry.query import CNQuerySet, MIZQuerySet, build_date, InvalidJahrgangError
+from dbentry.query import CNQuerySet, InvalidJahrgangError, MIZQuerySet, build_date
 from tests.case import DataTestCase, MIZTestCase
 from tests.model_factory import make
+
 from .models import Band
 
 
@@ -195,13 +196,19 @@ class TestCNQuerySet(DataTestCase):
         self.assertTrue(self.queryset.filter(month=11, year=2023, _changed_flag=True).exists())
 
     def test_defer_updates_name(self):
-        """Assert that _update_names is called when using defer() without a '_name' argument."""
+        """
+        Assert that _update_names is called when using defer() without a
+        '_name' argument.
+        """
         with patch.object(CNQuerySet, '_update_names') as update_mock:
             list(self.queryset.defer('id'))
             update_mock.assert_called()
 
     def test_defer_not_updates_name(self):
-        """Assert that _update_names is not called when using defer() with a '_name' argument."""
+        """
+        Assert that _update_names is not called when using defer() with a
+        '_name' argument.
+        """
         with patch.object(CNQuerySet, '_update_names') as update_mock:
             list(self.queryset.defer('_name'))
             update_mock.assert_not_called()
@@ -227,13 +234,19 @@ class TestCNQuerySet(DataTestCase):
             update_mock.assert_not_called()
 
     def test_only_updates_name(self):
-        """Assert that _update_names is called when using only() with a '_name' argument."""
+        """
+        Assert that _update_names is called when using only() with a '_name'
+        argument.
+        """
         with patch.object(CNQuerySet, '_update_names') as update_mock:
             list(self.queryset.only('_name'))
             update_mock.assert_called()
 
     def test_only_not_updates_name(self):
-        """Assert that _update_names is not called when using only() without a '_name' argument."""
+        """
+        Assert that _update_names is not called when using only() without a
+        '_name' argument.
+        """
         with patch.object(CNQuerySet, '_update_names') as update_mock:
             list(self.queryset.only('id'))
             update_mock.assert_not_called()
@@ -254,7 +267,10 @@ class TestCNQuerySet(DataTestCase):
         self.assertFalse(values['_changed_flag'])
 
     def test_values_updates_name(self):
-        """Assert that _update_names is called when using values() with a '_name' argument."""
+        """
+        Assert that _update_names is called when using values() with a '_name'
+        argument.
+        """
         with patch.object(CNQuerySet, '_update_names') as update_mock:
             list(self.queryset.values('_name'))
             update_mock.assert_called()
@@ -269,7 +285,10 @@ class TestCNQuerySet(DataTestCase):
             update_mock.assert_not_called()
 
     def test_values_list_updates_name(self):
-        """Assert that _update_names is called when using values_list() with a '_name' argument."""
+        """
+        Assert that _update_names is called when using values_list() with a
+        '_name' argument.
+        """
         with patch.object(CNQuerySet, '_update_names') as update_mock:
             list(self.queryset.values_list('_name'))
             update_mock.assert_called()

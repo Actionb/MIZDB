@@ -1,9 +1,10 @@
 from django.test import override_settings
-from django.urls import path, include
+from django.urls import include, path
 
-from dbentry.utils.html import create_hyperlink, get_obj_link, link_list, get_changelist_link
+from dbentry.utils.html import create_hyperlink, get_changelist_link, get_obj_link, link_list
 from tests.case import DataTestCase, RequestTestCase
 from tests.model_factory import make
+
 from .admin import admin_site
 from .models import Audio
 

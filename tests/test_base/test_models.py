@@ -31,7 +31,7 @@ class TestBaseModel(MIZTestCase):
         self.assertIn(self.obj, queryset)
 
     def test_qs_exception(self):
-        """qs should raise a TypeError, if called from class level."""
+        """The qs method should raise a TypeError, if called from class level."""
         with self.assertRaises(TypeError):
             self.model.qs(self.model)
 
@@ -173,7 +173,7 @@ class TestComputedNameModel(MIZTestCase):
 
     def test_update_name_no_pk(self):
         """
-        Unsaved instances should always be ignored, as update_name relies on 
+        Unsaved instances should always be ignored, as update_name relies on
         filtering queries with the instance's pk.
         """
         obj = self.model()

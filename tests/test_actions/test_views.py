@@ -13,27 +13,26 @@ from django.db import models
 from django.db.models import QuerySet
 from django.forms.formsets import ManagementForm
 from django.http import HttpResponse
-from django.test import override_settings, TestCase
-from django.urls import path
-from django.urls import reverse
+from django.test import TestCase, override_settings
+from django.urls import path, reverse
 from django.utils.translation import override as translation_override
 from formtools.wizard.views import WizardView
 
 import dbentry.admin.admin as _admin
 import dbentry.models as _models
 from dbentry.actions.forms import (
+    AdminMergeConflictsFormSet,
     BrochureActionFormOptions,
     BrochureActionFormSet,
     MergeFormSelectPrimary,
-    AdminMergeConflictsFormSet,
 )
 from dbentry.actions.views import (
+    AdminMergeView,
     BulkEditJahrgang,
     ChangeBestand,
     MergeView,
     MoveToBrochure,
     Replace,
-    AdminMergeView,
     text_summary,
 )
 from dbentry.admin import actions as _actions
@@ -42,7 +41,7 @@ from dbentry.utils.html import get_obj_link
 from tests.case import LoggingTestMixin
 from tests.model_factory import make
 from tests.test_actions.case import ActionViewTestCase, AdminActionViewTestCase
-from tests.test_actions.models import Band, Genre, Audio
+from tests.test_actions.models import Audio, Band, Genre
 
 admin_site = admin.AdminSite(name="test_actions")
 
@@ -537,7 +536,7 @@ class TestBulkEditJahrgang(AdminActionViewTestCase, LoggingTestMixin):
         self.assertEqual(len(display_field_values), 3)
 
         # 'jahrgang' value:
-        self.assertEqual(display_field_values[0], f"Jahrgang: ---")
+        self.assertEqual(display_field_values[0], "Jahrgang: ---")
 
         # 'year' values:
         # noinspection PyUnresolvedReferences
@@ -1220,7 +1219,10 @@ class TestMoveToBrochure(AdminActionViewTestCase):
     @patch("dbentry.actions.views.is_protected", new=Mock(return_value=False))
     @patch("dbentry.actions.views.get_model_from_string")
     def test_perform_action_kalender(self, get_model_mock, *_mocks):
-        """Assert that perform_action moves Ausgabe instances to the model 'Kalender'."""
+        """
+        Assert that perform_action moves Ausgabe instances to the model
+        'Kalender'.
+        """
         target_model = _models.Kalender
         get_model_mock.return_value = target_model
         form_data = [
@@ -1758,7 +1760,10 @@ class TestReplace(AdminActionViewTestCase, LoggingTestMixin):
                     )
 
     def test_get_form_kwargs_sets_choices(self):
-        """Assert that get_form_kwargs adds the choices for the replacements choice field."""
+        """
+        Assert that get_form_kwargs adds the choices for the replacements
+        choice field.
+        """
         view = self.get_view(request=self.get_request())
         form_kwargs = view.get_form_kwargs()
         self.assertIn("choices", form_kwargs)

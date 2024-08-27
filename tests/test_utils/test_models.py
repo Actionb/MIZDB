@@ -90,9 +90,7 @@ class TestModelUtils(MIZTestCase):
             utils.get_fields_and_lookups(Protected, 'nofield__icontains')
 
     def test_clean_contenttypes(self):
-        """
-        clean_contenttypes should delete CT objects with invalid models.
-        """
+        """clean_contenttypes should delete CT objects with invalid models."""
         exists = ContentType.objects.get_for_model(Protected)
         not_exists = ContentType.objects.create(app_label='utils', model='NotExists')
         content_types = Mock(return_value=[exists, not_exists])
@@ -242,9 +240,7 @@ class TestCleanPerms(MIZTestCase):
         self.assertEqual(stream.getvalue(), expected_message)
 
     def test_only_default_perms(self):
-        """
-        Assert that clean_permissions only works on model default permissions.
-        """
+        """Assert that clean_permissions only works on model default permissions."""
         p1 = Permission.objects.get(codename='eat_spam')
         # Change the codename so that clean_permissions has something to clean:
         p1.codename = 'eat_lovelyspam'

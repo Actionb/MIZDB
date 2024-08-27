@@ -5,10 +5,7 @@ from django.db.models import Model, QuerySet
 from django.db.utils import IntegrityError
 
 from dbentry.utils.admin import log_addition, log_change, log_deletion
-from dbentry.utils.models import (
-    get_model_relations, get_relation_info_to, get_updatable_fields,
-    is_protected
-)
+from dbentry.utils.models import get_model_relations, get_relation_info_to, get_updatable_fields, is_protected
 
 
 def merge_records(

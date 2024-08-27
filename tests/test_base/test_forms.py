@@ -5,8 +5,11 @@ from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
 from dbentry.base.forms import (
-    DiscogsFormMixin, DynamicChoiceFormMixin, FieldGroup, DeleteDuplicatesMixin,
-    MinMaxRequiredFormMixin
+    DeleteDuplicatesMixin,
+    DiscogsFormMixin,
+    DynamicChoiceFormMixin,
+    FieldGroup,
+    MinMaxRequiredFormMixin,
 )
 from tests.case import MIZTestCase
 from tests.model_factory import make
@@ -232,7 +235,7 @@ class DynamicChoiceFormMixinTest(MIZTestCase):
 
     def test_set_choices_raises_type_error(self):
         """
-        set_choices should raise an exception if the 'choices' argument is not 
+        set_choices should raise an exception if the 'choices' argument is not
         a dictionary.
         """
         form = self.TestForm()

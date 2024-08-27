@@ -8,10 +8,16 @@ from django.test import TestCase
 
 from dbentry import models as _models
 from dbentry.fields import PartialDate, PartialDateFormField
-from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory, DALSearchFormFactory, \
-    MIZSelectSearchFormFactory
-from dbentry.search.forms import RangeFormField, RangeWidget, SearchFormFactory, MIZAdminSearchForm
+from dbentry.search.forms import (
+    DALSearchFormFactory,
+    MIZAdminSearchForm,
+    MIZSelectSearchFormFactory,
+    RangeFormField,
+    RangeWidget,
+    SearchFormFactory,
+)
 from tests.model_factory import make
+
 from .models import Artikel, Ausgabe, Genre, InheritedPKModel, Magazin
 
 
@@ -535,7 +541,7 @@ class TestSearchForm(TestCase):
         form.cleaned_data = {'id__in': '1,2'}
         self.assertEqual(form.clean_id__in(), '1,2')
 
-        
+
 class TestMIZAdminSearchForm(TestCase):
     model = Artikel
 

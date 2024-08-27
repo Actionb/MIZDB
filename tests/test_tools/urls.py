@@ -1,8 +1,7 @@
 from django.urls import path
 
-from dbentry.tools.views import (
-    DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, UnusedObjectsView
-)
+from dbentry.tools.views import DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, UnusedObjectsView
+
 from .admin import admin_site
 
 urlpatterns = [

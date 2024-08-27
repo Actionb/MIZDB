@@ -17,9 +17,7 @@ StrOrInt = Optional[Union[str, int]]
 
 
 class YearField(models.IntegerField):
-    """
-    An IntegerField that validates against min and max values for year numbers.
-    """
+    """An IntegerField that validates against min and max values for year numbers."""
 
     MAX_YEAR: int = 3000
     MIN_YEAR: int = 1800
@@ -49,6 +47,8 @@ class StdNumWidget(forms.TextInput):
 
         Args:
             format_callback: callable that takes the plain value and formats it
+            args: positional arguments for TextInput
+            kwargs: keyword arguments for TextInput
         """
         self.format_callback = format_callback
         super().__init__(*args, **kwargs)
@@ -75,6 +75,8 @@ class StdNumFormField(forms.CharField):
         Args:
             stdnum (module): the module of the stdnum library that implements
               validation and formatting of the desired kind of standard number
+            args: positional arguments for CharField
+            kwargs: keyword arguments for CharField
         """
         self.stdnum = stdnum
         super().__init__(*args, **kwargs)

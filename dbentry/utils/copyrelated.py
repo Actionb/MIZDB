@@ -12,9 +12,7 @@ from dbentry.utils.admin import _get_relation_change_message, create_logentry
 
 
 def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
-    """
-    Add the related_objects in ``paths`` to an equivalent relation of ``obj``.
-    """
+    """Add the related_objects in ``paths`` to an equivalent relation of ``obj``."""
     change_message = []
     # noinspection PyUnresolvedReferences
     opts = obj._meta

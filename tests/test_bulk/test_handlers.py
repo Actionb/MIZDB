@@ -3,9 +3,7 @@ from typing import Union
 
 from django.test import TestCase
 
-from dbentry.tools.bulk.handlers import (
-    GroupingHandler, ItemHandler, NumericHandler, RangeGroupingHandler, RangeHandler
-)
+from dbentry.tools.bulk.handlers import GroupingHandler, ItemHandler, NumericHandler, RangeGroupingHandler, RangeHandler
 
 
 class TestItemHandler(TestCase):

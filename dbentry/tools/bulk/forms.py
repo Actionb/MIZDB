@@ -261,10 +261,11 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         if isinstance(jahre, str):
             jahre = [jahre]
         if jg and jahre and qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre).exists():
-            # Only filter for both jahrgang and jahre if such a queryset actually exists.
-            # If we can only find instances with jahre, but not with jahre and 
+            # Only filter for both jahrgang and jahre if such a queryset
+            # actually exists.
+            # If we can only find instances with jahre, but not with jahre and
             # jahrgang, then use the queryset that only uses jahre.
-            # jahre should take priority, since issues rarely specify a value 
+            # jahre should take priority, since issues rarely specify a value
             # for  jahrgang. Instead, a value for jahrgang is usually derived
             # from the jahre values, f.ex.: first issue appeared in the year
             # 2000, that would make issues published in 2010 to be of the

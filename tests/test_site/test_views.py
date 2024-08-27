@@ -1,8 +1,8 @@
 """Tests for the dbentry.site base views."""
 
 import re
-from unittest.mock import patch, Mock, call
-from urllib.parse import urlencode, unquote
+from unittest.mock import Mock, call, patch
+from urllib.parse import unquote, urlencode
 
 from django import forms
 from django.contrib import admin
@@ -10,28 +10,29 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.template import TemplateDoesNotExist
-from django.test import override_settings, TestCase
-from django.urls import path, reverse, NoReverseMatch
+from django.test import TestCase, override_settings
+from django.urls import NoReverseMatch, path, reverse
 from mizdb_tomselect.views import IS_POPUP_VAR
 
 from dbentry.site.forms import InlineForm
 from dbentry.site.views.base import (
-    BaseEditView,
-    Inline,
-    BaseListView,
-    SEARCH_VAR,
-    ORDER_VAR,
-    BaseViewMixin,
-    ModelViewMixin,
     ACTION_SELECTED_ITEM,
+    ORDER_VAR,
+    SEARCH_VAR,
+    BaseEditView,
+    BaseListView,
+    BaseViewMixin,
+    Inline,
+    ModelViewMixin,
     SearchableListView,
 )
-from dbentry.site.views.delete import DeleteView, DeleteSelectedView
+from dbentry.site.views.delete import DeleteSelectedView, DeleteView
 from dbentry.site.views.help import HelpView, has_help_page
 from dbentry.site.views.history import HistoryView
-from tests.case import ViewTestCase, DataTestCase
+from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
-from .models import Band, Genre, Musician, Country
+
+from .models import Band, Country, Genre, Musician
 
 
 class BandView(BaseEditView):
@@ -385,9 +386,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertEqual(self.obj.name, "Hovercrafts Full Of Eels")
 
     def test_post_save_adds_logentry(self):
-        """
-        Assert that a LogEntry object is created after saving the model object.
-        """
+        """Assert that a LogEntry object is created after saving the model object."""
         form_data = {
             "name": "Vikings of SPAMs",
             "_continue": "",
@@ -417,7 +416,10 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertEqual("Name, Url und Origin Country geändert.", entry.get_change_message())
 
     def test_get_success_message_add(self):
-        """Assert that a message is displayed when an object was added successfully."""
+        """
+        Assert that a message is displayed when an object was added
+        successfully.
+        """
         form_data = {
             "name": "Vikings of SPAMs",
             "_continue": "",
@@ -428,7 +430,10 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertMessageSent(response.wsgi_request, re.compile("Band.*Vikings of SPAMs.*erfolgreich erstellt."))
 
     def test_get_success_message_change(self):
-        """Assert that a message is displayed when an object was changed successfully."""
+        """
+        Assert that a message is displayed when an object was changed
+        successfully.
+        """
         form_data = {
             "name": "Vikings of SPAMs",
             "_continue": "",
@@ -1032,7 +1037,10 @@ class TestDeleteView(ViewTestCase):
         self.assertFalse(self.model.objects.filter(pk=self.obj.pk).exists())
 
     def test_redirects_to_changelist(self):
-        """Assert that a successful deletion redirects the user to the model's changelist."""
+        """
+        Assert that a successful deletion redirects the user to the model's
+        changelist.
+        """
         response = self.post_response(self.url, user=self.super_user, follow=True)
         self.assertEqual(response.wsgi_request.path, reverse("test_site_country_changelist"))
 

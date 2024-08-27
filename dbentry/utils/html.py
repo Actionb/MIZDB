@@ -1,4 +1,4 @@
-from typing import Union, Type, Optional, Any, Callable, Sequence
+from typing import Any, Callable, Optional, Sequence, Type, Union
 
 from django.db.models import Model
 from django.http import HttpRequest

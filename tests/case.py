@@ -8,7 +8,7 @@ import pytest
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
-from django.contrib.auth import get_user_model, get_permission_codename
+from django.contrib.auth import get_permission_codename, get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages import get_messages

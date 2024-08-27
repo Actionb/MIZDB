@@ -12,11 +12,14 @@ from django.views.generic import TemplateView
 
 from dbentry.search.forms import MIZAdminSearchForm
 from dbentry.search.mixins import (
-    AdminSearchFormMixin, ChangelistSearchFormMixin,
-    MIZAdminSearchFormMixin, SearchFormMixin
+    AdminSearchFormMixin,
+    ChangelistSearchFormMixin,
+    MIZAdminSearchFormMixin,
+    SearchFormMixin,
 )
 from tests.case import AdminTestCase, RequestTestCase, ViewTestCase
 from tests.model_factory import batch, make
+
 from .admin import ArtikelAdmin, BandAdmin, admin_site
 from .models import Artikel, Ausgabe, Band, Genre
 
@@ -41,8 +44,8 @@ class TestSearchFormMixin(ViewTestCase):
 
     def test_get_search_form_class(self):
         """
-        Assert that the searchform_factory is called with the expected kwargs.
-        (search_form_kwargs declared on the view + the passed in kwargs)
+        Assert that the searchform_factory is called with the expected kwargs
+        (search_form_kwargs declared on the view + the passed in kwargs).
         """
         search_form_kwargs = {'fields': ['datum'], 'labels': {'datum': 'Not datum'}}
         labels_override = {'datum': 'Das Datum!'}
@@ -236,8 +239,8 @@ class TestAdminMixin(AdminTestCase):
     def test_response_post_save_preserves_multi_values(self):
         """
         Assert that multiple values of a preserved_filter querystring are
-        included in the redirect url back to the changelist from the changeform.
-        (they were dropped previously due to calling dict() on a MultiValueDict)
+        included in the redirect url back to the changelist from the changeform
+        (they were dropped previously due to calling dict() on a MultiValueDict).
         """
         request_data = {'_changelist_filters': 'genre=1&genre=2'}
         obj = make(self.model)
@@ -356,7 +359,7 @@ class TestMIZAdminSearchFormMixin(TestCase):
 
     def test_get_search_form_class_custom_form_class(self):
         """
-        Assert that get_search_form_class calls the factory with the 
+        Assert that get_search_form_class calls the factory with the
         expected 'form' kwarg.
         """
         # Priorities for the form kwarg:
@@ -415,7 +418,7 @@ class TestMIZAdminSearchFormMixin(TestCase):
     def test_check_tabular_autocompletes_tabular_not_included(self):
         """
         Assert that the check creates Info messages for tabular inline fields
-        that are included in the search form's fields, but not in the search 
+        that are included in the search form's fields, but not in the search
         form's tabular fields (i.e. not flagged as tabular).
         """
         search_form_kwargs = {'fields': ['some_field'], 'tabular': []}
@@ -427,7 +430,7 @@ class TestMIZAdminSearchFormMixin(TestCase):
 
     def test_check_tabular_autocompletes_not_in_fields(self):
         """
-        Assert that the check ignores tabular inline fields that are not 
+        Assert that the check ignores tabular inline fields that are not
         included in the search form's fields.
         """
         search_form_kwargs = {'fields': []}
@@ -584,8 +587,8 @@ class TestSearchFormChangelist(AdminTestCase):
 
     def test_preserved_filters_result_list(self):
         """
-        Assert that the links to the result items contain the encoded filters.
-        (for filter preservation)
+        Assert that the links to the result items contain the encoded filters
+        (for filter preservation).
         """
         preserved_filters_name = '_changelist_filters'
         filters = [

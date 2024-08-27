@@ -3,10 +3,8 @@ from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 
 from dbentry.search.forms import MIZAdminSearchForm
-from dbentry.search.mixins import (
-    AdminSearchFormMixin, ChangelistSearchFormMixin,
-    MIZAdminSearchFormMixin
-)
+from dbentry.search.mixins import AdminSearchFormMixin, ChangelistSearchFormMixin, MIZAdminSearchFormMixin
+
 from .models import Artikel, Band
 
 admin_site = admin.AdminSite(name='test_search')

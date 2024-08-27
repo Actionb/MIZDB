@@ -1,8 +1,16 @@
 from django.core.exceptions import ValidationError
 
 from dbentry.validators import (
-    DNBURLValidator, DiscogsMasterReleaseValidator, DiscogsURLValidator, EANValidator,
-    ISBNValidator, ISSNValidator, InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength
+    DiscogsMasterReleaseValidator,
+    DiscogsURLValidator,
+    DNBURLValidator,
+    EANValidator,
+    InvalidChecksum,
+    InvalidComponent,
+    InvalidFormat,
+    InvalidLength,
+    ISBNValidator,
+    ISSNValidator,
 )
 from tests.case import MIZTestCase
 

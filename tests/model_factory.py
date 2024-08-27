@@ -1,10 +1,7 @@
 # WARNING: unique together options are not really supported. Use with caution.
 import itertools
 import sys
-from typing import (
-    Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar,
-    Union
-)
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import factory
 from django.db.models import Field
@@ -131,9 +128,7 @@ class RuntimeFactoryMixin(object):
 
 
 class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
-    """
-    A SubFactory that does not automatically create objects unless required.
-    """
+    """A SubFactory that does not automatically create objects unless required."""
 
     def __init__(self, *args: Any, required: bool = False, **kwargs: Any) -> None:
         """
@@ -143,6 +138,8 @@ class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
             required (bool): whether this SubFactory MUST create an object
               (usually: the field that this SubFactory represents is required
               i.e. not nullable)
+            args: positional arguments for the super class
+            kwargs: keyword arguments for the super class
         """
         self.required = required
         super().__init__(*args, **kwargs)
@@ -282,7 +279,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
                     # Separate items in extra that are iterables from those
                     # that are not.
                     iterables = {
-                        # e.g.: {'name': ['Alice','Bob','Charlie'], 'kuerzel': ['Al','Bo']}
+                        # e.g.: {'name': ['Alice','Bob','Charlie'], 'kuerzel': ['Al','Bo']}  # noqa: W505
                         k: v for k, v in context.extra.items()
                         if is_iterable(v)
                     }
@@ -490,9 +487,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 setattr(self.factory, rel.name, related_factory)
 
     def add_sub_factories(self) -> None:
-        """
-        Add SubFactories for every (forward) one-to-many relation of this model.
-        """
+        """Add SubFactories for every (forward) one-to-many relation of this model."""
         for field in get_model_fields(self.model, base=False, foreign=True, m2m=False):
             if not hasattr(self.factory, field.name):
                 factory_name = self._get_factory_name_for_model(field.related_model)

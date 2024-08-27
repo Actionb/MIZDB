@@ -1,13 +1,11 @@
 from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import Permission, AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 
-from dbentry.utils.permission import (
-    has_change_permission, has_delete_permission,
-    has_view_permission
-)
-from tests.case import UserTestCase, DataTestCase
+from dbentry.utils.permission import has_change_permission, has_delete_permission, has_view_permission
+from tests.case import DataTestCase, UserTestCase
+
 from .models import Band
 
 

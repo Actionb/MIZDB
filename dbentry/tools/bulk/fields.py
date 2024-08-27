@@ -6,9 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import Widget
 
-from dbentry.tools.bulk.handlers import (
-    GroupingHandler, NumericHandler, RangeGroupingHandler, RangeHandler
-)
+from dbentry.tools.bulk.handlers import GroupingHandler, NumericHandler, RangeGroupingHandler, RangeHandler
 
 
 class BaseSplitField(forms.CharField):

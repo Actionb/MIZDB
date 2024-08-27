@@ -3,7 +3,7 @@
 from urllib.parse import unquote
 
 from django.forms import ModelChoiceField
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 
 from dbentry import models as _models
 from dbentry.site.views import edit

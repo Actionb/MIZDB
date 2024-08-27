@@ -1,11 +1,11 @@
 from collections import OrderedDict
-from typing import Any, List, Optional, OrderedDict as OrderedDictType, Sequence, ValuesView
+from typing import Any, List, Optional, Sequence, ValuesView
+from typing import OrderedDict as OrderedDictType
 
-from django.conf import settings
 from django.contrib import admin
 from django.core import checks
 from django.http import HttpRequest, HttpResponse
-from django.urls import reverse, NoReverseMatch, reverse_lazy
+from django.urls import NoReverseMatch, reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache

@@ -68,6 +68,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
+        Handle a POST request.
+
         Either:
             - show the preview for *this* form
             - save the data from this form and continue to the next form
@@ -336,9 +338,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     # noinspection PyMethodMayBeStatic
     def instance_data(self, row: dict) -> dict:
-        """
-        Return data suitable to construct a model instance with from a given row.
-        """
+        """Return data suitable to construct a model instance with from a given row."""
         return {
             'jahrgang': row.get('jahrgang', None),
             'magazin': row.get('magazin'),

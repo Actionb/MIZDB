@@ -1,4 +1,4 @@
-from django.contrib.admin.views.main import ALL_VAR, ChangeList, ORDER_VAR
+from django.contrib.admin.views.main import ALL_VAR, ORDER_VAR, ChangeList
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
