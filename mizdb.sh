@@ -62,12 +62,14 @@ restore() {
 }
 
 update() {
+  current=$(git rev-parse --abbrev-ref HEAD)
   git remote update
-  git checkout master -q
+  if [ "$current" != "master" ]; then git checkout master -q; fi
   if docker exec -i $app_container scripts/app/check_update.py; then
     read -r -p "Soll das Update installiert werden? [j/n]: "
     if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
       echo "Abgebrochen."
+      if [ "$current" != "master" ]; then git checkout "$current" -q; fi
       exit 1
     fi
     set -e
@@ -103,6 +105,7 @@ update() {
     echo "Update abgeschlossen!"
     set +e
   fi
+  if [ "$current" != "master" ]; then git checkout "$current" -q; fi
 }
 
 restart() {

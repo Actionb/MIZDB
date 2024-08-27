@@ -34,7 +34,8 @@ def _get_local_version() -> str:
     Raises an UpdateCheckFailed exception if the VERSION files does not exist or
     if it could not be read.
     """
-    file_path = Path(__file__).parent.parent.joinpath("VERSION")
+    # PROJECT_ROOT is the third parent: PROJECT_ROOT/scripts/app/
+    file_path = Path(__file__).parents[2].joinpath("VERSION")
     try:
         with open(file_path, "r") as f:
             return f.read().strip()
