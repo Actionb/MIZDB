@@ -445,11 +445,12 @@ bash mizdb.sh uninstall
 
 ## Development
 
-Installiere zusätzliche Dependencies:
+Installiere zusätzliche Dependencies und Git Hooks:
 
 ```shell
 pip install -r requirements/dev.txt
 npm install
+pre-commit install
 ```
 
 ### CSS, Sass & Theme
