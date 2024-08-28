@@ -7,10 +7,10 @@ from dbentry.utils.models import get_model_relations
 
 
 def _replace(
-        obj: Model,
-        related_objects: QuerySet,
-        attr_name: str,
-        replacements: List[Model],
+    obj: Model,
+    related_objects: QuerySet,
+    attr_name: str,
+    replacements: List[Model],
 ) -> List[Model]:
     """
     For every model instance in 'related_objects', replace the object 'obj' in

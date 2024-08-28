@@ -19,8 +19,7 @@ class TestBaseModel(MIZTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj = make(
-            cls.model, titel='Alice Tester', other_title='Beats To Write Tests To',
-            beschreibung='They test things.'
+            cls.model, titel="Alice Tester", other_title="Beats To Write Tests To", beschreibung="They test things."
         )
         super().setUpTestData()
 
@@ -37,27 +36,27 @@ class TestBaseModel(MIZTestCase):
 
     def test_str_name_field_set(self):
         """With a name_field set, str() should use that field's value."""
-        self.obj.name_field = 'titel'
-        self.assertEqual(self.obj.__str__(), 'Alice Tester')
+        self.obj.name_field = "titel"
+        self.assertEqual(self.obj.__str__(), "Alice Tester")
 
     def test_str_no_name_field_set(self):
         """
         When no name_field is set, str() should concatenate the values of all
         fields that aren't empty, relations or explicitly excluded.
         """
-        self.obj.name_field = ''
-        self.obj.exclude_from_str = ['beschreibung']
-        self.assertEqual(self.obj.__str__(), 'Alice Tester Beats To Write Tests To')
+        self.obj.name_field = ""
+        self.obj.exclude_from_str = ["beschreibung"]
+        self.assertEqual(self.obj.__str__(), "Alice Tester Beats To Write Tests To")
         # Empty values should be ignored:
-        self.obj.titel = ''
-        self.assertEqual(self.obj.__str__(), 'Beats To Write Tests To')
+        self.obj.titel = ""
+        self.assertEqual(self.obj.__str__(), "Beats To Write Tests To")
 
     def test_merge_permission(self):
         """Assert that the model has the new 'merge' permission."""
         ct = ContentType.objects.get_for_model(self.model)
         self.assertIn(
-            get_permission_codename('merge', self.model._meta),
-            Permission.objects.filter(content_type=ct).values_list('codename', flat=True)
+            get_permission_codename("merge", self.model._meta),
+            Permission.objects.filter(content_type=ct).values_list("codename", flat=True),
         )
 
     def test_overview_applies_select_related(self):
@@ -95,25 +94,23 @@ class TestBaseM2MModel(MIZTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj = make(
-            cls.model, audio__titel='Testaudio', musiker__kuenstler_name='Alice Tester'
-        )
+        cls.obj = make(cls.model, audio__titel="Testaudio", musiker__kuenstler_name="Alice Tester")
         super().setUpTestData()
 
     def test_str_name_field_set(self):
         """With a name_field set, str() should use that field's related value."""
-        self.obj.name_field = 'musiker'
+        self.obj.name_field = "musiker"
         self.assertEqual(self.obj.__str__(), "Alice Tester")
 
     def test_str_no_name_field_set(self):
         # Without name_field.
-        self.obj.name_field = ''
+        self.obj.name_field = ""
         self.assertEqual(self.obj.__str__(), "Testaudio (Alice Tester)")
 
         # When there is only one field (or less) with values, str should call
         # the super method.
-        with patch('dbentry.base.models.get_model_fields') as mocked_get_fields:
-            with patch.object(BaseModel, '__str__') as mocked_super:
+        with patch("dbentry.base.models.get_model_fields") as mocked_get_fields:
+            with patch.object(BaseModel, "__str__") as mocked_super:
                 mocked_get_fields.return_value = [Mock(null=True)]
                 self.obj.__str__()
                 self.assertTrue(mocked_super.called)
@@ -124,36 +121,36 @@ class TestComputedNameModel(MIZTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj: Person = make(cls.model, vorname='Alice', nachname='Tester')
+        cls.obj: Person = make(cls.model, vorname="Alice", nachname="Tester")
         cls.qs = cls.model.objects.filter(pk=cls.obj.pk)  # noqa
         super().setUpTestData()
 
     def test_init(self):
         """The name should be updated with new data upon initialization."""
         qs = self.model.objects.filter(pk=self.obj.pk)
-        qs.update(vorname='Bob', _changed_flag=True)
+        qs.update(vorname="Bob", _changed_flag=True)
         obj = qs.get()
         self.assertFalse(obj._changed_flag)
         self.assertEqual(obj._name, "Bob Tester")
 
     def test_save_no_update(self):
         """save() should not update the name, if called with update=False."""
-        self.obj.vorname = 'Bob'
+        self.obj.vorname = "Bob"
         self.obj._changed_flag = True
-        with mock.patch.object(self.obj, 'update_name') as update_mock:
+        with mock.patch.object(self.obj, "update_name") as update_mock:
             self.obj.save(update=False)
         update_mock.assert_not_called()
         self.assertEqual(self.obj._name, "Alice Tester")
 
     def test_save_forces_update(self):
         """save() should update the name even if _changed_flag is False."""
-        self.obj.vorname = 'Bob'
+        self.obj.vorname = "Bob"
         self.obj._changed_flag = False
         self.obj.save()
         self.assertEqual(self.obj._name, "Bob Tester")
 
     def test_update_name(self):
-        self.obj.vorname = 'Bob'
+        self.obj.vorname = "Bob"
         self.obj._changed_flag = True
         self.obj.save(update=False)
         self.assertTrue(self.obj.update_name())
@@ -165,10 +162,10 @@ class TestComputedNameModel(MIZTestCase):
         self.obj.save(update=False)
         self.obj.update_name()
         self.assertFalse(self.obj._changed_flag)
-        self.assertFalse(self.qs.values_list('_changed_flag', flat=True).get())
+        self.assertFalse(self.qs.values_list("_changed_flag", flat=True).get())
 
     def test_name_default(self):
-        obj = make(self.model, nachname='')
+        obj = make(self.model, nachname="")
         self.assertEqual(str(obj), "No data for Person.")
 
     def test_update_name_no_pk(self):
@@ -183,12 +180,12 @@ class TestComputedNameModel(MIZTestCase):
 
     def test_update_name_aborts_on_name_deferred(self):
         """Do not allow updating the name if field '_name' is deferred."""
-        with mock.patch.object(self.obj, 'get_deferred_fields', Mock(return_value=['_name'])):
+        with mock.patch.object(self.obj, "get_deferred_fields", Mock(return_value=["_name"])):
             self.assertFalse(self.obj.update_name())
 
     def test_update_name_resets_change_flag_after_update(self):
         """The _changed_flag should be set to False after an update."""
-        self.obj._name = 'Beep'
+        self.obj._name = "Beep"
         self.obj._changed_flag = True
         self.assertTrue(self.obj.update_name())
         self.assertFalse(self.obj._changed_flag)
@@ -204,7 +201,7 @@ class TestComputedNameModel(MIZTestCase):
 
     def test_update_name_does_not_update_with_no_change_flag(self):
         """An update should be skipped, if the _changed_flag is False."""
-        self.qs.update(_name='Beep', _changed_flag=False)
+        self.qs.update(_name="Beep", _changed_flag=False)
         self.assertFalse(self.obj.update_name())
 
     def test_update_name_changed_flag_deferred(self):
@@ -212,8 +209,8 @@ class TestComputedNameModel(MIZTestCase):
         If _changed_flag is deferred, the value for it should be retrieved from
         the database directly. refresh_from_db should not be called.
         """
-        obj = self.qs.defer('_changed_flag').first()
-        with mock.patch.object(obj, 'refresh_from_db') as refresh_mock:
+        obj = self.qs.defer("_changed_flag").first()
+        with mock.patch.object(obj, "refresh_from_db") as refresh_mock:
             with self.assertNumQueries(1):
                 obj.update_name()
             refresh_mock.assert_not_called()
@@ -224,40 +221,33 @@ class TestComputedNameModel(MIZTestCase):
         'name_composing_fields'.
         """
         msg_template = "Attribute 'name_composing_fields' contains invalid item: '%s'. %s"
-        with patch.object(self.model, 'name_composing_fields'):
+        with patch.object(self.model, "name_composing_fields"):
             # Invalid field:
-            self.model.name_composing_fields = ['beep']
+            self.model.name_composing_fields = ["beep"]
             errors = self.model._check_name_composing_fields()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(
-                errors[0].msg,
-                msg_template % ('beep', "Person has no field named 'beep'")
-            )
+            self.assertEqual(errors[0].msg, msg_template % ("beep", "Person has no field named 'beep'"))
             # Invalid lookup:
-            self.model.name_composing_fields = ['nachname__year']
+            self.model.name_composing_fields = ["nachname__year"]
             errors = self.model._check_name_composing_fields()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(
-                errors[0].msg,
-                msg_template % ('nachname__year', "Invalid lookup: year for CharField.")
-            )
+            self.assertEqual(errors[0].msg, msg_template % ("nachname__year", "Invalid lookup: year for CharField."))
 
     def test_check_name_composing_fields_no_attribute(self):
         """
         Assert that _check_name_composing_fields issues a warning if the
         attribute 'name_composing_fields' is not set.
         """
-        with patch.object(self.model, 'name_composing_fields', new=None):
+        with patch.object(self.model, "name_composing_fields", new=None):
             errors = self.model._check_name_composing_fields()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Warning)
             self.assertEqual(
                 errors[0].msg,
-                "You must specify the fields that make up the name by "
-                "listing them in name_composing_fields."
+                "You must specify the fields that make up the name by listing them in name_composing_fields.",
             )

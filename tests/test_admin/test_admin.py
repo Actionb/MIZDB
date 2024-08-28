@@ -1571,8 +1571,7 @@ class TestChangelistAnnotations(AdminTestCase):
         other = make(self.model, ausgabejahr__jahr=2022, ausgabenum__num=1)
         query_string = (
             # Need to apply some filters or the result list will be empty.
-            "?ausgabejahr__jahr_0=2022&"
-            f"o={self.model_admin.list_display.index('num_list') + 1}"
+            f"?ausgabejahr__jahr_0=2022&o={self.model_admin.list_display.index('num_list') + 1}"
         )
         response = self.client.get(self.changelist_path + query_string)
         result_list = response.context_data["cl"].result_list

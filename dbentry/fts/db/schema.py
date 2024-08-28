@@ -12,9 +12,7 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
     """
 
     def _to_tsvector_weights(self, field):  # type: ignore[no-untyped-def]
-        sql_setweight = (
-            " setweight(to_tsvector({language}, COALESCE(NEW.{column}, '')), {weight}) ||"
-        )
+        sql_setweight = " setweight(to_tsvector({language}, COALESCE(NEW.{column}, '')), {weight}) ||"
 
         weights = []
         for column in field.columns:
@@ -22,10 +20,10 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
                 sql_setweight.format(
                     language=self.quote_value(column.language),
                     column=self.quote_name(column.name),
-                    weight=self.quote_value(column.weight)
+                    weight=self.quote_value(column.weight),
                 )
             )
-        weights[-1] = weights[-1][:-3] + ';'
+        weights[-1] = weights[-1][:-3] + ";"
 
         return weights
 

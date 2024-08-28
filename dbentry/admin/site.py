@@ -24,10 +24,11 @@ class MIZAdminSite(admin.AdminSite):
     Also, links to registered tool views are added to the sidebar of the index
     page.
     """
-    site_header = 'MIZDB'
-    site_title = 'MIZDB'
-    index_title = 'Index'
-    index_template = 'admin/index.html'
+
+    site_header = "MIZDB"
+    site_title = "MIZDB"
+    index_title = "Index"
+    index_template = "admin/index.html"
 
     site_url = reverse_lazy("index")
     # Disable the nav sidebar:
@@ -37,12 +38,7 @@ class MIZAdminSite(admin.AdminSite):
         super().__init__(*args, **kwargs)
         self.tools: List[tuple] = []
 
-    def app_index(
-            self,
-            request: HttpRequest,
-            app_label: str,
-            extra_context: Optional[dict] = None
-    ) -> HttpResponse:
+    def app_index(self, request: HttpRequest, app_label: str, extra_context: Optional[dict] = None) -> HttpResponse:
         """
         The categories added to the index page of 'dbentry' are essentially
         'fake' apps and since admin.AdminSite.app_index() is the index for a
@@ -51,7 +47,7 @@ class MIZAdminSite(admin.AdminSite):
         all apps, including our fake ones) for the response to include the
         grouping categories.
         """
-        if app_label == 'dbentry':
+        if app_label == "dbentry":
             # Redirect to the 'tidied' up index page of the main page
             return self.index(request, extra_context)
         return super().app_index(request, app_label, extra_context)
@@ -62,7 +58,7 @@ class MIZAdminSite(admin.AdminSite):
         # (dict keys: app_url, name, has_module_perms, models, app_label)
         dbentry_dict = None
         for i, app_dict in enumerate(app_list):
-            if app_dict['app_label'] == 'dbentry':
+            if app_dict["app_label"] == "dbentry":
                 dbentry_dict = app_list.pop(i)
                 break
 
@@ -71,15 +67,15 @@ class MIZAdminSite(admin.AdminSite):
             # Return an empty app_list.
             return []
 
-        model_list = dbentry_dict.pop('models')
+        model_list = dbentry_dict.pop("models")
         categories: OrderedDictType[str, list] = OrderedDict()
-        categories['Archivgut'] = []
-        categories['Stammdaten'] = []
-        categories['Sonstige'] = []
+        categories["Archivgut"] = []
+        categories["Stammdaten"] = []
+        categories["Sonstige"] = []
 
         # Divide the models into their categories.
         for m in model_list:
-            model_admin = get_model_admin_for_model(m['object_name'], self)
+            model_admin = get_model_admin_for_model(m["object_name"], self)
             if model_admin is None:  # pragma: no cover
                 continue
             # FIXME: Add a issubclass check: only MIZModelAdmins have the
@@ -87,15 +83,15 @@ class MIZAdminSite(admin.AdminSite):
             # noinspection PyUnresolvedReferences
             model_category = model_admin.get_index_category()
             if model_category not in categories:
-                categories['Sonstige'] = [m]
+                categories["Sonstige"] = [m]
             else:
                 categories[model_category].append(m)
 
         # Rebuild the app_list with the new categories.
         for category, models in categories.items():
             new_fake_app = dbentry_dict.copy()
-            new_fake_app['name'] = category
-            new_fake_app['models'] = models
+            new_fake_app["name"] = category
+            new_fake_app["models"] = models
             app_list.append(new_fake_app)
         return app_list
 
@@ -103,12 +99,12 @@ class MIZAdminSite(admin.AdminSite):
     def index(self, request: HttpRequest, extra_context: Optional[dict] = None) -> HttpResponse:
         # Add the registered admintools to the index page.
         extra_context = extra_context or {}
-        extra_context['admintools'] = self.build_admintools_context(request)
+        extra_context["admintools"] = self.build_admintools_context(request)
         response = super().index(request, extra_context)
         # Replace the original app_list with the one containing the grouping.
-        new_app_list = self.add_categories(response.context_data['app_list'])
+        new_app_list = self.add_categories(response.context_data["app_list"])
         if new_app_list:
-            response.context_data['app_list'] = new_app_list
+            response.context_data["app_list"] = new_app_list
         return response
 
     def check(self, app_configs: Optional[ValuesView]) -> List[checks.CheckMessage]:
@@ -121,19 +117,19 @@ class MIZAdminSite(admin.AdminSite):
                 errors.append(
                     checks.Error(
                         str(e),
-                        hint="Check register_tool decorator args of %s" % tool,
-                        obj="%s admin tools" % self.__class__
+                        hint=f"Check register_tool decorator args of {tool}",
+                        obj=f"{self.__class__} admin tools",
                     )
                 )
         return errors
 
     def register_tool(
-            self,
-            view: View,
-            url_name: str,
-            index_label: str,
-            permission_required: Sequence = (),
-            superuser_only: bool = False
+        self,
+        view: View,
+        url_name: str,
+        index_label: str,
+        permission_required: Sequence = (),
+        superuser_only: bool = False,
     ) -> None:
         """
         Add the given view to the sites' registered tools. A link to the

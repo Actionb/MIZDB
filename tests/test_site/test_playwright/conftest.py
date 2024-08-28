@@ -23,7 +23,7 @@ MODEL_VIEW_TYPES = [CHANGELIST_VIEW, ADD_VIEW, CHANGE_VIEW, DELETE_VIEW]
 # only has a view_only mode.
 CRUD_MODELS = sorted(
     [m for m in miz_site.views.keys() if m._meta.model_name.lower() != "bestand"],
-    key=lambda model: model._meta.model_name
+    key=lambda model: model._meta.model_name,
 )
 # Models with registered changelist views
 CHANGELIST_MODELS = sorted(miz_site.changelists.keys(), key=lambda model: model._meta.model_name)

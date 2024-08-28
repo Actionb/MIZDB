@@ -10,6 +10,7 @@ available.
 
 Note that this is expected to run inside the Docker container.
 """
+
 from pathlib import Path
 
 import requests

@@ -14,7 +14,7 @@ class ItemHandler(object):
           validate the item with
     """
 
-    regex: Union[str, re.Pattern] = ''
+    regex: Union[str, re.Pattern] = ""
 
     def __init__(self, regex: Optional[Union[str, re.Pattern]] = None) -> None:
         if regex is not None:
@@ -37,7 +37,7 @@ class ItemHandler(object):
 class NumericHandler(ItemHandler):
     """ItemHandler for numeric string literals."""
 
-    regex = r'^\d+$'
+    regex = r"^\d+$"
 
     def handle(self, item: str) -> Iterator[str]:
         if self.is_valid(item):
@@ -54,7 +54,7 @@ class RangeHandler(ItemHandler):
         * '1-6' yields  '1', '2', '3', '4', '5', '6'
     """
 
-    regex = r'^(\d+)-(\d+)$'
+    regex = r"^(\d+)-(\d+)$"
 
     def handle(self, item: str) -> Iterator[str]:
         match = self.is_valid(item)
@@ -75,7 +75,7 @@ class RangeGroupingHandler(ItemHandler):
         * '1-6*3' yields ['1', '2', '3'], ['4', '5', '6']
     """
 
-    regex = r'^(\d+)-(\d+)\*(\d+)$'
+    regex = r"^(\d+)-(\d+)\*(\d+)$"
 
     def handle(self, item: str) -> Iterator[List[str]]:
         match = self.is_valid(item)
@@ -95,8 +95,8 @@ class GroupingHandler(ItemHandler):
         * '1/2/3' yields ['1', '2', '3']
     """
 
-    regex = r'^\d+(/\d+)+$'
+    regex = r"^\d+(/\d+)+$"
 
     def handle(self, item: str) -> Iterator[List[str]]:
         if self.is_valid(item):
-            yield item.split('/')
+            yield item.split("/")

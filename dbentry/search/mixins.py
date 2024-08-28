@@ -29,7 +29,7 @@ class SearchFormMixin(object):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.search_form_kwargs = getattr(self, 'search_form_kwargs', None) or {}
+        self.search_form_kwargs = getattr(self, "search_form_kwargs", None) or {}
 
     def has_search_form(self) -> bool:
         """
@@ -39,7 +39,7 @@ class SearchFormMixin(object):
         A search form class would be empty if the instance's
         ``search_form_kwargs`` did not specify any fields.
         """
-        return bool(self.search_form_kwargs.get('fields'))
+        return bool(self.search_form_kwargs.get("fields"))
 
     def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         """
@@ -48,7 +48,7 @@ class SearchFormMixin(object):
         The form class is created by the searchform_factory, using the
         view's 'search_form_kwargs' and the provided keyword arguments.
         """
-        factory_kwargs = {'model': self.model, **self.search_form_kwargs, **kwargs}  # type: ignore[attr-defined]
+        factory_kwargs = {"model": self.model, **self.search_form_kwargs, **kwargs}  # type: ignore[attr-defined]
         return self.searchform_factory(**factory_kwargs)
 
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
@@ -78,32 +78,24 @@ class SearchFormMixin(object):
         # Relation fields defined by the model should be in the search form:
         rel_fields = [
             field.name
-            for field in get_model_fields(
-                self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
-            )
-            if not field.name.startswith('_')
+            for field in get_model_fields(self.model, base=False, foreign=True, m2m=True)  # type: ignore[attr-defined]
+            if not field.name.startswith("_")
         ]
-        for field_path in self.search_form_kwargs.get('fields', []):
+        for field_path in self.search_form_kwargs.get("fields", []):
             msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
             try:
-                search_utils.get_dbfield_from_path(
-                    self.model, field_path  # type: ignore[attr-defined]
-                )
+                search_utils.get_dbfield_from_path(self.model, field_path)  # type: ignore[attr-defined]
             except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                 errors.append(checks.Info(msg % e.args[0], obj=self))
             else:
                 try:
-                    rel_fields.remove(field_path.split('__')[0])
+                    rel_fields.remove(field_path.split("__")[0])
                 except ValueError:
                     # The first part of field_path is not in the rel_fields.
                     pass
         if rel_fields:
             errors.append(
-                checks.Info(
-                    "Changelist search form is missing fields for relations:"
-                    "\n\t%s" % rel_fields,
-                    obj=self
-                )
+                checks.Info(f"Changelist search form is missing fields for relations:\n\t{rel_fields}", obj=self)
             )
         return errors
 
@@ -114,18 +106,14 @@ class AdminSearchFormMixin(SearchFormMixin):
     changelist.
     """
 
-    change_list_template = 'admin/change_list.html'
+    change_list_template = "admin/change_list.html"
 
-    def changelist_view(
-            self,
-            request: HttpRequest,
-            extra_context: Optional[dict] = None
-    ) -> HttpResponse:
+    def changelist_view(self, request: HttpRequest, extra_context: Optional[dict] = None) -> HttpResponse:
         if extra_context is None:
             extra_context = {}
         # Add the search form as 'advanced_search_form' to the extra_context.
         search_form = self.get_search_form(data=request.GET)
-        extra_context['advanced_search_form'] = search_form
+        extra_context["advanced_search_form"] = search_form
         response = super().changelist_view(request, extra_context)  # type: ignore[misc]
         # Let django.admin do its thing, then update the response's context.
         self.update_changelist_context(response)
@@ -138,33 +126,33 @@ class AdminSearchFormMixin(SearchFormMixin):
         Add the search form's media to the media context and include other
         context variables required by the advanced_search_form.
         """
-        if not hasattr(response, 'context_data'):
+        if not hasattr(response, "context_data"):
             # Not all responses allow access to the template context post
             # instantiation.
             return response
         # noinspection PyUnresolvedReferences
         context_data = response.context_data
-        if hasattr(self, 'search_form') and hasattr(self.search_form, 'media'):
+        if hasattr(self, "search_form") and hasattr(self.search_form, "media"):
             # Add the search form's media to the context (if this model_admin
             # instance has one).
-            if 'media' in context_data:
-                context_data['media'] += self.search_form.media
+            if "media" in context_data:
+                context_data["media"] += self.search_form.media
             else:
-                context_data['media'] = self.search_form.media
+                context_data["media"] = self.search_form.media
         # django's search_form tag adds context items
         # (show_result_count, search_var) that are also required by the
         # advanced_search_form template. Since the default tag is not called
         # when an advanced_search_form is available, we need to add these
         # context items explicitly.
-        if 'cl' in context_data:
-            extra = search_form_tag_context(context_data['cl'])
+        if "cl" in context_data:
+            extra = search_form_tag_context(context_data["cl"])
             context_data.update(extra)
         context_data.update(kwargs)
         return response
 
     def lookup_allowed(self, lookup: str, value: Any) -> bool:
         allowed = super().lookup_allowed(lookup, value)  # type: ignore[misc]
-        if allowed or not hasattr(self, 'search_form'):
+        if allowed or not hasattr(self, "search_form"):
             # super() determined the lookup is allowed or
             # this model admin has no search form instance set:
             # no reason to dig deeper.
@@ -188,17 +176,14 @@ class AdminSearchFormMixin(SearchFormMixin):
             allowed.append(LessThanOrEqual.lookup_name)
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
-        return (
-                field_path in self.search_form.fields
-                and set(lookups).issubset(allowed)
-        )
+        return field_path in self.search_form.fields and set(lookups).issubset(allowed)
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Add data from the changelist filters to the add form's initial."""
         initial = super().get_changeform_initial_data(request)  # type: ignore[misc]
-        if '_changelist_filters' not in initial or not initial['_changelist_filters']:
+        if "_changelist_filters" not in initial or not initial["_changelist_filters"]:
             return initial
-        changelist_filters = QueryDict(initial['_changelist_filters'])
+        changelist_filters = QueryDict(initial["_changelist_filters"])
         if self.has_search_form():
             # Derive initial values directly from the processed search form data.
             form = self.get_search_form(data=changelist_filters)
@@ -213,9 +198,11 @@ class AdminSearchFormMixin(SearchFormMixin):
         """
         preserved_filters = dict(parse_qsl(self.get_preserved_filters(request)))  # type: ignore
         response = super()._response_post_save(request, obj)  # type: ignore[misc]
-        if (not isinstance(response, HttpResponseRedirect)
-                or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]
-                or '_changelist_filters' not in preserved_filters):
+        if (
+            not isinstance(response, HttpResponseRedirect)
+            or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]
+            or "_changelist_filters" not in preserved_filters
+        ):
             # Either the response is not a redirect (we need the url attribute)
             # or it redirects back to the index due to missing perms or
             # no changelist filters have been preserved.
@@ -239,7 +226,7 @@ class AdminSearchFormMixin(SearchFormMixin):
         post_url = response.url
         parsed_url = urlparse(post_url)
         post_url_query = QueryDict(parsed_url.query, mutable=True)
-        for lookup, values_list in QueryDict(preserved_filters['_changelist_filters']).lists():
+        for lookup, values_list in QueryDict(preserved_filters["_changelist_filters"]).lists():
             if lookup in post_url_query:
                 # Replace the list of values for this lookup, adding the values
                 # that were dropped by add_preserved_filters.
@@ -259,11 +246,8 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         # Set the default form class for searchform_factory, unless a class is
         # provided by kwargs or search_form_kwargs:
-        if not (
-                'form' in kwargs or
-                (self.search_form_kwargs and 'form' in self.search_form_kwargs)
-        ):
-            kwargs['form'] = MIZAdminSearchForm
+        if not ("form" in kwargs or (self.search_form_kwargs and "form" in self.search_form_kwargs)):
+            kwargs["form"] = MIZAdminSearchForm
         return super().get_search_form_class(**kwargs)
 
     def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
@@ -279,11 +263,11 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
         if not self.has_search_form():  # pragma: no cover
             return []
 
-        search_form_tabulars = self.search_form_kwargs.get('tabular', [])
+        search_form_tabulars = self.search_form_kwargs.get("tabular", [])
         messages = []
         for inline_cls in self.inlines:  # type: ignore[attr-defined]
-            for field_name in getattr(inline_cls, 'tabular_autocomplete', []):
-                if field_name not in self.search_form_kwargs['fields']:
+            for field_name in getattr(inline_cls, "tabular_autocomplete", []):
+                if field_name not in self.search_form_kwargs["fields"]:
                     continue
                 if field_name not in search_form_tabulars:
                     messages.append(

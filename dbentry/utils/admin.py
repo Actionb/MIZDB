@@ -11,14 +11,13 @@ from django.utils.translation import override as translation_override
 from dbentry.utils.models import get_model_from_string
 
 
-def get_model_admin_for_model(
-        model: Union[Type[Model], str], *admin_sites: AdminSite
-) -> Optional[ModelAdmin]:
+def get_model_admin_for_model(model: Union[Type[Model], str], *admin_sites: AdminSite) -> Optional[ModelAdmin]:
     """
     Check the registries of ``admin_sites`` for a ModelAdmin that represents
     ``model`` and return the first such ModelAdmin instance found.
     """
     from dbentry.admin.site import miz_site
+
     if isinstance(model, str):
         model = get_model_from_string(model)  # type: ignore[assignment]
     sites = admin_sites or [miz_site]
@@ -28,9 +27,7 @@ def get_model_admin_for_model(
     return None
 
 
-def construct_change_message(
-        form: ModelForm, formsets: List[BaseInlineFormSet], add: bool
-) -> List[Dict]:
+def construct_change_message(form: ModelForm, formsets: List[BaseInlineFormSet], add: bool) -> List[Dict]:
     """
     Construct a JSON structure describing changes from a changed object.
 
@@ -39,10 +36,10 @@ def construct_change_message(
     """
     change_message: List[Dict] = []
     if add:
-        change_message.append({'added': {}})
+        change_message.append({"added": {}})
     elif form.changed_data:
         changed_fields = [form.fields[field].label for field in form.changed_data]
-        change_message.append({'changed': {'fields': changed_fields}})
+        change_message.append({"changed": {"fields": changed_fields}})
     # Handle relational changes:
     if formsets:
         parent_model = form._meta.model
@@ -50,14 +47,14 @@ def construct_change_message(
             for formset in formsets:
                 for added_object in formset.new_objects:
                     msg = _get_relation_change_message(added_object, parent_model)
-                    change_message.append({'added': msg})
+                    change_message.append({"added": msg})
                 for changed_object, changed_fields in formset.changed_objects:
                     msg = _get_relation_change_message(changed_object, parent_model)
-                    msg['fields'] = changed_fields
-                    change_message.append({'changed': msg})
+                    msg["fields"] = changed_fields
+                    change_message.append({"changed": msg})
                 for deleted_object in formset.deleted_objects:
                     msg = _get_relation_change_message(deleted_object, parent_model)
-                    change_message.append({'deleted': msg})
+                    change_message.append({"deleted": msg})
     return change_message
 
 
@@ -86,23 +83,18 @@ def _get_relation_change_message(obj: Model, parent_model: Type[Model]) -> Dict:
                 return {
                     # Use the verbose_name of the model on the other end of the
                     # m2m relation as 'name'.
-                    'name': str(fld.related_model._meta.verbose_name),
+                    "name": str(fld.related_model._meta.verbose_name),
                     # Use the other related object directly instead of the
                     # record in the auto created through table.
-                    'object': str(getattr(obj, fld.name))
+                    "object": str(getattr(obj, fld.name)),
                 }
     return {
-        'name': str(opts.verbose_name),
-        'object': str(obj),
+        "name": str(opts.verbose_name),
+        "object": str(obj),
     }
 
 
-def create_logentry(
-        user_id: int,
-        obj: Model,
-        action_flag: int,
-        message: Union[str, list] = ''
-) -> LogEntry:
+def create_logentry(user_id: int, obj: Model, action_flag: int, message: Union[str, list] = "") -> LogEntry:
     """
     Create a LogEntry object to log an action.
 
@@ -132,18 +124,11 @@ def log_addition(user_id: int, obj: Model, related_obj: Model = None) -> LogEntr
     message: Dict[str, dict] = {"added": {}}
     if related_obj:
         # noinspection PyUnresolvedReferences
-        message['added'] = _get_relation_change_message(
-            related_obj, obj._meta.model
-        )
+        message["added"] = _get_relation_change_message(related_obj, obj._meta.model)
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
-def log_change(
-        user_id: int,
-        obj: Model,
-        fields: Union[Sequence[str], str],
-        related_obj: Model = None
-) -> LogEntry:
+def log_change(user_id: int, obj: Model, fields: Union[Sequence[str], str], related_obj: Model = None) -> LogEntry:
     """
     Log that values for the ``fields`` of ``object`` have changed.
 
@@ -152,21 +137,17 @@ def log_change(
     """
     if isinstance(fields, str):  # pragma: no cover
         fields = [fields]
-    message: Dict[str, dict] = {'changed': {}}
+    message: Dict[str, dict] = {"changed": {}}
     # noinspection PyUnresolvedReferences
     opts = obj._meta
     if related_obj:
-        message['changed'] = _get_relation_change_message(
-            related_obj, opts.model
-        )
+        message["changed"] = _get_relation_change_message(related_obj, opts.model)
         # Use the fields map of the related model:
         # noinspection PyUnresolvedReferences
         opts = related_obj._meta
 
     # noinspection PyTypeChecker
-    message['changed']['fields'] = sorted(
-        capfirst(opts.get_field(f).verbose_name) for f in fields
-    )
+    message["changed"]["fields"] = sorted(capfirst(opts.get_field(f).verbose_name) for f in fields)
     return create_logentry(user_id, obj, CHANGE, [message])
 
 

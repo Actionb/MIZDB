@@ -10,7 +10,7 @@ from .admin import FooAdmin, admin_site
 from .models import Foo
 
 
-@override_settings(ROOT_URLCONF='tests.test_templatetags.urls')
+@override_settings(ROOT_URLCONF="tests.test_templatetags.urls")
 class TestTags(AdminTestCase):
     admin_site = admin_site
     model = Foo
@@ -21,10 +21,10 @@ class TestTags(AdminTestCase):
         Assert that reset_ordering returns a link to the current changelist
         without any query string ordering items.
         """
-        request = self.get_request(self.changelist_path + f'?all=&{ORDER_VAR}=1.2')
+        request = self.get_request(self.changelist_path + f"?all=&{ORDER_VAR}=1.2")
         self.assertEqual(
             reset_ordering(self.get_changelist(request)),
-            '<span class="small quiet"><a href=?all=>Sortierung zurücksetzen</a></span>'
+            '<span class="small quiet"><a href=?all=>Sortierung zurücksetzen</a></span>',
         )
 
     def test_reset_ordering_no_ordering(self):
@@ -32,7 +32,7 @@ class TestTags(AdminTestCase):
         Assert that reset_ordering returns an empty string if the changelist
         does not have manually-specified ordering.
         """
-        request = self.get_request(self.changelist_path + '?all')
+        request = self.get_request(self.changelist_path + "?all")
         self.assertFalse(reset_ordering(self.get_changelist(request)))
 
     def test_checkbox_label(self):
@@ -42,10 +42,7 @@ class TestTags(AdminTestCase):
         """
 
         class Form(forms.Form):
-            cb = forms.BooleanField(label='Checkbox Test', required=False)
+            cb = forms.BooleanField(label="Checkbox Test", required=False)
 
-        admin_field = AdminField(Form(), 'cb', is_first=False)
-        self.assertEqual(
-            checkbox_label(admin_field),
-            '<label class="inline" for="id_cb">Checkbox Test:</label>'
-        )
+        admin_field = AdminField(Form(), "cb", is_first=False)
+        self.assertEqual(checkbox_label(admin_field), '<label class="inline" for="id_cb">Checkbox Test:</label>')

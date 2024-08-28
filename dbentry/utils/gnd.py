@@ -9,15 +9,15 @@ logger = logging.getLogger(__name__)
 
 
 def searchgnd(
-        query: str,
-        start: str = '1',
-        url: str = 'https://services.dnb.de/sru/authorities?',
-        version: str = '1.1',
-        operation: str = 'searchRetrieve',
-        schema: str = 'RDFxml',
-        identifier: str = 'gndo:gndIdentifier',
-        labels: Tuple[str] = ('gndo:preferredNameForThePerson',),
-        **params: List[str]
+    query: str,
+    start: str = "1",
+    url: str = "https://services.dnb.de/sru/authorities?",
+    version: str = "1.1",
+    operation: str = "searchRetrieve",
+    schema: str = "RDFxml",
+    identifier: str = "gndo:gndIdentifier",
+    labels: Tuple[str] = ("gndo:preferredNameForThePerson",),
+    **params: List[str],
 ) -> Tuple[List[Tuple[str, str]], int]:
     """
     Query the GND of the DNB and return a list of matching (id, label) pairs.
@@ -58,31 +58,26 @@ def searchgnd(
         return [], 0
 
     request_params = {
-        'query': [query],
-        'version': [version],
-        'operation': [operation],
-        'recordSchema': [schema],
-        'startRecord': [start],
-        **params
+        "query": [query],
+        "version": [version],
+        "operation": [operation],
+        "recordSchema": [schema],
+        "startRecord": [start],
+        **params,
     }
-    logger.info(f'Sending request to {url!r} using parameters {request_params!r}.')
+    logger.info(f"Sending request to {url!r} using parameters {request_params!r}.")
     response = requests.get(url, request_params)
-    logger.info(f'DNB SRU response status code: {response.status_code!r}')
+    logger.info(f"DNB SRU response status code: {response.status_code!r}")
     response.raise_for_status()  # raise 4xx and 5xx errors
 
     # Gather the namespaces and set the default namespace 'sru'.
-    namespaces = dict(
-        [
-            node
-            for _, node in ElementTree.iterparse(io.StringIO(response.text), events=['start-ns'])
-        ]
-    )
-    namespaces['sru'] = namespaces['']
+    namespaces = dict([node for _, node in ElementTree.iterparse(io.StringIO(response.text), events=["start-ns"])])
+    namespaces["sru"] = namespaces[""]
 
     root = ElementTree.fromstring(response.text)
     # Get the total number of matches:
     try:
-        result_count = int(root.find('.//sru:numberOfRecords', namespaces).text)  # type: ignore
+        result_count = int(root.find(".//sru:numberOfRecords", namespaces).text)  # type: ignore
     except AttributeError as exc:
         logger.error(
             "Could not find element 'sru:numberOfRecords' or the element found "
@@ -91,15 +86,13 @@ def searchgnd(
         )
         return [], 0
     except ValueError as exc:
-        logger.error(
-            f"Inappropriate text value for the 'numberOfRecords' element. Error message: {exc!s}"
-        )
+        logger.error(f"Inappropriate text value for the 'numberOfRecords' element. Error message: {exc!s}")
         return [], 0
 
     # Get the records returned in this batch.
     # Note that by default SRU returns 10 records at a time.
-    records = root.findall('.//sru:recordData', namespaces)
-    logger.info(f'SRU response returned {len(records)} of {result_count} matching records.')
+    records = root.findall(".//sru:recordData", namespaces)
+    logger.info(f"SRU response returned {len(records)} of {result_count} matching records.")
 
     results = []
     for record in records:
@@ -107,7 +100,7 @@ def searchgnd(
         if identifier_element is None:
             logger.warning(f"Record data contained no element with identifier tag {identifier!r}.")
             continue
-        if not getattr(identifier_element, 'text', None):
+        if not getattr(identifier_element, "text", None):
             # Reject elements without an ID value:
             logger.warning(f"No ID value found on element {identifier_element!r}.")
             continue
@@ -116,7 +109,7 @@ def searchgnd(
         # particular match.
         label: str = id_number
         for label_tag in labels:
-            label_element = record.find(f'.//{label_tag}', namespaces)
+            label_element = record.find(f".//{label_tag}", namespaces)
             if label_element is not None and label_element.text:
                 label = label_element.text
                 break

@@ -40,14 +40,14 @@ class FieldGroup:
     """
 
     def __init__(
-            self,
-            form: MinMaxForm,
-            *,
-            fields: List[str],
-            min_fields: Optional[int] = None,
-            max_fields: Optional[int] = None,
-            error_messages: Optional[Dict[str, str]] = None,
-            format_callback: Optional[Union[Callable, str]] = None,
+        self,
+        form: MinMaxForm,
+        *,
+        fields: List[str],
+        min_fields: Optional[int] = None,
+        max_fields: Optional[int] = None,
+        error_messages: Optional[Dict[str, str]] = None,
+        format_callback: Optional[Union[Callable, str]] = None,
     ) -> None:
         """
         Constructor for the FieldGroup.
@@ -229,7 +229,7 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         )
 
     def get_group_error_messages(
-            self, group: FieldGroup, error_messages: dict, format_callback: Optional[Union[Callable, str]] = None
+        self, group: FieldGroup, error_messages: dict, format_callback: Optional[Union[Callable, str]] = None
     ) -> dict:
         """
         Prepare and format the error messages for the given group.

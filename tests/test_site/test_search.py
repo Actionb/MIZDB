@@ -1,4 +1,5 @@
 """Tests for the `searchbar search` view."""
+
 import json
 from unittest.mock import Mock, patch
 

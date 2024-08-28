@@ -24,10 +24,7 @@ def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
                 # to a set that is already directly related to obj.
                 continue
             target_model = fields[-1].related_model
-            target_field = [
-                f for f in opts.get_fields()
-                if getattr(f, 'related_model', None) == target_model
-            ].pop()
+            target_field = [f for f in opts.get_fields() if getattr(f, "related_model", None) == target_model].pop()
         except (exceptions.FieldDoesNotExist, IndexError):
             continue
         # Get the IDs of the instances to copy to obj.
@@ -40,22 +37,12 @@ def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
             with transaction.atomic():
                 related_manager.add(*instances)
             for related_object in instances:
-                change_message.append(
-                    {'added': _get_relation_change_message(related_object, opts.model)}
-                )
+                change_message.append({"added": _get_relation_change_message(related_object, opts.model)})
     # Create LogEntry for all successful transactions.
     if change_message:
         try:
             # noinspection PyUnresolvedReferences
             create_logentry(request.user.pk, obj, CHANGE, change_message)
         except Exception as e:
-            message_text = (
-                    "Fehler beim Erstellen der LogEntry Objekte: \n"
-                    "%(error_class)s: %(error_txt)s" % {
-                        'error_class': e.__class__.__name__, 'error_txt': e.args[0]
-                    }
-            )
-            messages.add_message(
-                request=request, level=messages.ERROR,
-                message=message_text, fail_silently=True
-            )
+            message_text = f"Fehler beim Erstellen der LogEntry Objekte: \n{e.__class__.__name__}: {e.args[0]!s}"
+            messages.add_message(request=request, level=messages.ERROR, message=message_text, fail_silently=True)

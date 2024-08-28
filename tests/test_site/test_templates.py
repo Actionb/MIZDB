@@ -1,4 +1,5 @@
 """Tests for the dbentry.site templates."""
+
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.template import loader
@@ -18,17 +19,17 @@ class RenderTestCase(UserTestCase):
         return loader.render_to_string(template, context or self.get_context(), using=using)
 
     def get_soup(self, template, context=None, using=None):
-        return BeautifulSoup(self.render(template, context, using), 'html.parser')
+        return BeautifulSoup(self.render(template, context, using), "html.parser")
 
 
-@override_settings(ROOT_URLCONF='tests.test_site.urls')
+@override_settings(ROOT_URLCONF="tests.test_site.urls")
 class TestBase(RenderTestCase):
     template_name = "mizdb/base.html"
 
     def test_user_account_anonymous(self):
         """Check the contents of the user account block for anonymous users."""
-        soup = self.get_soup(self.template_name, {'user': AnonymousUser()})
-        account = str(soup.select('#user-account')[0])
+        soup = self.get_soup(self.template_name, {"user": AnonymousUser()})
+        account = str(soup.select("#user-account")[0])
         login_url = reverse("login")
         self.assertInHTML(f'<li><a class="dropdown-item" href="{login_url}">Anmelden</a></li>', account)
 
@@ -40,11 +41,11 @@ class TestBase(RenderTestCase):
         the password change page and a logout form.
         """
         user = self.staff_user
-        user.first_name = 'Alice'
-        csrf_token = 'foo'
+        user.first_name = "Alice"
+        csrf_token = "foo"
 
-        soup = self.get_soup(self.template_name, {'user': user, 'csrf_token': csrf_token})
-        account = str(soup.select('#user-account')[0])
+        soup = self.get_soup(self.template_name, {"user": user, "csrf_token": csrf_token})
+        account = str(soup.select("#user-account")[0])
 
         welcome_message = (
             '<li><span class="dropdown-item-text">Willkommen, <strong>Alice</strong></span></li>'
@@ -59,9 +60,9 @@ class TestBase(RenderTestCase):
         )
 
         expected_content = [
-            ('welcome message', welcome_message),
-            ('password change link', pw_change),
-            ('logout form', logout_form)
+            ("welcome message", welcome_message),
+            ("password change link", pw_change),
+            ("logout form", logout_form),
         ]
         for content_type, html in expected_content:
             with self.subTest(content_type=content_type):

@@ -20,27 +20,26 @@ class TestPermissions(DataTestCase, UserTestCase):
 
     def add_permission(self, action):
         perm = Permission.objects.get(
-            codename=get_permission_codename(action, self.opts),
-            content_type=self.content_type
+            codename=get_permission_codename(action, self.opts), content_type=self.content_type
         )
         self.user.user_permissions.add(perm)
         self.user = self.reload_user(self.user)
 
     def test_has_change_permission(self):
         self.assertFalse(has_change_permission(self.user, self.opts))
-        self.add_permission('change')
+        self.add_permission("change")
         self.assertTrue(has_change_permission(self.user, self.opts))
 
     def test_has_delete_permission(self):
         self.assertFalse(has_delete_permission(self.user, self.opts))
-        self.add_permission('delete')
+        self.add_permission("delete")
         self.assertTrue(has_delete_permission(self.user, self.opts))
 
     @override_settings(ANONYMOUS_CAN_VIEW=False)
     def test_has_view_permission(self):
         # Should return True with either view or change permission (or both).
         self.assertFalse(has_view_permission(self.user, self.opts))
-        self.add_permission('view')
+        self.add_permission("view")
         self.assertTrue(has_view_permission(self.user, self.opts))
 
         # Reset permissions:
@@ -48,9 +47,9 @@ class TestPermissions(DataTestCase, UserTestCase):
         self.user = self.reload_user(self.user)
         self.assertFalse(has_view_permission(self.user, self.opts))
 
-        self.add_permission('change')
+        self.add_permission("change")
         self.assertTrue(has_view_permission(self.user, self.opts))
-        self.add_permission('view')
+        self.add_permission("view")
         self.assertTrue(has_view_permission(self.user, self.opts))
 
     @override_settings(ANONYMOUS_CAN_VIEW=True)

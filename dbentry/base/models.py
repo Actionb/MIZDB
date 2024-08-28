@@ -30,9 +30,9 @@ class BaseModel(models.Model):
           optimizations for the overview queryset.
     """
 
-    name_field: str = ''
-    create_field: str = ''
-    exclude_from_str: tuple = ('beschreibung', 'bemerkungen', '_fts')
+    name_field: str = ""
+    create_field: str = ""
+    exclude_from_str: tuple = ("beschreibung", "bemerkungen", "_fts")
     select_related: tuple = ()
     prefetch_related: tuple = ()
 
@@ -53,17 +53,11 @@ class BaseModel(models.Model):
             result = str(opts.get_field(self.name_field).value_from_object(self))
         else:
             model_fields = [
-                f for f in opts.get_fields()
-                if f.concrete
-                and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
+                f
+                for f in opts.get_fields()
+                if f.concrete and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
             ]
-            result = " ".join(
-                [
-                    str(fld.value_from_object(self))
-                    for fld in model_fields
-                    if fld.value_from_object(self)
-                ]
-            )
+            result = " ".join([str(fld.value_from_object(self)) for fld in model_fields if fld.value_from_object(self)])
         return result.strip() or super().__str__()
 
     def qs(self) -> MIZQuerySet:
@@ -75,9 +69,7 @@ class BaseModel(models.Model):
                 requires a model instance.
         """
         if isinstance(self, type):
-            raise TypeError(
-                f"Calling qs() from class level is prohibited. Use {self.__name__}.objects instead."
-            )
+            raise TypeError(f"Calling qs() from class level is prohibited. Use {self.__name__}.objects instead.")
         # noinspection PyUnresolvedReferences
         return self._meta.model.objects.filter(pk=self.pk)
 
@@ -111,7 +103,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-        default_permissions = ('add', 'change', 'delete', 'merge', 'view')
+        default_permissions = ("add", "change", "delete", "merge", "view")
 
 
 class BaseM2MModel(BaseModel):
@@ -132,9 +124,7 @@ class BaseM2MModel(BaseModel):
             # fk_field.value_from_object(self) would only return the primary
             # key of the related object.
             str(getattr(self, fk_field.name))
-            for fk_field in get_model_fields(
-                self._meta.model, base=False, foreign=True, m2m=False
-            )
+            for fk_field in get_model_fields(self._meta.model, base=False, foreign=True, m2m=False)
             if not fk_field.null
         ]
         if len(data) < 2:
@@ -154,16 +144,16 @@ class BaseAliasModel(BaseModel):
     relation using the ``parent`` field.
     """
 
-    alias = models.CharField('Alias', max_length=100)
+    alias = models.CharField("Alias", max_length=100)
     # the field that will hold the ForeignKey:
     parent: models.ForeignKey = None  # type: ignore[assignment]
 
-    name_field = 'alias'
+    name_field = "alias"
 
     class Meta(BaseModel.Meta):
-        ordering = ['alias']
-        verbose_name = 'Alias'
-        verbose_name_plural = 'Aliases'
+        ordering = ["alias"]
+        verbose_name = "Alias"
+        verbose_name_plural = "Aliases"
         abstract = True
 
 
@@ -197,7 +187,7 @@ class ComputedNameModel(BaseModel):
     _changed_flag = models.BooleanField(editable=False, default=False)
 
     name_composing_fields: list = []
-    name_field: str = '_name'
+    name_field: str = "_name"
 
     objects = CNQuerySet.as_manager()
 
@@ -221,9 +211,8 @@ class ComputedNameModel(BaseModel):
         if not cls.name_composing_fields:
             return [
                 checks.Warning(
-                    "You must specify the fields that make up the name by "
-                    "listing them in name_composing_fields.",
-                    obj=cls.__name__
+                    "You must specify the fields that make up the name by listing them in name_composing_fields.",
+                    obj=cls.__name__,
                 )
             ]
         errors = []
@@ -233,9 +222,7 @@ class ComputedNameModel(BaseModel):
             except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                 errors.append(
                     checks.Error(
-                        "Attribute 'name_composing_fields' contains invalid item: "
-                        "'%s'. %s" % (field, e),
-                        obj=cls
+                        "Attribute 'name_composing_fields' contains invalid item: '%s'. %s" % (field, e), obj=cls
                     )
                 )
         return errors
@@ -262,14 +249,14 @@ class ComputedNameModel(BaseModel):
         """
         deferred = self.get_deferred_fields()
 
-        if not self.pk or '_name' in deferred and not force_update:
+        if not self.pk or "_name" in deferred and not force_update:
             # Abort the update if:
             # - this instance has not yet been saved to the database or
             # - the _name field is not actually part of the instance AND
             # - an update is not forced
             return False
 
-        if '_changed_flag' not in deferred:
+        if "_changed_flag" not in deferred:
             # _changed_flag was not deferred;
             # self has access to it without calling refresh_from_db.
             changed_flag = self._changed_flag
@@ -277,15 +264,11 @@ class ComputedNameModel(BaseModel):
             # Avoid calling refresh_from_db by fetching the value directly
             # from the database:
             # noinspection PyUnresolvedReferences
-            changed_flag = self._meta.model.objects.values_list(
-                '_changed_flag', flat=True
-            ).get(pk=self.pk)
+            changed_flag = self._meta.model.objects.values_list("_changed_flag", flat=True).get(pk=self.pk)
 
         if force_update or changed_flag:
             # An update was scheduled or forced for this instance.
-            name_data = self.qs().values_dict(
-                *self.name_composing_fields, include_empty=False, flatten=False
-            )
+            name_data = self.qs().values_dict(*self.name_composing_fields, include_empty=False, flatten=False)
             current_name = self._get_name(**name_data[self.pk])
 
             if self._name != current_name:
@@ -309,39 +292,39 @@ class ComputedNameModel(BaseModel):
         The keyword arguments are the fields of ``name_composing_fields``
         and their respective values.
         """
-        raise NotImplementedError('Subclasses must implement this method.')  # pragma: no cover
+        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
     def __str__(self) -> str:
         # noinspection PyUnresolvedReferences
-        return self._name % {'verbose_name': self._meta.verbose_name}
+        return self._name % {"verbose_name": self._meta.verbose_name}
 
     class Meta(BaseModel.Meta):
         abstract = True
-        ordering = ['_name']
+        ordering = ["_name"]
 
 
 class AbstractJahrModel(BaseModel):
     """Abstract model that adds a dbentry.fields.YearField."""
 
-    jahr = YearField('Jahr')
+    jahr = YearField("Jahr")
 
-    name_field = 'jahr'
+    name_field = "jahr"
 
     class Meta(BaseModel.Meta):
         abstract = True
-        verbose_name = 'Jahr'
-        verbose_name_plural = 'Jahre'
-        ordering = ['jahr']
+        verbose_name = "Jahr"
+        verbose_name_plural = "Jahre"
+        ordering = ["jahr"]
 
 
 class AbstractURLModel(BaseModel):
     """Abstract model that adds an URLField."""
 
-    url = models.URLField(verbose_name='Webpage')
+    url = models.URLField(verbose_name="Webpage")
 
-    name_field = 'url'
+    name_field = "url"
 
     class Meta(BaseModel.Meta):
         abstract = True
-        verbose_name = 'Webseite'
-        verbose_name_plural = 'Webseiten'
+        verbose_name = "Webseite"
+        verbose_name_plural = "Webseiten"

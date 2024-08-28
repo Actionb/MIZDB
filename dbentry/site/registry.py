@@ -53,7 +53,7 @@ class Registry:
                     path(
                         f"{opts.model_name}/export",
                         ExportModelView.as_view(model=model, resource_class=view.resource_class),
-                        name=urlname("export", opts)
+                        name=urlname("export", opts),
                     )
                 )
         for model, view in self.views.items():

@@ -41,6 +41,6 @@ class HistoryView(PermissionRequiredMixin, ModelViewMixin, ListView):
             "page_range": page_range,
             "page_var": self.page_kwarg,
             "pagination_required": paginator.count > 100,
-            "title": f"{self.title}: {str(self.model.objects.get(pk=unquote(self.kwargs.get(self.pk_url_kwarg))))}"
+            "title": f"{self.title}: {str(self.model.objects.get(pk=unquote(self.kwargs.get(self.pk_url_kwarg))))}",
         }
         return ctx

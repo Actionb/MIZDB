@@ -20,7 +20,6 @@ urlpatterns = [
 
 
 class TestHasHelpPage(TestCase):
-
     def test_has_help_page(self):
         for has_page in (True, False):
             with self.subTest(has_help_page=has_page):

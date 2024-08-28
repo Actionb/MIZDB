@@ -1272,6 +1272,7 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
 # Tests for various autocompletes that use the generic URL.
 ####################################################################################################
 
+
 class TestACInstrument(RequestTestCase):
     model = _models.Instrument
     path = reverse_lazy(GENERIC_URL_NAME, kwargs={"model_name": "instrument"})

@@ -24,7 +24,6 @@ class HelpIndexView(BaseViewMixin, TemplateView):
 
 
 class HelpView(BaseViewMixin, TemplateView):
-
     def get(self, request, *args, **kwargs):
         try:
             if has_help_page(self.kwargs["page_name"]):

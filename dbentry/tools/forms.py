@@ -24,14 +24,12 @@ class DuplicateFieldsSelectForm(forms.Form):
     display = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple)
 
     class Media:
-        css = {'all': ['admin/css/forms.css']}
-        js = ['admin/js/collapse.js']
+        css = {"all": ["admin/css/forms.css"]}
+        js = ["admin/js/collapse.js"]
 
     def __init__(self, *, model: Type[Model], **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.fields['select'].choices, self.fields['display'].choices = (
-            get_dupe_field_choices(model)
-        )
+        self.fields["select"].choices, self.fields["display"].choices = get_dupe_field_choices(model)
 
 
 def get_dupe_field_choices(model: Type[Model]) -> Tuple:
@@ -53,10 +51,8 @@ def get_dupe_field_choices(model: Type[Model]) -> Tuple:
             if field.many_to_many:
                 # Add a choice for the related model's name_field, but add them
                 # to display_choices after all non-m2m choices.
-                target = getattr(field.related_model, 'name_field', '') or 'pk'
-                m2m.append(
-                    (field.name + LOOKUP_SEP + target, field.verbose_name.capitalize())
-                )
+                target = getattr(field.related_model, "name_field", "") or "pk"
+                m2m.append((field.name + LOOKUP_SEP + target, field.verbose_name.capitalize()))
             else:
                 choice = (field.name, field.verbose_name.capitalize())
                 display_choices.append(choice)
@@ -66,13 +62,8 @@ def get_dupe_field_choices(model: Type[Model]) -> Tuple:
         else:
             # Some kind of reverse relation. Add a choice for the related
             # model's name_field.
-            target = getattr(field.related_model, 'name_field', '') or 'pk'
-            reverse.append(
-                (
-                    get_reverse_field_path(field, target),
-                    field.related_model._meta.verbose_name
-                )
-            )
+            target = getattr(field.related_model, "name_field", "") or "pk"
+            reverse.append((get_reverse_field_path(field, target), field.related_model._meta.verbose_name))
     display_choices.extend([*sorted(m2m), *sorted(reverse)])
     return select_choices, display_choices
 
@@ -85,19 +76,13 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
     given app which are also registered with the given admin site.
     """
 
-    model_select = forms.ChoiceField(label='Bitte Tabelle auswählen')
+    model_select = forms.ChoiceField(label="Bitte Tabelle auswählen")
 
-    def __init__(
-            self,
-            *args: Any,
-            app_label: str = 'dbentry',
-            admin_site: AdminSite = miz_site,
-            **kwargs: Any
-    ) -> None:
+    def __init__(self, *args: Any, app_label: str = "dbentry", admin_site: AdminSite = miz_site, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.app_label = app_label
         self.admin_site = admin_site
-        self.fields['model_select'].choices = self.get_model_list()
+        self.fields["model_select"].choices = self.get_model_list()
 
     def get_model_filters(self) -> List[Callable[[Type[Model]], bool]]:
         """Prepare filters for the list of models returned by apps.get_models."""

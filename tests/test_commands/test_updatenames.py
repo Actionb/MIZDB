@@ -12,7 +12,6 @@ models_list_mock = Mock(return_value=[UpdateCNModel, UpdateNormalModel])
 
 @patch("dbentry.management.commands.updatenames.apps.get_models", new=models_list_mock)
 class TestCommand(TestCase):
-
     @patch("dbentry.query.CNQuerySet._update_names")
     def test_handle(self, update_names_mock):
         """Assert that handle calls _update_names on ComputedNameModels."""

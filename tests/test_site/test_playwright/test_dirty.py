@@ -12,7 +12,6 @@ DIRTY_CLASS = "_dirty"
 
 
 class DialogHandler(TrackingHandler):
-
     def __init__(self, accept=True):
         super().__init__()
         self.accept = accept

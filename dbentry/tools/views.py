@@ -34,11 +34,9 @@ def find_duplicates(queryset: QuerySet, fields: Sequence[str]) -> RawQuerySet:
     Returns a raw queryset containing the duplicate instances.
     """
     window_expression = Window(
-        expression=Count('*'),
-        partition_by=fields,
-        order_by=[F(field).desc() for field in fields]
+        expression=Count("*"), partition_by=fields, order_by=[F(field).desc() for field in fields]
     )
-    counts_query = queryset.annotate(c=window_expression).values('pk', 'c')
+    counts_query = queryset.annotate(c=window_expression).values("pk", "c")
     # Need to filter out rows without duplicates, but Window expressions are
     # not allowed in the filter clause - so use this workaround:
     # https://code.djangoproject.com/ticket/28333#comment:20
@@ -56,20 +54,20 @@ class ModelSelectView(views.generic.FormView):
           able to return a URL using this view name.
     """
 
-    template_name = 'admin/basic_form.html'
+    template_name = "admin/basic_form.html"
     form_class = ModelSelectForm
 
-    form_method: str = 'get'
-    submit_value: str = 'Weiter'
-    submit_name: str = 'submit'
-    next_view: str = 'admin:index'
+    form_method: str = "get"
+    submit_value: str = "Weiter"
+    submit_name: str = "submit"
+    next_view: str = "admin:index"
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
         # Add context variables specific to admin/basic_form.html:
-        context['submit_value'] = self.submit_value
-        context['submit_name'] = self.submit_name
-        context['form_method'] = self.form_method
+        context["submit_value"] = self.submit_value
+        context["submit_name"] = self.submit_name
+        context["form_method"] = self.form_method
         return context
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -81,14 +79,10 @@ class ModelSelectView(views.generic.FormView):
         return reverse(self.next_view, kwargs=self.get_next_view_kwargs())
 
     def get_next_view_kwargs(self) -> Dict[str, dict]:
-        return {'model_name': self.request.GET.get('model_select')}
+        return {"model_name": self.request.GET.get("model_select")}
 
 
-@register_tool(
-    url_name='tools:dupes_select',
-    index_label='Duplikate finden',
-    superuser_only=True
-)
+@register_tool(url_name="tools:dupes_select", index_label="Duplikate finden", superuser_only=True)
 class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
     Main entry point for the duplicates search.
@@ -97,8 +91,8 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
     redirects to the DuplicateObjectsView.
     """
 
-    title = 'Duplikate finden'
-    next_view = 'dupes'
+    title = "Duplikate finden"
+    next_view = "dupes"
     form_class = ModelSelectForm
 
 
@@ -113,44 +107,44 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
     and the possibility for merging each group is provided.
     """
 
-    template_name = 'tools/dupes.html'
+    template_name = "tools/dupes.html"
     form_class = DuplicateFieldsSelectForm
 
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         super().setup(request, *args, **kwargs)
-        if not kwargs.get('model_name'):
+        if not kwargs.get("model_name"):
             raise TypeError("Model not provided.")
         # noinspection PyAttributeOutsideInit
-        self.model = get_model_from_string(kwargs['model_name'], app_label='dbentry')
+        self.model = get_model_from_string(kwargs["model_name"], app_label="dbentry")
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle the request to find duplicates."""
         form = self.get_form()
         context = self.get_context_data(form=form, **kwargs)
-        if 'get_duplicates' in request.GET and form.is_valid():
+        if "get_duplicates" in request.GET and form.is_valid():
             # Use the human-readable part of the selected choices for the
             # headers of the listing table:
-            choices = dict(form.fields['display'].choices)
-            context['headers'] = [choices[selected] for selected in form.cleaned_data['display']]
+            choices = dict(form.fields["display"].choices)
+            context["headers"] = [choices[selected] for selected in form.cleaned_data["display"]]
             # Calculate the (percentile) width of the headers; 25% of the width
             # is already taken up by the three headers 'merge','id','link'.
-            context['headers_width'] = str(int(80 / len(context['headers'])))
-            context['items'] = self.build_duplicates_items(form)
+            context["headers_width"] = str(int(80 / len(context["headers"])))
+            context["items"] = self.build_duplicates_items(form)
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
         # noinspection PyUnresolvedReferences
-        context['title'] = 'Duplikate: ' + self.model._meta.verbose_name
+        context["title"] = "Duplikate: " + self.model._meta.verbose_name
         # noinspection PyUnresolvedReferences
-        context['breadcrumbs_title'] = self.model._meta.verbose_name
+        context["breadcrumbs_title"] = self.model._meta.verbose_name
         return context
 
     def get_form_kwargs(self) -> dict:
         """Return the kwargs for the fields select form."""
         kwargs = super().get_form_kwargs()
-        kwargs['model'] = self.model
-        kwargs['data'] = self.request.GET
+        kwargs["model"] = self.model
+        kwargs["data"] = self.request.GET
         return kwargs
 
     def build_duplicates_items(self, form: Form) -> list[tuple[Model, str, list]]:
@@ -177,7 +171,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         annotations = {}
         select_related = []
         display_fields = []
-        for path in form.cleaned_data['display']:
+        for path in form.cleaned_data["display"]:
             fields = get_fields_from_path(self.model, path)
             if not fields[0].is_relation:
                 display_fields.append(path)
@@ -192,14 +186,14 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
             display_fields.append(path)
 
         # noinspection PyUnresolvedReferences
-        search_fields = form.cleaned_data['select']
+        search_fields = form.cleaned_data["select"]
         # noinspection PyUnresolvedReferences
         queryset = self.model.objects.all()
         duplicates = (
             queryset.filter(pk__in=[o.pk for o in find_duplicates(queryset, search_fields)])
             .select_related(*select_related)
             .annotate(**annotations)
-            .order_by(*search_fields, 'pk')
+            .order_by(*search_fields, "pk")
         )
 
         # noinspection PyShadowingNames
@@ -212,11 +206,11 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
             """
             values = []
             for f in display_fields:
-                v = ''
+                v = ""
                 if getattr(obj, f) is not None:
                     v = str(getattr(obj, f))
                     if len(v) > 100:
-                        v = v[:100] + ' [...]'
+                        v = v[:100] + " [...]"
                 values.append(v)
             link = get_obj_link(self.request, obj, namespace="admin", blank=True)
             return obj, link, values
@@ -228,16 +222,14 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
             items.
             """
             cl_url = get_changelist_url(
-                self.request,
-                self.model,
-                obj_list=[item[0] for item in dupe_group],
-                namespace='admin'
+                self.request, self.model, obj_list=[item[0] for item in dupe_group], namespace="admin"
             )
             return create_hyperlink(
-                url=cl_url, content='Änderungsliste',
+                url=cl_url,
+                content="Änderungsliste",
                 # 'class' cannot be a keyword argument, so wrap the element
                 # attribute arguments in a dictionary.
-                **{'target': '_blank', 'class': 'button', 'style': 'padding: 10px 15px;'}
+                **{"target": "_blank", "class": "button", "style": "padding: 10px 15px;"},
             )
 
         groups: list = []
@@ -259,11 +251,7 @@ class DuplicateObjectsView(MIZAdminMixin, views.generic.FormView):
         return groups
 
 
-@register_tool(
-    url_name='tools:find_unused',
-    index_label='Unreferenzierte Datensätze',
-    superuser_only=True
-)
+@register_tool(url_name="tools:find_unused", index_label="Unreferenzierte Datensätze", superuser_only=True)
 class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
     View that enables finding objects of a given model that are referenced by
@@ -271,12 +259,12 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
 
     form_class = UnusedObjectsForm
-    template_name = 'tools/find_unused.html'
+    template_name = "tools/find_unused.html"
 
-    form_method = 'get'
-    submit_name = 'get_unused'
-    submit_value = 'Suchen'
-    breadcrumbs_title = title = 'Unreferenzierte Datensätze'
+    form_method = "get"
+    submit_name = "get_unused"
+    submit_value = "Suchen"
+    breadcrumbs_title = title = "Unreferenzierte Datensätze"
 
     def get_form_kwargs(self) -> dict:
         """Use request GET as form data instead of request POST."""
@@ -284,7 +272,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         if self.submit_name in self.request.GET:
             # Only include data when the search button has been pressed to
             # suppress validation on the first visit on this page.
-            kwargs['data'] = self.request.GET
+            kwargs["data"] = self.request.GET
         return kwargs
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -293,26 +281,23 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         if self.submit_name in request.GET:
             form = self.get_form()
             if form.is_valid():
-                model_name = form.cleaned_data['model_select']
+                model_name = form.cleaned_data["model_select"]
                 model = get_model_from_string(model_name)
-                relations, queryset = self.get_queryset(model, form.cleaned_data['limit'])
+                relations, queryset = self.get_queryset(model, form.cleaned_data["limit"])
                 # noinspection PyUnresolvedReferences
-                cl_url = get_changelist_url(request, model, obj_list=queryset, namespace='admin')
+                cl_url = get_changelist_url(request, model, obj_list=queryset, namespace="admin")
                 context_kwargs = {
-                    'form': form,
-                    'items': self.build_items(relations, queryset),
-                    'changelist_link': create_hyperlink(
-                        url=cl_url, content='Änderungsliste',
-                        **{'target': '_blank', 'class': 'button'}
-                    )
+                    "form": form,
+                    "items": self.build_items(relations, queryset),
+                    "changelist_link": create_hyperlink(
+                        url=cl_url, content="Änderungsliste", **{"target": "_blank", "class": "button"}
+                    ),
                 }
                 context.update(**context_kwargs)
         return self.render_to_response(context)
 
     # noinspection PyMethodMayBeStatic
-    def get_queryset(
-            self, model: Type[Model], limit: int
-    ) -> Tuple[OrderedDictType[Relations, dict], QuerySet]:
+    def get_queryset(self, model: Type[Model], limit: int) -> Tuple[OrderedDictType[Relations, dict], QuerySet]:
         """
         Prepare the queryset that includes all objects of ``model`` that have
         less than ``limit`` reverse related objects.
@@ -327,7 +312,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
         # all_ids is a 'screenshot' of all IDs of the model's objects.
         # Starting out, unused will also contain all IDs, but any ID that is
         # from an object that exceeds the limit will be removed.
-        all_ids = unused = set(queryset.values_list('pk', flat=True))
+        all_ids = unused = set(queryset.values_list("pk", flat=True))
 
         # For each reverse relation, query for the 'unused' objects, and remove
         # all OTHER IDs (i.e. those of objects that exceed the limit) from the
@@ -352,38 +337,27 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
 
             # For this relation, get objects that do not exceed the limit.
             qs = queryset.order_by().annotate(c=Count(query_name)).filter(Q(c__lte=limit))
-            counts = {pk: c for pk, c in qs.values_list('pk', 'c')}
+            counts = {pk: c for pk, c in qs.values_list("pk", "c")}
             # Remove the ids of the objects that exceed the limit for this relation.
             unused.difference_update(all_ids.difference(counts))
-            relations[rel] = {
-                'related_model': related_model,
-                'counts': counts
-            }
+            relations[rel] = {"related_model": related_model, "counts": counts}
         return relations, queryset.filter(pk__in=unused)
 
     def build_items(
-            self,
-            relations: OrderedDictType[Relations, dict],
-            queryset: QuerySet
+        self, relations: OrderedDictType[Relations, dict], queryset: QuerySet
     ) -> List[Tuple[SafeText, str]]:
         """Build items for the context."""
         items = []
-        under_limit_template = '{model_name} ({count!s})'
+        under_limit_template = "{model_name} ({count!s})"
         for obj in queryset:
             under_limit = []
             for info in relations.values():
-                count = info['counts'].get(obj.pk, 0)
+                count = info["counts"].get(obj.pk, 0)
                 under_limit.append(
-                    under_limit_template.format(
-                        model_name=info['related_model']._meta.verbose_name,
-                        count=count
-                    )
+                    under_limit_template.format(model_name=info["related_model"]._meta.verbose_name, count=count)
                 )
             items.append(
-                (
-                    get_obj_link(self.request, obj, namespace="admin", blank=True),
-                    ", ".join(sorted(under_limit))
-                )
+                (get_obj_link(self.request, obj, namespace="admin", blank=True), ", ".join(sorted(under_limit)))
             )
         return items
 
@@ -394,18 +368,18 @@ class SiteSearchView(views.generic.TemplateView):
     given app.
     """
 
-    app_label = ''
-    template_name = 'tools/site_search.html'
+    app_label = ""
+    template_name = "tools/site_search.html"
 
     def get(self, request: HttpRequest, **kwargs: Any) -> HttpResponse:
         context = self.get_context_data(**kwargs)
-        q = request.GET.get('q', '')
+        q = request.GET.get("q", "")
         if q:
-            context['q'] = q
-            context['results'] = self.get_result_list(q)
+            context["q"] = q
+            context["results"] = self.get_result_list(q)
         return self.render_to_response(context)
 
-    def _get_models(self, app_label: str = '') -> List[Type[Model]]:
+    def _get_models(self, app_label: str = "") -> List[Type[Model]]:
         """
         Return a list of models to be queried.
 
@@ -418,18 +392,12 @@ class SiteSearchView(views.generic.TemplateView):
 
         def has_permission(user, model):  # type: ignore[no-untyped-def]
             opts = model._meta
-            codename_view = get_permission_codename('view', opts)
-            codename_change = get_permission_codename('change', opts)
-            return (
-                    user.has_perm('%s.%s' % (opts.app_label, codename_view))
-                    or user.has_perm('%s.%s' % (opts.app_label, codename_change))
-            )
+            has_view_perm = user.has_perm(f"{opts.app_label}.{get_permission_codename('view', opts)}")
+            has_change_perm = user.has_perm(f"{opts.app_label}.{get_permission_codename('change', opts)}")
+            return has_view_perm or has_change_perm
 
         app = apps.get_app_config(app_label or self.app_label)
-        return [
-            model for model in app.get_models()
-            if has_permission(self.request.user, model)
-        ]
+        return [model for model in app.get_models() if has_permission(self.request.user, model)]
 
     def _search(self, model: Type[Model], q: str) -> Any:
         """Search the given model for the search term ``q``."""
@@ -450,7 +418,7 @@ class SiteSearchView(views.generic.TemplateView):
                 continue
             # noinspection PyUnresolvedReferences
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
-            url = get_changelist_url(self.request, model, namespace='admin')
+            url = get_changelist_url(self.request, model, namespace="admin")
             if url:
                 url += f"?q={q!s}"
                 results.append(create_hyperlink(url, label, target="_blank"))
@@ -458,25 +426,22 @@ class SiteSearchView(views.generic.TemplateView):
 
 
 # TODO: MIZSiteSearch requires a permission check
-@register_tool(
-    url_name='tools:site_search',
-    index_label='Datenbank durchsuchen',
-    superuser_only=False
-)
+@register_tool(url_name="tools:site_search", index_label="Datenbank durchsuchen", superuser_only=False)
 class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
     """Site search for the admin page."""
-    app_label = 'dbentry'
 
-    title = 'Datenbank durchsuchen'
-    breadcrumbs_title = 'Suchen'
+    app_label = "dbentry"
 
-    def _get_models(self, app_label: str = '') -> List[Model]:
+    title = "Datenbank durchsuchen"
+    breadcrumbs_title = "Suchen"
+
+    def _get_models(self, app_label: str = "") -> List[Model]:
         # Limit the models to those subclassing BaseModel only.
         from dbentry.base.models import BaseM2MModel, BaseModel  # avoid circular imports
+
         # noinspection PyTypeChecker
         return [
-            m for m in super()._get_models(app_label)
-            if issubclass(m, BaseModel) and not issubclass(m, BaseM2MModel)
+            m for m in super()._get_models(app_label) if issubclass(m, BaseModel) and not issubclass(m, BaseM2MModel)
         ]
 
     def _search(self, model: Model, q: str) -> Any:
@@ -486,10 +451,9 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
 
 # TODO: remove SearchbarSearch - not used
 class SearchbarSearch(MIZSiteSearch):
-
     def get(self, request: HttpRequest, **kwargs: Any) -> JsonResponse:
-        if q := request.GET.get('q', ''):
+        if q := request.GET.get("q", ""):
             results = self.get_result_list(q)
         else:
             results = []
-        return JsonResponse({'results': results})
+        return JsonResponse({"results": results})

@@ -10,6 +10,7 @@ from stdnum import exceptions as stdnum_exceptions
 
 class MsgValidationError(ValidationError):
     """Validation error with a preset message."""
+
     message = None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -18,11 +19,11 @@ class MsgValidationError(ValidationError):
 
 
 class InvalidLength(MsgValidationError):
-    message = gettext_lazy('The number has an invalid length.')
+    message = gettext_lazy("The number has an invalid length.")
 
 
 class InvalidFormat(MsgValidationError):
-    message = gettext_lazy('The number has an invalid format.')
+    message = gettext_lazy("The number has an invalid format.")
 
 
 class InvalidChecksum(MsgValidationError):
@@ -70,7 +71,7 @@ def EANValidator(raw_ean: str) -> bool:
 class DiscogsURLValidator(RegexValidator):
     """Validator that checks that the given URL's host is 'discogs.com'."""
 
-    regex = r'^([a-z][a-z0-9+\-.]*://)?(www.)?discogs.com'
+    regex = r"^([a-z][a-z0-9+\-.]*://)?(www.)?discogs.com"
     message = "Bitte nur Adressen von discogs.com eingeben."
     code = "discogs"
 
@@ -78,7 +79,7 @@ class DiscogsURLValidator(RegexValidator):
 class DiscogsMasterReleaseValidator(RegexValidator):
     """Validator that checks that the value isn't a discogs master release."""
 
-    regex = r'/master/(\d+)'
+    regex = r"/master/(\d+)"
     message = "Bitte keine Adressen von Master-Releases eingeben."
     code = "master_release"
     inverse_match = True
@@ -91,6 +92,6 @@ class DNBURLValidator(RegexValidator):
     This validator captures the GND ID in the first group for a given valid URL.
     """
 
-    regex = re.compile(r'.*(?:d-nb.info?|portal.dnb.de?)/.*(?:gnd/?|nid%3D?)(\w+)')
+    regex = re.compile(r".*(?:d-nb.info?|portal.dnb.de?)/.*(?:gnd/?|nid%3D?)(\w+)")
     message = "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de)."
     code = "dnb"

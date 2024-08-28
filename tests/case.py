@@ -24,7 +24,6 @@ if not sys.warnoptions:
 
 
 class MIZTestCase(TestCase):
-
     @contextlib.contextmanager
     def assertNotRaises(self, exceptions, msg=None):
         """Assert that the body does NOT raise one of the passed exceptions."""
@@ -74,14 +73,10 @@ class UserTestCase(MIZTestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         cls.super_user = get_user_model().objects.create_superuser(
-            username='superuser', password='foobar', email='testtest@test.test'
+            username="superuser", password="foobar", email="testtest@test.test"
         )
-        cls.staff_user = get_user_model().objects.create_user(
-            username='staff', password='foo', is_staff=True
-        )
-        cls.noperms_user = get_user_model().objects.create_user(
-            username='noperms', password='bar'
-        )
+        cls.staff_user = get_user_model().objects.create_user(username="staff", password="foo", is_staff=True)
+        cls.noperms_user = get_user_model().objects.create_user(username="noperms", password="bar")
 
     def setUp(self):
         super().setUp()
@@ -114,13 +109,13 @@ class RequestTestCase(UserTestCase):
             self.client.force_login(user)
         return self.client.post(path, data, **kwargs)
 
-    def post_request(self, path='', data=None, user=None, **kwargs):
+    def post_request(self, path="", data=None, user=None, **kwargs):
         """Construct a POST request using the django RequestFactory."""
         request = self.rf.post(path, data, **kwargs)
         request.user = user or self.super_user
         return request
 
-    def get_request(self, path='', data=None, user=None, **kwargs):
+    def get_request(self, path="", data=None, user=None, **kwargs):
         """Construct a GET request using the django RequestFactory."""
         request = self.rf.get(path, data, **kwargs)
         request.user = user or self.super_user
@@ -128,11 +123,14 @@ class RequestTestCase(UserTestCase):
 
     def _has_message(self, expected, messages):
         if isinstance(expected, str):
+
             def test(m):
                 return expected in m
         else:
+
             def test(m):
                 return re.search(expected, m)
+
         return any(test(m) for m in messages)
 
     def assertMessageSent(self, request, expected_message, msg=None):
@@ -167,9 +165,9 @@ class AdminTestCase(DataTestCase, RequestTestCase):
     admin_site = None
     model_admin_class = None
 
-    changelist_path = ''
-    change_path = ''
-    add_path = ''
+    changelist_path = ""
+    change_path = ""
+    add_path = ""
 
     @classmethod
     def setUpTestData(cls):
@@ -178,11 +176,11 @@ class AdminTestCase(DataTestCase, RequestTestCase):
         opts = cls.model._meta
         url_name = f"{cls.admin_site.name}:{opts.app_label}_{opts.model_name}"
         if not cls.changelist_path:
-            cls.changelist_path = reverse(url_name + '_changelist')
+            cls.changelist_path = reverse(url_name + "_changelist")
         if not cls.change_path:
-            cls.change_path = unquote(reverse(url_name + '_change', args=['{pk}']))
+            cls.change_path = unquote(reverse(url_name + "_change", args=["{pk}"]))
         if not cls.add_path:
-            cls.add_path = reverse(url_name + '_add')
+            cls.add_path = reverse(url_name + "_add")
 
     def setUp(self):
         super().setUp()
@@ -234,10 +232,10 @@ class LoggingTestMixin(object):
             model = obj._meta.model
             content_type = get_content_type_for_model(model)
             filter_params = {
-                'object_id': pk,
-                'content_type__pk': content_type.pk,
-                'action_flag': action_flag,
-                'change_message': change_message
+                "object_id": pk,
+                "content_type__pk": content_type.pk,
+                "action_flag": action_flag,
+                "change_message": change_message,
             }
             filter_params.update(**kwargs)
             qs = LogEntry.objects.filter(**filter_params)
@@ -255,28 +253,22 @@ class LoggingTestMixin(object):
                     object=obj,
                     count=qs.count(),
                     items=sorted(filter_params.items()),
-                    model=ContentType.objects.get_for_id(filter_params['content_type__pk']).model,
+                    model=ContentType.objects.get_for_id(filter_params["content_type__pk"]).model,
                 )
                 for values in (
-                        LogEntry.objects
-                                .order_by('pk')
-                                .filter(**filter_params)
-                                .values('pk', *list(filter_params))
+                    LogEntry.objects.order_by("pk").filter(**filter_params).values("pk", *list(filter_params))
                 ):
-                    pk = values.pop('pk')
-                    ct_model = ContentType.objects.get_for_id(values['content_type__pk']).model
+                    pk = values.pop("pk")
+                    ct_model = ContentType.objects.get_for_id(values["content_type__pk"]).model
                     msg += "\n{}: {}; {}".format(str(pk), sorted(values.items()), ct_model)
                 msg += "\nchange_messages: "
-                for log_entry in LogEntry.objects.order_by('pk').filter(**filter_params):
+                for log_entry in LogEntry.objects.order_by("pk").filter(**filter_params):
                     msg += "\n{}: {}".format(str(log_entry.pk), log_entry.get_change_message())
                 msg += "\nCheck your test method or state of LogEntry table."
                 raise AssertionError(msg)
         if unlogged:
-            msg = (
-                "LogEntry for {op} missing on objects: {unlogged_objects}, "
-                "model: ({model_name})."
-            ).format(
-                op=['ADDITION', 'CHANGE', 'DELETION'][action_flag - 1],
+            msg = "LogEntry for {op} missing on objects: {unlogged_objects}, " "model: ({model_name}).".format(
+                op=["ADDITION", "CHANGE", "DELETION"][action_flag - 1],
                 unlogged_objects=[i[0] for i in unlogged],
                 model_name=model._meta.model_name,
             )
@@ -285,15 +277,15 @@ class LoggingTestMixin(object):
                 msg += "\nFilter parameters used: "
                 msg += "\n{}; {}".format(
                     sorted(filter_params.items()),
-                    ContentType.objects.get_for_id(filter_params['content_type__pk']).model  # noqa
+                    ContentType.objects.get_for_id(filter_params["content_type__pk"]).model,  # noqa
                 )
                 msg += "\nLogEntry values: "
-                for log_entry in LogEntry.objects.order_by('pk').values('pk', *list(filter_params)):
-                    pk = log_entry.pop('pk')
-                    ct_model = ContentType.objects.get_for_id(log_entry['content_type__pk']).model
+                for log_entry in LogEntry.objects.order_by("pk").values("pk", *list(filter_params)):
+                    pk = log_entry.pop("pk")
+                    ct_model = ContentType.objects.get_for_id(log_entry["content_type__pk"]).model
                     msg += "\n{}: {}; {}".format(str(pk), sorted(log_entry.items()), ct_model)
                 msg += "\nchange_messages: "
-                for log_entry in LogEntry.objects.order_by('pk'):
+                for log_entry in LogEntry.objects.order_by("pk"):
                     msg += "\n{}: {}".format(str(log_entry.pk), log_entry.get_change_message())
             self.fail(msg)
 

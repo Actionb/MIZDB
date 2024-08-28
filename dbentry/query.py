@@ -16,13 +16,8 @@ from dbentry.utils.dates import leapdays
 
 
 class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
-
     def values_dict(
-            self,
-            *fields: str,
-            include_empty: bool = False,
-            flatten: bool = False,
-            **expressions: Any
+        self, *fields: str, include_empty: bool = False, flatten: bool = False, **expressions: Any
     ) -> OrderedDictType[int, dict]:
         """
         An extension of QuerySet.values() that merges results for the same
@@ -69,8 +64,8 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         # require it to build the result out of.
         # If fields is empty, the query targets all the model's fields.
         if fields and pk_name not in fields:
-            if 'pk' in fields:
-                pk_name = 'pk'
+            if "pk" in fields:
+                pk_name = "pk"
             else:
                 # The query does not query for the primary key at all;
                 # it must be added to fields.
@@ -151,17 +146,17 @@ class CNQuerySet(MIZQuerySet):
         return super().bulk_create(objs, **kwargs)
 
     def defer(self, *fields: str) -> MIZQuerySet:
-        if '_name' not in fields:
+        if "_name" not in fields:
             self._update_names()
         return super().defer(*fields)
 
     def filter(self, *args: Any, **kwargs: Any) -> MIZQuerySet:
-        if any(k.startswith('_name') for k in kwargs):
+        if any(k.startswith("_name") for k in kwargs):
             self._update_names()
         return super().filter(*args, **kwargs)
 
     def only(self, *fields: str) -> MIZQuerySet:
-        if '_name' in fields:
+        if "_name" in fields:
             self._update_names()
         return super().only(*fields)
 
@@ -169,17 +164,17 @@ class CNQuerySet(MIZQuerySet):
     def update(self, **kwargs: Any) -> int:
         # Assume that a name update will be required after this update.
         # If _changed_flag is not already part of the update, add it.
-        if '_changed_flag' not in kwargs:
-            kwargs['_changed_flag'] = True
+        if "_changed_flag" not in kwargs:
+            kwargs["_changed_flag"] = True
         return super().update(**kwargs)
 
     def values(self, *fields: str, **expressions: Any) -> MIZQuerySet:
-        if '_name' in fields:
+        if "_name" in fields:
             self._update_names()
         return super().values(*fields, **expressions)
 
     def values_list(self, *fields: str, **kwargs: Any) -> MIZQuerySet:
-        if '_name' in fields:
+        if "_name" in fields:
             self._update_names()
         return super().values_list(*fields, **kwargs)
 
@@ -187,26 +182,16 @@ class CNQuerySet(MIZQuerySet):
     def _update_names(self) -> None:
         """Update the names of rows where _changed_flag is True."""
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
-            values = self.filter(
-                _changed_flag=True
-            ).values_dict(
-                *self.model.name_composing_fields,
-                include_empty=False,
-                flatten=False
+            values = self.filter(_changed_flag=True).values_dict(
+                *self.model.name_composing_fields, include_empty=False, flatten=False
             )
             with transaction.atomic():
                 for pk, val_dict in values.items():
                     new_name = self.model._get_name(**val_dict)
-                    self.order_by().filter(pk=pk).update(
-                        _name=new_name, _changed_flag=False
-                    )
+                    self.order_by().filter(pk=pk).update(_name=new_name, _changed_flag=False)
 
 
-def build_date(
-        years: List[int],
-        month_ordinals: List[int],
-        day: int = 1
-) -> Optional[datetime.date]:
+def build_date(years: List[int], month_ordinals: List[int], day: int = 1) -> Optional[datetime.date]:
     """
     Helper function for AusgabeQuerySet.increment_jahrgang to build a
     datetime.date() instance out of lists of years and month ordinals.
@@ -244,12 +229,12 @@ class InvalidJahrgangError(Exception):
 class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
 
-    def _chain(self) -> 'AusgabeQuerySet':
+    def _chain(self) -> "AusgabeQuerySet":
         clone = super()._chain()
         clone.chronologically_ordered = self.chronologically_ordered
         return clone
 
-    def order_by(self, *field_names: str) -> 'AusgabeQuerySet':
+    def order_by(self, *field_names: str) -> "AusgabeQuerySet":
         # Any call to order_by is almost guaranteed to break the
         # chronological ordering.
         self.chronologically_ordered = False
@@ -264,7 +249,7 @@ class AusgabeQuerySet(CNQuerySet):
             return self.order_by().update(**kwargs)
         return super().update(**kwargs)
 
-    def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> 'AusgabeQuerySet':
+    def search(self, q: str, search_type: str = "plain", ranked: bool = True) -> "AusgabeQuerySet":
         # Replace the forward slashes in the query term. Otherwise, postgres
         # would treat the search term as a file path.
         q = q.replace("/", "+")
@@ -289,7 +274,7 @@ class AusgabeQuerySet(CNQuerySet):
         """
         start = start_obj or self.chronological_order().first()
         start_date = start.e_datum
-        years = start.ausgabejahr_set.values_list('jahr', flat=True)
+        years = start.ausgabejahr_set.values_list("jahr", flat=True)
         if start_date:
             start_year = start_date.year
         elif years:
@@ -303,28 +288,21 @@ class AusgabeQuerySet(CNQuerySet):
 
         # Increment jahrgang using a (partial) date.
         if start_date is None:
-            month_ordinals = start.ausgabemonat_set.values_list(
-                'monat__ordinal', flat=True
-            )
+            month_ordinals = start.ausgabemonat_set.values_list("monat__ordinal", flat=True)
             start_date = build_date(years, month_ordinals)
 
         if start_date:
             val_dicts = queryset.values_dict(
-                'e_datum', 'ausgabejahr__jahr', 'ausgabemonat__monat__ordinal',
-                include_empty=False, flatten=False
+                "e_datum", "ausgabejahr__jahr", "ausgabemonat__monat__ordinal", include_empty=False, flatten=False
             )
             for pk, val_dict in val_dicts.items():
-                if 'e_datum' in val_dict:
-                    obj_date = val_dict.get('e_datum')[-1]
-                elif ('ausgabejahr__jahr' not in val_dict
-                      or 'ausgabemonat__monat__ordinal' not in val_dict):
+                if "e_datum" in val_dict:
+                    obj_date = val_dict.get("e_datum")[-1]
+                elif "ausgabejahr__jahr" not in val_dict or "ausgabemonat__monat__ordinal" not in val_dict:
                     # Need both year and month to build a meaningful date.
                     continue
                 else:
-                    obj_date = build_date(
-                        val_dict['ausgabejahr__jahr'],
-                        val_dict['ausgabemonat__monat__ordinal']
-                    )
+                    obj_date = build_date(val_dict["ausgabejahr__jahr"], val_dict["ausgabemonat__monat__ordinal"])
                 if obj_date < start_date:
                     # If the obj_date lies before start_date the obj_jg will
                     # always be start_jg - 1 plus the year difference between
@@ -345,28 +323,25 @@ class AusgabeQuerySet(CNQuerySet):
                 ids_seen.add(pk)
 
         # Increment jahrgang using the ausgabe's num.
-        nums = start.ausgabenum_set.values_list('num', flat=True)
+        nums = start.ausgabenum_set.values_list("num", flat=True)
         if nums and start_year:
             queryset = queryset.exclude(pk__in=ids_seen)
             start_num = min(nums)
-            val_dicts = queryset.values_dict(
-                'ausgabenum__num', 'ausgabejahr__jahr',
-                include_empty=False, flatten=False
-            )
+            val_dicts = queryset.values_dict("ausgabenum__num", "ausgabejahr__jahr", include_empty=False, flatten=False)
             for pk, val_dict in val_dicts.items():
-                if ('ausgabenum__num' not in val_dict
-                        or 'ausgabejahr__jahr' not in val_dict):
+                if "ausgabenum__num" not in val_dict or "ausgabejahr__jahr" not in val_dict:
                     continue
 
-                obj_year = min(val_dict['ausgabejahr__jahr'])
-                obj_num = min(val_dict['ausgabenum__num'])
-                if len(val_dict['ausgabejahr__jahr']) > 1:
+                obj_year = min(val_dict["ausgabejahr__jahr"])
+                obj_num = min(val_dict["ausgabenum__num"])
+                if len(val_dict["ausgabejahr__jahr"]) > 1:
                     # The ausgabe spans two years, choose the highest num
                     # number to order it at the end of the year.
-                    obj_num = max(val_dict['ausgabenum__num'])
+                    obj_num = max(val_dict["ausgabenum__num"])
 
-                if ((obj_num > start_num and obj_year == start_year)
-                        or (obj_num < start_num and obj_year == start_year + 1)):
+                if (obj_num > start_num and obj_year == start_year) or (
+                    obj_num < start_num and obj_year == start_year + 1
+                ):
                     # The object was released either:
                     #   - after the start object and within the same year
                     #   - *numerically* before the start object but in the year
@@ -386,13 +361,11 @@ class AusgabeQuerySet(CNQuerySet):
         # Increment by year.
         if start_year:
             queryset = queryset.exclude(pk__in=ids_seen)
-            val_dicts = queryset.values_dict(
-                'ausgabejahr__jahr', include_empty=False, flatten=False
-            )
+            val_dicts = queryset.values_dict("ausgabejahr__jahr", include_empty=False, flatten=False)
             for pk, val_dict in val_dicts.items():
-                if 'ausgabejahr__jahr' not in val_dict:
+                if "ausgabejahr__jahr" not in val_dict:
                     continue
-                obj_jg = start_jg + min(val_dict['ausgabejahr__jahr']) - start_year
+                obj_jg = start_jg + min(val_dict["ausgabejahr__jahr"]) - start_year
                 if obj_jg not in update_dict:
                     update_dict[obj_jg] = []
                 update_dict[obj_jg].append(pk)
@@ -409,7 +382,7 @@ class AusgabeQuerySet(CNQuerySet):
 
         return update_dict
 
-    def chronological_order(self, *order_fields: str) -> 'AusgabeQuerySet':
+    def chronological_order(self, *order_fields: str) -> "AusgabeQuerySet":
         """Return this queryset chronologically ordered."""
         # TODO: check out nulls_first and nulls_last parameters of
         #   Expression.asc() and desc() (added in 1.11) to fix the nulls
@@ -425,7 +398,7 @@ class AusgabeQuerySet(CNQuerySet):
         # ordering (the default one) with another poor, but more expensive
         # chronological one. In that case, return self with some form of
         # ordering instead.
-        if self.only('magazin').distinct().values_list('magazin').count() != 1:
+        if self.only("magazin").distinct().values_list("magazin").count() != 1:
             # This condition is also True if self is an empty queryset.
             if order_fields:
                 return self.order_by(*order_fields)
@@ -433,7 +406,7 @@ class AusgabeQuerySet(CNQuerySet):
                 return self
             return self.order_by(*opts.ordering)
 
-        default_ordering = ('magazin__magazin_name', 'jahr', 'jahrgang', 'sonderausgabe')
+        default_ordering = ("magazin__magazin_name", "jahr", "jahrgang", "sonderausgabe")
         ordering: List[str] = [*order_fields, *default_ordering]
 
         pk_name = opts.pk.name
@@ -442,56 +415,47 @@ class AusgabeQuerySet(CNQuerySet):
         # It makes no sense to have the queryset be ordered primarily on the
         # primary key.
         try:
-            pk_order_item = next(
-                filter(
-                    lambda i: i in ('pk', '-pk', pk_name, '-' + pk_name),
-                    ordering
-                )
-            )
+            pk_order_item = next(filter(lambda i: i in ("pk", "-pk", pk_name, "-" + pk_name), ordering))
             ordering.remove(pk_order_item)
         except StopIteration:
             # No primary key in ordering, use a default.
-            pk_order_item = '-%s' % pk_name
+            pk_order_item = "-%s" % pk_name
 
         # Determine if jahr should come before jahrgang in ordering.
-        jj_values: List[Tuple[int, int]] = list(self.values_list('ausgabejahr__jahr', 'jahrgang'))
+        jj_values: List[Tuple[int, int]] = list(self.values_list("ausgabejahr__jahr", "jahrgang"))
         # Remove empty values and unzip the 2-tuples into two lists.
         jahr_values: Sequence[int]
         jahrgang_values: Sequence[int]
         jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
-            jahr_index = ordering.index('jahr')
-            jahrgang_index = ordering.index('jahrgang')
-            ordering[jahr_index] = 'jahrgang'
-            ordering[jahrgang_index] = 'jahr'
+            jahr_index = ordering.index("jahr")
+            jahrgang_index = ordering.index("jahrgang")
+            ordering[jahr_index] = "jahrgang"
+            ordering[jahrgang_index] = "jahr"
 
         clone = self.annotate(
-            num=Max('ausgabenum__num'),
-            monat=Max('ausgabemonat__monat__ordinal'),
-            lnum=Max('ausgabelnum__lnum'),
-            jahr=Min('ausgabejahr__jahr')
+            num=Max("ausgabenum__num"),
+            monat=Max("ausgabemonat__monat__ordinal"),
+            lnum=Max("ausgabelnum__lnum"),
+            jahr=Min("ausgabejahr__jahr"),
         )
         # Find the best (annotated) fields to order against.
         # Sort the fields e_datum, lnum, monat and num by how often the objects
         # of the queryset have values in those fields.
         from dbentry.models import AusgabeLnum, AusgabeMonat, AusgabeNum
-        counted = (
-            self
-            .annotate(
-                has_lnum=Exists(AusgabeLnum.objects.filter(ausgabe=OuterRef("pk"))),
-                has_monat=Exists(AusgabeMonat.objects.filter(ausgabe=OuterRef("pk"))),
-                has_num=Exists(AusgabeNum.objects.filter(ausgabe=OuterRef("pk")))
-            )
-            .aggregate(
-                e_datum__sum=Count('e_datum'),
-                lnum__sum=Count('has_lnum', filter=Q(has_lnum=True)),
-                monat__sum=Count('has_monat', filter=Q(has_monat=True)),
-                num__sum=Count('has_num', filter=Q(has_num=True)),
-            )
+
+        counted = self.annotate(
+            has_lnum=Exists(AusgabeLnum.objects.filter(ausgabe=OuterRef("pk"))),
+            has_monat=Exists(AusgabeMonat.objects.filter(ausgabe=OuterRef("pk"))),
+            has_num=Exists(AusgabeNum.objects.filter(ausgabe=OuterRef("pk"))),
+        ).aggregate(
+            e_datum__sum=Count("e_datum"),
+            lnum__sum=Count("has_lnum", filter=Q(has_lnum=True)),
+            monat__sum=Count("has_monat", filter=Q(has_monat=True)),
+            num__sum=Count("has_num", filter=Q(has_num=True)),
         )
-        default_criteria_ordering = [
-            'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
+        default_criteria_ordering = ["e_datum__sum", "lnum__sum", "monat__sum", "num__sum"]
 
         # Tuples are sorted lexicographically in ascending order:
         # sorted([(1, 'c'), (1, 'b'), (2, 'a')]) = [(1, 'b'), (1, 'c'), (2, 'a')]
@@ -499,10 +463,9 @@ class AusgabeQuerySet(CNQuerySet):
         # (hence the minus operand), and if any sums are equal, the order of
         # sum_names in the defaults decides.
         criteria = sorted(
-            counted.items(),
-            key=lambda itemtpl: (-itemtpl[1], default_criteria_ordering.index(itemtpl[0]))
+            counted.items(), key=lambda itemtpl: (-itemtpl[1], default_criteria_ordering.index(itemtpl[0]))
         )
-        result_ordering = [sum_name.split('__')[0] for sum_name, _sum in criteria]
+        result_ordering = [sum_name.split("__")[0] for sum_name, _sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
 
         clone = clone.order_by(*ordering)

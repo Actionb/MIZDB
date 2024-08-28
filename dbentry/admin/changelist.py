@@ -7,7 +7,6 @@ from dbentry.utils.models import get_model_fields
 
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
-
     def get_results(self, request: HttpRequest) -> None:
         """
         Prepare the result list of the changelist.
@@ -29,11 +28,10 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
     def get_show_all_url(self) -> str:
         """Return the url for an unfiltered changelist showing all objects."""
         # NOTE: is removing *ALL* other params necessary/reasonable?
-        return self.get_query_string(new_params={ALL_VAR: ''}, remove=self.params)
+        return self.get_query_string(new_params={ALL_VAR: ""}, remove=self.params)
 
 
 class AusgabeChangeList(MIZChangeList):
-
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """
         Apply chronological order to the result queryset unless an ordering is
@@ -46,25 +44,24 @@ class AusgabeChangeList(MIZChangeList):
 
 
 class BestandChangeList(ChangeList):
-
     def get_results(self, request: HttpRequest) -> None:
         super().get_results(request)
         # Include the related archive objects referenced by the Bestand objects
         # (i.e. Ausgabe, Audio, etc.) in the result queryset.
         bestand_fields = [
-            f for f in get_model_fields(self.model, base=False, foreign=True, m2m=False)
-            if f.related_model._meta.model_name not in ('lagerort', 'provenienz')
+            f
+            for f in get_model_fields(self.model, base=False, foreign=True, m2m=False)
+            if f.related_model._meta.model_name not in ("lagerort", "provenienz")
         ]
         # Let the model admin cache the data it needs for the list display
         # items 'bestand_class' and 'bestand_link'.
         self.model_admin.cache_bestand_data(
             request,
             self.result_list.select_related(*[f.name for f in bestand_fields]),  # type: ignore
-            bestand_fields
+            bestand_fields,
         )
         # Overwrite the result_list.
         # noinspection PyAttributeOutsideInit
         self.result_list = self.result_list.select_related(  # type: ignore[has-type]
-            *self.list_select_related,
-            *[f.name for f in bestand_fields]
+            *self.list_select_related, *[f.name for f in bestand_fields]
         )
