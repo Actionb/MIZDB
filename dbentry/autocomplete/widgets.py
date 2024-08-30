@@ -3,7 +3,7 @@ from mizdb_tomselect.widgets import MIZSelect, MIZSelectMultiple, MIZSelectTabul
 from dbentry import models as _models
 
 # NOTE: models without an explicit create_field (like Person, Autor) still need
-# a 'create' field set on the widget or no AJAX requests can be made.
+#  a 'create' field set on the widget or no AJAX requests can be made.
 
 
 DEFAULTS = {
@@ -79,7 +79,7 @@ def make_widget(
     if "create_field" not in widget_opts and getattr(model, "create_field", None):
         widget_opts["create_field"] = getattr(model, "create_field")
 
-    # Add a placeholder when filtering by the another field:
+    # Add a placeholder when filtering by another field:
     if "filter_by" in widget_opts and "placeholder" not in widget_opts["attrs"]:
         field_name, _lookup = widget_opts["filter_by"]
         # TODO: placeholder should target the field of the lookup (filter_by[1])
