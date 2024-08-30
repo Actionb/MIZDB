@@ -1,4 +1,4 @@
-from tests.case import AdminTestCase, ViewTestCase, DataTestCase
+from tests.case import AdminTestCase, DataTestCase, ViewTestCase
 
 
 class ActionViewTestCase(DataTestCase, ViewTestCase):

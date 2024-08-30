@@ -1,4 +1,5 @@
 """Utility functions and helpers."""
+
 from collections.abc import Callable, Iterable, Iterator
 from typing import Any, Union
 

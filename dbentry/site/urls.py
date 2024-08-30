@@ -1,9 +1,9 @@
 from django.contrib.auth.views import logout_then_login
-from django.urls import path, include
+from django.urls import include, path
 
 from dbentry.site.registry import miz_site
-from dbentry.site.views.auth import LoginView, PasswordChangeView, PasswordChangeDoneView
-from dbentry.site.views.help import HelpView, HelpIndexView
+from dbentry.site.views.auth import LoginView, PasswordChangeDoneView, PasswordChangeView
+from dbentry.site.views.help import HelpIndexView, HelpView
 from dbentry.site.views.list import Index, changelist_selection_sync
 from dbentry.site.views.search import SearchbarSearch, SiteSearchView
 from dbentry.site.views.watchlist import WatchlistView

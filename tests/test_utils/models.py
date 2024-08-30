@@ -4,39 +4,39 @@ from django.db import models
 class Musiker(models.Model):
     kuenstler_name = models.CharField(max_length=100)
 
-    genre = models.ManyToManyField('test_utils.Genre')
+    genre = models.ManyToManyField("test_utils.Genre")
 
     def __str__(self):
         return self.kuenstler_name
 
     class Meta:
-        verbose_name = 'Musiker'
-        verbose_name_plural = 'Musiker'
+        verbose_name = "Musiker"
+        verbose_name_plural = "Musiker"
 
 
 class Band(models.Model):
     band_name = models.CharField(max_length=100)
 
-    genre = models.ManyToManyField('test_utils.Genre')
-    musiker = models.ManyToManyField('test_utils.Musiker')
+    genre = models.ManyToManyField("test_utils.Genre")
+    musiker = models.ManyToManyField("test_utils.Musiker")
 
     def __str__(self):
         return self.band_name
 
     class Meta:
-        verbose_name = 'Band'
-        verbose_name_plural = 'Bands'
-        ordering = ['band_name']
+        verbose_name = "Band"
+        verbose_name_plural = "Bands"
+        ordering = ["band_name"]
 
 
 class MusikerAudioM2M(models.Model):
-    musiker = models.ForeignKey('test_utils.Musiker', on_delete=models.CASCADE)
-    audio = models.ForeignKey('test_utils.Audio', on_delete=models.CASCADE)
+    musiker = models.ForeignKey("test_utils.Musiker", on_delete=models.CASCADE)
+    audio = models.ForeignKey("test_utils.Audio", on_delete=models.CASCADE)
 
     class Meta:
-        verbose_name = 'Audio-Musiker'
-        verbose_name_plural = 'Audio-Musiker'
-        unique_together = ('musiker', 'audio')
+        verbose_name = "Audio-Musiker"
+        verbose_name_plural = "Audio-Musiker"
+        unique_together = ("musiker", "audio")
 
     def __str__(self):
         return str(self.musiker)  # imitate dbentry.base.BaseM2MModel.__str__
@@ -44,20 +44,20 @@ class MusikerAudioM2M(models.Model):
 
 class Audio(models.Model):
     titel = models.CharField(max_length=100)
-    tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
+    tracks = models.PositiveIntegerField("Anz. Tracks", blank=True, null=True)
 
     beschreibung = models.TextField(blank=True)
     bemerkungen = models.TextField(blank=True)
 
-    musiker = models.ManyToManyField('test_utils.Musiker', through=MusikerAudioM2M)
-    band = models.ManyToManyField('test_utils.Band')
-    genre = models.ManyToManyField('test_utils.Genre')
+    musiker = models.ManyToManyField("test_utils.Musiker", through=MusikerAudioM2M)
+    band = models.ManyToManyField("test_utils.Band")
+    genre = models.ManyToManyField("test_utils.Genre")
 
-    veranstaltung = models.ManyToManyField('test_utils.Veranstaltung')
+    veranstaltung = models.ManyToManyField("test_utils.Veranstaltung")
 
     class Meta:
-        verbose_name = 'Audio-Material'
-        verbose_name_plural = 'Audio-Materialien'
+        verbose_name = "Audio-Material"
+        verbose_name_plural = "Audio-Materialien"
 
     def __str__(self):
         return self.titel
@@ -69,16 +69,14 @@ class VeranstaltungsReihe(models.Model):
 
 class Veranstaltung(models.Model):
     name = models.CharField(max_length=100)
-    reihe = models.ForeignKey(
-        'test_utils.VeranstaltungsReihe', on_delete=models.SET_NULL, blank=True, null=True
-    )
+    reihe = models.ForeignKey("test_utils.VeranstaltungsReihe", on_delete=models.SET_NULL, blank=True, null=True)
 
-    musiker = models.ManyToManyField('test_utils.Musiker')
-    band = models.ManyToManyField('test_utils.Band')
+    musiker = models.ManyToManyField("test_utils.Musiker")
+    band = models.ManyToManyField("test_utils.Band")
 
     class Meta:
-        verbose_name = 'Veranstaltung'
-        verbose_name_plural = 'Veranstaltungen'
+        verbose_name = "Veranstaltung"
+        verbose_name_plural = "Veranstaltungen"
 
 
 class Lagerort(models.Model):
@@ -89,15 +87,15 @@ class Lagerort(models.Model):
 
 
 class Bestand(models.Model):
-    lagerort = models.ForeignKey('test_utils.Lagerort', models.PROTECT)
+    lagerort = models.ForeignKey("test_utils.Lagerort", models.PROTECT)
 
-    audio = models.ForeignKey('test_utils.Audio', on_delete=models.CASCADE, blank=True, null=True)
+    audio = models.ForeignKey("test_utils.Audio", on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return str(self.lagerort)
 
     class Meta:
-        verbose_name = 'Bestand'
+        verbose_name = "Bestand"
 
 
 class Genre(models.Model):
@@ -107,13 +105,13 @@ class Genre(models.Model):
         return self.genre
 
     class Meta:
-        verbose_name = 'Genre'
+        verbose_name = "Genre"
 
 
 class Base(models.Model):
     titel = models.CharField(max_length=100)
 
-    genre = models.ManyToManyField('test_utils.Genre')
+    genre = models.ManyToManyField("test_utils.Genre")
 
     def __str__(self):
         return self.titel
@@ -121,4 +119,4 @@ class Base(models.Model):
 
 class Kalender(Base):
     class Meta:
-        verbose_name = 'Programmheft'
+        verbose_name = "Programmheft"

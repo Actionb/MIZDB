@@ -7,26 +7,21 @@ from dbentry.base.models import ComputedNameModel
 class Command(BaseCommand):
     requires_migrations_checks = True
 
-    help = (
-        'Updates the name attribute of all model instances of models '
-        'subclassing ComputedNameModel.'
-    )
+    help = "Updates the name attribute of all model instances of models subclassing ComputedNameModel."
 
     def add_arguments(self, parser):
         parser.add_argument(  # pragma: no cover
-            '-f', '--force',
-            action='store_true',
-            help='Force the update of all model instances.'
+            "-f", "--force", action="store_true", help="Force the update of all model instances."
         )
 
     def handle(self, *args, **options):
         models = [
             model
-            for model in apps.get_models('dbentry')  # FIXME: the app name shouldn't be hardcoded
+            for model in apps.get_models("dbentry")  # FIXME: the app name shouldn't be hardcoded
             if issubclass(model, ComputedNameModel)
         ]
         for model in models:
-            if options['force']:
+            if options["force"]:
                 model.objects.update(_changed_flag=True)
             model.objects.all()._update_names()
             # noinspection PyUnresolvedReferences

@@ -1,6 +1,7 @@
 """Tests for the `searchbar search` view."""
+
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from django.test import override_settings
 from django.urls import path, reverse

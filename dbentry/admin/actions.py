@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.translation import gettext_lazy
 
-from dbentry.actions.views import BulkEditJahrgang, ChangeBestand, MoveToBrochure, Replace, AdminMergeView, text_summary
+from dbentry.actions.views import AdminMergeView, BulkEditJahrgang, ChangeBestand, MoveToBrochure, Replace, text_summary
 
 
 @admin.action(description=gettext_lazy("Add issue volume"), permissions=["change"])

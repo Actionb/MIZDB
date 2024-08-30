@@ -1,11 +1,10 @@
 from django_bootstrap5.renderers import FieldRenderer
-from mizdb_inlines.renderers import InlineFormsetRenderer, InlineFormRenderer
+from mizdb_inlines.renderers import InlineFormRenderer, InlineFormsetRenderer
 
 IS_INVALID_CLASS = "is-invalid"
 
 
 class MIZFieldRenderer(FieldRenderer):
-
     def get_server_side_validation_classes(self):
         """Return CSS classes for server-side validation."""
         if self.field_errors:

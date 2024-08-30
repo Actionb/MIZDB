@@ -26,15 +26,12 @@ class WeightedColumn(tsvector_field.WeightedColumn):
         return (
             "dbentry.fts.fields.{}".format(self.__class__.__name__),
             [force_str(self.name), force_str(self.weight), force_str(self.language)],
-            {}
+            {},
         )
 
 
 class SearchVectorField(tsvector_field.SearchVectorField):
-
-    def __init__(
-            self, blank: bool = True, editable: bool = False, *args: Any, **kwargs: Any
-    ) -> None:
+    def __init__(self, blank: bool = True, editable: bool = False, *args: Any, **kwargs: Any) -> None:
         # Set defaults for blank and editable. Note that tsvector_field ALWAYS
         # sets null to True.
         super().__init__(blank=blank, editable=editable, *args, **kwargs)
@@ -47,7 +44,7 @@ class SearchVectorField(tsvector_field.SearchVectorField):
                     yield checks.Error(
                         "Language required for column "
                         f"WeightedColumn({column.name!r}, {column.weight!r}, {column.language!r})",
-                        obj=self
+                        obj=self,
                     )
 
     def deconstruct(self) -> Tuple[str, str, list, Dict[str, list]]:
@@ -68,18 +65,13 @@ class SearchVectorField(tsvector_field.SearchVectorField):
         # parameters would be incorrectly omitted when they do *not* have their
         # default values (although this is when they *must* be included).
         if not self.blank:
-            kwargs['blank'] = False
+            kwargs["blank"] = False
         else:
-            kwargs.pop('blank', None)
+            kwargs.pop("blank", None)
         if self.editable:
-            kwargs['editable'] = True
+            kwargs["editable"] = True
         else:
-            kwargs.pop('editable', None)
+            kwargs.pop("editable", None)
         # Change the path to so that this SearchVectorField class is used
         # instead of the default implementation:
-        return (
-            name,
-            "dbentry.fts.fields.{}".format(self.__class__.__name__),
-            args,
-            kwargs
-        )
+        return name, "dbentry.fts.fields.{}".format(self.__class__.__name__), args, kwargs

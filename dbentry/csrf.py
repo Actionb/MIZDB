@@ -2,8 +2,8 @@ import re
 
 from django import forms
 from django.contrib import messages
-from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
-from django.urls import reverse, resolve, Resolver404
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.urls import Resolver404, resolve, reverse
 from django.utils.safestring import mark_safe
 from django.views.csrf import csrf_failure as django_csrf_failure
 

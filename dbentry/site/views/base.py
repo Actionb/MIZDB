@@ -1,6 +1,4 @@
-"""
-Base views for the other views of the site app.
-"""
+"""Base views for the other views of the site app."""
 
 from collections import OrderedDict
 from urllib.parse import parse_qsl
@@ -14,24 +12,24 @@ from django.contrib.messages.storage import default_storage
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
-from django.http import HttpResponseBase, Http404
-from django.shortcuts import render, redirect
+from django.http import Http404, HttpResponseBase
+from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
-from django.views.generic import UpdateView, ListView
+from django.views.generic import ListView, UpdateView
 from django.views.generic.base import ContextMixin
 from mizdb_inlines.views import InlineFormsetMixin
-from mizdb_tomselect.views import PopupResponseMixin, IS_POPUP_VAR
+from mizdb_tomselect.views import IS_POPUP_VAR, PopupResponseMixin
 from mizdb_watchlist.views import WatchlistMixin
 
 from dbentry.base.models import ComputedNameModel
-from dbentry.csrf import _restore_formset, CSRF_FORM_DATA_KEY
+from dbentry.csrf import CSRF_FORM_DATA_KEY, _restore_formset
 from dbentry.search.forms import MIZSelectSearchFormFactory
 from dbentry.search.mixins import SearchFormMixin
-from dbentry.site.forms import MIZEditForm, InlineForm
+from dbentry.site.forms import InlineForm, MIZEditForm
 from dbentry.site.registry import miz_site
 from dbentry.site.templatetags.mizdb import add_preserved_filters
 from dbentry.utils import flatten
@@ -39,13 +37,13 @@ from dbentry.utils.admin import construct_change_message, create_logentry
 from dbentry.utils.html import create_hyperlink, get_obj_link, get_view_link
 from dbentry.utils.models import get_model_relations
 from dbentry.utils.permission import (
-    has_view_permission,
     get_perm,
-    has_change_permission,
     has_add_permission,
+    has_change_permission,
+    has_view_permission,
 )
 from dbentry.utils.text import diffhtml
-from dbentry.utils.url import get_change_url, urlname, get_changelist_url_for_relation, get_view_url
+from dbentry.utils.url import get_change_url, get_changelist_url_for_relation, get_view_url, urlname
 
 # Constants for the changelist views
 ALL_VAR = "all"
@@ -515,9 +513,7 @@ class BaseEditView(
         return links
 
     def handle_require_confirmation(self, request, *args, **kwargs):
-        """
-        This view requires a confirmation for big changes to the model object.
-        """
+        """This view requires a confirmation for big changes to the model object."""
         if "_change_confirmed" in request.POST:
             # Restore the original form data.
             request.POST = request.session.pop("confirmed_form_data", request.POST)
@@ -588,7 +584,9 @@ class BaseEditView(
         """
 
         def stringify_boundfield(bf):
-            """Return a string representation of the value(s) of the given boundfield."""
+            """
+            Return a string representation of the value(s) of the given boundfield.
+            """  # noqa: D200
             formfield = bf.field
             value = boundfield.value()
             if isinstance(formfield, forms.ChoiceField) and value:
@@ -838,9 +836,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         return ctx
 
     def get_empty_value_display(self):
-        """
-        Return the empty_value_display set on this view.
-        """
+        """Return the empty_value_display set on this view."""
         return mark_safe(self.empty_value_display)
 
     def _lookup_field(self, name):
@@ -1139,7 +1135,7 @@ class SearchableListView(SearchFormMixin, BaseListView):
             elif isinstance(bound_field.field, forms.MultiValueField):
                 # The value for an empty MultiValueField can look like this:
                 # - [None, None] or
-                # - [[None, None], [None, None]] (nested MultiValueFields, i.e. PartialDate + RangeField)
+                # - [[None, None], [None, None]] (nested MultiValueFields, i.e. PartialDate + RangeField)  # noqa: W505
                 return all(subvalue is None for subvalue in flatten(value))
             else:
                 return False

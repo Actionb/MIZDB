@@ -6,11 +6,11 @@ from dbentry.admin.site import MIZAdminSite, miz_site
 
 
 def register_tool(
-        url_name: str,
-        index_label: str,
-        permission_required: Sequence = (),
-        superuser_only: bool = False,
-        site: MIZAdminSite = miz_site
+    url_name: str,
+    index_label: str,
+    permission_required: Sequence = (),
+    superuser_only: bool = False,
+    site: MIZAdminSite = miz_site,
 ) -> Callable:
     """
     Decorator that registers a view class as a 'tool view' for the given site.

@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from django.db import models
 
@@ -15,9 +15,7 @@ class TestBaseExportView(ViewTestCase):
 
     @patch("dbentry.site.views.export.super")
     def test_get_context_data_adds_queryset(self, super_mock):
-        """
-        Assert that get_context_data adds the queryset to the template context.
-        """
+        """Assert that get_context_data adds the queryset to the template context."""
         super_mock.return_value.get_context_data.return_value = {}
         queryset_mock = Mock()
         view = self.get_view(self.post_request(), queryset=queryset_mock, model=DummyModel)

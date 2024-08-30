@@ -50,10 +50,7 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
                 # if the jahrgang values are valid for all objects.
                 queryset.increment_jahrgang(start_obj=start_obj, start_jg=jahrgang, commit=False)
             except InvalidJahrgangError:
-                self.add_error(
-                    "jahrgang",
-                    "Der Jahrgang ist für mind. eine Ausgabe ungültig (Wert wäre kleiner 1)."
-                )
+                self.add_error("jahrgang", "Der Jahrgang ist für mind. eine Ausgabe ungültig (Wert wäre kleiner 1).")
         return cleaned_data
 
 
@@ -72,15 +69,19 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         choices=[],
         required=True,
         widget=forms.HiddenInput(),
-        label="Bitten wählen Sie den Datensatz, dem die verwandten "
-              "Objekte der anderen Datensätze angehängt werden sollen",
+        label=(
+            "Bitten wählen Sie den Datensatz, dem die verwandten Objekte der "
+            "anderen Datensätze angehängt werden sollen"
+        ),
     )
     expand_primary = forms.BooleanField(
         required=False,
         label="Primären Datensatz erweitern",
         initial=True,
-        help_text="Sollen fehlende Grunddaten des primäre Datensatzes um "
-                  "in anderen Datensätzen vorhandenen Daten erweitert werden?",
+        help_text=(
+            "Sollen fehlende Grunddaten des primäre Datensatzes um in anderen "
+            "Datensätzen vorhandenen Daten erweitert werden?"
+        ),
     )
 
     PRIMARY_FIELD_NAME = "primary"
@@ -90,9 +91,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
         css = {"all": ("admin/css/changelists.css",)}
 
     def expand_primary_fieldset(self) -> Fieldset:
-        """
-        Provide a Fieldset object of the expand_primary field for the template.
-        """
+        """Provide a Fieldset object of the expand_primary field for the template."""
         return Fieldset(self, fields=["expand_primary"])
 
 
@@ -152,9 +151,11 @@ class BrochureActionForm(MIZAdminForm):
         label="Änderungen bestätigen",
         required=False,
         initial=True,
-        help_text="Hiermit bestätigen Sie, dass diese Ausgabe verschoben "
-                  "werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu "
-                  "überspringen und nicht zu verschieben.",
+        help_text=(
+            "Hiermit bestätigen Sie, dass diese Ausgabe verschoben werden soll. "
+            "Entfernen Sie das Häkchen, um diese Ausgabe zu überspringen und "
+            "nicht zu verschieben."
+        ),
     )
 
     fieldsets = [

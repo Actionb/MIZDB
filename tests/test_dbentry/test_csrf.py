@@ -1,7 +1,7 @@
 from django import forms
 from django.urls import reverse
 
-from dbentry.csrf import csrf_failure, _restore_formset, CSRF_FORM_DATA_KEY
+from dbentry.csrf import CSRF_FORM_DATA_KEY, _restore_formset, csrf_failure
 from tests.case import RequestTestCase, TestCase
 from tests.model_factory import make
 from tests.test_dbentry.models import Band, Genre
@@ -50,9 +50,7 @@ class TestRestoreFormset(TestCase):
         self.assertEqual(formset.forms[1].initial["genre"], self.pop.pk)
 
     def test_restore_formset_bound_form_addition(self):
-        """
-        Assert that _restore_formset adds new form data to `initial_extra`.
-        """
+        """Assert that _restore_formset adds new form data to `initial_extra`."""
         data = {
             "Band_genre-0-genre": [self.rock.pk],
             "Band_genre-1-genre": [self.spam.pk],

@@ -50,8 +50,10 @@ def test_data(artikel_data, band_data):
 @pytest.fixture
 def get_selection_checkboxes(changelist_results):
     """Return the selection checkbox element for the given changelist."""
+
     def inner(changelist):
         return changelist_results(changelist).get_by_role("checkbox")
+
     return inner
 
 

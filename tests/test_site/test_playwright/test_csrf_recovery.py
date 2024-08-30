@@ -3,7 +3,7 @@ from playwright.sync_api import expect
 
 from dbentry import models as _models
 from tests.model_factory import make
-from tests.test_site.test_playwright.conftest import CHANGE_VIEW, ADD_VIEW
+from tests.test_site.test_playwright.conftest import ADD_VIEW, CHANGE_VIEW
 
 pytestmark = pytest.mark.e2e
 

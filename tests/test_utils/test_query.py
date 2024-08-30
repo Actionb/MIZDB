@@ -1,10 +1,10 @@
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import F, Func, Value
 
-from dbentry.utils.query import to_array, array_to_string, concatenate, limit, join_arrays, array_remove
-from tests.case import MIZTestCase, DataTestCase
+from dbentry.utils.query import array_remove, array_to_string, concatenate, join_arrays, limit, to_array
+from tests.case import DataTestCase, MIZTestCase
 from tests.model_factory import make
-from tests.test_utils.models import Band, Audio
+from tests.test_utils.models import Audio, Band
 
 
 class TestFunctions(MIZTestCase):

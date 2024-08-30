@@ -1,22 +1,22 @@
 """Tests for the (change)list views."""
 
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.views import View
 
 from dbentry import models as _models
-from dbentry.site.registry import Registry, register_changelist, ModelType
+from dbentry.site.registry import ModelType, Registry, register_changelist
 from dbentry.site.views import list
 from dbentry.site.views.base import ORDER_VAR
 from dbentry.site.views.list import _get_continue_url
-from tests.case import ViewTestCase, RequestTestCase, DataTestCase
+from tests.case import DataTestCase, RequestTestCase, ViewTestCase
 from tests.model_factory import make
-from tests.test_site.models import Band, Musician, Genre
+from tests.test_site.models import Band, Genre, Musician
 
 
 class TestChangelistSelectionSync(DataTestCase, RequestTestCase):
@@ -176,9 +176,7 @@ class TestAusgabeList(ListViewTestMethodsMixin, ListViewTestCase):
         self.assertTrue(view.get_queryset().chronologically_ordered)
 
     def test_ordered_chronologically_filtered(self):
-        """
-        Assert that the filtered changelist queryset is ordered chronologically.
-        """
+        """Assert that the filtered changelist queryset is ordered chronologically."""
         request = self.get_request(self.url, data={"magazin_id": self.obj.magazin_id})
         view = self.get_view(request)
         self.assertTrue(view.get_queryset().chronologically_ordered)

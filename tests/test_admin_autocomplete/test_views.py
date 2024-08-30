@@ -98,7 +98,7 @@ class TestACBase(ACViewTestCase):
         A create option should be displayed when:
             - a create_field is set and
             - q is not None and not an empty string and
-            - we're on the last page of the results (if there is pagination)
+            - we're on the last page of the results (if there is pagination).
         """
         view = self.get_view()
         view.create_field = "any"
@@ -524,7 +524,10 @@ class TestACBand(ACViewTestCase):
         self.assertEqual([str(self.contains.pk)], get_result_ids(response))
 
     def test_get_queryset_adds_overview_annotations(self):
-        """Assert that get_queryset adds the annotations declared in overview_annotations."""
+        """
+        Assert that get_queryset adds the annotations declared in
+        overview_annotations.
+        """
         view = self.get_view(self.get_request())
         queryset = view.get_queryset()
         self.assertCountEqual(["alias_list", "orte_list"], list(queryset.query.annotations))
@@ -626,7 +629,10 @@ class TestACAusgabe(ACViewTestCase):
         self.assertEqual(result["selected_text"], str(self.obj_num))
 
     def test_get_queryset_adds_overview_annotations(self):
-        """Assert that get_queryset adds the annotations declared in overview_annotations."""
+        """
+        Assert that get_queryset adds the annotations declared in
+        overview_annotations.
+        """
         view = self.get_view(self.get_request())
         queryset = view.get_queryset()
         for expected in ("num_list", "lnum_list", "jahr_list"):
@@ -706,9 +712,7 @@ class TestACAutor(ACViewTestCase):
         self.assertEqual(len(create_option), 5)
 
     def test_create_object_only_kuerzel(self):
-        """
-        Assert that no Person instance is created if only the kuerzel is given.
-        """
+        """Assert that no Person instance is created if only the kuerzel is given."""
         response = self.post_response(self.path, data={"text": "(BT)"})
         self.assertEqual(response.status_code, 200)
         self.assertFalse(_models.Person.objects.exists())
@@ -854,7 +858,10 @@ class TestACMusiker(ACViewTestCase):
         self.assertTrue(self.model.objects.get(pk=created["id"]))
 
     def test_get_queryset_adds_overview_annotations(self):
-        """Assert that get_queryset adds the annotations declared in overview_annotations."""
+        """
+        Assert that get_queryset adds the annotations declared in
+        overview_annotations.
+        """
         view = self.get_view(self.get_request())
         queryset = view.get_queryset()
         self.assertCountEqual(["alias_list", "orte_list"], list(queryset.query.annotations))
@@ -1193,7 +1200,7 @@ class TestGND(ViewTestCase):
     def test_get_result_label(self):
         """
         Assert that for a given result, the label displayed is of the format:
-        'gnd_name (gnd_id)'
+        'gnd_name (gnd_id)'.
         """
         view = self.get_view()
         self.assertEqual("Plant, Robert (134485904)", view.get_result_label(("134485904", "Plant, Robert")))
@@ -1264,6 +1271,7 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
 ####################################################################################################
 # Tests for various autocompletes that use the generic URL.
 ####################################################################################################
+
 
 class TestACInstrument(RequestTestCase):
     model = _models.Instrument

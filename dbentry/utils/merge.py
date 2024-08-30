@@ -5,18 +5,15 @@ from django.db.models import Model, QuerySet
 from django.db.utils import IntegrityError
 
 from dbentry.utils.admin import log_addition, log_change, log_deletion
-from dbentry.utils.models import (
-    get_model_relations, get_relation_info_to, get_updatable_fields,
-    is_protected
-)
+from dbentry.utils.models import get_model_relations, get_relation_info_to, get_updatable_fields, is_protected
 
 
 def merge_records(
-        original: Model,
-        queryset: QuerySet,
-        update_data: Optional[Dict] = None,
-        expand_original: bool = True,
-        user_id: int = 0
+    original: Model,
+    queryset: QuerySet,
+    update_data: Optional[Dict] = None,
+    expand_original: bool = True,
+    user_id: int = 0,
 ) -> Tuple[Model, Optional[Dict]]:
     """
     Merge all model instances in ``queryset`` into model instance ``original``.
@@ -69,9 +66,7 @@ def merge_records(
             # Get all the related objects that are going to be updated to be
             # related to original:
             # noinspection PyUnresolvedReferences
-            merger_related = related_model.objects.filter(
-                **{related_field.name + '__in': queryset}
-            )
+            merger_related = related_model.objects.filter(**{related_field.name + "__in": queryset})
             qs_to_be_updated = merger_related.all()
             if not qs_to_be_updated.exists():
                 continue
@@ -108,7 +103,7 @@ def merge_records(
             # Get the ids of the related objects that will be updated.
             # If an IntegrityError occurs, despite our efforts above,
             # this list is reevaluated.
-            updated_ids = list(qs_to_be_updated.values_list('pk', flat=True))
+            updated_ids = list(qs_to_be_updated.values_list("pk", flat=True))
             try:
                 with transaction.atomic():
                     qs_to_be_updated.update(**{related_field.name: original})
@@ -117,7 +112,7 @@ def merge_records(
                 # qs_to_be_updated. Work through each object in
                 # qs_to_be_updated and do the update individually.
                 updated_ids = []
-                for pk in qs_to_be_updated.values_list('pk', flat=True):
+                for pk in qs_to_be_updated.values_list("pk", flat=True):
                     # noinspection PyUnresolvedReferences
                     loop_qs = related_model.objects.filter(pk=pk)
                     try:

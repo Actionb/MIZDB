@@ -6,7 +6,6 @@ from dbentry.utils.dates import leapdays
 
 
 class TestDateUtils(TestCase):
-
     def test_leapdays(self):
         test_data = [
             # start.year == end.year

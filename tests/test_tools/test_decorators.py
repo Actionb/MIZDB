@@ -4,7 +4,6 @@ from tests.case import MIZTestCase
 
 
 class TestRegisterToolDecorator(MIZTestCase):
-
     def test(self):
         """
         Assert that the register_tool decorator calls a site's register_tool
@@ -14,16 +13,13 @@ class TestRegisterToolDecorator(MIZTestCase):
         site = MIZAdminSite()
 
         @register_tool(
-            url_name='url_name',
-            index_label='index_label',
-            permission_required=('dbentry.ausgabe_add',),
+            url_name="url_name",
+            index_label="index_label",
+            permission_required=("dbentry.ausgabe_add",),
             superuser_only=True,
-            site=site
+            site=site,
         )
         class DummyView:
             pass
 
-        self.assertIn(
-            (DummyView, 'url_name', 'index_label', ('dbentry.ausgabe_add',), True),
-            site.tools
-        )
+        self.assertIn((DummyView, "url_name", "index_label", ("dbentry.ausgabe_add",), True), site.tools)

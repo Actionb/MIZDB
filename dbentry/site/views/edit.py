@@ -20,7 +20,7 @@ To declare inlines for handling relations:
 """
 
 from django import forms
-from django.urls import reverse_lazy, reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse, reverse_lazy
 
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget

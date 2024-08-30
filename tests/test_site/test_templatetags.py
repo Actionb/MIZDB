@@ -1,5 +1,5 @@
 from unittest.mock import Mock
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode, urlparse
 
 # noinspection PyPackageRequirements
 from bs4 import BeautifulSoup
@@ -10,12 +10,12 @@ from mizdb_tomselect.views import IS_POPUP_VAR
 
 from dbentry.site.templatetags.mizdb import (
     add_preserved_filters,
-    reset_ordering_link,
     formset_has_errors,
     get_actionlist_item,
     remove_popup_param,
+    reset_ordering_link,
 )
-from dbentry.site.views.base import BaseListView, ORDER_VAR
+from dbentry.site.views.base import ORDER_VAR, BaseListView
 from tests.case import ViewTestCase
 from tests.test_site.models import Band
 

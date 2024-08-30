@@ -2,7 +2,7 @@ from urllib.parse import parse_qsl, unquote, urlparse, urlunparse
 
 from django import template
 from django.contrib.auth import get_permission_codename
-from django.urls import Resolver404, get_script_prefix, resolve, reverse, NoReverseMatch
+from django.urls import NoReverseMatch, Resolver404, get_script_prefix, resolve, reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from mizdb_tomselect.views import IS_POPUP_VAR
@@ -18,6 +18,7 @@ register = template.Library()
 def urlname(opts, name):  # pragma: no cover
     """
     Return the 'url name' for the given name/action and model options.
+
         {opts.app_label}_{opts.model_name}_{name}
 
     Usage:

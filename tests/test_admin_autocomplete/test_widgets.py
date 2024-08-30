@@ -85,7 +85,7 @@ class TestRemoteModelWidgetWrapper(MIZTestCase):
             self.assertNotIn("can_delete_related", context)
 
     def test_wrapper_includes_related_object_js(self):
-        """Assert that the wrapped widget includes the RelatedObjectLookups.js"""
+        """Assert that the wrapped widget includes the RelatedObjectLookups.js."""
         self.assertIn("admin/js/admin/RelatedObjectLookups.js", self.widget.media._js)
 
     def test_no_related_links_for_multiple(self):

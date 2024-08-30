@@ -1,4 +1,5 @@
-from .defaults import *
+from .defaults import *  # noqa
+from .defaults import INSTALLED_APPS, MIDDLEWARE
 
 DEBUG = True
 

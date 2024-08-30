@@ -49,7 +49,7 @@ class AutocompleteMixin(object):
     tabular_autocomplete: list = []
 
     def formfield_for_foreignkey(
-            self, db_field: models.Field, request: HttpRequest, **kwargs: Any
+        self, db_field: models.Field, request: HttpRequest, **kwargs: Any
     ) -> forms.ChoiceField:
         if "widget" not in kwargs:
             kwargs["widget"] = make_widget(
@@ -59,7 +59,6 @@ class AutocompleteMixin(object):
 
 
 class ExportMixin(BaseExportMixin):
-
     def has_export_permission(self, request):
         return request.user.is_superuser
 
@@ -317,14 +316,14 @@ class MIZModelAdmin(ExportMixin, WatchlistMixin, AutocompleteMixin, MIZAdminSear
         return super().add_view(request, form_url, self.add_extra_context(**(extra_context or {})))
 
     def change_view(
-            self, request: HttpRequest, object_id: str = "", form_url: str = "", extra_context: Optional[dict] = None
+        self, request: HttpRequest, object_id: str = "", form_url: str = "", extra_context: Optional[dict] = None
     ) -> HttpResponse:
         """View for changing an object."""
         new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
         return super().change_view(request, object_id, form_url, new_extra)
 
     def _changeform_view(
-            self, request: HttpRequest, object_id: int, form_url: str, extra_context: dict
+        self, request: HttpRequest, object_id: int, form_url: str, extra_context: dict
     ) -> HttpResponse:
         if request.method == "POST" and self.require_confirmation:
             if "_change_confirmed" in request.POST:
@@ -360,12 +359,9 @@ class MIZModelAdmin(ExportMixin, WatchlistMixin, AutocompleteMixin, MIZAdminSear
         return super()._changeform_view(request, object_id, form_url, extra_context)
 
     def construct_change_message(
-            self, request: HttpRequest, form: forms.ModelForm, formsets: List[forms.BaseInlineFormSet],
-            add: bool = False
+        self, request: HttpRequest, form: forms.ModelForm, formsets: List[forms.BaseInlineFormSet], add: bool = False
     ) -> List[dict]:
-        """
-        Construct a JSON structure describing changes from a changed object.
-        """
+        """Construct a JSON structure describing changes from a changed object."""
         return construct_change_message(form, formsets, add)
 
     def has_module_permission(self, request: HttpRequest) -> bool:
@@ -385,7 +381,7 @@ class MIZModelAdmin(ExportMixin, WatchlistMixin, AutocompleteMixin, MIZAdminSear
             super().save_model(request, obj, form, change)
 
     def save_related(
-            self, request: HttpRequest, form: forms.ModelForm, formsets: List[forms.BaseInlineFormSet], change: bool
+        self, request: HttpRequest, form: forms.ModelForm, formsets: List[forms.BaseInlineFormSet], change: bool
     ) -> None:
         super().save_related(request, form, formsets, change)
         if isinstance(form.instance, ComputedNameModel):
@@ -393,7 +389,7 @@ class MIZModelAdmin(ExportMixin, WatchlistMixin, AutocompleteMixin, MIZAdminSear
             form.instance.update_name(force_update=True)
 
     def get_search_results(
-            self, request: HttpRequest, queryset: MIZQuerySet, search_term: str
+        self, request: HttpRequest, queryset: MIZQuerySet, search_term: str
     ) -> tuple[MIZQuerySet, bool]:
         if not search_term:
             return queryset, False

@@ -1,5 +1,5 @@
 import sys
-from typing import Iterable, List, Optional, TextIO, Tuple, Type, Union, Sequence
+from typing import Iterable, List, Optional, Sequence, TextIO, Tuple, Type, Union
 
 from django.apps import apps
 from django.contrib import auth
@@ -8,7 +8,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
 from django.db import models, transaction, utils
-from django.db.models import Field, Model, constants, QuerySet
+from django.db.models import Field, Model, QuerySet, constants
 from django.db.models.fields.related import ForeignKey, OneToOneField
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel, OneToOneRel
 from django.http import HttpRequest
@@ -213,9 +213,7 @@ def is_protected(objs: List[ModelClassOrInstance], using: str = "default") -> Op
 
 
 def get_reverse_field_path(rel: Relations, field_name: str) -> str:
-    """
-    Build a field_path to ``field_name`` using the reverse relation ``rel``.
-    """
+    """Build a field_path to ``field_name`` using the reverse relation ``rel``."""
     # (used by dbentry.tools.forms.get_dupe_field_choices)
     if rel.related_query_name:
         field_path = rel.related_query_name
