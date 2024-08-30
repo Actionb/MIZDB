@@ -699,26 +699,6 @@ class TestBaseBrochureAdmin(AdminTestCase):
         cls.obj1 = make(cls.model, jahre__jahr=[2002, 2001])
         super().setUpTestData()
 
-    @translation_override(language=None)
-    def test_get_fieldsets(self):
-        """
-        Assert that an extra fieldset for the (ausgabe__magazin, ausgabe) group
-        is added.
-        """
-        fieldsets = self.model_admin.get_fieldsets(self.get_request())
-        # Expect three fieldsets:
-        #   1) the default 'none',
-        #   2) beschreibung & bemerkungen
-        #   3) ausgabe & ausgabe__magazin
-        self.assertEqual(len(fieldsets), 3)
-
-        self.assertEqual(fieldsets[1][0], "Beilage von Ausgabe")
-        fieldset_options = fieldsets[1][1]
-        self.assertIn("fields", fieldset_options)
-        self.assertEqual(fieldset_options["fields"], [("ausgabe__magazin", "ausgabe")])
-        self.assertIn("description", fieldset_options)
-        self.assertEqual(fieldset_options["description"], "Geben Sie die Ausgabe an, der dieses Objekt beilag.")
-
     def test_get_queryset_adds_jahr_min_annotation(self):
         """Assert that the 'jahr_min' annotation is added to the queryset."""
         queryset = self.model_admin.get_queryset(self.get_request())
@@ -1046,16 +1026,6 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         cls.obj1 = make(cls.model)
         super().setUpTestData()
-
-    def test_get_fieldsets(self):
-        """Assert that the fields 'art' and 'zusammenfassung' are swapped."""
-        none_fieldset_options = self.model_admin.get_fieldsets(self.get_request())[0][1]
-        self.assertIn("fields", none_fieldset_options)
-        self.assertIn("art", none_fieldset_options["fields"])
-        art_index = none_fieldset_options["fields"].index("art")
-        self.assertIn("zusammenfassung", none_fieldset_options["fields"])
-        z_index = none_fieldset_options["fields"].index("zusammenfassung")
-        self.assertTrue(art_index < z_index)
 
     def test_action_change_bestand(self):
         """

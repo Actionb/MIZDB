@@ -10,7 +10,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
 from django.db import transaction
-from django.db.models import Count, IntegerField, ManyToManyField, Min, Model, OuterRef, QuerySet, Subquery, Value
+from django.db.models import Count, IntegerField, ManyToManyField, Min, OuterRef, QuerySet, Subquery, Value
 from django.db.models import Field as ModelField
 from django.db.models.functions import Coalesce
 from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
@@ -1519,33 +1519,15 @@ class BaseBrochureAdmin(MIZModelAdmin):
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe"],
     }
-
-    def get_fieldsets(self, request: HttpRequest, obj: Optional[Model] = None) -> list:
-        """Add a fieldset for (ausgabe, ausgabe__magazin)."""
-        # TODO: why do this in get_fieldsets instead of declaring the fieldsets
-        #  via fields attribute?
-        #  fields = [(None, ...), ..., ('Beilage von Ausgabe', {...})]
-        fieldsets = super().get_fieldsets(request, obj)
-        # django default implementation adds at minimum:
-        # [(None, {'fields': self.get_fields()})]
-        # Check the default fieldset for (ausgabe, ausgabe__magazin).
-        # 'ausgabe__magazin' is returned by get_fields() due to being a base
-        # field of this ModelAdmin's form class.
-        default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:  # pragma: no cover
-            return fieldsets
-        fields = default_fieldset["fields"].copy()
-        ausgabe_fields = ("ausgabe__magazin", "ausgabe")
-        if all(f in fields for f in ausgabe_fields):
-            for f in ausgabe_fields:
-                fields.remove(f)
-            fieldset = (
-                "Beilage von Ausgabe",
-                {"fields": [ausgabe_fields], "description": "Geben Sie die Ausgabe an, der dieses Objekt beilag."},
-            )
-            fieldsets.insert(1, fieldset)
-            default_fieldset["fields"] = fields
-        return fieldsets
+    # fmt: off
+    fieldsets = [
+        (None, {"fields": ["titel", "zusammenfassung", "beschreibung", "bemerkungen"]}),
+        ("Beilage von Ausgabe", {
+            "fields": [("ausgabe__magazin", "ausgabe")],
+            "description": "Geben Sie die Ausgabe an, der dieses Objekt beilag.",
+        }),
+    ]
+    # fmt: on
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         # Add the annotation necessary for the proper ordering:
@@ -1593,25 +1575,15 @@ class KatalogAdmin(BaseBrochureAdmin):
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     list_display = ["titel", "zusammenfassung", "art", "jahr_list"]
     resource_class = resources.KatalogResource
-
-    def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
-        """
-        Swap fieldset fields 'art' and 'zusammenfassung' without having to
-        redeclare the entire fieldsets attribute.
-        """
-        # TODO: just declare the fieldsets attribute
-        fieldsets = super().get_fieldsets(*args, **kwargs)
-        default_fieldset = dict(fieldsets).get(None, {})
-        if not default_fieldset:  # pragma: no cover
-            return fieldsets
-        else:
-            fields = default_fieldset["fields"].copy()
-            if all(f in fields for f in ("art", "zusammenfassung")):
-                art = fields.index("art")
-                zusammenfassung = fields.index("zusammenfassung")
-                fields[art], fields[zusammenfassung] = fields[zusammenfassung], fields[art]
-                default_fieldset["fields"] = fields
-            return fieldsets
+    # fmt: off
+    fieldsets = [
+        (None, {"fields": ["titel", "art", "zusammenfassung", "beschreibung", "bemerkungen"]}),
+        ("Beilage von Ausgabe", {
+            "fields": [("ausgabe__magazin", "ausgabe")],
+            "description": "Geben Sie die Ausgabe an, der dieses Objekt beilag.",
+        }),
+    ]
+    # fmt: on
 
 
 @admin.register(_models.Kalender, site=miz_site)
