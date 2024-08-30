@@ -74,11 +74,6 @@ class BestandInLine(BaseTabularInline):
         """Display the signatur of this Bestand object."""
         return str(obj.signatur) or ""
 
-    # TODO: enable tabular autocomplete for 'lagerort'
-    #  (see admin.autocomplete.views.ACLagerort and admin.autocomplete.urls for
-    #  details)
-    # tabular_autocomplete = ['lagerort']
-
 
 @admin.register(_models.Audio, site=miz_site)
 class AudioAdmin(MIZModelAdmin):

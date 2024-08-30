@@ -290,22 +290,6 @@ class ACBuchband(ACBase):
     queryset = _models.Buch.objects.filter(is_buchband=True)
 
 
-class ACLagerort(ACTabular):
-    # TODO: enable the use of this view (admin.BestandInLine) once it's clear
-    #   what fields Lagerort should have and how the default result label
-    #   (here: Lagerort._name) should look like
-
-    model = _models.Lagerort
-
-    def get_group_headers(self) -> list:
-        return ["Ort", "Raum"]  # pragma: no cover
-
-    def get_extra_data(self, result: _models.Lagerort) -> list:
-        # noinspection PyUnresolvedReferences
-        # NOTE: the model does not provide overview annotations
-        return [result.ort, result.raum]  # pragma: no cover
-
-
 class ACMagazin(ACBase):
     model = _models.Magazin
 
