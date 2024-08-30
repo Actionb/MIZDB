@@ -445,7 +445,15 @@ bash mizdb.sh uninstall
 
 ## Development
 
-Installiere zusätzliche Dependencies und Git Hooks:
+Virtuelle Umgebung erstellen:
+
+```shell
+python -m venv .venv
+echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
+. .venv/bin/activate
+```
+
+Zusätzliche Dependencies und Git Hooks installieren:
 
 ```shell
 pip install -r requirements/dev.txt
