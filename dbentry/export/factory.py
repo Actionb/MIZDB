@@ -66,16 +66,6 @@ def get_m2m_field(fk, model):
             return f
 
 
-# TODO: set "name_field" attribute on the models in NAME_FIELD
-NAME_FIELDS = {
-    _models.Bestand: "lagerort___name",
-    _models.AusgabeNum: "num",
-    _models.AusgabeLnum: "lnum",
-    _models.AusgabeJahr: "jahr",
-    _models.AusgabeMonat: "monat__abk",
-}
-
-
 def resource_factory(model):
     """
     Create a ModelResource class for the given model.
@@ -124,11 +114,11 @@ def resource_factory(model):
     for inline in edit_view.get_inline_instances():
         fk = inline.get_formset_class().fk
         field = get_m2m_field(fk, model) or fk.remote_field
-        if inline.model in NAME_FIELDS:
-            # Some models do not have name_field set
-            target_field = NAME_FIELDS[inline.model]
-        else:
+        try:
             target_field = field.related_model.name_field
+        except AttributeError:  # pragma: no cover
+            print(f"Skipping annotations for '{inline}' inline: {field.related_model} has no 'name_field' set.")
+            continue
 
         name = f"{field.name}_list"
         path = f"{field.name}__{target_field}"

@@ -476,6 +476,8 @@ class AusgabeJahr(BaseModel):
 
     ausgabe = models.ForeignKey("Ausgabe", models.CASCADE)
 
+    name_field = "jahr"
+
     class Meta(BaseModel.Meta):
         verbose_name = "Jahr"
         verbose_name_plural = "Jahre"
@@ -487,6 +489,8 @@ class AusgabeNum(BaseModel):
     num = models.PositiveSmallIntegerField("Nummer")
 
     ausgabe = models.ForeignKey("Ausgabe", models.CASCADE)
+
+    name_field = "num"
 
     class Meta(BaseModel.Meta):
         verbose_name = "Nummer"
@@ -500,6 +504,8 @@ class AusgabeLnum(BaseModel):
 
     ausgabe = models.ForeignKey("Ausgabe", models.CASCADE)
 
+    name_field = "lnum"
+
     class Meta(BaseModel.Meta):
         verbose_name = "lfd. Nummer"
         verbose_name_plural = "Laufende Nummer"
@@ -510,6 +516,8 @@ class AusgabeLnum(BaseModel):
 class AusgabeMonat(BaseModel):
     ausgabe = models.ForeignKey("Ausgabe", models.CASCADE)
     monat = models.ForeignKey("Monat", models.CASCADE)
+
+    name_field = "monat__abk"
 
     class Meta(BaseModel.Meta):
         verbose_name = "Ausgabe-Monat"
@@ -1515,6 +1523,8 @@ class Bestand(BaseModel):
     _fts = SearchVectorField(columns=[WeightedColumn("anmerkungen", "A", STEMMING)])
 
     select_related = ("lagerort", "provenienz__geber")
+
+    name_field = "lagerort___name"
 
     class Meta(BaseModel.Meta):
         verbose_name = "Bestand"
