@@ -366,7 +366,8 @@ class AusgabenAdmin(MIZModelAdmin):
         Check that the request's user has permission to add Brochure objects
         and permission to delete Ausgabe objects.
         """
-        # NOTE: This method is called by admin.checks._check_action_permission_methods
+        # Called when checking permissions for the 'moveto_brochure' action by:
+        # django.contrib.admin.checks.ModelAdminChecks._check_action_permission_methods
         perms = [
             "%s.%s" % (opts.app_label, get_permission_codename(name, opts))
             for name, opts in [("delete", _models.Ausgabe._meta), ("add", _models.BaseBrochure._meta)]
