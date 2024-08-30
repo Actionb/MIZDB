@@ -74,12 +74,14 @@ class MIZAdminSite(admin.AdminSite):
         categories["Sonstige"] = []
 
         # Divide the models into their categories.
+        from dbentry.admin.base import MIZModelAdmin  # avoid circular imports
+
         for m in model_list:
             model_admin = get_model_admin_for_model(m["object_name"], self)
-            if model_admin is None:  # pragma: no cover
+            if model_admin is None or not isinstance(model_admin, MIZModelAdmin):  # pragma: no cover
+                # No ModeLAdmin found or not a MIZModelAdmin; only
+                # MIZModelAdmins have the get_index_category method
                 continue
-            # FIXME: Add a issubclass check: only MIZModelAdmins have the
-            #  get_index_category method
             # noinspection PyUnresolvedReferences
             model_category = model_admin.get_index_category()
             if model_category not in categories:
