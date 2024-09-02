@@ -14,6 +14,7 @@ from django.test import TestCase, override_settings
 from django.urls import NoReverseMatch, path, reverse
 from mizdb_tomselect.views import IS_POPUP_VAR
 
+from dbentry import models as _models
 from dbentry.site.forms import InlineForm
 from dbentry.site.views.base import (
     ACTION_SELECTED_ITEM,
@@ -29,6 +30,7 @@ from dbentry.site.views.base import (
 from dbentry.site.views.delete import DeleteSelectedView, DeleteView
 from dbentry.site.views.help import HelpView, has_help_page
 from dbentry.site.views.history import HistoryView
+from dbentry.site.views.watchlist import WatchlistView
 from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
 
@@ -1367,3 +1369,41 @@ class TestInline(TestCase):
             "changelist_fk_field": "genre",
         }
         self.assertEqual(inline.get_context_data(), expected)
+
+
+class TestWatchlistView(ViewTestCase):
+    view_class = WatchlistView
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(_models.Ausgabe)
+        super().setUpTestData()
+
+    def test_get_object_text_ausgabe(self):
+        """
+        Assert that the text for an Ausgabe watchlist item includes the name of
+        its magazin.
+        """
+        view = self.get_view()
+        object_text = view.get_object_text(self.get_request(), _models.Ausgabe, self.obj.pk)
+        self.assertIn(self.obj.magazin.magazin_name, object_text)
+
+    def test_get_object_text_ausgabe_does_not_exist(self):
+        """
+        Assert that get_object_text calls the super method if the lookup for
+        the ausgabe instance raises an ObjectDoesNotExist.
+        """
+        view = self.get_view()
+        with patch("dbentry.site.views.watchlist.super") as super_mock:
+            view.get_object_text(self.get_request(), _models.Ausgabe, pk=-1)
+            super_mock.assert_called()
+
+    def test_get_object_text_not_ausgabe(self):
+        """
+        Assert that get_object_text calls the super method if the model is not
+        Ausgabe.
+        """
+        view = self.get_view()
+        with patch("dbentry.site.views.watchlist.super") as super_mock:
+            view.get_object_text(self.get_request(), _models.Band, pk=42)
+            super_mock.assert_called()

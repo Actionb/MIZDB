@@ -5,6 +5,7 @@
 ### Fixed
 
 - fixed text search with search terms that contain forward slashes (#14)
+- watchlist: include Magazin name in the text representation of Ausgabe watchlist items
 
 ## [0.19.0] - 2024-08-19
 
