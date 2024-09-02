@@ -1,5 +1,6 @@
 """Tests for the edit views."""
 
+from unittest.mock import patch
 from urllib.parse import unquote
 
 from django.forms import ModelChoiceField
@@ -100,6 +101,24 @@ class EditViewTestMethodsMixin:
 
 class TestAudioView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.AudioView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.ausgabe1 = ausgabe1 = make(_models.Ausgabe)
+        cls.ausgabe2 = ausgabe2 = make(_models.Ausgabe)
+        cls.obj.ausgabe_set.add(ausgabe1, ausgabe2)
+
+    def test_ausgabe_inline_contains_magazin_data(self):
+        """
+        Assert that the forms of the AusgabeInline include initial data for the
+        magazin field.
+        """
+        with patch.object(self.view_class, "inlines", new=[self.view_class.AusgabeInline]):
+            response = self.get_response(self.edit_url.format(pk=self.obj.pk))
+            formset = response.context_data["inlines"][0][0]
+            self.assertEqual(formset.forms[0].initial["ausgabe__magazin"], self.ausgabe1.magazin)
+            self.assertEqual(formset.forms[1].initial["ausgabe__magazin"], self.ausgabe2.magazin)
 
 
 class TestAusgabeView(EditViewTestMethodsMixin, EditViewTestCase):
@@ -220,6 +239,24 @@ class TestVerlagView(EditViewTestMethodsMixin, EditViewTestCase):
 
 class TestVideoView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.VideoView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.ausgabe1 = ausgabe1 = make(_models.Ausgabe)
+        cls.ausgabe2 = ausgabe2 = make(_models.Ausgabe)
+        cls.obj.ausgabe_set.add(ausgabe1, ausgabe2)
+
+    def test_ausgabe_inline_contains_magazin_data(self):
+        """
+        Assert that the forms of the AusgabeInline include initial data for the
+        magazin field.
+        """
+        with patch.object(self.view_class, "inlines", new=[self.view_class.AusgabeInline]):
+            response = self.get_response(self.edit_url.format(pk=self.obj.pk))
+            formset = response.context_data["inlines"][0][0]
+            self.assertEqual(formset.forms[0].initial["ausgabe__magazin"], self.ausgabe1.magazin)
+            self.assertEqual(formset.forms[1].initial["ausgabe__magazin"], self.ausgabe2.magazin)
 
 
 class TestOrtView(EditViewTestMethodsMixin, EditViewTestCase):

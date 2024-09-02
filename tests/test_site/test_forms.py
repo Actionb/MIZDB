@@ -1,9 +1,13 @@
+from unittest.mock import patch
+
 from django import forms
 from mizdb_tomselect.widgets import MIZSelect, MIZSelectMultiple
 
-from dbentry.site.forms import InlineForm, MIZEditForm
+from dbentry import models as _models
+from dbentry.site.forms import AusgabeInlineForm, InlineForm, MIZEditForm
 from dbentry.site.widgets import MIZURLInput
-from tests.case import MIZTestCase
+from tests.case import DataTestCase, MIZTestCase
+from tests.model_factory import make
 from tests.test_site.models import Band
 
 
@@ -89,3 +93,25 @@ class TestInlineForm(MIZTestCase):
     def test_url_field_widget(self):
         """Assert that the default widget for a URL field is a MIZURLInput."""
         self.assertIsInstance(self.url_field().widget, MIZURLInput)
+
+
+@patch.object(AusgabeInlineForm._meta, "model", new=_models.Ausgabe.audio.through)
+class TestAusgabeInlineForm(DataTestCase):
+    model = _models.Ausgabe.audio.through
+    form_class = AusgabeInlineForm
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.ausgabe = ausgabe = make(_models.Ausgabe)
+        cls.obj = make(_models.Audio, ausgabe=ausgabe)
+        super().setUpTestData()
+
+    def test_initial_ausgabe_magazin(self):
+        """Assert that init adds initial data for the magazin."""
+        for instance in (self.model.objects.first(), None):
+            with self.subTest(instance=instance):
+                form = self.form_class(instance=instance)
+                if instance:
+                    self.assertEqual(form.initial["ausgabe__magazin"], self.ausgabe.magazin)
+                else:
+                    self.assertFalse(form.initial.get("ausgabe__magazin", False))

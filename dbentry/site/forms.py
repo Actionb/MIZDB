@@ -216,6 +216,15 @@ class AusgabeInlineForm(InlineForm):
     class Meta(InlineForm.Meta):
         widgets = {"ausgabe": make_widget(_models.Ausgabe, tabular=True)}
 
+    def __init__(self, *args, **kwargs):
+        """Set the initial for ausgabe__magazin according to the form's instance."""
+        if "instance" in kwargs and kwargs["instance"]:
+            if "initial" not in kwargs:
+                kwargs["initial"] = {}
+            if kwargs["instance"].ausgabe:
+                kwargs["initial"]["ausgabe__magazin"] = kwargs["instance"].ausgabe.magazin
+        super().__init__(*args, **kwargs)
+
 
 ################################################################################
 # SEARCH FORMS
