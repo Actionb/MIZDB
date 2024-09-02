@@ -1,0 +1,11 @@
+coverage
+factory-boy
+requests_mock
+beautifulsoup4
+pytest
+pytest-django
+pytest-xdist
+pytest-cov
+playwright
+pytest-playwright
+pytest-subtests

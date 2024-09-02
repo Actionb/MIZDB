@@ -1,0 +1,18 @@
+Django
+django-admin-logs
+django-autocomplete-light
+django-bootstrap5
+django-formtools
+git+https://github.com/Actionb/django-tsvector-field-dj4.git#egg=django-tsvector-field  # Fork of django-tsvector-field updated for Django 4.0+
+Levenshtein
+mizdb-inlines
+mizdb-tomselect
+mod_wsgi
+nameparser
+requests
+psycopg2
+python-stdnum
+mizdb-watchlist
+django-import-export
+pyyaml
+semver
