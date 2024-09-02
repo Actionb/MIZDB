@@ -1,0 +1,14 @@
+[project]
+name = "MIZDB"
+authors = [
+  "Philip Becker <yummytea1@gmail.com>" ,
+]
+classifiers = [
+    "Framework :: Django",
+    "Programming Language :: Python :: 3",
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.uv.pip]
+generate-hashes = true
