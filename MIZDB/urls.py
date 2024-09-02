@@ -19,8 +19,6 @@ Including another URLconf
 import os
 import warnings
 
-from django.conf import settings
-from django.conf.urls.static import static
 from django.urls import include, path
 from django.views import defaults
 
@@ -36,9 +34,6 @@ urlpatterns = [
     # watchlist URLs:
     path("mizdb_watchlist/", include("mizdb_watchlist.urls")),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if os.environ.get("DJANGO_DEVELOPMENT", False):
     # Add django debug toolbar URLs:
