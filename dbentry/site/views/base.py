@@ -118,11 +118,6 @@ class ModelViewMixin(BaseViewMixin):
                 "preserved_filters": self.get_preserved_filters(self.request),  # noqa
             }
         )
-
-        from dbentry.site.views.help import has_help_page
-
-        if has_help_page(self.opts.verbose_name.lower()):
-            ctx["help_url"] = reverse("help", kwargs={"page_name": self.opts.verbose_name.lower()})
         return ctx
 
     def get_preserved_filters(self, request):
