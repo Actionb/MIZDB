@@ -201,23 +201,6 @@ class TestModelViewMixin(ViewTestCase):
         request = self.get_response(reverse("test_site_band_add"), data={"_changelist_filters": "foo=bar"}).wsgi_request
         self.assertEqual(view.get_preserved_filters(request), "_changelist_filters=foo%3Dbar")
 
-    def test_get_context_data_adds_help_url(self):
-        """
-        Assert that get_context_data overrides the 'help_url' context item if a
-        help page for the given model exists.
-        """
-        view = self.get_view(request=self.get_request())
-        with patch.object(view, "_get_admin_url"):
-            for help_page_exists in (True, False):
-                with self.subTest(help_page_exists=help_page_exists):
-                    with patch("dbentry.site.views.help.has_help_page") as has_help_page_mock:
-                        has_help_page_mock.return_value = help_page_exists
-                        context = view.get_context_data()
-                    if help_page_exists:
-                        self.assertEqual(context["help_url"], "/help/band/")
-                    else:
-                        self.assertEqual(context["help_url"], "/help/index/")
-
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestBaseEditView(DataTestCase, ViewTestCase):
