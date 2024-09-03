@@ -1,7 +1,7 @@
 [project]
 name = "MIZDB"
 authors = [
-  "Philip Becker <yummytea1@gmail.com>" ,
+    {name = "Philip Becker", email = "yummytea1@gmail.com"},
 ]
 classifiers = [
     "Framework :: Django",
@@ -9,6 +9,7 @@ classifiers = [
 ]
 readme = "README.md"
 requires-python = ">=3.9"
+dynamic = ["version"]
 
 [tool.uv.pip]
 generate-hashes = true
