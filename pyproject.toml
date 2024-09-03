@@ -42,3 +42,19 @@ max-doc-length = 88
 
 [tool.lint.isort]
 known-first-party = ["dbentry"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+addopts = [
+    "--reuse-db",
+]
+markers = [
+    "e2e: End-To-End tests with Playwright",
+    # pytest-django 4.6.0 enables using django test tags as pytest markers.
+    # If you don't register them, a warning about an unknown marker will be issued.
+    "bug: This test is tagged as a bug test: @tag('bug')",
+    "logging: This test is tagged as a logging test: @tag('logging')",
+]
+filterwarnings = [
+    "ignore::django.utils.deprecation.RemovedInDjango50Warning",
+]
