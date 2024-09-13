@@ -1,7 +1,0 @@
--r base.in
--r test.in
--r docs.in
-
-django-debug-toolbar
-ruff
-pre-commit

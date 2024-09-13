@@ -302,7 +302,7 @@ die folgenden Dateien:
 ```shell
 # Erforderliche Python Module installieren:  
 python3 -m pip install --upgrade pip wheel
-python3 -m pip install -r requirements.txt  
+python3 -m pip install -r requirements/base.txt  
 # Datenbank Migrationen anwenden:  
 python manage.py migrate
 # Statische Dateien für die Webseite sammeln:  
