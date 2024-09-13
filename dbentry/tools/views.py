@@ -92,7 +92,7 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
     """
 
     title = "Duplikate finden"
-    next_view = "dupes"
+    next_view = "tools:dupes"
     form_class = ModelSelectForm
 
 

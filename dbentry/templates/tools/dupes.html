@@ -4,7 +4,7 @@
 {% block extrastyle %}
 <style>
 form ul li {
-    list-style-type:none; 
+    list-style-type:none;
 }
 </style>
 {% endblock extrastyle %}
@@ -12,8 +12,8 @@ form ul li {
 {% block breadcrumbs %}
     <div class="breadcrumbs">
         <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-        &rsaquo; 
-        <a href="{% url 'dupes_select' %}">Duplikate</a>
+        &rsaquo;
+        <a href="{% url 'tools:dupes_select' %}">Duplikate</a>
         {% if breadcrumbs_title %} &rsaquo; {{ breadcrumbs_title }}{% endif %}
     </div>
 {% endblock %}
