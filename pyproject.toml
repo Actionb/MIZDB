@@ -69,3 +69,8 @@ exclude = [
     "migrations",
     "management",
 ]
+
+[tool.coverage.run]
+omit = [
+    "dbentry/migrations/*",
+]
