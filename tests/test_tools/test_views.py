@@ -94,6 +94,7 @@ class TestDuplicateObjectsView(ViewTestCase):
         cls.dupe_2.genres.set([cls.genre1, cls.genre2])
         super().setUpTestData()
 
+    @patch("dbentry.tools.views.DuplicateModelSelectView.next_view", new="dupes")
     def test(self):
         # Go to the model select part:
         response = self.get_response(reverse("dupes_select"))
