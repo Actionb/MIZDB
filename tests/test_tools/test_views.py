@@ -6,7 +6,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
-from django.urls import reverse
+from django.urls import reverse, path, include
 
 from dbentry import models as _models
 from dbentry.tools.views import (
@@ -21,6 +21,8 @@ from dbentry.tools.views import (
 from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
 
+
+from .admin import admin_site
 from .models import Band, Genre, Musiker, Person
 
 
@@ -64,7 +66,22 @@ class TestModelSelectView(ViewTestCase):
         self.assertEqual(view.get_next_view_kwargs(), {"model_name": "some_model"})
 
 
-@override_settings(ROOT_URLCONF="tests.test_tools.urls")
+class ToolsURLConf:
+    app_name = "tools"
+    urlpatterns = [
+        path("dupes/<str:model_name>/", DuplicateObjectsView.as_view(admin_site=admin_site), name="dupes"),
+        path("dupes/", DuplicateModelSelectView.as_view(admin_site=admin_site), name="dupes_select"),
+    ]
+
+
+class URLConf:
+    urlpatterns = [
+        path("admin/", admin_site.urls),
+        path("tools/", include(ToolsURLConf, "tools")),
+    ]
+
+
+@override_settings(ROOT_URLCONF=URLConf)
 class TestDuplicateObjectsView(ViewTestCase):
     model = Musiker
     view_class = DuplicateObjectsView
@@ -94,17 +111,16 @@ class TestDuplicateObjectsView(ViewTestCase):
         cls.dupe_2.genres.set([cls.genre1, cls.genre2])
         super().setUpTestData()
 
-    @patch("dbentry.tools.views.DuplicateModelSelectView.next_view", new="dupes")
     def test(self):
         # Go to the model select part:
-        response = self.get_response(reverse("dupes_select"))
+        response = self.get_response(reverse("tools:dupes_select"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.resolver_match.func.__name__, DuplicateModelSelectView.as_view().__name__)
 
         # Select model 'musiker'. It should redirect us to the DuplicateObjectsView
         # for that model to select the fields for the search and the overview.
         response = self.client.get(
-            reverse("dupes_select"), data={"submit": "1", "model_select": "test_tools.musiker"}, follow=True
+            reverse("tools:dupes_select"), data={"submit": "1", "model_select": "test_tools.musiker"}, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "tools/dupes.html")
@@ -117,7 +133,7 @@ class TestDuplicateObjectsView(ViewTestCase):
 
         # Select the fields. The duplicates should then be displayed.
         response = self.client.get(
-            reverse("dupes", kwargs={"model_name": "test_tools.musiker"}),
+            reverse("tools:dupes", kwargs={"model_name": "test_tools.musiker"}),
             data={"get_duplicates": "1", "select": ["kuenstler_name"], "display": ["kuenstler_name", "genres__genre"]},
         )
         self.assertEqual(response.status_code, 200)
