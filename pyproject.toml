@@ -58,3 +58,14 @@ markers = [
 filterwarnings = [
     "ignore::django.utils.deprecation.RemovedInDjango50Warning",
 ]
+
+[tool.mypy]
+files = "dbentry/"
+# https://mypy.readthedocs.io/en/stable/running_mypy.html#how-mypy-handles-imports
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+exclude = [
+    "migrations",
+    "management",
+]
