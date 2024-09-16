@@ -105,8 +105,9 @@ class TestAudioView(EditViewTestMethodsMixin, EditViewTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.ausgabe1 = ausgabe1 = make(_models.Ausgabe)
-        cls.ausgabe2 = ausgabe2 = make(_models.Ausgabe)
+        cls.magazin = magazin = make(_models.Magazin)
+        cls.ausgabe1 = ausgabe1 = make(_models.Ausgabe, magazin=magazin)
+        cls.ausgabe2 = ausgabe2 = make(_models.Ausgabe, magazin=magazin)
         cls.obj.ausgabe_set.add(ausgabe1, ausgabe2)
 
     def test_ausgabe_inline_contains_magazin_data(self):
@@ -117,8 +118,8 @@ class TestAudioView(EditViewTestMethodsMixin, EditViewTestCase):
         with patch.object(self.view_class, "inlines", new=[self.view_class.AusgabeInline]):
             response = self.get_response(self.edit_url.format(pk=self.obj.pk))
             formset = response.context_data["inlines"][0][0]
-            self.assertEqual(formset.forms[0].initial["ausgabe__magazin"], self.ausgabe1.magazin)
-            self.assertEqual(formset.forms[1].initial["ausgabe__magazin"], self.ausgabe2.magazin)
+            self.assertEqual(formset.forms[0].initial["ausgabe__magazin"], self.magazin)
+            self.assertEqual(formset.forms[1].initial["ausgabe__magazin"], self.magazin)
 
 
 class TestAusgabeView(EditViewTestMethodsMixin, EditViewTestCase):
@@ -243,8 +244,9 @@ class TestVideoView(EditViewTestMethodsMixin, EditViewTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.ausgabe1 = ausgabe1 = make(_models.Ausgabe)
-        cls.ausgabe2 = ausgabe2 = make(_models.Ausgabe)
+        cls.magazin = magazin = make(_models.Magazin)
+        cls.ausgabe1 = ausgabe1 = make(_models.Ausgabe, magazin=magazin)
+        cls.ausgabe2 = ausgabe2 = make(_models.Ausgabe, magazin=magazin)
         cls.obj.ausgabe_set.add(ausgabe1, ausgabe2)
 
     def test_ausgabe_inline_contains_magazin_data(self):
@@ -255,8 +257,8 @@ class TestVideoView(EditViewTestMethodsMixin, EditViewTestCase):
         with patch.object(self.view_class, "inlines", new=[self.view_class.AusgabeInline]):
             response = self.get_response(self.edit_url.format(pk=self.obj.pk))
             formset = response.context_data["inlines"][0][0]
-            self.assertEqual(formset.forms[0].initial["ausgabe__magazin"], self.ausgabe1.magazin)
-            self.assertEqual(formset.forms[1].initial["ausgabe__magazin"], self.ausgabe2.magazin)
+            self.assertEqual(formset.forms[0].initial["ausgabe__magazin"], self.magazin)
+            self.assertEqual(formset.forms[1].initial["ausgabe__magazin"], self.magazin)
 
 
 class TestOrtView(EditViewTestMethodsMixin, EditViewTestCase):
