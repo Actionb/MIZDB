@@ -111,7 +111,7 @@ class BuchForm(MinMaxRequiredFormMixin, MIZEditForm):
         }
 
 
-class PersonForm(base_forms.PersonForm, MIZEditForm):
+class PersonForm(base_forms.PersonForm, MIZEditForm):  # type: ignore[misc]
     pass
 
 

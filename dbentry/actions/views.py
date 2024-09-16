@@ -31,6 +31,7 @@ from dbentry.actions.forms import (
 )
 from dbentry.admin.views import MIZAdminMixin
 from dbentry.models import Magazin
+from dbentry.site.views.base import BaseListView
 from dbentry.utils.admin import create_logentry, log_addition, log_change, log_deletion
 from dbentry.utils.html import get_changelist_link, get_obj_link, link_list
 from dbentry.utils.merge import merge_records
@@ -179,7 +180,7 @@ class MergeView(WizardConfirmationView):
     (merge conflict resolution step) of the process.
     """
 
-    view = None
+    view: BaseListView = None  # type: ignore[assignment]  # set when calling MergeView.as_view
     template_name = "mizdb/merge_records.html"
     action_name = "merge_records"
     action_allowed_checks = ["check_at_least_two_objects", "check_same_magazin", "check_same_ausgabe"]
