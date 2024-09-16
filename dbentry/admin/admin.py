@@ -17,7 +17,7 @@ from django.forms import BaseInlineFormSet, ChoiceField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
 from django_admin_logs.admin import LogEntryAdmin
-from mizdb_watchlist.admin import WatchlistAdmin
+from mizdb_watchlist.admin import WatchlistAdmin as WatchlistAdminBase
 from mizdb_watchlist.models import Watchlist
 
 import dbentry.admin.actions as _actions
@@ -1842,5 +1842,5 @@ class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
 
 
 @admin.register(Watchlist, site=miz_site)
-class WatchlistAdmin(WatchlistAdmin, MIZModelAdmin):
+class WatchlistAdmin(WatchlistAdminBase, MIZModelAdmin):
     superuser_only = True
