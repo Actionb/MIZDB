@@ -1,3 +1,4 @@
+from django.db import models
 from django.contrib.auth.mixins import UserPassesTestMixin
 from import_export.mixins import ExportViewFormMixin
 
@@ -9,9 +10,9 @@ from dbentry.utils.permission import has_export_permission
 class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
     """Base view for exporting model objects."""
 
-    queryset = None
+    queryset: models.QuerySet = None
 
-    title = "Export"
+    title: str = "Export"
 
     def get_queryset(self):
         return self.queryset
@@ -35,8 +36,8 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
 class ExportActionView(BaseExportView, ActionConfirmationView):
     """Export a queryset via a changelist action."""
 
-    action_name = "export"
-    template_name = "mizdb/export.html"
+    action_name: str = "export"
+    template_name: str = "mizdb/export.html"
 
     def post(self, request, *args, **kwargs):
         if self.action_confirmed(request):
@@ -51,8 +52,8 @@ class ExportActionView(BaseExportView, ActionConfirmationView):
 class ExportModelView(BaseExportView):
     """Export all objects of the view's model."""
 
-    model = None
-    template_name = "mizdb/export_model.html"
+    model: type[models.Model] = None  # type: ignore[assignment]
+    template_name: str = "mizdb/export_model.html"
 
     def get_queryset(self):  # pragma: no cover
         return self.model.objects.all()

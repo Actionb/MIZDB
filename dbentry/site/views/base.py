@@ -1,6 +1,7 @@
 """Base views for the other views of the site app."""
 
 from collections import OrderedDict
+from typing import Iterable, Sequence, Optional
 from urllib.parse import parse_qsl
 
 import Levenshtein
@@ -30,7 +31,7 @@ from dbentry.csrf import CSRF_FORM_DATA_KEY, _restore_formset
 from dbentry.search.forms import MIZSelectSearchFormFactory
 from dbentry.search.mixins import SearchFormMixin
 from dbentry.site.forms import InlineForm, MIZEditForm
-from dbentry.site.registry import miz_site
+from dbentry.site.registry import miz_site, Registry
 from dbentry.site.templatetags.mizdb import add_preserved_filters
 from dbentry.utils import flatten
 from dbentry.utils.admin import construct_change_message, create_logentry
@@ -59,10 +60,10 @@ ACTION_SELECTED_ITEM = "_selected-item"
 class BaseViewMixin(ContextMixin):
     """Mixin for all views of the `miz_site` site."""
 
-    title = ""
-    site = miz_site
+    title: str = ""
+    site: Registry = miz_site
 
-    help_url = ""
+    help_url: str = ""
 
     def _get_admin_url(self, request):
         try:
@@ -101,9 +102,9 @@ class BaseViewMixin(ContextMixin):
 class ModelViewMixin(BaseViewMixin):
     """Mixin for views that interact with a model."""
 
-    model = None
+    model: type[models.Model] = None  # type: ignore[assignment]
     opts = None
-    pk_url_kwarg = "object_id"
+    pk_url_kwarg: str = "object_id"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -167,20 +168,20 @@ class Inline:
     for the inline formset factory.
     """
 
-    model = None
-    form = InlineForm
-    fields = None
-    exclude = None
-    widgets = None
+    model: type[models.Model] = None  # type: ignore[assignment]
+    form: forms.Form = InlineForm
+    fields: Optional[Iterable[str]] = None
+    exclude: Optional[Iterable[str]] = None
+    widgets: Optional[dict[str, forms.Widget]] = None
 
-    verbose_name = ""
-    verbose_name_plural = ""
-    verbose_model = None
+    verbose_name: str = ""
+    verbose_name_plural: str = ""
+    verbose_model: type[models.Model] = None  # type: ignore[assignment]
 
-    tabular = True
+    tabular: bool = True
 
-    changelist_url = ""
-    changelist_fk_field = ""
+    changelist_url: str = ""
+    changelist_fk_field: str = ""
 
     def __init__(self, parent_model):
         self.parent_model = parent_model
@@ -282,17 +283,18 @@ class BaseEditView(
 
     template_name = "mizdb/change_form.html"
 
-    exclude = None
-    field_groups = None
-    widgets = None
-    form = MIZEditForm
+    exclude: Optional[Iterable] = None
+    field_groups: Optional[Sequence] = None  # TODO: remove this attr - it is not used
+    widgets: Optional[dict[str, forms.Widget]] = None
+    form: forms.Form = MIZEditForm
 
-    inlines = ()
-    changelist_link_labels = None
-    require_confirmation = False
-    confirmation_threshold = 0.85
+    inlines: Sequence[type[Inline]] = ()
+    changelist_link_labels: Optional[dict[str, str]] = None
+    require_confirmation: bool = False
+    confirmation_threshold: float = 0.85
 
     def __init__(self, *args, **kwargs):
+        kwargs.setdefault("changelist_link_labels", getattr(self, "changelist_link_labels", {}))
         super().__init__(*args, **kwargs)
         self.add = self.extra_context["add"]
 
@@ -656,17 +658,17 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
           against all fields.
     """
 
-    template_name = "mizdb/changelist.html"
-    list_display = ()
-    list_display_links = ()
-    paginate_by = 100
-    empty_value_display = "-"
-    page_kwarg = PAGE_VAR
+    template_name: str = "mizdb/changelist.html"
+    list_display: Sequence[str] = ()
+    list_display_links: Sequence[str] = ()
+    paginate_by: int = 100
+    empty_value_display: str = "-"
+    page_kwarg: str = PAGE_VAR
 
-    order_unfiltered_results = True
-    prioritize_search_ordering = True
-    actions = ()
-    sortable_by = ()
+    order_unfiltered_results: bool = True
+    prioritize_search_ordering: bool = True
+    actions: Sequence = ()
+    sortable_by: Sequence[str] = ()
 
     def has_permission(self):
         return has_view_permission(self.request.user, self.opts)
