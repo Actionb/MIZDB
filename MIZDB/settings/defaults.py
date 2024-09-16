@@ -134,11 +134,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 MEDIA_URL = "/media/"
 
-# Override maximum number of post parameters to allow handling of user input
-# during imports.
-# TODO: remove DATA_UPLOAD_MAX_NUMBER_FIELDS (imports are not supported)
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
-
 # Avoid having the session cookie expire during work hours by adding 12 hours
 # to the default cookie age (2 weeks).
 SESSION_COOKIE_AGE = (14 * 24 + 12) * 60 * 60
