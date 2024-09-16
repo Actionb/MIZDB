@@ -1,4 +1,3 @@
-# TODO: modelfactory_factory tests are still missing
 from unittest import mock
 from unittest.mock import Mock, patch
 

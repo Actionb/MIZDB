@@ -594,13 +594,6 @@ def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFact
         modelfac = getattr(sys.modules[__name__], factory_name)
         if modelfac._meta.model == model:
             return modelfac
-    # TODO: is it safe to use sys.modules to check for contents of a external
-    #  module, or should an import be attempted instead?
-    #  -- ALSO: why even bother checking factory.base?
-    if hasattr(sys.modules["factory.base"], factory_name):
-        modelfac = getattr(sys.modules["factory.base"], factory_name)
-        if modelfac._meta.model == model:
-            return modelfac
     # Create a new factory class:
     if "Meta" not in kwargs:
         kwargs["Meta"] = type("Options", (MIZDjangoOptions,), {"model": model})
