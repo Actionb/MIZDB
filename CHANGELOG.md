@@ -9,7 +9,7 @@
   - exporting all records of a model requires superuser permission
 - watchlist: include magazin name in Ausgabe watchlist items
 - moved docs and test requirements into their own requirement files
-- move pytest, ruff configs into pyproject.toml
+- move dev configs (pytest, ruff, etc.) into pyproject.toml
 
 ### Fixed
 
