@@ -295,6 +295,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="3"><a href="#backups-automatisieren" class="nav-link">Backups automatisieren</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="3"><a href="#update" class="nav-link">Update</a>
               <ul class="nav flex-column">
               </ul>
@@ -346,6 +350,78 @@ ist <code>mizdb-postgres</code>.</p>
 <pre><code class="language-shell">bash mizdb.sh dump backup_datei
 </code></pre>
 <p>Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis <code>MIZDB/dumps</code> erstellt.</p>
+<h3 id="backups-automatisieren">Backups automatisieren</h3>
+<h4 id="cronjob">Cronjob</h4>
+<p>Crontab des root users öffnen:</p>
+<pre><code class="language-shell">sudo crontab -e
+</code></pre>
+<p>Und folgenden cronjob hinzufügen:</p>
+<pre><code># Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
+51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+</code></pre>
+<h4 id="rclone">rclone</h4>
+<p>Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.</p>
+<ol>
+<li>rclone installieren: https://rclone.org/install/</li>
+<li>rclone für Google Drive konfigurieren: https://rclone.org/drive/</li>
+<li>crontab öffnen:
+    <code>shell
+    sudo crontab -e</code>
+   und dann den cronjob definieren, zum Beispiel:
+    <code>shell
+   # Backups mit rclone hochladen:
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups &lt;remote_name&gt;:backups</code></li>
+</ol>
+<p>Die Standardkonfiguration erfordert einen Webbrowser.
+Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: https://rclone.org/remote_setup/</p>
+<h5 id="rclone-mit-google-service-account">rclone mit Google Service Account</h5>
+<p>Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:</p>
+<p>https://rclone.org/drive/#service-account-support</p>
+<p>Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:</p>
+<ol>
+<li>
+<p>Falls nicht der bereits existierende Service "dbbackup-service" benutzt werden soll, muss
+   vorerst ein Service Account angelegt werden:</p>
+<ol>
+<li>in die Google Cloud Console einloggen: https://console.cloud.google.com</li>
+<li>Service Accounts &gt; Create Service Account</li>
+<li>im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
+   Account freigeben</li>
+</ol>
+</li>
+<li>
+<p>Service Account Key (<code>credentials.json</code>) generieren, falls nicht vorhanden:</p>
+<ol>
+<li>in die Google Cloud Console einloggen: https://console.cloud.google.com</li>
+<li>Service Accounts &gt; dbbackup-service &gt; KEYS</li>
+<li>Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen</li>
+</ol>
+</li>
+<li>
+<p>Root Folder ID des Backup-Ordners herausfinden:</p>
+<ol>
+<li>In Google Drive einloggen</li>
+<li>Unter "Meine Ablage" den entsprechenden Ordner anklicken</li>
+<li>die ID ist am Ende der URL nach <code>/folders/</code> zu finden; also
+   z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
+   ID <code>10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa</code></li>
+</ol>
+</li>
+<li>
+<p>rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support</p>
+</li>
+</ol>
+<p>Mit einer solchen rclone.conf, zu finden unter <code>/home/my_user/.config/rclone/</code>:</p>
+<pre><code>[dbbackup]
+type = drive
+scope = drive
+root_folder_id = 10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa
+service_account_file = /pfad/zu/service/account/credentials.json
+</code></pre>
+<p>müsste der cronjob so aussehen:</p>
+<pre><code>53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
+</code></pre>
+<p>Weitere Links: <a href="https://forum.rclone.org/t/gdrive-access-via-service-account/17926">Gdrive access via service account</a></p>
 <h3 id="update">Update</h3>
 <p>Um die Anwendung zu aktualisieren, benutze:</p>
 <pre><code class="language-shell">bash mizdb.sh update
