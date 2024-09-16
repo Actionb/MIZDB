@@ -3,10 +3,7 @@ from import_export.mixins import ExportViewFormMixin
 
 from dbentry.actions.base import ActionConfirmationView
 from dbentry.site.views.base import ModelViewMixin
-
-
-def has_export_permission(user, opts):  # pragma: no cover
-    return user.is_superuser
+from dbentry.utils.permission import has_export_permission
 
 
 class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
@@ -59,3 +56,6 @@ class ExportModelView(BaseExportView):
 
     def get_queryset(self):  # pragma: no cover
         return self.model.objects.all()
+
+    def test_func(self) -> bool:
+        return self.request.user.is_superuser

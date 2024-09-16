@@ -9,6 +9,7 @@ from mizdb_tomselect.views import IS_POPUP_VAR
 
 from dbentry.site.renderer import TabularInlineFormsetRenderer
 from dbentry.utils import url
+from dbentry.utils import permission
 from dbentry.utils.html import create_hyperlink
 
 register = template.Library()
@@ -168,4 +169,4 @@ def remove_popup_param(request):
 
 @register.simple_tag
 def has_export_permission(user, opts):
-    return user.is_superuser
+    return permission.has_export_permission(user, opts)

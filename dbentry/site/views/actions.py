@@ -3,9 +3,9 @@ from mizdb_watchlist.manager import get_manager
 
 from dbentry.actions.views import MergeView
 from dbentry.site.views.delete import DeleteSelectedView
-from dbentry.site.views.export import ExportActionView, has_export_permission
+from dbentry.site.views.export import ExportActionView
 from dbentry.utils import permission as perms
-from dbentry.utils.permission import has_delete_permission
+from dbentry.utils.permission import has_delete_permission, has_export_permission
 
 
 def action(permission_func=None, label="", description=""):
@@ -66,7 +66,7 @@ def watchlist(view, request, queryset):
 
 
 @action(
-    permission_func=has_export_permission,  # TODO: set to has_view_permission to enable export action for all users
+    permission_func=has_export_permission,
     label="Exportieren",
     description="Die ausgewählten Objekte exportieren",
 )
@@ -76,7 +76,7 @@ def export(view, request, queryset):
 
 
 @action(
-    permission_func=has_export_permission,  # TODO: set to has_view_permission to enable export action for all users
+    permission_func=has_export_permission,
     label="Ergebnisse exportieren",
     description="Die gefundenen Objekte exportieren",
 )

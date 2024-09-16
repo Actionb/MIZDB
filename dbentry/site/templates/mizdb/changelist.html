@@ -64,7 +64,7 @@
           {% csrf_token %}
           <button type="submit" name="action_name" value="{{ actions.export_results_action.name }}" class="btn btn-info" title="{{ actions.export_results_action.title }}">{{ actions.export_results_action.text }}</button></form>
       {% endif %}
-      {% if export_url and user_has_export_perms %}<a href="{{ export_url }}" class="btn btn-info" title="Alle {{ opts.verbose_name_plural }} exportieren">Alle exportieren</a>{% endif %}
+      {% if export_url and user.is_superuser %}<a href="{{ export_url }}" class="btn btn-info" title="Alle {{ opts.verbose_name_plural }} exportieren">Alle exportieren</a>{% endif %}
     {% endif %}
   </div>
 </div>
