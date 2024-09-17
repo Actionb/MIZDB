@@ -25,7 +25,7 @@
 # will be cached with the same configuration used each time. If you need to
 # update the set of options, run ``setup-server`` again with the new set of
 # options.
-python manage.py runmodwsgi --setup-only --user apache --group apache --server-root=/etc/mizdb-server --mount-point "$MOUNT_POINT"
+python manage.py runmodwsgi --setup-only --user app --group app --server-root=/etc/mizdb-server --mount-point "$MOUNT_POINT"
 
 # The entrypoint is run as pid 1, and the container will remain up and running
 # as long as pid 1 is alive. Exec the command line arguments/the container

@@ -15,13 +15,18 @@ RUN --mount=type=bind,source=requirements,target=/tmp/requirements ["uv", "pip",
 
 FROM python:3.11-alpine AS final
 
+# Don't run your app as root.
+RUN addgroup --system app
+RUN adduser --system --ingroup app --no-create-home app
+
 RUN ["apk", "update", "&&", "upgrade"]
 # libpq required by psycopg2
 RUN ["apk", "add", "libpq", "apache2"]
 
-COPY --from=build /opt/venv /opt/venv
+COPY --from=build --chown=app:app /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+USER app
 WORKDIR /mizdb
 COPY . /mizdb
 EXPOSE 80
