@@ -1,0 +1,23 @@
+FROM python:3.11-slim-bookworm
+
+RUN apt update -qy && apt upgrade -qy
+RUN apt install -qy python3-dev libpq-dev apache2-dev gcc git
+
+# Set up uv for Docker:
+# https://docs.astral.sh/uv/guides/integration/docker/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Create a virtual environment
+RUN uv venv /opt/venv
+# Use the virtual environment automatically
+ENV VIRTUAL_ENV=/opt/venv
+# Use venv python and binaries automatically
+ENV PATH=/opt/venv/bin:$PATH
+
+# Install dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=requirements,target=/tmp/requirements \
+    uv pip install -r /tmp/requirements/dev.txt
+
+WORKDIR /app
+EXPOSE 80

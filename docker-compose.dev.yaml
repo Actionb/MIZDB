@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mizdb-devdb
+    volumes:
+      - /var/lib/mizdb/devdb:/var/lib/postgresql/data
+      # Mount the directory that contains the restore and dump scripts:
+      - ./scripts/db:/mizdb
+    environment:
+      POSTGRES_DB: mizdb
+      POSTGRES_USER: mizdb_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    restart: unless-stopped
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 2s
+    shm_size: 128mb
+
+  web:
+    build:
+      dockerfile: Dockerfile.dev
+    container_name: mizdb-dev
+    volumes:
+      - .:/app
+      - /app/.venv
+    env_file:
+      - .env
+    environment:
+      DJANGO_DEVELOPMENT: 1
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python manage.py runserver 0.0.0.0:8000
+
+
+secrets:
+  db_password:
+    file: .passwd
