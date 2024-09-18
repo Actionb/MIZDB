@@ -50,6 +50,12 @@ Dokumentation:
 
 ## Development
 
+> [!NOTE]  
+> Beachte die build prerequisites/requirements für psycopg2 und mod_wsgi:
+>  * psycopg2: https://www.psycopg.org/docs/install.html#build-prerequisites
+>  * mod_wsgi: https://github.com/GrahamDumpleton/mod_wsgi?tab=readme-ov-file#system-requirements
+
+
 Repository klonen:
 
 ```shell
@@ -65,10 +71,27 @@ echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
 . .venv/bin/activate
 ```
 
-Zusätzliche Dependencies und Git Hooks installieren:
+Project Abhängigkeiten und Git Hooks installieren:
 
 ```shell
 pip install -r requirements/dev.txt
+npm install
+pre-commit install
+```
+
+### Installation mit uv
+
+uv installieren: https://docs.astral.sh/uv/getting-started/installation/
+
+Dann:
+
+```shell
+git clone https://github.com/Actionb/MIZDB MIZDB
+cd MIZDB
+uv venv 
+echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
+. .venv/bin/activate
+uv pip install -r requirements/dev.txt
 npm install
 pre-commit install
 ```
@@ -85,7 +108,13 @@ pytest -n auto -m "not e2e" --cov=. --cov-report html  --cov-branch tests
 
 #### Playwright
 
-Um nur die [Playwright](https://playwright.dev/) Tests auszuführen:
+Die Playwright Browser müssen installiert sein:
+
+```shell
+playwright install
+```
+
+Dann [Playwright](https://playwright.dev/) Tests auszuführen:
 
 ```shell
 pytest -n auto --browser firefox tests/test_site/test_playwright
