@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## [0.20.0] - 2024-09-20
 
 ### Changed
 
@@ -15,7 +15,7 @@
 
 - fixed text search with search terms that contain forward slashes (#14)
 - watchlist: include Magazin name in the text representation of Ausgabe watchlist items
-- fixed duplicate search URLs
+- fixed URLs for the duplicates search
 
 ## [0.19.1] - 2024-09-03
 
