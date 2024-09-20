@@ -5,7 +5,7 @@ if sys.version_info > (3, 10):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -40,14 +40,14 @@ class FieldGroup:
     """
 
     def __init__(
-            self,
-            form: MinMaxForm,
-            *,
-            fields: List[str],
-            min_fields: Optional[int] = None,
-            max_fields: Optional[int] = None,
-            error_messages: Optional[Dict[str, str]] = None,
-            format_callback: Optional[Union[Callable, str]] = None,
+        self,
+        form: MinMaxForm,
+        *,
+        fields: List[str],
+        min_fields: Optional[int] = None,
+        max_fields: Optional[int] = None,
+        error_messages: Optional[Dict[str, str]] = None,
+        format_callback: Optional[Union[Callable, str]] = None,
     ) -> None:
         """
         Constructor for the FieldGroup.
@@ -130,7 +130,7 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         - ``min_error_message`` (str): the default error message for a min error
         - ``max_error_message`` (str): the default error message for a max error
 
-     Example:
+    Example:
         class MyForm(MinMaxRequiredFormMixin, Form):
             spam = forms.IntegerField()
             bacon = forms.IntegerField()
@@ -229,7 +229,7 @@ class MinMaxRequiredFormMixin(FormMixinBase):
         )
 
     def get_group_error_messages(
-            self, group: FieldGroup, error_messages: dict, format_callback: Optional[Union[Callable, str]] = None
+        self, group: FieldGroup, error_messages: dict, format_callback: Optional[Union[Callable, str]] = None
     ) -> dict:
         """
         Prepare and format the error messages for the given group.
@@ -327,7 +327,7 @@ class DeleteDuplicatesMixin(ModelFormMixinBase):
 
     def validate_unique(self) -> None:
         """
-        Call the instance's validate_unique() method and plan the deletion of
+        Call the instance's validate_unique method and plan the deletion of
         this inline formset form, if unique constraints are violated.
         """
         exclude = self._get_validation_exclusions()

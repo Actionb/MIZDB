@@ -1,8 +1,7 @@
 from unittest.mock import Mock, patch
 
-from tests.case import MIZTestCase
-
 from dbentry.export.widgets import ChoiceLabelWidget, YesNoBooleanWidget
+from tests.case import MIZTestCase
 
 
 class TestYesNoBooleanWidget(MIZTestCase):

@@ -11,7 +11,6 @@ class DbentryConfig(AppConfig):
 
 
 class DbentryAdminConfig(SimpleAdminConfig):
-
     def ready(self) -> None:
         # Import the module with admin models to register them with the site.
         import dbentry.admin.admin  # noqa

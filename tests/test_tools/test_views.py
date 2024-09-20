@@ -6,28 +6,35 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
-from django.urls import reverse
+from django.urls import reverse, path, include
 
 from dbentry import models as _models
 from dbentry.tools.views import (
-    DuplicateModelSelectView, DuplicateObjectsView, MIZSiteSearch, ModelSelectView, SiteSearchView,
+    DuplicateModelSelectView,
+    DuplicateObjectsView,
+    MIZSiteSearch,
+    ModelSelectView,
+    SiteSearchView,
     UnusedObjectsView,
-    find_duplicates
+    find_duplicates,
 )
 from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
+
+
+from .admin import admin_site
 from .models import Band, Genre, Musiker, Person
 
 
-@override_settings(ROOT_URLCONF='tests.test_tools.urls')
+@override_settings(ROOT_URLCONF="tests.test_tools.urls")
 class TestModelSelectView(ViewTestCase):
     view_class = ModelSelectView
 
     def test_get_context_data(self):
         initkwargs = {
-            'submit_value': 'testing_value',
-            'submit_name': 'testing_name',
-            'form_method': 'testing_form_method'
+            "submit_value": "testing_value",
+            "submit_name": "testing_name",
+            "form_method": "testing_form_method",
         }
         view = self.get_view(self.get_request(), **initkwargs)
         context = view.get_context_data()
@@ -41,25 +48,40 @@ class TestModelSelectView(ViewTestCase):
         Assert that get() redirects to the success url if the view's
         submit_name is in the GET query dict.
         """
-        request = self.get_request(data={'testing': 'yes'})
-        view = self.get_view(request, submit_name='testing')
-        with patch.object(view, 'get_success_url', return_value='test_tools:index'):
+        request = self.get_request(data={"testing": "yes"})
+        view = self.get_view(request, submit_name="testing")
+        with patch.object(view, "get_success_url", return_value="test_tools:index"):
             response = view.get(request)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/test_tools/')
+        self.assertEqual(response.url, "/test_tools/")
 
     def test_get_success_url(self):
         """Assert that get_success_url returns a resolvable url."""
-        view = self.get_view(self.get_request(), next_view='test_tools:index')
-        with patch.object(view, 'get_next_view_kwargs', return_value={}):
-            self.assertEqual(view.get_success_url(), '/test_tools/')
+        view = self.get_view(self.get_request(), next_view="test_tools:index")
+        with patch.object(view, "get_next_view_kwargs", return_value={}):
+            self.assertEqual(view.get_success_url(), "/test_tools/")
 
     def test_get_next_view_kwargs(self):
-        view = self.get_view(self.get_request(data={'model_select': 'some_model'}))
-        self.assertEqual(view.get_next_view_kwargs(), {'model_name': 'some_model'})
+        view = self.get_view(self.get_request(data={"model_select": "some_model"}))
+        self.assertEqual(view.get_next_view_kwargs(), {"model_name": "some_model"})
 
 
-@override_settings(ROOT_URLCONF='tests.test_tools.urls')
+class ToolsURLConf:
+    app_name = "tools"
+    urlpatterns = [
+        path("dupes/<str:model_name>/", DuplicateObjectsView.as_view(admin_site=admin_site), name="dupes"),
+        path("dupes/", DuplicateModelSelectView.as_view(admin_site=admin_site), name="dupes_select"),
+    ]
+
+
+class URLConf:
+    urlpatterns = [
+        path("admin/", admin_site.urls),
+        path("tools/", include(ToolsURLConf, "tools")),
+    ]
+
+
+@override_settings(ROOT_URLCONF=URLConf)
 class TestDuplicateObjectsView(ViewTestCase):
     model = Musiker
     view_class = DuplicateObjectsView
@@ -70,24 +92,20 @@ class TestDuplicateObjectsView(ViewTestCase):
             "This description is rather long and should be truncated to 100 characters "
             "so that it doesn't occupy too much space in the overview."
         )
-        cls.genre1 = make(Genre, genre='Rock')
-        cls.genre2 = make(Genre, genre='Soul')
-        cls.person1 = person1 = make(Person, name='Alice Tester')
-        cls.person2 = person2 = make(Person, name='Bob Tester')
+        cls.genre1 = make(Genre, genre="Rock")
+        cls.genre2 = make(Genre, genre="Soul")
+        cls.person1 = person1 = make(Person, name="Alice Tester")
+        cls.person2 = person2 = make(Person, name="Bob Tester")
 
         # Do not use make(); it would do a get_or_create(kuenstler_name='Dupe')
         # when creating the second object, returning the first.
-        cls.dupe_1 = cls.model.objects.create(
-            kuenstler_name='Dupe', beschreibung=beschreibung, person=person1
-        )
-        cls.dupe_2 = cls.model.objects.create(
-            kuenstler_name='Dupe', beschreibung=beschreibung, person=person2
-        )
+        cls.dupe_1 = cls.model.objects.create(kuenstler_name="Dupe", beschreibung=beschreibung, person=person1)
+        cls.dupe_2 = cls.model.objects.create(kuenstler_name="Dupe", beschreibung=beschreibung, person=person2)
         # Add another group of simple duplicates:
-        cls.dupe_3 = cls.model.objects.create(kuenstler_name='Zulu')
-        cls.dupe_4 = cls.model.objects.create(kuenstler_name='Zulu')
+        cls.dupe_3 = cls.model.objects.create(kuenstler_name="Zulu")
+        cls.dupe_4 = cls.model.objects.create(kuenstler_name="Zulu")
         # And a control object that shouldn't show up as a duplicate:
-        cls.other = cls.model.objects.create(kuenstler_name='Other')
+        cls.other = cls.model.objects.create(kuenstler_name="Other")
 
         cls.dupe_1.genres.set([cls.genre1, cls.genre2])
         cls.dupe_2.genres.set([cls.genre1, cls.genre2])
@@ -95,78 +113,63 @@ class TestDuplicateObjectsView(ViewTestCase):
 
     def test(self):
         # Go to the model select part:
-        response = self.get_response(reverse('dupes_select'))
+        response = self.get_response(reverse("tools:dupes_select"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.resolver_match.func.__name__,
-            DuplicateModelSelectView.as_view().__name__
-        )
+        self.assertEqual(response.resolver_match.func.__name__, DuplicateModelSelectView.as_view().__name__)
 
         # Select model 'musiker'. It should redirect us to the DuplicateObjectsView
         # for that model to select the fields for the search and the overview.
         response = self.client.get(
-            reverse('dupes_select'),
-            data={'submit': '1', 'model_select': 'test_tools.musiker'},
-            follow=True
+            reverse("tools:dupes_select"), data={"submit": "1", "model_select": "test_tools.musiker"}, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'tools/dupes.html')
+        self.assertTemplateUsed(response, "tools/dupes.html")
         context = response.context
-        self.assertEqual(context['title'], 'Duplikate: Musiker')
-        self.assertEqual(context['breadcrumbs_title'], 'Musiker')
+        self.assertEqual(context["title"], "Duplikate: Musiker")
+        self.assertEqual(context["breadcrumbs_title"], "Musiker")
         # no overview should be displayed yet:
-        self.assertNotIn('headers', context)
-        self.assertNotIn('items', context)
+        self.assertNotIn("headers", context)
+        self.assertNotIn("items", context)
 
         # Select the fields. The duplicates should then be displayed.
         response = self.client.get(
-            reverse('dupes', kwargs={'model_name': 'test_tools.musiker'}),
-            data={
-                'get_duplicates': '1',
-                'select': ['kuenstler_name'],
-                'display': ['kuenstler_name', 'genres__genre']
-            }
+            reverse("tools:dupes", kwargs={"model_name": "test_tools.musiker"}),
+            data={"get_duplicates": "1", "select": ["kuenstler_name"], "display": ["kuenstler_name", "genres__genre"]},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'tools/dupes.html')
+        self.assertTemplateUsed(response, "tools/dupes.html")
         context = response.context
-        self.assertEqual(context['title'], 'Duplikate: Musiker')
-        self.assertEqual(context['breadcrumbs_title'], 'Musiker')
-        self.assertEqual(context['headers'], ['Künstlername', 'Genres'])
-        self.assertTrue(context['items'])
+        self.assertEqual(context["title"], "Duplikate: Musiker")
+        self.assertEqual(context["breadcrumbs_title"], "Musiker")
+        self.assertEqual(context["headers"], ["Künstlername", "Genres"])
+        self.assertTrue(context["items"])
 
     def test_build_duplicates_items(self):
-        changelist_url = reverse('test_tools:test_tools_musiker_changelist')
-        changeform_url = unquote(
-            reverse('test_tools:test_tools_musiker_change', args=['{pk}'])
-        )
+        changelist_url = reverse("test_tools:test_tools_musiker_changelist")
+        changeform_url = unquote(reverse("test_tools:test_tools_musiker_change", args=["{pk}"]))
         link_template = '<a href="{url}" target="_blank">{name}</a>'
 
         def get_link(obj):
             return link_template.format(url=changeform_url.format(pk=obj.pk), name=str(obj))
 
         request_data = {
-            'select': ['kuenstler_name'],
-            'display': ['kuenstler_name', 'beschreibung', 'person', 'genres__genre']
+            "select": ["kuenstler_name"],
+            "display": ["kuenstler_name", "beschreibung", "person", "genres__genre"],
         }
         request = self.get_request(data=request_data)
-        view = self.get_view(request, kwargs={'model_name': 'test_tools.musiker'})
+        view = self.get_view(request, kwargs={"model_name": "test_tools.musiker"})
         form = view.get_form()
         # A validated and cleaned form is required.
         self.assertTrue(form.is_valid(), msg=form.errors)
 
         items = view.build_duplicates_items(form)
-        self.assertEqual(
-            len(items), 2,
-            msg=f"There should be two sets of duplicate objects. {items}"
-        )
+        self.assertEqual(len(items), 2, msg=f"There should be two sets of duplicate objects. {items}")
 
         ############################################################################################
         # Check the first set of duplicates:
         ############################################################################################
         self.assertEqual(
-            len(items[0]), 2,
-            msg="Should contain one set of duplicate objects and the link to their changelist."
+            len(items[0]), 2, msg="Should contain one set of duplicate objects and the link to their changelist."
         )
         # Check the link to the changelist:
         cl_link = items[0][1]
@@ -175,7 +178,7 @@ class TestDuplicateObjectsView(ViewTestCase):
         self.assertIn('target="_blank"', cl_link)
         self.assertIn('class="button"', cl_link)
         self.assertIn('style="padding: 10px 15px;', cl_link)
-        self.assertIn('>Änderungsliste</a>', cl_link)
+        self.assertIn(">Änderungsliste</a>", cl_link)
 
         self.assertEqual(len(items[0][0]), 2, msg="Should contain the two duplicate objects.")
 
@@ -185,25 +188,16 @@ class TestDuplicateObjectsView(ViewTestCase):
             "doesn't occupy  [...]"
         )
         dupe1, dupe2 = items[0][0]
-        expected = (
-            self.dupe_1,
-            get_link(self.dupe_1),
-            ['Dupe', expected_beschreibung, 'Alice Tester', 'Rock, Soul']
-        )
+        expected = (self.dupe_1, get_link(self.dupe_1), ["Dupe", expected_beschreibung, "Alice Tester", "Rock, Soul"])
         self.assertEqual(dupe1, expected)
-        expected = (
-            self.dupe_2,
-            get_link(self.dupe_2),
-            ['Dupe', expected_beschreibung, 'Bob Tester', 'Rock, Soul']
-        )
+        expected = (self.dupe_2, get_link(self.dupe_2), ["Dupe", expected_beschreibung, "Bob Tester", "Rock, Soul"])
         self.assertEqual(dupe2, expected)
 
         ############################################################################################
         # Check the second set of duplicates:
         ############################################################################################
         self.assertEqual(
-            len(items[1]), 2,
-            msg="Should contain one set of duplicate objects and the link to their changelist."
+            len(items[1]), 2, msg="Should contain one set of duplicate objects and the link to their changelist."
         )
         # Check the link to the changelist:
         cl_link = items[1][1]
@@ -212,44 +206,47 @@ class TestDuplicateObjectsView(ViewTestCase):
         self.assertIn('target="_blank"', cl_link)
         self.assertIn('class="button"', cl_link)
         self.assertIn('style="padding: 10px 15px;', cl_link)
-        self.assertIn('>Änderungsliste</a>', cl_link)
+        self.assertIn(">Änderungsliste</a>", cl_link)
 
         self.assertEqual(len(items[1][0]), 2, msg="Should contain the two duplicate objects.")
         dupe1, dupe2 = items[1][0]
-        self.assertEqual(dupe1, (self.dupe_3, get_link(self.dupe_3), ['Zulu', '', '', '-']))
-        self.assertEqual(dupe2, (self.dupe_4, get_link(self.dupe_4), ['Zulu', '', '', '-']))
+        self.assertEqual(dupe1, (self.dupe_3, get_link(self.dupe_3), ["Zulu", "", "", "-"]))
+        self.assertEqual(dupe2, (self.dupe_4, get_link(self.dupe_4), ["Zulu", "", "", "-"]))
 
     def test_setup_exception(self):
         """Assert that setup() raises a TypeError when 'model_name' kwarg is missing."""
         with self.assertRaises(TypeError):
             self.view_class().setup(self.get_request())
 
-    @patch('dbentry.admin.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
+    @patch("dbentry.admin.views.MIZAdminMixin.get_context_data", new=Mock(return_value={}))
     def test_headers(self):
-        """Assert that the headers for the overview table are added to the template context."""
+        """
+        Assert that the headers for the overview table are added to the
+        template context.
+        """
         request_data = {
-            'get_duplicates': '1',
-            'select': ['kuenstler_name'],
-            'display': ['kuenstler_name', 'genres__genre']
+            "get_duplicates": "1",
+            "select": ["kuenstler_name"],
+            "display": ["kuenstler_name", "genres__genre"],
         }
         request = self.get_request(data=request_data)
-        view = self.get_view(request, kwargs={'model_name': 'test_tools.musiker'})
-        with patch.object(view, 'build_duplicates_items'):
-            with patch.object(view, 'render_to_response') as render_mock:
+        view = self.get_view(request, kwargs={"model_name": "test_tools.musiker"})
+        with patch.object(view, "build_duplicates_items"):
+            with patch.object(view, "render_to_response") as render_mock:
                 view.get(request)
                 context = render_mock.call_args[0][0]
-                self.assertEqual(context['headers'], ['Künstlername', 'Genres'])
-                self.assertEqual(context['headers_width'], '40')
+                self.assertEqual(context["headers"], ["Künstlername", "Genres"])
+                self.assertEqual(context["headers_width"], "40")
 
-    @patch('dbentry.admin.views.MIZAdminMixin.get_context_data', new=Mock(return_value={}))
+    @patch("dbentry.admin.views.MIZAdminMixin.get_context_data", new=Mock(return_value={}))
     def test_get_context_data(self):
-        view = self.get_view(self.get_request(), kwargs={'model_name': 'test_tools.musiker'})
+        view = self.get_view(self.get_request(), kwargs={"model_name": "test_tools.musiker"})
         context = view.get_context_data()
-        self.assertEqual(context['title'], 'Duplikate: Musiker')
-        self.assertEqual(context['breadcrumbs_title'], 'Musiker')
+        self.assertEqual(context["title"], "Duplikate: Musiker")
+        self.assertEqual(context["breadcrumbs_title"], "Musiker")
 
 
-@override_settings(ROOT_URLCONF='tests.test_tools.urls')
+@override_settings(ROOT_URLCONF="tests.test_tools.urls")
 class TestUnusedObjectsView(ViewTestCase):
     view_class = UnusedObjectsView
 
@@ -274,25 +271,24 @@ class TestUnusedObjectsView(ViewTestCase):
         the submit button).
         """
         view = self.get_view(request=self.get_request())
-        self.assertNotIn('data', view.get_form_kwargs())
-        view = self.get_view(request=self.get_request(data={'get_unused': '1'}))
-        self.assertIn('data', view.get_form_kwargs())
+        self.assertNotIn("data", view.get_form_kwargs())
+        view = self.get_view(request=self.get_request(data={"get_unused": "1"}))
+        self.assertIn("data", view.get_form_kwargs())
 
     def test_get(self):
         """Assert that certain items are added to the template context."""
-        request = self.get_request(data={'get_unused': True, 'model_select': 'artikel', 'limit': 0})
+        request = self.get_request(data={"get_unused": True, "model_select": "artikel", "limit": 0})
         view = self.get_view(request=request)
         self.assertTrue(view.get_form().is_valid())
         with patch.multiple(
-                view, build_items=DEFAULT, render_to_response=DEFAULT,
-                get_context_data=Mock(return_value={})
+            view, build_items=DEFAULT, render_to_response=DEFAULT, get_context_data=Mock(return_value={})
         ) as mocks:
             view.get(request=request)
-        self.assertTrue(mocks['render_to_response'].called)
-        context = mocks['render_to_response'].call_args[0][0]
-        self.assertIn('items', context)
-        self.assertIn('form', context)
-        self.assertIn('changelist_link', context)
+        self.assertTrue(mocks["render_to_response"].called)
+        context = mocks["render_to_response"].call_args[0][0]
+        self.assertIn("items", context)
+        self.assertIn("form", context)
+        self.assertIn("changelist_link", context)
 
     def test_get_queryset(self):
         """
@@ -325,10 +321,7 @@ class TestUnusedObjectsView(ViewTestCase):
     def test_build_items(self):
         """Check the contents of the list that build_items returns."""
         relations = OrderedDict()
-        relations['artikel_rel'] = {
-            'related_model': Musiker,
-            'counts': {self.unused.pk: '0', self.used_once.pk: '1'}
-        }
+        relations["artikel_rel"] = {"related_model": Musiker, "counts": {self.unused.pk: "0", self.used_once.pk: "1"}}
         queryset = Genre.objects.filter(pk__in=[self.unused.pk, self.used_once.pk])
 
         items = self.get_view(self.get_request()).build_items(relations, queryset)
@@ -351,77 +344,72 @@ class TestFindDuplicates(DataTestCase):
     def setUpTestData(cls):
         # Do not use make(); it would do a get_or_create(kuenstler_name='Dupe')
         # when creating the second object, returning the first.
-        cls.dupe_1 = cls.model.objects.create(kuenstler_name='Dupe', beschreibung='foo')
-        cls.dupe_2 = cls.model.objects.create(kuenstler_name='Dupe', beschreibung='bar')
-        cls.other = cls.model.objects.create(kuenstler_name='Test')
+        cls.dupe_1 = cls.model.objects.create(kuenstler_name="Dupe", beschreibung="foo")
+        cls.dupe_2 = cls.model.objects.create(kuenstler_name="Dupe", beschreibung="bar")
+        cls.other = cls.model.objects.create(kuenstler_name="Test")
         super().setUpTestData()
 
     def test(self):
         self.assertNotEqual(self.dupe_1.pk, self.dupe_2.pk)
-        duplicates = find_duplicates(self.model.objects.all(), fields=['kuenstler_name'])
+        duplicates = find_duplicates(self.model.objects.all(), fields=["kuenstler_name"])
         self.assertEqual(len(duplicates), 2)
         self.assertIn(self.dupe_1, duplicates)
         self.assertIn(self.dupe_2, duplicates)
 
         # There should be no duplicates, if the 'beschreibung' field is included
         # as the field values differ.
-        duplicates = find_duplicates(
-            self.model.objects.all(), fields=['kuenstler_name', 'beschreibung']
-        )
+        duplicates = find_duplicates(self.model.objects.all(), fields=["kuenstler_name", "beschreibung"])
         self.assertEqual(len(duplicates), 0)
 
     def test_relations(self):
-        """Assert that values from relations can be included when checking for duplicates."""
-        self.dupe_1.genres.create(genre='Foo')
-        duplicates = find_duplicates(
-            self.model.objects.all(), fields=['kuenstler_name', 'genres__genre']
-        )
+        """
+        Assert that values from relations can be included when checking for
+        duplicates.
+        """
+        self.dupe_1.genres.create(genre="Foo")
+        duplicates = find_duplicates(self.model.objects.all(), fields=["kuenstler_name", "genres__genre"])
         self.assertEqual(len(duplicates), 0)
 
-        self.dupe_2.genres.create(genre='Foo')
-        duplicates = find_duplicates(
-            self.model.objects.all(), fields=['kuenstler_name', 'genres__genre']
-        )
+        self.dupe_2.genres.create(genre="Foo")
+        duplicates = find_duplicates(self.model.objects.all(), fields=["kuenstler_name", "genres__genre"])
         self.assertEqual(len(duplicates), 2)
 
         # other shouldn't be a duplicate just because of the matching genre
-        self.dupe_2.genres.update(genre='Bar')  # genres no longer match
-        self.other.genres.create(genre='Foo')
-        duplicates = find_duplicates(
-            self.model.objects.all(), fields=['kuenstler_name', 'genres__genre']
-        )
+        self.dupe_2.genres.update(genre="Bar")  # genres no longer match
+        self.other.genres.create(genre="Foo")
+        duplicates = find_duplicates(self.model.objects.all(), fields=["kuenstler_name", "genres__genre"])
         self.assertEqual(len(duplicates), 0)
 
 
-@override_settings(ROOT_URLCONF='tests.test_tools.urls')
+@override_settings(ROOT_URLCONF="tests.test_tools.urls")
 class TestSiteSearchView(ViewTestCase):
     class view_class(SiteSearchView):
-        app_label = 'test_tools'  # use test models
+        app_label = "test_tools"  # use test models
 
         def _search(self, model, q):
             opts = model._meta
-            field = ''
-            if opts.model_name == 'band':
-                field = 'name'
-            elif opts.model_name == 'musiker':
-                field = 'kuenstler_name'
-            elif opts.model_name == 'genre':
-                field = 'genre'
+            field = ""
+            if opts.model_name == "band":
+                field = "name"
+            elif opts.model_name == "musiker":
+                field = "kuenstler_name"
+            elif opts.model_name == "genre":
+                field = "genre"
             if not field:
                 return []
-            qs = model.objects.filter(**{field + '__icontains': q})
+            qs = model.objects.filter(**{field + "__icontains": q})
             return qs
 
     @classmethod
     def setUpTestData(cls):
-        make(Musiker, kuenstler_name='Sharon Silva')
+        make(Musiker, kuenstler_name="Sharon Silva")
         super().setUpTestData()
 
     def test_get_result_list(self):
         view = self.get_view(request=self.get_request())
-        results = view.get_result_list('Silva')
+        results = view.get_result_list("Silva")
         self.assertEqual(len(results), 1)
-        self.assertIn('Musiker (1)', results[0])
+        self.assertIn("Musiker (1)", results[0])
 
     def test_get_result_list_no_perms(self):
         """
@@ -429,7 +417,7 @@ class TestSiteSearchView(ViewTestCase):
         who do not have permission to view those changelists.
         """
         view = self.get_view(request=self.get_request(user=self.noperms_user))
-        results = view.get_result_list('Silva')
+        results = view.get_result_list("Silva")
         self.assertFalse(results)
 
     def test_get_result_list_no_changelist(self):
@@ -437,48 +425,48 @@ class TestSiteSearchView(ViewTestCase):
         Assert that get_result_list doesn't return changelist links for models
         that do not have a registered ModelAdmin.
         """
-        make(Person, name='Sharon Silva')  # no ModelAdmin for this model
+        make(Person, name="Sharon Silva")  # no ModelAdmin for this model
         view = self.get_view(request=self.get_request())
-        results = view.get_result_list('Silva')
+        results = view.get_result_list("Silva")
         self.assertEqual(len(results), 1)
-        self.assertIn('Musiker (1)', results[0])
+        self.assertIn("Musiker (1)", results[0])
 
     def test_get_result_list_sorted(self):
         """
         Assert that the result list is sorted alphabetically by the models'
         object names.
         """
-        make(Band, name='Silva')
-        make(Genre, genre='Silva Music')
+        make(Band, name="Silva")
+        make(Genre, genre="Silva Music")
         view = self.get_view(request=self.get_request())
-        results = view.get_result_list('Silva')
+        results = view.get_result_list("Silva")
         self.assertTrue(results)
         self.assertEqual(len(results), 3)
-        self.assertIn('Bands (1)', results[0])
-        self.assertIn('Genres (1)', results[1])
-        self.assertIn('Musiker (1)', results[2])
+        self.assertIn("Bands (1)", results[0])
+        self.assertIn("Genres (1)", results[1])
+        self.assertIn("Musiker (1)", results[2])
 
-    @patch.object(SiteSearchView, 'render_to_response')
+    @patch.object(SiteSearchView, "render_to_response")
     def test_get(self, render_mock):
         """Assert that render_to_response is called with the expected context."""
-        request = self.get_request(data={'q': 'Silva'})
+        request = self.get_request(data={"q": "Silva"})
         self.get_view(request).get(request)
         self.assertTrue(render_mock.called)
         context = render_mock.call_args[0][0]
-        self.assertIn('q', context.keys())
-        self.assertEqual(context['q'], 'Silva')
-        self.assertIn('results', context.keys())
-        results = context['results']
+        self.assertIn("q", context.keys())
+        self.assertEqual(context["q"], "Silva")
+        self.assertIn("results", context.keys())
+        results = context["results"]
         self.assertTrue(results)
         self.assertEqual(len(results), 1)
-        self.assertIn('?q=Silva', results[0])
-        self.assertIn('Musiker (1)', results[0])
+        self.assertIn("?q=Silva", results[0])
+        self.assertIn("Musiker (1)", results[0])
 
-    @patch.object(SiteSearchView, 'get_result_list')
-    @patch.object(SiteSearchView, 'render_to_response')
+    @patch.object(SiteSearchView, "get_result_list")
+    @patch.object(SiteSearchView, "render_to_response")
     def test_get_no_q(self, _render_mock, get_result_list_mock):
         """get_result_list should not be called when no search term was provided."""
-        for data in ({}, {'q': ''}):
+        for data in ({}, {"q": ""}):
             with self.subTest(request_data=data):
                 request = self.get_request(data=data)
                 self.get_view(request).get(request)
@@ -489,7 +477,7 @@ class TestSiteSearchView(ViewTestCase):
         Assert that get_models does not include models that the user lacks
         permission for.
         """
-        app_label = 'test_tools'
+        app_label = "test_tools"
         model = Musiker
         ct = ContentType.objects.get_for_model(model)
 
@@ -499,7 +487,7 @@ class TestSiteSearchView(ViewTestCase):
         self.assertFalse(list(view._get_models(app_label=app_label)))
 
         # Add permissions for Musiker model.
-        for action in ('view', 'change'):
+        for action in ("view", "change"):
             with self.subTest(action=action):
                 codename = get_permission_codename(action, model._meta)
                 perm = Permission.objects.get(codename=codename, content_type=ct)
@@ -516,56 +504,54 @@ class TestMIZSiteSearch(ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        make(_models.Musiker, kuenstler_name='Sharon Silva')
-        make(_models.Band, band_name='Silvas')
-        make(_models.Veranstaltung, name='Silva Konzert')
+        make(_models.Musiker, kuenstler_name="Sharon Silva")
+        make(_models.Band, band_name="Silvas")
+        make(_models.Veranstaltung, name="Silva Konzert")
         super().setUpTestData()
 
     def test_get_models_no_m2m_models(self):
         """Assert that _get_models filters out models subclassing BaseM2MModel."""
         view = self.get_view(self.get_request())
-        models = view._get_models('dbentry')
-        from dbentry.base.models import BaseModel, BaseM2MModel
+        models = view._get_models("dbentry")
+        from dbentry.base.models import BaseM2MModel, BaseModel
+
         self.assertFalse(any(issubclass(m, BaseM2MModel) for m in models))
         self.assertTrue(all(issubclass(m, BaseModel) for m in models))
 
     def test_get_result_list(self):
         view = self.get_view(request=self.get_request())
-        results = view.get_result_list('Silva')
+        results = view.get_result_list("Silva")
         self.assertTrue(results)
         self.assertEqual(len(results), 3)
-        self.assertIn('Bands (1)', results[0])
-        self.assertIn('Musiker (1)', results[1])
-        self.assertIn('Veranstaltungen (1)', results[2])
+        self.assertIn("Bands (1)", results[0])
+        self.assertIn("Musiker (1)", results[1])
+        self.assertIn("Veranstaltungen (1)", results[2])
 
     def test_permissions(self):
         """
         Assert that site search does not include results for models that the
         user lacks permission for.
         """
-        app_label = 'dbentry'
         model = _models.Musiker
         ct = ContentType.objects.get_for_model(model)
 
-        q = 'Silva'
+        q = "Silva"
         # staff_user does not have any permissions; the search should
         # return empty.
-        response = self.get_response(reverse('site_search'), data={'q': q}, user=self.staff_user)
-        results = response.context['results']
+        response = self.get_response(reverse("site_search"), data={"q": q}, user=self.staff_user)
+        results = response.context["results"]
         # self.assertEqual(len(results), 0)
 
         # Add permissions for the Musiker model.
         # The results should include an entry for the Musiker instance - but
         # not any for the Band or Veranstaltung instance.
-        for action in ('view', 'change'):
+        for action in ("view", "change"):
             with self.subTest(action=action):
                 codename = get_permission_codename(action, model._meta)
                 permission = Permission.objects.get(codename=codename, content_type=ct)
                 self.staff_user.user_permissions.set([permission])
                 response = self.get_response(
-                    reverse('tools:site_search'),
-                    data={'q': q},
-                    user=self.reload_user(self.staff_user)
+                    reverse("tools:site_search"), data={"q": q}, user=self.reload_user(self.staff_user)
                 )
-                results = response.context['results']
+                results = response.context["results"]
                 self.assertEqual(len(results), 1)

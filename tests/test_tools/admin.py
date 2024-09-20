@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import Band, Genre, Kalender, Musiker
 
-admin_site = admin.AdminSite(name='test_tools')
+admin_site = admin.AdminSite(name="test_tools")
 
 
 @admin.register(Band, site=admin_site)

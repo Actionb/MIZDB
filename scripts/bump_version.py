@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Bump the semantic version number defined in the VERSION file."""
+
 from argparse import ArgumentParser
 from pathlib import Path
 

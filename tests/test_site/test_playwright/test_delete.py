@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from tests.test_site.test_playwright.conftest import DELETE_VIEW, CRUD_MODELS, CHANGE_VIEW
+from tests.test_site.test_playwright.conftest import CHANGE_VIEW, CRUD_MODELS, DELETE_VIEW
 
 pytestmark = pytest.mark.e2e
 
@@ -21,9 +21,7 @@ def test_can_delete(page, view_name, test_object, model, fill_value):
 @pytest.mark.parametrize("view_name", [DELETE_VIEW])
 @pytest.mark.usefixtures("login_superuser")
 def test_can_abort(page, view_name, test_object, model, fill_value):
-    """
-    Assert that the object is not deleted if the user clicks the abort button.
-    """
+    """Assert that the object is not deleted if the user clicks the abort button."""
     pk = test_object.pk
     page.get_by_role("button", name=re.compile("Abbrechen")).click()
     assert model.objects.filter(pk=pk).exists(), "Model object was deleted unexpectedly."

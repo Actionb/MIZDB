@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models.deletion import Collector
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.safestring import mark_safe
 from django.views.generic import DeleteView as BaseDeleteView
 

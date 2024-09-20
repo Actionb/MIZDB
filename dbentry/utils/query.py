@@ -1,8 +1,8 @@
-from typing import Union, Any, Optional
+from typing import Any, Optional, Union
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import models
-from django.db.models import Value, Func, Expression
+from django.db.models import Expression, Func, Value
 from django.db.models.expressions import Combinable
 
 LENGTH_LIMIT = 100
@@ -59,5 +59,8 @@ def concatenate(*expr: Union[Expression, Combinable], sep: str = ", ") -> Func:
 
 
 def string_list(path: str, sep: str = ", ", length: int = LENGTH_LIMIT, distinct: bool = True) -> Func:
-    """Concatenate the values from `path`, separated by `sep`, up to a length of `length`."""
+    """
+    Concatenate the values from `path`, separated by `sep`, up to a length of
+    `length`.
+    """
     return limit(array_to_string(to_array(path, distinct=distinct), sep=sep), length=length)

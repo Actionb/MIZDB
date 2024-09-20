@@ -2,13 +2,14 @@ from urllib.parse import parse_qsl, unquote, urlparse, urlunparse
 
 from django import template
 from django.contrib.auth import get_permission_codename
-from django.urls import Resolver404, get_script_prefix, resolve, reverse, NoReverseMatch
+from django.urls import NoReverseMatch, Resolver404, get_script_prefix, resolve, reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from mizdb_tomselect.views import IS_POPUP_VAR
 
 from dbentry.site.renderer import TabularInlineFormsetRenderer
 from dbentry.utils import url
+from dbentry.utils import permission
 from dbentry.utils.html import create_hyperlink
 
 register = template.Library()
@@ -18,6 +19,7 @@ register = template.Library()
 def urlname(opts, name):  # pragma: no cover
     """
     Return the 'url name' for the given name/action and model options.
+
         {opts.app_label}_{opts.model_name}_{name}
 
     Usage:
@@ -167,4 +169,4 @@ def remove_popup_param(request):
 
 @register.simple_tag
 def has_export_permission(user, opts):
-    return user.is_superuser
+    return permission.has_export_permission(user, opts)

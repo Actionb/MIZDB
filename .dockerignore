@@ -12,3 +12,4 @@
 !docker-entrypoint.sh
 !manage.py
 !README.md
+!VERSION

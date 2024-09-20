@@ -17,6 +17,38 @@
 <ul class="nav flex-column">
 </ul>
 </li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#installation-ohne-docker">Installation ohne Docker</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#1-erforderliche-pakete-installieren">1. Erforderliche Pakete installieren</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#2-postgres-datenbank-einrichten">2. Postgres Datenbank einrichten</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#3-mizdb-dateien-herunterladen-und-einrichten">3. MIZDB Dateien herunterladen und einrichten</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#4-apache-einrichten">4. Apache einrichten</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#datenbank-wiederherstellen">Datenbank wiederherstellen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#mizdb-testen">MIZDB testen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#postgresql-terminal-aufrufen">PostgreSQL Terminal aufrufen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -61,5 +93,144 @@ docker exec -i mizdb-app chown -R apache:apache logs
 <p>Ansonsten müssen die Datenbank Migrationen ausgeführt werden:</p>
 <pre><code class="language-shell">bash mizdb.sh migrate
 </code></pre>
-<p>Die Seite sollte nun unter <code>http://&lt;hostname&gt;/miz/</code> erreichbar sein.</p></div>
+<p>Die Seite sollte nun unter <code>http://&lt;hostname&gt;/miz/</code> erreichbar sein.</p>
+<h2 id="installation-ohne-docker">Installation ohne Docker</h2>
+<p><strong>Wichtig:</strong> MIZDB sollte nicht im Home Verzeichnis erstellt werden, da der Webserver keinen Zugriff auf dieses
+Verzeichnis hat!
+Also zum Beispiel unter <code>/opt/</code> erstellen:</p>
+<pre><code class="language-shell">sudo mkdir -p /opt/archiv
+sudo chown $USER:$USER /opt/archiv
+cd /opt/archiv
+</code></pre>
+<h3 id="1-erforderliche-pakete-installieren">1. Erforderliche Pakete installieren</h3>
+<pre><code class="language-shell"># Paketquellen aktualisieren:  
+sudo apt update
+# Danach Apache2, diverse Python3 &amp; PostgreSQL Pakete, git Versionskontrolle installieren:  
+sudo apt install apache2 apache2-dev python3-dev python3-venv python3-pip postgresql-contrib libpq-dev git
+</code></pre>
+<h3 id="2-postgres-datenbank-einrichten">2. Postgres Datenbank einrichten</h3>
+<pre><code class="language-shell"># Datenbankbenutzer erstellen:
+sudo -u postgres createuser mizdb_user -P --createdb  
+# Datenbank erzeugen:
+sudo -u postgres createdb mizdb --owner=mizdb_user
+</code></pre>
+<p>Benutzername (hier: <code>mizdb_user</code>) und das verwendete Passwort werden später noch einmal benötigt.</p>
+<h3 id="3-mizdb-dateien-herunterladen-und-einrichten">3. MIZDB Dateien herunterladen und einrichten</h3>
+<pre><code class="language-shell"># MIZDB git Repository klonen:
+git clone https://github.com/Actionb/MIZDB .
+# Virtuelle Umgebung erstellen und aktivieren:
+python3 -m venv venv &amp;&amp; source venv/bin/activate
+# MIZDB einrichten:
+sh setup.sh
+</code></pre>
+<p>Das Script <code>setup.sh</code> fragt nach einigen Daten für die Applikation und erstellt
+die folgenden Dateien:</p>
+<ul>
+<li>im Stammverzeichnis wird die Datei <code>.env</code> mit den Werten für Umgebungsvariablen erstellt</li>
+<li>im Unterverzeichnis <code>.secrets</code> werden die folgenden Dateien erstellt:<ul>
+<li><code>.passwd</code>: beinhaltet das Passwort der Datenbank</li>
+<li><code>.key</code>: beinhaltet einen kryptografischen Schlüssel</li>
+<li><code>.allowedhosts</code>: beinhaltet die erwarteten Hostnamen</li>
+</ul>
+</li>
+</ul>
+<h4 id="python-module-installieren">Python Module installieren:</h4>
+<pre><code class="language-shell"># Erforderliche Python Module installieren:  
+python3 -m pip install --upgrade pip wheel
+python3 -m pip install -r requirements/base.txt  
+# Datenbank Migrationen anwenden:  
+python manage.py migrate
+# Statische Dateien für die Webseite sammeln:  
+python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
+</code></pre>
+<h4 id="ordner-fur-log-dateien-einrichten">Ordner für Log-Dateien einrichten:</h4>
+<pre><code class="language-shell"># Ordner erstellen:
+sudo mkdir -p /var/log/mizdb/
+# Den Webserver-Benutzer als Besitzer einstellen:
+sudo chown www-data:www-data /var/log/mizdb
+</code></pre>
+<h3 id="4-apache-einrichten">4. Apache einrichten</h3>
+<pre><code class="language-shell"># Den Loader für das mod_wsgi Module für Apache erstellen:  
+sudo venv/bin/mod_wsgi-express install-module | sudo tee /etc/apache2/mods-available/mod_wsgi.load &gt; /dev/null  
+# Danach kann das Modul aktiviert werden: 
+sudo a2enmod mod_wsgi
+# 'macro' Modul aktivieren:  
+sudo a2enmod macro
+# Danach Konfigurationsdatei für die MIZDB-Seite erstellen:  
+sudoedit /etc/apache2/sites-available/mizdb.conf  
+</code></pre>
+<p>Folgendem Code in die Konfigurationsdatei einfügen:</p>
+<pre><code>&lt;Macro VHost $VENV_ROOT $PROJECT_ROOT&gt;
+    &lt;VirtualHost *:80&gt;  
+        # Name of the host. The name must be included in the ALLOWED_HOSTS django settings.
+        ServerName localhost
+
+        # http://localhost/admin/ will produce the admin dashboard.
+        # For localhost/foobar/admin/ use:
+        #   WSGIScriptAlias /foobar $PROJECT_ROOT/MIZDB/wsgi.py
+        WSGIScriptAlias /miz $PROJECT_ROOT/MIZDB/wsgi.py
+
+        # python-home must point to the root folder of the virtual environment.
+        # python-path adds the given path to sys.path thereby making packages contained within available for import;
+        # add the path to the django project so the project settings can be imported.
+        WSGIDaemonProcess mizdb python-home=$VENV_ROOT python-path=$PROJECT_ROOT
+        WSGIProcessGroup mizdb
+
+        # Make the static folder in the project root available. The Alias is required.
+        Alias /static $PROJECT_ROOT/static
+            &lt;Directory $PROJECT_ROOT/static&gt;
+                Require all granted
+            &lt;/Directory&gt;
+
+        # Allow access to the file containing the wsgi application.
+            &lt;Directory $PROJECT_ROOT/MIZDB&gt;
+                &lt;Files wsgi.py&gt;
+                        Require all granted
+                &lt;/Files&gt;
+            &lt;/Directory&gt;
+
+    &lt;/VirtualHost&gt;
+&lt;/Macro&gt;
+
+# Create the VirtualHost 'VHost' declared above with the following parameters:
+#    - root of the virtual environment
+#    - root of the django project directory
+#
+# Don't confuse the project directory with the project package directory:
+#   - the project directory contains manage.py and the various django apps
+#   - the project package is a directory inside the project directory and contains settings.py, wsgi.py and the root urls.py
+USE VHost /opt/archiv/venv /opt/archiv
+
+# Undefine and free up the variable (basically).
+UndefMacro VHost
+</code></pre>
+<p><strong>⚠️ Notwendige Änderungen ⚠️</strong>:</p>
+<ul>
+<li>In der Zeile mit <code>ServerName</code> muss der Hostname des Servers eingefügt werden. Dieser Name muss auch in der <code>.env</code>
+  Datei unter <code>ALLOWED_HOSTS</code> auftauchen.</li>
+<li>In der Zeile <code>USE VHOST</code> müssen gegebenenfalls die zwei Pfade angepasst werden.<ul>
+<li>der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung</li>
+<li>der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch <code>manage.py</code> zu finden ist.</li>
+</ul>
+</li>
+</ul>
+<p>Also beispielsweise: <code>USE VHost /opt/archiv/venv /opt/archiv</code></p>
+<p>Danach:</p>
+<pre><code class="language-shell"># MIZDB-Seite aktivieren:
+sudo a2ensite mizdb
+# Apache neu starten:
+sudo service apache2 restart   
+</code></pre>
+<p>Jetzt sollte MIZDB unter <code>http://&lt;ServerName&gt;/miz/admin</code> (also z.B. http://localhost/miz/admin) erreichbar sein.</p>
+<h3 id="datenbank-wiederherstellen">Datenbank wiederherstellen</h3>
+<pre><code class="language-shell">sudo -u postgres dropdb mizdb
+sudo -u postgres createdb mizdb --owner=mizdb_user
+sudo -u postgres pg_restore --dbname mizdb &lt; backup_datei
+</code></pre>
+<h3 id="mizdb-testen">MIZDB testen</h3>
+<pre><code class="language-shell">python manage.py test --settings=tests.settings tests
+</code></pre>
+<h3 id="postgresql-terminal-aufrufen">PostgreSQL Terminal aufrufen</h3>
+<pre><code class="language-shell">psql --username=mizdb_user --host=localhost mizdb
+</code></pre></div>
 </div>{% endblock content %}

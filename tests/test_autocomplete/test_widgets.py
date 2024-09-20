@@ -1,4 +1,4 @@
-from mizdb_tomselect.widgets import MIZSelect, MIZSelectTabular, MIZSelectTabularMultiple, MIZSelectMultiple
+from mizdb_tomselect.widgets import MIZSelect, MIZSelectMultiple, MIZSelectTabular, MIZSelectTabularMultiple
 
 from dbentry.autocomplete.widgets import make_widget
 from tests.case import MIZTestCase
@@ -65,9 +65,7 @@ class TestMakeWidget(MIZTestCase):
             with self.subTest(can_add=can_add):
                 widget = make_widget(self.model, can_add=can_add)
                 if can_add:
-                    self.assertEqual(
-                        widget.add_url, f"{self.model._meta.app_label}_{self.model._meta.model_name}_add"
-                    )
+                    self.assertEqual(widget.add_url, f"{self.model._meta.app_label}_{self.model._meta.model_name}_add")
                 else:
                     self.assertFalse(widget.add_url)
 

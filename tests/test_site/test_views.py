@@ -1,8 +1,8 @@
 """Tests for the dbentry.site base views."""
 
 import re
-from unittest.mock import patch, Mock, call
-from urllib.parse import urlencode, unquote
+from unittest.mock import Mock, call, patch
+from urllib.parse import unquote, urlencode
 
 from django import forms
 from django.contrib import admin
@@ -10,28 +10,31 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.template import TemplateDoesNotExist
-from django.test import override_settings, TestCase
-from django.urls import path, reverse, NoReverseMatch
+from django.test import TestCase, override_settings
+from django.urls import NoReverseMatch, path, reverse
 from mizdb_tomselect.views import IS_POPUP_VAR
 
+from dbentry import models as _models
 from dbentry.site.forms import InlineForm
 from dbentry.site.views.base import (
-    BaseEditView,
-    Inline,
-    BaseListView,
-    SEARCH_VAR,
-    ORDER_VAR,
-    BaseViewMixin,
-    ModelViewMixin,
     ACTION_SELECTED_ITEM,
+    ORDER_VAR,
+    SEARCH_VAR,
+    BaseEditView,
+    BaseListView,
+    BaseViewMixin,
+    Inline,
+    ModelViewMixin,
     SearchableListView,
 )
-from dbentry.site.views.delete import DeleteView, DeleteSelectedView
+from dbentry.site.views.delete import DeleteSelectedView, DeleteView
 from dbentry.site.views.help import HelpView, has_help_page
 from dbentry.site.views.history import HistoryView
-from tests.case import ViewTestCase, DataTestCase
+from dbentry.site.views.watchlist import WatchlistView
+from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
-from .models import Band, Genre, Musician, Country
+
+from .models import Band, Country, Genre, Musician
 
 
 class BandView(BaseEditView):
@@ -368,9 +371,7 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertEqual(self.obj.name, "Hovercrafts Full Of Eels")
 
     def test_post_save_adds_logentry(self):
-        """
-        Assert that a LogEntry object is created after saving the model object.
-        """
+        """Assert that a LogEntry object is created after saving the model object."""
         form_data = {
             "name": "Vikings of SPAMs",
             "_continue": "",
@@ -400,7 +401,10 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertEqual("Name, Url und Origin Country geändert.", entry.get_change_message())
 
     def test_get_success_message_add(self):
-        """Assert that a message is displayed when an object was added successfully."""
+        """
+        Assert that a message is displayed when an object was added
+        successfully.
+        """
         form_data = {
             "name": "Vikings of SPAMs",
             "_continue": "",
@@ -411,7 +415,10 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
         self.assertMessageSent(response.wsgi_request, re.compile("Band.*Vikings of SPAMs.*erfolgreich erstellt."))
 
     def test_get_success_message_change(self):
-        """Assert that a message is displayed when an object was changed successfully."""
+        """
+        Assert that a message is displayed when an object was changed
+        successfully.
+        """
         form_data = {
             "name": "Vikings of SPAMs",
             "_continue": "",
@@ -746,6 +753,21 @@ class TestBaseListView(DataTestCase, ViewTestCase):
             with self.subTest(context_item=context_item):
                 self.assertIn(context_item, context)
 
+    def test_get_context_data_is_filtered(self):
+        """
+        Assert that the context data contains the 'is_filtered' item that
+        indicates whether the result list is filtered.
+        """
+        request = self.get_response(reverse("test_site_band_changelist")).wsgi_request
+        for is_filtered in (True, False):
+            with self.subTest(is_filtered=is_filtered):
+                view = self.get_view(request)
+                view.object_list = view.get_queryset().order_by("id")
+                if is_filtered:
+                    view.object_list = view.object_list.filter(pk=self.obj.pk)
+                ctx = view.get_context_data()
+                self.assertEqual(ctx["is_filtered"], is_filtered)
+
     def test_order_queryset_order_unfiltered_results_filtered(self):
         """
         Assert that order_queryset applies extended ordering when the queryset
@@ -1000,7 +1022,10 @@ class TestDeleteView(ViewTestCase):
         self.assertFalse(self.model.objects.filter(pk=self.obj.pk).exists())
 
     def test_redirects_to_changelist(self):
-        """Assert that a successful deletion redirects the user to the model's changelist."""
+        """
+        Assert that a successful deletion redirects the user to the model's
+        changelist.
+        """
         response = self.post_response(self.url, user=self.super_user, follow=True)
         self.assertEqual(response.wsgi_request.path, reverse("test_site_country_changelist"))
 
@@ -1327,3 +1352,41 @@ class TestInline(TestCase):
             "changelist_fk_field": "genre",
         }
         self.assertEqual(inline.get_context_data(), expected)
+
+
+class TestWatchlistView(ViewTestCase):
+    view_class = WatchlistView
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(_models.Ausgabe)
+        super().setUpTestData()
+
+    def test_get_object_text_ausgabe(self):
+        """
+        Assert that the text for an Ausgabe watchlist item includes the name of
+        its magazin.
+        """
+        view = self.get_view()
+        object_text = view.get_object_text(self.get_request(), _models.Ausgabe, self.obj.pk)
+        self.assertIn(self.obj.magazin.magazin_name, object_text)
+
+    def test_get_object_text_ausgabe_does_not_exist(self):
+        """
+        Assert that get_object_text calls the super method if the lookup for
+        the ausgabe instance raises an ObjectDoesNotExist.
+        """
+        view = self.get_view()
+        with patch("dbentry.site.views.watchlist.super") as super_mock:
+            view.get_object_text(self.get_request(), _models.Ausgabe, pk=-1)
+            super_mock.assert_called()
+
+    def test_get_object_text_not_ausgabe(self):
+        """
+        Assert that get_object_text calls the super method if the model is not
+        Ausgabe.
+        """
+        view = self.get_view()
+        with patch("dbentry.site.views.watchlist.super") as super_mock:
+            view.get_object_text(self.get_request(), _models.Band, pk=42)
+            super_mock.assert_called()

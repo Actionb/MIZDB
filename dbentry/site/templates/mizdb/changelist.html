@@ -59,12 +59,12 @@
   <div class="d-flex gap-2">
     <a href="{% add_preserved_filters add_url %}" class="btn btn-success">{{ opts.verbose_name }} hinzufügen</a>
     {% if user_has_export_perms %}
-      {% if shown_fields and result_rows and actions.export_results_action %}
+      {% if is_filtered and result_rows and actions.export_results_action %}
         <form method="POST">
           {% csrf_token %}
           <button type="submit" name="action_name" value="{{ actions.export_results_action.name }}" class="btn btn-info" title="{{ actions.export_results_action.title }}">{{ actions.export_results_action.text }}</button></form>
       {% endif %}
-      {% if export_url and user_has_export_perms %}<a href="{{ export_url }}" class="btn btn-info" title="Alle {{ opts.verbose_name_plural }} exportieren">Alle exportieren</a>{% endif %}
+      {% if export_url and user.is_superuser %}<a href="{{ export_url }}" class="btn btn-info" title="Alle {{ opts.verbose_name_plural }} exportieren">Alle exportieren</a>{% endif %}
     {% endif %}
   </div>
 </div>

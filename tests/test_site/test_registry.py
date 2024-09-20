@@ -1,8 +1,10 @@
 """Tests for the registry handling the dbentry site views."""
+
 from django.test import TestCase
 from django.views import View
 
-from dbentry.site.registry import register_edit, register_changelist, Registry, ModelType
+from dbentry.site.registry import ModelType, Registry, register_changelist, register_edit
+
 from .models import Foo
 
 test_site = Registry()
@@ -19,7 +21,6 @@ class ChangelistView(View):
 
 
 class TestRegistry(TestCase):
-
     def test_views(self):
         self.assertEqual(test_site.views, {Foo: EditView})
 
@@ -51,4 +52,4 @@ class TestRegistry(TestCase):
     def test_register_changelist_invalid_category(self):
         site = Registry()
         with self.assertRaises(ValueError):
-            register_changelist(Foo, category='foobar', site=site)
+            register_changelist(Foo, category="foobar", site=site)

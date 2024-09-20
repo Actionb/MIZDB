@@ -4,36 +4,36 @@ from django import views
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.admin.options import InlineModelAdmin
-from django.contrib.admin.utils import get_fields_from_path, display_for_field
+from django.contrib.admin.utils import display_for_field, get_fields_from_path
 from django.db import transaction
 from django.db.models import Count, F, Model, ProtectedError, QuerySet
 from django.forms import ALL_FIELDS, BaseInlineFormSet, Form
 from django.http import HttpRequest, HttpResponse
 from django.utils.html import format_html
 from django.utils.translation import gettext
-from django.views.generic import FormView
 
 from dbentry import models as _models
 from dbentry.actions.base import (
     ActionConfirmationView,
+    AdminActionConfirmationView,
+    AdminActionMixin,
     WizardConfirmationView,
     get_object_link,
-    AdminActionMixin,
-    AdminActionConfirmationView,
 )
 from dbentry.actions.forms import (
+    AdminMergeConflictsFormSet,
     BrochureActionFormOptions,
     BrochureActionFormSet,
     BulkEditJahrgangForm,
     MergeConflictsFormSet,
     MergeFormSelectPrimary,
     ReplaceForm,
-    AdminMergeConflictsFormSet,
 )
 from dbentry.admin.views import MIZAdminMixin
 from dbentry.models import Magazin
+from dbentry.site.views.base import BaseListView
 from dbentry.utils.admin import create_logentry, log_addition, log_change, log_deletion
-from dbentry.utils.html import get_changelist_link, link_list, get_obj_link
+from dbentry.utils.html import get_changelist_link, get_obj_link, link_list
 from dbentry.utils.merge import merge_records
 from dbentry.utils.models import get_model_from_string, get_model_relations, get_updatable_fields, is_protected
 from dbentry.utils.replace import replace
@@ -180,7 +180,7 @@ class MergeView(WizardConfirmationView):
     (merge conflict resolution step) of the process.
     """
 
-    view = None
+    view: BaseListView = None  # type: ignore[assignment]  # set when calling MergeView.as_view
     template_name = "mizdb/merge_records.html"
     action_name = "merge_records"
     action_allowed_checks = ["check_at_least_two_objects", "check_same_magazin", "check_same_ausgabe"]

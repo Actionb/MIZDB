@@ -4,7 +4,7 @@ from django.db import models
 from dbentry import forms as base_forms
 from dbentry import models as _models
 from dbentry.autocomplete.widgets import make_widget
-from dbentry.base.forms import DiscogsFormMixin, MinMaxRequiredFormMixin, InlineFormBase
+from dbentry.base.forms import DiscogsFormMixin, InlineFormBase, MinMaxRequiredFormMixin
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.forms import SearchForm
 from dbentry.site.widgets import MIZURLInput
@@ -38,9 +38,7 @@ def _formfield_for_db_field(db_field, is_inline=False, **kwargs):
 
 
 def edit_formfield_callback(db_field, **kwargs):
-    """
-    Create formfields for edit forms.
-    """
+    """Create formfields for edit forms."""
     return _formfield_for_db_field(db_field, is_inline=False, **kwargs)
 
 
@@ -113,7 +111,7 @@ class BuchForm(MinMaxRequiredFormMixin, MIZEditForm):
         }
 
 
-class PersonForm(base_forms.PersonForm, MIZEditForm):
+class PersonForm(base_forms.PersonForm, MIZEditForm):  # type: ignore[misc]
     pass
 
 
@@ -217,6 +215,15 @@ class AusgabeInlineForm(InlineForm):
 
     class Meta(InlineForm.Meta):
         widgets = {"ausgabe": make_widget(_models.Ausgabe, tabular=True)}
+
+    def __init__(self, *args, **kwargs):
+        """Set the initial for ausgabe__magazin according to the form's instance."""
+        if "instance" in kwargs and kwargs["instance"]:
+            if "initial" not in kwargs:
+                kwargs["initial"] = {}
+            if kwargs["instance"].ausgabe:
+                kwargs["initial"]["ausgabe__magazin"] = kwargs["instance"].ausgabe.magazin
+        super().__init__(*args, **kwargs)
 
 
 ################################################################################

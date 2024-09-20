@@ -29,7 +29,7 @@ Use SearchableListView to add a search form to the changelist:
 import json
 
 from django.apps import apps
-from django.contrib.admin.models import LogEntry, DELETION
+from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
@@ -42,19 +42,22 @@ from django.views.generic import TemplateView
 
 from dbentry import models as _models
 from dbentry.export import resources
-from dbentry.site.forms import null_boolean_select, MusikerSearchForm
-from dbentry.site.registry import register_changelist, ModelType
+from dbentry.site.forms import MusikerSearchForm, null_boolean_select
+from dbentry.site.registry import ModelType, register_changelist
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import BaseViewMixin, ORDER_VAR
-from dbentry.site.views.base import SearchableListView
+from dbentry.site.views.base import ORDER_VAR, BaseViewMixin, SearchableListView
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
 from dbentry.utils.url import get_change_url
 
 # @formatter:off
 # A green checkmark icon and a red X to use as representation of boolean values:
-BOOLEAN_TRUE = mark_safe('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>')  # noqa
-BOOLEAN_FALSE = mark_safe('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>')  # noqa
+BOOLEAN_TRUE = mark_safe(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>'  # noqa
+)
+BOOLEAN_FALSE = mark_safe(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'  # noqa
+)
 # @formatter:on
 
 

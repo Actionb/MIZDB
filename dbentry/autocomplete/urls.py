@@ -1,14 +1,14 @@
 from django.urls import path
 
 from dbentry.autocomplete.views import (
-    MIZAutocompleteView,
     AutocompleteAusgabe,
     AutocompleteAutor,
     AutocompleteBuchband,
-    AutocompletePerson,
     AutocompleteMagazin,
-    AutocompleteProvenienz,
     AutocompleteMostUsed,
+    AutocompletePerson,
+    AutocompleteProvenienz,
+    MIZAutocompleteView,
 )
 
 urlpatterns = [

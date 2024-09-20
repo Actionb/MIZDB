@@ -2,11 +2,10 @@ from unittest.mock import patch
 
 from django.http import HttpResponseRedirect
 from django.template import TemplateDoesNotExist
-from django.test import TestCase
-from django.test import override_settings
+from django.test import TestCase, override_settings
 from django.urls import path, reverse
 
-from dbentry.site.views.help import has_help_page, HelpView
+from dbentry.site.views.help import HelpView, has_help_page
 from tests.case import ViewTestCase
 
 
@@ -21,7 +20,6 @@ urlpatterns = [
 
 
 class TestHasHelpPage(TestCase):
-
     def test_has_help_page(self):
         for has_page in (True, False):
             with self.subTest(has_help_page=has_page):

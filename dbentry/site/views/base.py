@@ -1,8 +1,7 @@
-"""
-Base views for the other views of the site app.
-"""
+"""Base views for the other views of the site app."""
 
 from collections import OrderedDict
+from typing import Iterable, Sequence, Optional
 from urllib.parse import parse_qsl
 
 import Levenshtein
@@ -14,38 +13,38 @@ from django.contrib.messages.storage import default_storage
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
-from django.http import HttpResponseBase, Http404
-from django.shortcuts import render, redirect
+from django.http import Http404, HttpResponseBase
+from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
-from django.views.generic import UpdateView, ListView
+from django.views.generic import ListView, UpdateView
 from django.views.generic.base import ContextMixin
 from mizdb_inlines.views import InlineFormsetMixin
-from mizdb_tomselect.views import PopupResponseMixin, IS_POPUP_VAR
+from mizdb_tomselect.views import IS_POPUP_VAR, PopupResponseMixin
 from mizdb_watchlist.views import WatchlistMixin
 
 from dbentry.base.models import ComputedNameModel
-from dbentry.csrf import _restore_formset, CSRF_FORM_DATA_KEY
+from dbentry.csrf import CSRF_FORM_DATA_KEY, _restore_formset
 from dbentry.search.forms import MIZSelectSearchFormFactory
 from dbentry.search.mixins import SearchFormMixin
-from dbentry.site.forms import MIZEditForm, InlineForm
-from dbentry.site.registry import miz_site
+from dbentry.site.forms import InlineForm, MIZEditForm
+from dbentry.site.registry import miz_site, Registry
 from dbentry.site.templatetags.mizdb import add_preserved_filters
 from dbentry.utils import flatten
 from dbentry.utils.admin import construct_change_message, create_logentry
 from dbentry.utils.html import create_hyperlink, get_obj_link, get_view_link
 from dbentry.utils.models import get_model_relations
 from dbentry.utils.permission import (
-    has_view_permission,
     get_perm,
-    has_change_permission,
     has_add_permission,
+    has_change_permission,
+    has_view_permission,
 )
 from dbentry.utils.text import diffhtml
-from dbentry.utils.url import get_change_url, urlname, get_changelist_url_for_relation, get_view_url
+from dbentry.utils.url import get_change_url, get_changelist_url_for_relation, get_view_url, urlname
 
 # Constants for the changelist views
 ALL_VAR = "all"
@@ -61,10 +60,10 @@ ACTION_SELECTED_ITEM = "_selected-item"
 class BaseViewMixin(ContextMixin):
     """Mixin for all views of the `miz_site` site."""
 
-    title = ""
-    site = miz_site
+    title: str = ""
+    site: Registry = miz_site
 
-    help_url = ""
+    help_url: str = ""
 
     def _get_admin_url(self, request):
         try:
@@ -103,9 +102,9 @@ class BaseViewMixin(ContextMixin):
 class ModelViewMixin(BaseViewMixin):
     """Mixin for views that interact with a model."""
 
-    model = None
+    model: type[models.Model] = None  # type: ignore[assignment]
     opts = None
-    pk_url_kwarg = "object_id"
+    pk_url_kwarg: str = "object_id"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -169,20 +168,20 @@ class Inline:
     for the inline formset factory.
     """
 
-    model = None
-    form = InlineForm
-    fields = None
-    exclude = None
-    widgets = None
+    model: type[models.Model] = None  # type: ignore[assignment]
+    form: forms.Form = InlineForm
+    fields: Optional[Iterable[str]] = None
+    exclude: Optional[Iterable[str]] = None
+    widgets: Optional[dict[str, forms.Widget]] = None
 
-    verbose_name = ""
-    verbose_name_plural = ""
-    verbose_model = None
+    verbose_name: str = ""
+    verbose_name_plural: str = ""
+    verbose_model: type[models.Model] = None  # type: ignore[assignment]
 
-    tabular = True
+    tabular: bool = True
 
-    changelist_url = ""
-    changelist_fk_field = ""
+    changelist_url: str = ""
+    changelist_fk_field: str = ""
 
     def __init__(self, parent_model):
         self.parent_model = parent_model
@@ -284,17 +283,18 @@ class BaseEditView(
 
     template_name = "mizdb/change_form.html"
 
-    exclude = None
-    field_groups = None
-    widgets = None
-    form = MIZEditForm
+    exclude: Optional[Iterable] = None
+    field_groups: Optional[Sequence] = None  # TODO: remove this attr - it is not used
+    widgets: Optional[dict[str, forms.Widget]] = None
+    form: forms.Form = MIZEditForm
 
-    inlines = ()
-    changelist_link_labels = None
-    require_confirmation = False
-    confirmation_threshold = 0.85
+    inlines: Sequence[type[Inline]] = ()
+    changelist_link_labels: Optional[dict[str, str]] = None
+    require_confirmation: bool = False
+    confirmation_threshold: float = 0.85
 
     def __init__(self, *args, **kwargs):
+        kwargs.setdefault("changelist_link_labels", getattr(self, "changelist_link_labels", {}))
         super().__init__(*args, **kwargs)
         self.add = self.extra_context["add"]
 
@@ -510,9 +510,7 @@ class BaseEditView(
         return links
 
     def handle_require_confirmation(self, request, *args, **kwargs):
-        """
-        This view requires a confirmation for big changes to the model object.
-        """
+        """This view requires a confirmation for big changes to the model object."""
         if "_change_confirmed" in request.POST:
             # Restore the original form data.
             request.POST = request.session.pop("confirmed_form_data", request.POST)
@@ -583,7 +581,9 @@ class BaseEditView(
         """
 
         def stringify_boundfield(bf):
-            """Return a string representation of the value(s) of the given boundfield."""
+            """
+            Return a string representation of the value(s) of the given boundfield.
+            """  # noqa: D200
             formfield = bf.field
             value = boundfield.value()
             if isinstance(formfield, forms.ChoiceField) and value:
@@ -658,17 +658,17 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
           against all fields.
     """
 
-    template_name = "mizdb/changelist.html"
-    list_display = ()
-    list_display_links = ()
-    paginate_by = 100
-    empty_value_display = "-"
-    page_kwarg = PAGE_VAR
+    template_name: str = "mizdb/changelist.html"
+    list_display: Sequence[str] = ()
+    list_display_links: Sequence[str] = ()
+    paginate_by: int = 100
+    empty_value_display: str = "-"
+    page_kwarg: str = PAGE_VAR
 
-    order_unfiltered_results = True
-    prioritize_search_ordering = True
-    actions = ()
-    sortable_by = ()
+    order_unfiltered_results: bool = True
+    prioritize_search_ordering: bool = True
+    actions: Sequence = ()
+    sortable_by: Sequence[str] = ()
 
     def has_permission(self):
         return has_view_permission(self.request.user, self.opts)
@@ -821,6 +821,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 "total_count": self.model.objects.count(),
                 "search_term": self.request.GET.get(SEARCH_VAR, ""),
                 "actions": actions,
+                "is_filtered": bool(ctx["object_list"].query.has_filters()),
             }
         )
         # Provide the template with the URL for the view that syncs the
@@ -832,9 +833,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         return ctx
 
     def get_empty_value_display(self):
-        """
-        Return the empty_value_display set on this view.
-        """
+        """Return the empty_value_display set on this view."""
         return mark_safe(self.empty_value_display)
 
     def _lookup_field(self, name):
@@ -1133,7 +1132,7 @@ class SearchableListView(SearchFormMixin, BaseListView):
             elif isinstance(bound_field.field, forms.MultiValueField):
                 # The value for an empty MultiValueField can look like this:
                 # - [None, None] or
-                # - [[None, None], [None, None]] (nested MultiValueFields, i.e. PartialDate + RangeField)
+                # - [[None, None], [None, None]] (nested MultiValueFields, i.e. PartialDate + RangeField)  # noqa: W505
                 return all(subvalue is None for subvalue in flatten(value))
             else:
                 return False

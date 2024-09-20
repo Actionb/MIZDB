@@ -1,4 +1,4 @@
-from django.contrib.postgres.search import SearchVector, SearchQuery
+from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.db import models
 from django.db.models import QuerySet
 
@@ -45,7 +45,7 @@ class Band(models.Model):
     class Meta:
         verbose_name = "Band"
         verbose_name_plural = "Bands"
-        default_permissions = ('add', 'change', 'delete', 'merge', 'view')
+        default_permissions = ("add", "change", "delete", "merge", "view")
 
 
 class Country(models.Model):

@@ -1,0 +1,76 @@
+[project]
+name = "MIZDB"
+authors = [
+    {name = "Philip Becker", email = "yummytea1@gmail.com"},
+]
+classifiers = [
+    "Framework :: Django",
+    "Programming Language :: Python :: 3",
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[tool.uv.pip]
+generate-hashes = true
+
+[tool.ruff]
+src = ["src"]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["**/migrations/**"]
+
+[tool.lint]
+select = [
+    "D",        # pydocstyle
+    "E", "W",   # pycodestyle
+    "F",        # flake8
+    "I",        # isort
+]
+ignore = [
+    "D1",    # D1: Missing docstring error codes (because not every function and class has a docstring)
+    "D203",  # D203: 1 blank line required before class docstring (conflicts with D211 and should be disabled, see https://github.com/PyCQA/pydocstyle/pull/91)
+    "D205",  # D205: 1 blank line required between summary line and description
+    "D212",  # D212: Multi-line docstring summary should start at the first line
+]
+
+[tool.lint.pydocstyle]
+convention = "google"
+
+[tool.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.lint.isort]
+known-first-party = ["dbentry"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+addopts = [
+    "--reuse-db",
+]
+markers = [
+    "e2e: End-To-End tests with Playwright",
+    # pytest-django 4.6.0 enables using django test tags as pytest markers.
+    # If you don't register them, a warning about an unknown marker will be issued.
+    "bug: This test is tagged as a bug test: @tag('bug')",
+    "logging: This test is tagged as a logging test: @tag('logging')",
+]
+filterwarnings = [
+    "ignore::django.utils.deprecation.RemovedInDjango50Warning",
+]
+
+[tool.mypy]
+files = "dbentry/"
+# https://mypy.readthedocs.io/en/stable/running_mypy.html#how-mypy-handles-imports
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+exclude = [
+    "migrations",
+    "management",
+]
+
+[tool.coverage.run]
+omit = [
+    "dbentry/migrations/*",
+]

@@ -6,9 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import Widget
 
-from dbentry.tools.bulk.handlers import (
-    GroupingHandler, NumericHandler, RangeGroupingHandler, RangeHandler
-)
+from dbentry.tools.bulk.handlers import GroupingHandler, NumericHandler, RangeGroupingHandler, RangeHandler
 
 
 class BaseSplitField(forms.CharField):
@@ -36,16 +34,16 @@ class BaseSplitField(forms.CharField):
           order of the handlers can matter if their regexes are similar.
     """
 
-    separator_pattern: str = r','
+    separator_pattern: str = r","
     item_handlers: Sequence = ()
-    default_error_messages: Dict[str, str] = {'invalid': 'Ungültige Angabe(n): %(invalid)s.'}
+    default_error_messages: Dict[str, str] = {"invalid": "Ungültige Angabe(n): %(invalid)s."}
 
     def __init__(
-            self,
-            separator_pattern: Optional[str] = None,
-            item_handlers: Optional[Sequence] = None,
-            *args: Any,
-            **kwargs: Any
+        self,
+        separator_pattern: Optional[str] = None,
+        item_handlers: Optional[Sequence] = None,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         if separator_pattern is not None:  # pragma: no cover
@@ -65,27 +63,21 @@ class BaseSplitField(forms.CharField):
                 invalid.append(item)
         if invalid:
             raise ValidationError(
-                self.error_messages['invalid'],
-                code='invalid',
-                params={'invalid': ", ".join(invalid)}
+                self.error_messages["invalid"], code="invalid", params={"invalid": ", ".join(invalid)}
             )
 
     def clean(self, value: str) -> str:
         if value:
             # Remove whitespaces and empty items.
             value = self.separator_pattern.join(
-                [
-                    item.replace(' ', '')
-                    for item in self.separator_regex.split(value)
-                    if item.strip()
-                ]
+                [item.replace(" ", "") for item in self.separator_regex.split(value) if item.strip()]
             )
         return super().clean(value)
 
     def widget_attrs(self, widget: Widget) -> dict:
         attrs = super().widget_attrs(widget)
         # Limit the width of the SplitField's widget to 350px.
-        attrs['style'] = 'width:350px;'
+        attrs["style"] = "width:350px;"
         return attrs
 
     def to_list(self, value: str) -> Tuple[list, int]:
@@ -109,9 +101,7 @@ class BaseSplitField(forms.CharField):
 class BulkField(BaseSplitField):
     """The default formfield for the BulkForm."""
 
-    item_handlers: Sequence = (
-        RangeGroupingHandler(), RangeHandler(), GroupingHandler(), NumericHandler()
-    )
+    item_handlers: Sequence = (RangeGroupingHandler(), RangeHandler(), GroupingHandler(), NumericHandler())
 
     def __init__(self, required: bool = False, *args: Any, **kwargs: Any) -> None:
         super().__init__(required=required, *args, **kwargs)
@@ -128,8 +118,8 @@ class BulkJahrField(BaseSplitField):
         # separator.
         self.validators.append(
             RegexValidator(
-                regex=r'^(\d{4}|%s)*$' % self.separator_pattern,
-                message='Bitte vierstellige Jahresangaben benutzen.',
-                code='invalid_year'
+                regex=r"^(\d{4}|%s)*$" % self.separator_pattern,
+                message="Bitte vierstellige Jahresangaben benutzen.",
+                code="invalid_year",
             )
         )

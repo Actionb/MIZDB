@@ -32,6 +32,7 @@ def ausgabe(magazin):
 @pytest.fixture
 def dropdown():
     """Return the dropdown div for the given TomSelect ts-control div."""
+
     def inner(ts_control):
         elem = ts_control.locator(":scope ~ div")
         elem.wait_for(state="attached")
@@ -43,6 +44,7 @@ def dropdown():
 @pytest.fixture
 def dropdown_input(dropdown):
     """Return the dropdown input element for the given TomSelect element."""
+
     def inner(ts_control):
         elem = dropdown(ts_control).locator(".dropdown-input")
         elem.wait_for(state="attached")

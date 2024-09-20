@@ -12,22 +12,22 @@ try:
 except FileNotFoundError as e:
     raise FileNotFoundError(".secrets file not found.\nHINT: run setup.sh") from e
 
-SECRET_KEY = 'abcdefghi'
+SECRET_KEY = "abcdefghi"
 
 ALWAYS_INSTALLED_APPS = [
-    'dbentry.apps.DbentryConfig',
-    'dbentry.apps.DbentryAdminConfig',
-    'dal',
-    'dal_select2',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'formtools',
-    'django.contrib.postgres',
-    'django_admin_logs',
-    'dbentry.site',
+    "dbentry.apps.DbentryConfig",
+    "dbentry.apps.DbentryAdminConfig",
+    "dal",
+    "dal_select2",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "formtools",
+    "django.contrib.postgres",
+    "django_admin_logs",
+    "dbentry.site",
     "django_bootstrap5",
     "mizdb_inlines",
     "mizdb_tomselect",
@@ -55,27 +55,27 @@ TEST_APPS = [
 INSTALLED_APPS = ALWAYS_INSTALLED_APPS + TEST_APPS
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.request',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.request",
             ],
         },
     },
@@ -94,12 +94,12 @@ DATABASES = {
 
 DEBUG = True
 
-ROOT_URLCONF = 'tests.urls'
+ROOT_URLCONF = "tests.urls"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.MD5PasswordHasher',
+    "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
 # Add a NullHandler to the root logger for test runs.
@@ -109,18 +109,18 @@ PASSWORD_HASHERS = [
 # handles all log records. The toolbar need not be enabled for this.
 logging.getLogger().addHandler(logging.NullHandler())
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
-TIME_ZONE = 'Europe/Berlin'
+TIME_ZONE = "Europe/Berlin"
 
 LANGUAGE_CODE = "de"
 
-LOGIN_URL = 'login'
+LOGIN_URL = "login"
 
 BOOTSTRAP5 = {
     "field_renderers": {"default": "dbentry.site.renderer.MIZFieldRenderer"},
     "required_css_class": "required",
-    "set_placeholder": False
+    "set_placeholder": False,
 }
 
 ANONYMOUS_CAN_VIEW = True

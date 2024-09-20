@@ -11,7 +11,7 @@ from dbentry.admin.base import AutocompleteMixin
 from dbentry.admin.changelist import MIZChangeList
 from tests.case import AdminTestCase
 from tests.model_factory import make
-from tests.test_admin.admin import AudioAdmin, BandAdmin, admin_site, PersonAdmin
+from tests.test_admin.admin import AudioAdmin, BandAdmin, PersonAdmin, admin_site
 from tests.test_admin.models import Audio, Band, Bestand, Person, Veranstaltung
 
 

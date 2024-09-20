@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.20.0] - 2024-09-20
+
+### Changed
+
+- changed export permission requirements: 
+  - exporting a limited set of records only requires 'view' permission 
+  - exporting all records of a model requires superuser permission
+- watchlist: include magazin name in Ausgabe watchlist items
+- moved docs and test requirements into their own requirement files
+- move dev configs (pytest, ruff, etc.) into pyproject.toml
+
+### Fixed
+
+- fixed text search with search terms that contain forward slashes (#14)
+- watchlist: include Magazin name in the text representation of Ausgabe watchlist items
+- fixed URLs for the duplicates search
+
 ## [0.19.1] - 2024-09-03
 
 ### Fixed

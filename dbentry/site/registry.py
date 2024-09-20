@@ -2,7 +2,7 @@ from collections import OrderedDict
 from enum import Enum
 
 from django.db.models.base import ModelBase
-from django.urls import path, include
+from django.urls import include, path
 
 from dbentry.utils.url import urlname
 
@@ -41,8 +41,8 @@ class Registry:
 
     def get_urls(self):
         from dbentry.site.views.delete import DeleteView
-        from dbentry.site.views.history import HistoryView
         from dbentry.site.views.export import ExportModelView
+        from dbentry.site.views.history import HistoryView
 
         urlpatterns = []
         for model, view in self.changelists.items():
@@ -53,7 +53,7 @@ class Registry:
                     path(
                         f"{opts.model_name}/export",
                         ExportModelView.as_view(model=model, resource_class=view.resource_class),
-                        name=urlname("export", opts)
+                        name=urlname("export", opts),
                     )
                 )
         for model, view in self.views.items():

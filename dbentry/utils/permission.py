@@ -26,3 +26,7 @@ def has_view_permission(user: User, opts: Options) -> bool:
         # Always allow viewing if that setting is True.
         return True
     return user.has_perm(get_perm("view", opts)) or has_change_permission(user, opts)
+
+
+def has_export_permission(user: User, opts: Options) -> bool:  # pragma: no cover
+    return has_view_permission(user, opts)
