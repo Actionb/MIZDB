@@ -50,50 +50,61 @@ Dokumentation:
 
 ## Development
 
-> [!NOTE]  
-> Beachte die build prerequisites/requirements für psycopg2 und mod_wsgi:
->  * psycopg2: https://www.psycopg.org/docs/install.html#build-prerequisites
->  * mod_wsgi: https://github.com/GrahamDumpleton/mod_wsgi?tab=readme-ov-file#system-requirements
+### Installation
 
+#### System Requirements
 
-Repository klonen:
+* PostgreSQL
+    * für [Debian/Ubuntu](https://www.postgresql.org/download/)
+    * für [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/postgresql/)
+* Apache2 mit Dev Headern (benötigt von mod_wsgi)
+* libpq-dev (benötigt von psycopg2)
+* Git
+* [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
+Zum Beispiel für Debian:
 
 ```shell
+sudo apt update && sudo apt install python3-pip python3-venv postgresql apache2-dev libpq-dev git nodejs npm
+```
+
+#### Datenbank einrichten
+
+```shell
+# Datenbankbenutzer erstellen:
+sudo -u postgres createuser mizdb_user -P --createdb  
+# Datenbank erzeugen:
+sudo -u postgres createdb mizdb --owner=mizdb_user
+```
+
+#### MIZDB installieren
+
+```shell
+# Repository klonen:
 git clone https://github.com/Actionb/MIZDB MIZDB
 cd MIZDB
-```
-
-Virtuelle Umgebung erstellen:
-
-```shell
-python -m venv .venv
+# Virtuelle Umgebung erstellen:
+python3 -m venv .venv
 echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
 . .venv/bin/activate
-```
-
-Project Abhängigkeiten und Git Hooks installieren:
-
-```shell
+# Projekt Abhängigkeiten und Git Hooks installieren:
 pip install -r requirements/dev.txt
 npm install
 pre-commit install
+# MIZDB einrichten:
+sh setup.sh
 ```
 
-### Installation mit uv
-
-uv installieren: https://docs.astral.sh/uv/getting-started/installation/
-
-Dann:
+Anschließend entweder die Migrationen ausführen:
 
 ```shell
-git clone https://github.com/Actionb/MIZDB MIZDB
-cd MIZDB
-uv venv 
-echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
-. .venv/bin/activate
-uv pip install -r requirements/dev.txt
-npm install
-pre-commit install
+python3 manage.py migrate
+```
+
+oder ein Backup einlesen:
+
+```shell
+POSTGRES_USER=mizdb_user POSTGRES_DB=mizdb scripts/db/restore.sh < backup_datei
 ```
 
 ### Tests
