@@ -43,7 +43,7 @@ Je eine Zeile in einem Inline repräsentiert je eine Verknüpfung zu einem ander
 
 Um eine existierende Verknüpfung zu ändern, wähle im Auswahlfeld aus der Liste einen *anderen* Datensatz aus.
 
-<div markdown class="admonition caution">
+<div markdown class="admonition danger">
 
 <p class="admonition-title ps-3">
 Achtung: Was du <u>nicht</u> machen darfst, ist einfach den Namen des verknüpften Datensatzes ändern!
