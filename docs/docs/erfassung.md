@@ -106,7 +106,7 @@ Da der Datensatz der Ausgabe den [Lagerort](lagerort.md "Lagerort") des Heftes a
 Hand, die man braucht, um den Artikel im "echten" Heft wiederzufinden.
 
 [comment]: <> (@formatter:off)
-!!! caution "Achtung: Abspeichern ist notwendig!"
+!!! danger "Achtung: Abspeichern ist notwendig!"
     Änderungen werden nur übernommen, wenn du auf einen der "[Sichern](sichern.md "Sichern")" Knöpfe klickst.
     Verlässt du das Formular (z.B. indem du das Fenster schließt oder zu einer anderen Seite navigierst), ohne es zu
     sichern, geht deine Arbeit verloren!

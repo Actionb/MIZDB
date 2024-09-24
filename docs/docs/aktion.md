@@ -49,7 +49,7 @@ keine Verweise darstellen und die dem primären Datensatz fehlen, dem primären 
 Beschreibung oder Zusammenfassung).
 
 [comment]: <> (@formatter:off)  
-!!! caution "Achtung: die anderen Datensätze werden gelöscht!"  
+!!! danger "Achtung: die anderen Datensätze werden gelöscht!"  
     Nach dem Erweitern des primären Datensatzes werden die anderen Datensätze gelöscht. 
   
 [comment]: <> (@formatter:on)
