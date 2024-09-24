@@ -72,6 +72,7 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.top
+    - content.code.copy
   icon:
     repo: fontawesome/brands/github
 use_directory_urls: false
@@ -82,6 +83,14 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
 not_in_nav: |
   /datensatz.md
   /id.md
