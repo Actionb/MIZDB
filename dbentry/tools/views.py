@@ -9,7 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.db.models import Count, F, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet, Window
 from django.db.models.query import RawQuerySet
 from django.forms import Form
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
@@ -447,13 +447,3 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
     def _search(self, model: Model, q: str) -> Any:
         # noinspection PyUnresolvedReferences
         return model.objects.search(q, ranked=False)  # pragma: no cover
-
-
-# TODO: remove SearchbarSearch - not used
-class SearchbarSearch(MIZSiteSearch):
-    def get(self, request: HttpRequest, **kwargs: Any) -> JsonResponse:
-        if q := request.GET.get("q", ""):
-            results = self.get_result_list(q)
-        else:
-            results = []
-        return JsonResponse({"results": results})
