@@ -11,7 +11,7 @@ from django.views import View
 
 from dbentry import models as _models
 from dbentry.site.registry import ModelType, Registry, register_changelist
-from dbentry.site.views import list
+from dbentry.site.views import list as list_views
 from dbentry.site.views.base import ORDER_VAR
 from dbentry.site.views.list import _get_continue_url
 from tests.case import DataTestCase, RequestTestCase, ViewTestCase
@@ -31,7 +31,7 @@ class TestChangelistSelectionSync(DataTestCase, RequestTestCase):
         selected = json.dumps([str(self.obj.pk), "-1"])
         opts = self.model._meta
         request = self.get_request(data={"model": f"{opts.app_label}.{opts.model_name}", "ids": selected})
-        response = list.changelist_selection_sync(request)
+        response = list_views.changelist_selection_sync(request)
         data = json.loads(response.content)
         self.assertEqual(data["remove"], ["-1"])
 
@@ -75,7 +75,7 @@ class ChangelistView(View):
 
 
 class TestIndex(ViewTestCase):
-    view_class = list.Index
+    view_class = list_views.Index
 
     @classmethod
     def add_log(cls, obj, action_flag):
@@ -163,11 +163,11 @@ class ListViewTestMethodsMixin:
 
 
 class TestAudioList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.AudioList
+    view_class = list_views.AudioList
 
 
 class TestAusgabeList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.AusgabeList
+    view_class = list_views.AusgabeList
 
     def test_ordered_chronologically(self):
         """Assert that the changelist queryset is ordered chronologically."""
@@ -192,35 +192,35 @@ class TestAusgabeList(ListViewTestMethodsMixin, ListViewTestCase):
 
 
 class TestAutorList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.AutorList
+    view_class = list_views.AutorList
 
 
 class TestArtikelList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.ArtikelList
+    view_class = list_views.ArtikelList
 
 
 class TestBandList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.BandList
+    view_class = list_views.BandList
 
 
 class TestPlakatList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.PlakatList
+    view_class = list_views.PlakatList
 
 
 class TestBuchList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.BuchList
+    view_class = list_views.BuchList
 
 
 class TestGenreList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.GenreList
+    view_class = list_views.GenreList
 
 
 class TestMagazinList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.MagazinList
+    view_class = list_views.MagazinList
 
 
 class TestMusikerList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.MusikerList
+    view_class = list_views.MusikerList
 
     @classmethod
     def setUpTestData(cls):
@@ -238,88 +238,88 @@ class TestMusikerList(ListViewTestMethodsMixin, ListViewTestCase):
 
 
 class TestPersonList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.PersonList
+    view_class = list_views.PersonList
 
 
 class TestSchlagwortList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.SchlagwortList
+    view_class = list_views.SchlagwortList
 
 
 class TestSpielortList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.SpielortList
+    view_class = list_views.SpielortList
 
 
 class TestVeranstaltungList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.VeranstaltungList
+    view_class = list_views.VeranstaltungList
 
 
 class TestVerlagList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.VerlagList
+    view_class = list_views.VerlagList
 
 
 class TestVideoList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.VideoList
+    view_class = list_views.VideoList
 
 
 class TestOrtList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.OrtList
+    view_class = list_views.OrtList
 
 
 class TestInstrumentList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.InstrumentList
+    view_class = list_views.InstrumentList
 
 
 class TestHerausgeberList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.HerausgeberList
+    view_class = list_views.HerausgeberList
 
 
 class TestBrochureList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.BrochureList
+    view_class = list_views.BrochureList
 
 
 class TestKatalogList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.WarenkatalogList
+    view_class = list_views.WarenkatalogList
 
 
 class TestKalenderList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.ProgrammheftList
+    view_class = list_views.ProgrammheftList
 
 
 class TestFotoList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.FotoList
+    view_class = list_views.FotoList
 
 
 class TestPlattenfirmaList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.PlattenfirmaList
+    view_class = list_views.PlattenfirmaList
 
 
 class TestLagerortList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.LagerortList
+    view_class = list_views.LagerortList
 
 
 class TestGeberList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.GeberList
+    view_class = list_views.GeberList
 
 
 class TestProvenienzList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.ProvenienzList
+    view_class = list_views.ProvenienzList
 
 
 class TestSchriftenreiheList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.SchriftenreiheList
+    view_class = list_views.SchriftenreiheList
 
 
 class TestBildreiheList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.BildreiheList
+    view_class = list_views.BildreiheList
 
 
 class TestVeranstaltungsreiheList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.VeranstaltungsreiheList
+    view_class = list_views.VeranstaltungsreiheList
 
 
 class TestVideoMediumList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.VideoMediumList
+    view_class = list_views.VideoMediumList
 
 
 class TestAudioMediumList(ListViewTestMethodsMixin, ListViewTestCase):
-    view_class = list.AudioMediumList
+    view_class = list_views.AudioMediumList
