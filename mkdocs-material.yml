@@ -76,6 +76,8 @@ theme:
   icon:
     repo: fontawesome/brands/github
 use_directory_urls: false
+extra_css:
+  - css/material_extra.css
 plugins:
   - search
   - glightbox
