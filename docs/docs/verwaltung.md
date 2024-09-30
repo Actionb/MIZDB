@@ -69,8 +69,8 @@ Und folgenden cronjob hinzufügen:
 
 Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.
 
-1. rclone installieren: https://rclone.org/install/
-2. rclone für Google Drive konfigurieren: https://rclone.org/drive/
+1. rclone installieren: [https://rclone.org/install/](https://rclone.org/install/)
+2. rclone für Google Drive konfigurieren: [https://rclone.org/drive/](https://rclone.org/drive/)
 3. crontab öffnen:
     ```shell
     sudo crontab -e
@@ -82,36 +82,37 @@ Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive 
     ```
 
 Die Standardkonfiguration erfordert einen Webbrowser.
-Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: https://rclone.org/remote_setup/
+Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
+konfigurieren: [https://rclone.org/remote_setup/](https://rclone.org/remote_setup/)
 
 ##### rclone mit Google Service Account
 
 Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:
 
-https://rclone.org/drive/#service-account-support
+[https://rclone.org/drive/#service-account-support](https://rclone.org/drive/#service-account-support)
 
 Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:
 
 1. Falls nicht der bereits existierende Service "dbbackup-service" benutzt werden soll, muss
    vorerst ein Service Account angelegt werden:
-    1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+    1. in die Google Cloud Console einloggen: [https://console.cloud.google.com](https://console.cloud.google.com)
     2. Service Accounts > Create Service Account
     3. im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
        Account freigeben
 
 2. Service Account Key (`credentials.json`) generieren, falls nicht vorhanden:
-    1. in die Google Cloud Console einloggen: https://console.cloud.google.com
+    1. in die Google Cloud Console einloggen: [https://console.cloud.google.com](https://console.cloud.google.com)
     2. Service Accounts > dbbackup-service > KEYS
     3. Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen
 
 3. Root Folder ID des Backup-Ordners herausfinden:
     1. In Google Drive einloggen
     2. Unter "Meine Ablage" den entsprechenden Ordner anklicken
-    3. die ID ist am Ende der URL nach `/folders/` zu finden; also
-       z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
-       ID `10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa`
+    3. die ID ist am Ende der URL nach `/folders/` zu finden;  
+       also z.B. `https://drive.google.com/drive/u/1/folders/foo1bar` hat die ID `foo1bar`
 
-4. rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support
+4. rclone Konfigurationsdatei
+   erzeugen: [https://rclone.org/drive/#service-account-support](https://rclone.org/drive/#service-account-support)
 
 Mit einer solchen rclone.conf, zu finden unter `/home/my_user/.config/rclone/`:
 
@@ -119,7 +120,7 @@ Mit einer solchen rclone.conf, zu finden unter `/home/my_user/.config/rclone/`:
 [dbbackup]
 type = drive
 scope = drive
-root_folder_id = 10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa
+root_folder_id = foo1bar
 service_account_file = /pfad/zu/service/account/credentials.json
 ```
 
@@ -129,7 +130,9 @@ müsste der cronjob so aussehen:
 53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
 ```
 
-Weitere Links: [Gdrive access via service account](https://forum.rclone.org/t/gdrive-access-via-service-account/17926)
+Weitere Links:
+
+* [Gdrive access via service account](https://forum.rclone.org/t/gdrive-access-via-service-account/17926)
 
 ### Update
 

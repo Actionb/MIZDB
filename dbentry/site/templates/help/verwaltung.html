@@ -89,8 +89,8 @@ ist <code>mizdb-postgres</code>.</p>
 <h4 id="rclone">rclone</h4>
 <p>Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.</p>
 <ol>
-<li>rclone installieren: https://rclone.org/install/</li>
-<li>rclone für Google Drive konfigurieren: https://rclone.org/drive/</li>
+<li>rclone installieren: <a href="https://rclone.org/install/">https://rclone.org/install/</a></li>
+<li>rclone für Google Drive konfigurieren: <a href="https://rclone.org/drive/">https://rclone.org/drive/</a></li>
 <li>crontab öffnen:
     <code>shell
     sudo crontab -e</code>
@@ -100,17 +100,18 @@ ist <code>mizdb-postgres</code>.</p>
     53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups &lt;remote_name&gt;:backups</code></li>
 </ol>
 <p>Die Standardkonfiguration erfordert einen Webbrowser.
-Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: https://rclone.org/remote_setup/</p>
+Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
+konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/remote_setup/</a></p>
 <h5 id="rclone-mit-google-service-account">rclone mit Google Service Account</h5>
 <p>Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:</p>
-<p>https://rclone.org/drive/#service-account-support</p>
+<p><a href="https://rclone.org/drive/#service-account-support">https://rclone.org/drive/#service-account-support</a></p>
 <p>Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:</p>
 <ol>
 <li>
 <p>Falls nicht der bereits existierende Service "dbbackup-service" benutzt werden soll, muss
    vorerst ein Service Account angelegt werden:</p>
 <ol>
-<li>in die Google Cloud Console einloggen: https://console.cloud.google.com</li>
+<li>in die Google Cloud Console einloggen: <a href="https://console.cloud.google.com">https://console.cloud.google.com</a></li>
 <li>Service Accounts &gt; Create Service Account</li>
 <li>im Drive Ordner rechts in den Ordnerdetails unter "Zugriff verwalten" den Backup-Ordner für den neuen Service
    Account freigeben</li>
@@ -119,7 +120,7 @@ Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: ht
 <li>
 <p>Service Account Key (<code>credentials.json</code>) generieren, falls nicht vorhanden:</p>
 <ol>
-<li>in die Google Cloud Console einloggen: https://console.cloud.google.com</li>
+<li>in die Google Cloud Console einloggen: <a href="https://console.cloud.google.com">https://console.cloud.google.com</a></li>
 <li>Service Accounts &gt; dbbackup-service &gt; KEYS</li>
 <li>Mit "ADD KEY" wird ein neuer Key erzeugt und heruntergeladen</li>
 </ol>
@@ -129,26 +130,29 @@ Um rclone ohne Webbrowser (z.B. für einen headless Server) zu konfigurieren: ht
 <ol>
 <li>In Google Drive einloggen</li>
 <li>Unter "Meine Ablage" den entsprechenden Ordner anklicken</li>
-<li>die ID ist am Ende der URL nach <code>/folders/</code> zu finden; also
-   z.B. https://drive.google.com/drive/u/1/folders/10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa hat die
-   ID <code>10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa</code></li>
+<li>die ID ist am Ende der URL nach <code>/folders/</code> zu finden;<br/>
+   also z.B. <code>https://drive.google.com/drive/u/1/folders/foo1bar</code> hat die ID <code>foo1bar</code></li>
 </ol>
 </li>
 <li>
-<p>rclone Konfigurationsdatei erzeugen: https://rclone.org/drive/#service-account-support</p>
+<p>rclone Konfigurationsdatei
+   erzeugen: <a href="https://rclone.org/drive/#service-account-support">https://rclone.org/drive/#service-account-support</a></p>
 </li>
 </ol>
 <p>Mit einer solchen rclone.conf, zu finden unter <code>/home/my_user/.config/rclone/</code>:</p>
 <pre><code>[dbbackup]
 type = drive
 scope = drive
-root_folder_id = 10z55r6HFxfOWkmrRIT4-mrjhhJgqYPqa
+root_folder_id = foo1bar
 service_account_file = /pfad/zu/service/account/credentials.json
 </code></pre>
 <p>müsste der cronjob so aussehen:</p>
 <pre><code>53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
 </code></pre>
-<p>Weitere Links: <a href="https://forum.rclone.org/t/gdrive-access-via-service-account/17926">Gdrive access via service account</a></p>
+<p>Weitere Links:</p>
+<ul>
+<li><a href="https://forum.rclone.org/t/gdrive-access-via-service-account/17926">Gdrive access via service account</a></li>
+</ul>
 <h3 id="update">Update</h3>
 <p>Um die Anwendung zu aktualisieren, benutze:</p>
 <pre><code class="language-shell">bash mizdb.sh update
