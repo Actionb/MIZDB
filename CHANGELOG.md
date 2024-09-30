@@ -1,12 +1,21 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+- non-admin autocomplete create function for Person, Band and Musiker now automatically add a numeric suffix when the
+  newly created object is an exact duplicate of an already existing object. For example: assuming that a Band "The
+  Beatles" already exists, when the user creates a new Band with the same name via the create autocomplete function, the
+  new Band will have the name "The Beatles (2)".
+
 ## [0.20.0] - 2024-09-20
 
 ### Changed
 
-- changed export permission requirements: 
-  - exporting a limited set of records only requires 'view' permission 
-  - exporting all records of a model requires superuser permission
+- changed export permission requirements:
+    - exporting a limited set of records only requires 'view' permission
+    - exporting all records of a model requires superuser permission
 - watchlist: include magazin name in Ausgabe watchlist items
 - moved docs and test requirements into their own requirement files
 - move dev configs (pytest, ruff, etc.) into pyproject.toml
