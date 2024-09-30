@@ -5,14 +5,14 @@ from unittest.mock import Mock, patch
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.utils.http import urlencode
 from django.views import View
 
 from dbentry import models as _models
 from dbentry.site.registry import ModelType, Registry, register_changelist
 from dbentry.site.views import list as list_views
-from dbentry.site.views.base import ORDER_VAR
+from dbentry.site.views.base import ORDER_VAR, IMPROVABLE_QUERY_PARAM
 from dbentry.site.views.list import _get_continue_url
 from tests.case import DataTestCase, RequestTestCase, ViewTestCase
 from tests.model_factory import make
@@ -136,6 +136,31 @@ class TestIndex(ViewTestCase):
         """Assert that deleted objects do not appear in the last edits."""
         self.assertNotIn("Musician: Deleted", self.get_descriptions())
 
+    def test_get_improvable_views(self):
+        """Assert that get_improvable_views adds the expected changelist URLs."""
+        view = self.get_view(self.get_request(), site=test_site)
+        # Ignore the descriptions returned by get_improvable views:
+        improvable_views = [(url, verbose_name) for url, verbose_name, _ in view.get_improvable_views()]
+
+        expected = [
+            (f"/artikel/?{IMPROVABLE_QUERY_PARAM}=1", "Artikel"),
+            (f"/band/?{IMPROVABLE_QUERY_PARAM}=1", "Bands"),
+            (f"/musiker/?{IMPROVABLE_QUERY_PARAM}=1", "Musiker"),
+        ]
+        for expected_url, label in expected:
+            with self.subTest(label=label):
+                self.assertIn((expected_url, label), improvable_views)
+
+    def test_get_improvable_views_no_reverse_match(self):
+        """
+        Assert that get_improvable_views catches and suppresses NoReverseMatch
+        exceptions.
+        """
+        view = self.get_view(self.get_request(), site=test_site)
+        with patch("dbentry.site.views.list.reverse") as reverse_mock:
+            reverse_mock.side_effect = NoReverseMatch
+            self.assertFalse(view.get_improvable_views())
+
 
 class ListViewTestCase(ViewTestCase):
     @classmethod
@@ -198,9 +223,40 @@ class TestAutorList(ListViewTestMethodsMixin, ListViewTestCase):
 class TestArtikelList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list_views.ArtikelList
 
+    def test_filter_improvable(self):
+        """Assert that filter_improvable only shows objects that lack data."""
+        self.obj.delete()
+        make(_models.Artikel, zusammenfassung="A proper summary!")
+        improvable = make(_models.Artikel)
+        improvable_w_dashes = make(_models.Artikel, schlagzeile="----")
+        improvable_w_dots = make(_models.Artikel, schlagzeile=".....")
+
+        view = self.get_view(self.get_request(path=f"{self.url}?{IMPROVABLE_QUERY_PARAM}=1"))
+        queryset = view.filter_improvable(_models.Artikel.objects.all())
+        self.assertEqual(queryset.count(), 3, msg=queryset)
+        self.assertIn(improvable, queryset)
+        self.assertIn(improvable_w_dashes, queryset)
+        self.assertIn(improvable_w_dots, queryset)
+
 
 class TestBandList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list_views.BandList
+
+    def test_filter_improvable(self):
+        """Assert that filter_improvable only shows objects that lack data."""
+        self.obj.delete()
+        make(_models.Band, band_name="has_beschreibung", beschreibung="foo")
+        make(_models.Band, band_name="has_urls", musiker__extra=1)
+        make(_models.Band, band_name="has_genre", genre__extra=1)
+        make(_models.Band, band_name="has_alias", bandalias__extra=1)
+        make(_models.Band, band_name="has_musiker", musiker__extra=1)
+        make(_models.Band, band_name="has_orte", orte__extra=1)
+        improvable = make(_models.Band, band_name="improvable")
+
+        view = self.get_view(self.get_request(path=f"{self.url}?{IMPROVABLE_QUERY_PARAM}=1"))
+        queryset = view.filter_improvable(_models.Band.objects.all())
+        self.assertEqual(queryset.count(), 1, msg=queryset)
+        self.assertIn(improvable, queryset)
 
 
 class TestPlakatList(ListViewTestMethodsMixin, ListViewTestCase):
@@ -222,19 +278,31 @@ class TestMagazinList(ListViewTestMethodsMixin, ListViewTestCase):
 class TestMusikerList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list_views.MusikerList
 
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        cls.band = band = make(_models.Band)
-        cls.found = make(_models.Musiker, band=band)
-        cls.not_found = make(_models.Musiker)
-
     def test_search_form_bands(self):
         """Assert that the user can filter the changelist by Bands."""
+        self.band = band = make(_models.Band)
+        self.found = make(_models.Musiker, band=band)
+        self.not_found = make(_models.Musiker)
         response = self.get_response(reverse("dbentry_musiker_changelist"), data={"band": self.band.pk})
         results = [r for r, _ in response.context_data["result_rows"]]
         self.assertIn(self.found, results)
         self.assertNotIn(self.not_found, results)
+
+    def test_filter_improvable(self):
+        """Assert that filter_improvable only shows objects that lack data."""
+        self.obj.delete()
+        make(_models.Musiker, kuenstler_name="has_beschreibung", beschreibung="foo")
+        make(_models.Musiker, kuenstler_name="has_urls", urls__extra=1)
+        make(_models.Musiker, kuenstler_name="has_genre", genre__extra=1)
+        make(_models.Musiker, kuenstler_name="has_alias", musikeralias__extra=1)
+        make(_models.Musiker, kuenstler_name="has_musiker", band__extra=1)
+        make(_models.Musiker, kuenstler_name="has_orte", orte__extra=1)
+        improvable = make(_models.Musiker, kuenstler_name="improvable")
+
+        view = self.get_view(self.get_request(path=f"{self.url}?{IMPROVABLE_QUERY_PARAM}=1"))
+        queryset = view.filter_improvable(_models.Musiker.objects.all())
+        self.assertEqual(queryset.count(), 1, msg=queryset)
+        self.assertIn(improvable, queryset)
 
 
 class TestPersonList(ListViewTestMethodsMixin, ListViewTestCase):

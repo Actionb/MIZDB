@@ -8,6 +8,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 from django.http import HttpResponse
 from django.template import TemplateDoesNotExist
 from django.test import TestCase, override_settings
@@ -26,6 +27,7 @@ from dbentry.site.views.base import (
     Inline,
     ModelViewMixin,
     SearchableListView,
+    IMPROVABLE_QUERY_PARAM,
 )
 from dbentry.site.views.delete import DeleteSelectedView, DeleteView
 from dbentry.site.views.help import HelpView, has_help_page
@@ -33,7 +35,6 @@ from dbentry.site.views.history import HistoryView
 from dbentry.site.views.watchlist import WatchlistView
 from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
-
 from .models import Band, Country, Genre, Musician
 
 
@@ -991,6 +992,45 @@ class TestBaseListView(DataTestCase, ViewTestCase):
                 get_actions_mock.return_value = {"export_results": (export_results_mock, "foo", "bar")}
                 view.post(request)
                 export_results_mock.assert_called_with(view, request, queryset_mock)
+
+    def test_get_queryset_improvable_param(self):
+        """
+        Assert that get_queryset calls the filter_improvable method if the
+        IMPROVABLE_QUERY_PARAM key is present in the GET request.
+        """
+        for params in ({IMPROVABLE_QUERY_PARAM: 1}, {}):
+            with self.subTest(params=params):
+                request = self.get_request(data=params)
+                view = self.get_view(request=request)
+                with patch.object(view, "filter_improvable") as filter_improvable_mock:
+                    view.get_queryset()
+                if params:
+                    filter_improvable_mock.assert_called()
+                else:
+                    filter_improvable_mock.assert_not_called()
+
+    def test_filter_improvable_filters(self):
+        """Assert that filter_improvable filters the queryset."""
+        view = self.get_view()
+        for filters in ({"name": "foo"}, Q(name="foo")):
+            with self.subTest(filters=filters):
+                queryset = self.model.objects.all()
+                with patch.object(view, "get_improvable_filters") as get_improvable_filters_mock:
+                    get_improvable_filters_mock.return_value = filters, {}
+                    queryset = view.filter_improvable(queryset)
+                    self.assertTrue(bool(queryset.query.has_filters()))
+
+    def test_filter_improvable_no_filters(self):
+        """
+        Assert that filter_improvable does not apply filtering if the
+        `get_improvable_filters` method does not return any usable filters.
+        """
+        view = self.get_view()
+        queryset = self.model.objects.all()
+        with patch.object(view, "get_improvable_filters") as get_improvable_filters_mock:
+            get_improvable_filters_mock.return_value = {}, {}
+            queryset = view.filter_improvable(queryset)
+            self.assertFalse(bool(queryset.query.has_filters()))
 
 
 @override_settings(ROOT_URLCONF=URLConf)

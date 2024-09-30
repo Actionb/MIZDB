@@ -32,8 +32,10 @@ from django.apps import apps
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count, Q, Value, CharField, F
+from django.db.models.functions import Replace
 from django.http import JsonResponse
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -45,10 +47,10 @@ from dbentry.export import resources
 from dbentry.site.forms import MusikerSearchForm, null_boolean_select
 from dbentry.site.registry import ModelType, register_changelist
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import ORDER_VAR, BaseViewMixin, SearchableListView
+from dbentry.site.views.base import ORDER_VAR, BaseViewMixin, SearchableListView, IMPROVABLE_QUERY_PARAM
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
-from dbentry.utils.url import get_change_url
+from dbentry.utils.url import get_change_url, urlname
 
 # @formatter:off
 # A green checkmark icon and a red X to use as representation of boolean values:
@@ -137,7 +139,27 @@ class Index(BaseViewMixin, TemplateView):
                 break
 
         context["last_edits"] = edits
+        context["improvable_views"] = self.get_improvable_views()
         return context
+
+    def get_improvable_views(self):
+        """
+        Return urls (and labels and descriptions for the links) to changelist
+        views filtered to show objects which lack data and can be improved.
+        """
+        urls = []
+        opts_and_descriptions = [
+            (_models.Artikel._meta, "Artikel ohne Zusammenfassung oder Schlagzeile"),
+            (_models.Band._meta, "Bands ohne Mitglieder, Genres, Orte, usw."),
+            (_models.Musiker._meta, "Musiker ohne Bands, Genres, Orte, usw."),
+        ]
+        for opts, description in opts_and_descriptions:
+            try:
+                url = reverse(urlname("changelist", opts))
+            except NoReverseMatch:
+                continue
+            urls.append((f"{url}?{IMPROVABLE_QUERY_PARAM}=1", opts.verbose_name_plural, description))
+        return urls
 
 
 ################################################################################
@@ -207,6 +229,18 @@ class ArtikelList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.kuenstler_list or self.get_empty_value_display()
+
+    def get_improvable_filters(self):
+        # Also include schlagzeile/zusammenfassung that only include dashes or
+        # dots by replacing them with empty strings:
+        annotations = {}
+        for field in ("schlagzeile", "zusammenfassung"):
+            annotations[f"{field}_replaced_dot"] = Replace(F(field), Value("."), Value(""), output_field=CharField())
+            annotations[f"{field}_replaced"] = Replace(
+                F(f"{field}_replaced_dot"), Value("-"), Value(""), output_field=CharField()
+            )
+        filters = Q(schlagzeile_replaced="") | Q(zusammenfassung_replaced="")
+        return filters, annotations
 
 
 @register_changelist(_models.Audio, category=ModelType.ARCHIVGUT)
@@ -611,6 +645,15 @@ class BandList(SearchableListView):
         # (added by annotations)
         return obj.orte_list or self.get_empty_value_display()
 
+    def get_improvable_filters(self):
+        filters = {"beschreibung": ""}
+        annotations = {}
+        for rel in ("urls", "genre", "bandalias", "musiker", "orte"):
+            annotation_name = f"{rel}_count"
+            annotations[annotation_name] = Count(rel)
+            filters[f"{annotation_name}"] = 0
+        return filters, annotations
+
 
 @register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
 class GenreList(SearchableListView):
@@ -681,6 +724,15 @@ class MusikerList(SearchableListView):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
         return obj.orte_list or self.get_empty_value_display()
+
+    def get_improvable_filters(self):
+        filters = {"beschreibung": ""}
+        annotations = {}
+        for rel in ("urls", "genre", "musikeralias", "band", "orte"):
+            annotation_name = f"{rel}_count"
+            annotations[annotation_name] = Count(rel)
+            filters[f"{annotation_name}"] = 0
+        return filters, annotations
 
 
 @register_changelist(_models.Ort, category=ModelType.STAMMDATEN)

@@ -10,6 +10,20 @@
 
   {% if user.is_authenticated %}
     <div class="col secondary-bg-subtle">
+      {% if improvable_views %}
+        <div id="improvableObjects" class="mb-3">
+          <h5 class="p-2 bg-primary text-bg-primary">Werkzeuge</h5>
+            <span class="my-auto ms-3">Verbesserungsfähige Objekte suchen:</span>
+            <div class="mx-3 d-flex justify-content-evenly gap-5">
+            {% for url, label, description in improvable_views %}
+              <div class="col">
+                <a href="{{ url }}" class="btn btn-outline-success my-2 w-100" title="{{ description }} finden">{{ label }}</a>
+                <div class="mx-3"><span class="small text-secondary d-inline-block text-center">{{ description }}</span></div>
+              </div>
+            {% endfor %}
+            </div>
+        </div>
+      {% endif %}
       {% if last_edits %}
         <div id="recentEdits" class="mb-3">
           <h5 class="p-2 bg-primary text-bg-primary">Zuletzt bearbeitete Archivgüter</h5>

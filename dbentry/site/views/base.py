@@ -13,6 +13,7 @@ from django.contrib.messages.storage import default_storage
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from django.db.models import Q
 from django.http import Http404, HttpResponseBase
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
@@ -55,6 +56,10 @@ SEARCH_VAR = "q"
 # The name of the input elements that hold the PK values of items that were
 # selected for an action on a changelist.
 ACTION_SELECTED_ITEM = "_selected-item"
+
+# Query string parameter that tells a changelist to only show items that should
+# be improved by providing additional data.
+IMPROVABLE_QUERY_PARAM = "_improv"
 
 
 class BaseViewMixin(ContextMixin):
@@ -716,7 +721,10 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         return "?%s" % urlencode(sorted(p.items()))
 
     def get_queryset(self):
-        queryset = self.get_search_results(super().get_queryset())
+        queryset = super().get_queryset()
+        if IMPROVABLE_QUERY_PARAM in self.request.GET:
+            queryset = self.filter_improvable(super().get_queryset())
+        queryset = self.get_search_results(queryset)
         queryset = self.add_list_display_annotations(queryset)
         # Re-evaluate the ordering of the queryset, now that the search was
         # performed and annotations have been added.
@@ -1088,6 +1096,29 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
 
     def get_sortable_by(self):
         return self.sortable_by
+
+    def filter_improvable(self, queryset):
+        """
+        Filter the given queryset to only include objects that lack data and
+        thus need to be improved.
+
+        Concrete changelist views that inherit from BaseListView should declare
+        filters (and any annotations) via the `get_improvable_filters` method.
+        """
+        filters, annotations = self.get_improvable_filters()
+        if filters:
+            if not isinstance(filters, Q):
+                filters = Q(**filters)
+            return queryset.annotate(**annotations).filter(filters)
+        else:
+            return queryset
+
+    def get_improvable_filters(self):  # pragma: no cover
+        """
+        Return filters and annotations for filtering the changelist queryset to
+        only include objects that need improvements.
+        """
+        return {}, {}
 
 
 class SearchableListView(SearchFormMixin, BaseListView):

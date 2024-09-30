@@ -14,6 +14,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import SafeString, SafeText
 
+from dbentry import models as _models
 from dbentry.admin.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.tools.decorators import register_tool
 from dbentry.tools.forms import DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
@@ -447,3 +448,13 @@ class MIZSiteSearch(MIZAdminMixin, SiteSearchView):
     def _search(self, model: Model, q: str) -> Any:
         # noinspection PyUnresolvedReferences
         return model.objects.search(q, ranked=False)  # pragma: no cover
+
+
+def get_improvable_bands():
+    filters = {"beschreibung": ""}
+    annotations = {}
+    for rel in ("urls", "genre", "bandalias", "musiker", "orte"):
+        annotation_name = f"{rel}_count"
+        annotations[annotation_name] = Count(rel)
+        filters[f"{annotation_name}__lte"] = 1
+    return _models.Band.objects.annotate(**annotations).filter(**filters)
