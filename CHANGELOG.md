@@ -8,6 +8,7 @@
   newly created object is an exact duplicate of an already existing object. For example: assuming that a Band "The
   Beatles" already exists, when the user creates a new Band with the same name via the create autocomplete function, the
   new Band will have the name "The Beatles (2)".
+- added docker compose file for running a (development) test server
 
 ## [0.20.0] - 2024-09-20
 

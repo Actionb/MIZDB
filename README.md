@@ -107,6 +107,16 @@ oder ein Backup einlesen:
 POSTGRES_USER=mizdb_user POSTGRES_DB=mizdb scripts/db/restore.sh < backup_datei
 ```
 
+### Dev Server (Docker)
+
+Um den Test-/Development Server zu starten:
+
+```shell
+docker compose -f docker-compose.test-server.yaml up --build -d
+```
+
+Der Server ist dann unter http://host_name:8090 (lokal: http://127.0.0.1:8090) erreichbar.
+
 ### Tests
 
 #### Einfacher Testdurchlauf
