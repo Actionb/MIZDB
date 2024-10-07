@@ -1,0 +1,42 @@
+name: "mizdb-test"
+
+services:
+
+  testserver-db:
+    image: postgres:15-alpine
+    container_name: mizdb-testserver-db
+    volumes:
+      - /var/lib/mizdb/test/pgdata:/var/lib/postgresql/data
+      - ./scripts/db:/scripts/
+    environment:
+      POSTGRES_DB: mizdb
+      POSTGRES_USER: mizdb_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    restart: unless-stopped
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 2s
+    shm_size: 128mb
+
+  testserver:
+    build: .
+    container_name: mizdb-testserver
+    environment:
+      DB_NAME: mizdb
+      DB_USER: mizdb_user
+      DB_HOST: testserver-db
+      DB_PORT: 5432
+    ports:
+      - 8090:8090
+    depends_on:
+      testserver-db:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python manage.py runserver 0.0.0.0:8090
+
+
+secrets:
+  db_password:
+    file: .passwd
