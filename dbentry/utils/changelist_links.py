@@ -1,21 +1,21 @@
 """Functions for creating so-called changelist links.
 
 A changelist link is a link on the edit or view page of an object to the
-changelist of objects that it is related to.
+changelist of objects that it is related with.
 
-For example, a Band object may be related to multiple Artikel objects, and the
-changelist link for Artikel on the Band edit page would send the user to the
-Artikel changelist page. The changelist page will be filtered to only include
-the Artikel objects that the Band is related to.
+For example, assuming that a Band object is related with multiple Artikel
+objects, then the changelist link for Artikel on that Band's edit page would
+send the user to the Artikel changelist page, filtered to only include the
+Artikel objects that the Band is related with.
 
 Changelist links only cover reverse relations that are not already handled by
 inlines on the edit page. That means that the relation Band <-> Musiker does
-not get a changelist link because the relation is handled by an inline.
+not get a changelist link since that relation is handled by an inline.
 
-This way, changelist links mostly cover relations from "Stammdaten" objects to
-"Archivgut" objects, because Stammdaten <-> Stammdaten (f.ex. Band <-> Musiker)
-or Archivgut <-> Stammdaten (Artikel <-> Band) should be handled by inlines and
-thus be excluded.
+This way, changelist links mostly cover relations towards "Archivgut" objects,
+since Stammdaten <-> Stammdaten (f.ex. Band <-> Musiker) and
+Archivgut <-> Stammdaten (f.ex. Artikel <-> Band) should be handled by inlines
+and thus be excluded.
 """
 
 from django.urls import NoReverseMatch, reverse
