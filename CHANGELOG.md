@@ -10,6 +10,10 @@
   new Band will have the name "The Beatles (2)".
 - added docker compose file for running a (development) test server
 
+### Fixed
+
+- re-added changelist links on view-only pages
+
 ## [0.20.0] - 2024-09-20
 
 ### Changed
