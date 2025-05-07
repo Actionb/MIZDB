@@ -14,6 +14,7 @@
 
 - re-added changelist links on view-only pages
 - fix Brochure-type list views using the wrong ordering field for the 'jahr_list' list display field
+- fix string_list annotations not including values that do not satisfy set filters
 
 ## [0.20.0] - 2024-09-20
 

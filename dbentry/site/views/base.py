@@ -716,8 +716,9 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         return "?%s" % urlencode(sorted(p.items()))
 
     def get_queryset(self):
-        queryset = self.get_search_results(super().get_queryset())
-        queryset = self.add_list_display_annotations(queryset)
+        queryset = self.add_list_display_annotations(super().get_queryset())
+        queryset = self.get_search_results(queryset)
+
         # Re-evaluate the ordering of the queryset, now that the search was
         # performed and annotations have been added.
         return self.order_queryset(queryset)
