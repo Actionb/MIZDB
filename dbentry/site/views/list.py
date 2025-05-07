@@ -351,7 +351,7 @@ class BrochureList(SearchableListView):
     }
     resource_class = resources.BrochureResource
 
-    @add_attrs(description="Jahre", ordering="jahr_min")
+    @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.BaseBrochure):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
@@ -501,7 +501,7 @@ class ProgrammheftList(SearchableListView):
     }
     resource_class = resources.KalenderResource
 
-    @add_attrs(description="Jahre", ordering="jahr_min")
+    @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.BaseBrochure):
         # noinspection PyUnresolvedReferences
         # (added by annotations)
@@ -550,7 +550,7 @@ class WarenkatalogList(SearchableListView):
     }
     resource_class = resources.KatalogResource
 
-    @add_attrs(description="Jahre", ordering="jahr_min")
+    @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.BaseBrochure):
         # noinspection PyUnresolvedReferences
         # (added by annotations)

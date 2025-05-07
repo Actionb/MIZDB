@@ -276,13 +276,25 @@ class TestHerausgeberList(ListViewTestMethodsMixin, ListViewTestCase):
 class TestBrochureList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.BrochureList
 
+    def test_jahr_list_ordering_field(self):
+        """Assert that the ordering field of jahr_list is set correctly."""
+        self.assertEqual(self.get_view().jahr_list.ordering, "jahr_list")
+
 
 class TestKatalogList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.WarenkatalogList
 
+    def test_jahr_list_ordering_field(self):
+        """Assert that the ordering field of jahr_list is set correctly."""
+        self.assertEqual(self.get_view().jahr_list.ordering, "jahr_list")
+
 
 class TestKalenderList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.ProgrammheftList
+
+    def test_jahr_list_ordering_field(self):
+        """Assert that the ordering field of jahr_list is set correctly."""
+        self.assertEqual(self.get_view().jahr_list.ordering, "jahr_list")
 
 
 class TestFotoList(ListViewTestMethodsMixin, ListViewTestCase):

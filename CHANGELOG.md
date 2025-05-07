@@ -13,6 +13,7 @@
 ### Fixed
 
 - re-added changelist links on view-only pages
+- fix Brochure-type list views using the wrong ordering field for the 'jahr_list' list display field
 
 ## [0.20.0] - 2024-09-20
 
