@@ -9,6 +9,7 @@
   Beatles" already exists, when the user creates a new Band with the same name via the create autocomplete function, the
   new Band will have the name "The Beatles (2)".
 - added docker compose file for running a (development) test server
+- mkdocs config using the Materials theme for the online help
 
 ### Changed
 
