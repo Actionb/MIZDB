@@ -173,6 +173,8 @@ Links:
 
 ### Hilfe Seiten erzeugen
 
+#### Offline-Hilfe
+
 Um die Hilfe Seiten der MIZDB "site" app zu erzeugen, benutze:
 
 ```shell
@@ -181,6 +183,15 @@ mkdocs build
 
 Ein [post build hook](https://www.mkdocs.org/dev-guide/plugins/#on_post_build)
 erzeugt aus den mkdocs html Dateien Django Templates und legt sie unter `dbentry/site/templates/help` ab.
+
+#### Online-Hilfe
+
+Hilfe Seiten mit dem [Materials Theme](https://squidfunk.github.io/mkdocs-material/) erzeugen und bei Github Pages
+hochladen:
+
+```shell
+mkdocs gh-deploy -f mkdocs-material.yml
+```
 
 ### Release erstellen
 
