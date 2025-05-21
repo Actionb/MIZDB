@@ -4,7 +4,7 @@
     border-color: var(--bs-success-border-subtle);
 }
 
-.admonition.danger {
+.admonition.caution {
     background-color: var(--bs-danger-bg-subtle);
     color: var(--bs-danger-text-emphasis);
     border-color: var(--bs-danger-border-subtle);
