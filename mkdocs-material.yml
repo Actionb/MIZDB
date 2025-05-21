@@ -53,6 +53,7 @@ nav:
       - 'Deinstallation': deinstall.md
 theme:
   name: material
+  custom_dir: 'docs/material_overrides/'
   language: de
   palette:
     - media: "(prefers-color-scheme)"
