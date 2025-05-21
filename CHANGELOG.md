@@ -18,6 +18,7 @@
     - a dropdown menu includes a button for the offline help pages
     - help button URLs should now always send the user to the help page that corresponds with the current list or edit
       view
+- hide add buttons on the changelists if the user does not have 'add' permission
 
 ### Fixed
 
