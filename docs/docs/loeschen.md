@@ -4,7 +4,7 @@ Löschen
 Beim Löschen wird der jeweilige [Datensatz](datensatz.md "Datensatz") aus der Datenbank entfernt.
 
 [comment]: <> (@formatter:off)  
-!!! caution "Achtung: Löschungen sind endgültig"  
+!!! danger "Achtung: Löschungen sind endgültig"  
     Wird ein Datensatz gelöscht, so geht dieser und alle Verknüpfungen, die der Datensatz mit anderen Datensätzen hatte,
     verloren!<br>  
     Eine Wiederherstellung ist **nicht** möglich! 
