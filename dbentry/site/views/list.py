@@ -27,6 +27,7 @@ Use SearchableListView to add a search form to the changelist:
 """
 
 import json
+from urllib.parse import urljoin
 
 from django.apps import apps
 from django.contrib.admin.models import DELETION, LogEntry
@@ -45,7 +46,7 @@ from dbentry.export import resources
 from dbentry.site.forms import MusikerSearchForm, null_boolean_select
 from dbentry.site.registry import ModelType, register_changelist
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import ORDER_VAR, BaseViewMixin, SearchableListView
+from dbentry.site.views.base import ORDER_VAR, BaseViewMixin, SearchableListView, ONLINE_HELP_INDEX
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
 from dbentry.utils.url import get_change_url
@@ -232,7 +233,6 @@ class AudioList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.AudioResource
-    offline_help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Audio):
@@ -350,6 +350,8 @@ class BrochureList(SearchableListView):
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
     resource_class = resources.BrochureResource
+    help_url = urljoin(ONLINE_HELP_INDEX, "broschuere.html")
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "broschuere"})
 
     @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.BaseBrochure):
@@ -500,6 +502,8 @@ class ProgrammheftList(SearchableListView):
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
     resource_class = resources.KalenderResource
+    help_url = urljoin(ONLINE_HELP_INDEX, "programmheft.html")
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "programmheft"})
 
     @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.BaseBrochure):
@@ -529,7 +533,6 @@ class VideoList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.VideoResource
-    offline_help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Video):
@@ -549,6 +552,8 @@ class WarenkatalogList(SearchableListView):
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
     }
     resource_class = resources.KatalogResource
+    help_url = urljoin(ONLINE_HELP_INDEX, "warenkatalog.html")
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "warenkatalog"})
 
     @add_attrs(description="Jahre", ordering="jahr_list")
     def jahr_list(self, obj: _models.BaseBrochure):
@@ -769,6 +774,7 @@ class InstrumentList(SearchableListView):
 class PlattenfirmaList(SearchableListView):
     model = _models.Plattenfirma
     resource_class = resources.PlattenfirmaResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.Spielort, category=ModelType.SONSTIGE)
@@ -826,6 +832,7 @@ class LagerortList(SearchableListView):
 class GeberList(SearchableListView):
     model = _models.Geber
     resource_class = resources.GeberResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.Provenienz, category=ModelType.SONSTIGE)
@@ -838,30 +845,35 @@ class ProvenienzList(SearchableListView):
 class SchriftenreiheList(SearchableListView):
     model = _models.Schriftenreihe
     resource_class = resources.SchriftenreiheResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.Bildreihe, category=ModelType.SONSTIGE)
 class BildreiheList(SearchableListView):
     model = _models.Bildreihe
     resource_class = resources.BildreiheResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.Veranstaltungsreihe, category=ModelType.SONSTIGE)
 class VeranstaltungsreiheList(SearchableListView):
     model = _models.Veranstaltungsreihe
     resource_class = resources.VeranstaltungsreiheResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.VideoMedium, category=ModelType.SONSTIGE)
 class VideoMediumList(SearchableListView):
     model = _models.VideoMedium
     resource_class = resources.VideoMediumResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.AudioMedium, category=ModelType.SONSTIGE)
 class AudioMediumList(SearchableListView):
     model = _models.AudioMedium
     resource_class = resources.AudioMediumResource
+    view_has_help_page = False
 
 
 @register_changelist(_models.Bestand, category=ModelType.SONSTIGE)

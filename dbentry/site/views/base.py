@@ -2,10 +2,12 @@
 
 from collections import OrderedDict
 from typing import Iterable, Sequence, Optional
+from urllib import parse
 from urllib.parse import parse_qsl
 
 import Levenshtein
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -16,7 +18,7 @@ from django.db import models, transaction
 from django.http import Http404, HttpResponseBase
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
-from django.urls import NoReverseMatch, reverse
+from django.urls import NoReverseMatch, reverse, reverse_lazy
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
@@ -56,6 +58,10 @@ SEARCH_VAR = "q"
 # selected for an action on a changelist.
 ACTION_SELECTED_ITEM = "_selected-item"
 
+# URLs for the index pages of the online and offline help.
+ONLINE_HELP_INDEX = settings.ONLINE_HELP_URL
+OFFLINE_HELP_INDEX = reverse_lazy("help", kwargs={"page_name": "index"})
+
 
 class BaseViewMixin(ContextMixin):
     """Mixin for all views of the `miz_site` site."""
@@ -63,6 +69,7 @@ class BaseViewMixin(ContextMixin):
     title: str = ""
     site: Registry = miz_site
 
+    help_url: str = ""
     offline_help_url: str = ""
 
     def _get_admin_url(self, request):
@@ -80,15 +87,20 @@ class BaseViewMixin(ContextMixin):
         match = request.resolver_match
         return reverse(f"admin:{match.url_name}", args=match.args, kwargs=match.kwargs)
 
+    def get_help_url(self):
+        """Return the URL to the corresponding online help page."""
+        return self.help_url or ONLINE_HELP_INDEX
+
     def get_offline_help_url(self):
         """Return the URL to the corresponding offline help page."""
-        return self.offline_help_url or reverse("help", kwargs={"page_name": "index"})
+        return self.offline_help_url or OFFLINE_HELP_INDEX
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(
             {
                 "title": self.title,
+                "help_url": self.get_help_url(),
                 "offline_help_url": self.get_offline_help_url(),
                 "admin_url": self._get_admin_url(self.request),  # noqa
                 "model_list": self.site.model_list,
@@ -105,6 +117,10 @@ class ModelViewMixin(BaseViewMixin):
     model: type[models.Model] = None  # type: ignore[assignment]
     opts = None
     pk_url_kwarg: str = "object_id"
+
+    # Set to True if the model view has a corresponding help page. If False,
+    # the help link will send the user to the help index page instead.
+    view_has_help_page = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -135,6 +151,18 @@ class ModelViewMixin(BaseViewMixin):
             if preserved_filters:
                 return urlencode({"_changelist_filters": preserved_filters})
         return ""
+
+    def get_help_url(self):
+        """Return the URL to the corresponding online help page."""
+        if not self.view_has_help_page:
+            return ONLINE_HELP_INDEX
+        return self.help_url or parse.urljoin(ONLINE_HELP_INDEX, f"{parse.quote(self.model._meta.model_name)}.html")
+
+    def get_offline_help_url(self):
+        """Return the URL to the corresponding offline help page."""
+        if not self.view_has_help_page:
+            return OFFLINE_HELP_INDEX
+        return self.offline_help_url or reverse("help", kwargs={"page_name": self.model._meta.model_name})
 
 
 class Inline:
