@@ -1,4 +1,5 @@
 site_name: MIZDB - Hilfe
+site_url: 'https://actionb.github.io/MIZDB/'
 docs_dir: 'docs/docs/'
 nav:
   - 'Index': index.md
