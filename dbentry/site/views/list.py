@@ -232,7 +232,7 @@ class AudioList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.AudioResource
-    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Audio):
@@ -529,7 +529,7 @@ class VideoList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.VideoResource
-    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
     @add_attrs(description="Künstler")
     def kuenstler_list(self, obj: _models.Video):

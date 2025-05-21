@@ -117,7 +117,7 @@ class AudioView(BaseEditView):
         BestandInline,
     ]
     form = _forms.AudioForm
-    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
 
 @register_edit(_models.Ausgabe)
@@ -655,7 +655,7 @@ class VideoView(BaseEditView):
         BestandInline,
     ]
     form = _forms.VideoForm
-    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
 
 @register_edit(_models.Ort)
