@@ -10,6 +10,14 @@
   new Band will have the name "The Beatles (2)".
 - added docker compose file for running a (development) test server
 
+### Changed
+
+- changed how the help button works:
+    - the primary 'help button' now sends the user to the online help pages
+    - a dropdown menu includes a button for the offline help pages
+    - help button URLs should now always send the user to the help page that corresponds with the current list or edit
+      view
+
 ### Fixed
 
 - re-added changelist links on view-only pages
