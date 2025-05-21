@@ -178,7 +178,7 @@ Links:
 Um die Hilfe Seiten der MIZDB "site" app zu erzeugen, benutze:
 
 ```shell
-mkdocs build
+mkdocs build -f mkdocs-offline.yml
 ```
 
 Ein [post build hook](https://www.mkdocs.org/dev-guide/plugins/#on_post_build)
@@ -190,7 +190,7 @@ Hilfe Seiten mit dem [Materials Theme](https://squidfunk.github.io/mkdocs-materi
 hochladen:
 
 ```shell
-mkdocs gh-deploy -f mkdocs-material.yml
+mkdocs gh-deploy -f mkdocs-online.yml
 ```
 
 ### Release erstellen
