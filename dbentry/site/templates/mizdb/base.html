@@ -52,15 +52,15 @@
             {% endif %}
             {% if help_url %}
                 <div id="help" class="btn-group" role="group">
-                  <a class="btn btn-primary border-dark p-2" href="{{ help_url }}" {% if popup_links %}target="_blank"{% endif %} title="Hilfe">
+                  <a class="btn btn-primary border-dark p-2" href="{{ help_url }}" target="_blank" title="Hilfe">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-help-circle"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                       <span class="nav-text">Hilfe</span>
                   </a>
                   {% if offline_help_url or feedback_url %}
                     <button type="button" class="btn btn-primary border-dark dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                      {% if offline_help_url %}<li><a class="dropdown-item" href="{{ offline_help_url }}">Offline-Hilfe</a></li>{% endif %}
-                      {% if feedback_url %}<li><a class="dropdown-item" href="{{ feedback_url }}">Feedback</a></li>{% endif %}
+                      {% if offline_help_url %}<li><a class="dropdown-item" href="{{ offline_help_url }}" {% if popup_links %}target="_blank"{% endif %}>Offline-Hilfe</a></li>{% endif %}
+                      {% if feedback_url %}<li><a class="dropdown-item" href="{{ feedback_url }}" {% if popup_links %}target="_blank"{% endif %}>Feedback</a></li>{% endif %}
                     </ul>
                   {% endif %}
                 </div>
