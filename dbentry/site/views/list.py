@@ -882,6 +882,7 @@ class BestandList(SearchableListView):
     list_display = ["signatur", "lagerort", "provenienz", "anmerkungen", "bestand_object_string"]
     search_form_kwargs = {"fields": ["lagerort", "provenienz", "signatur"]}
     resource_class = resources.BestandResource
+    include_add_btn = False
 
     @add_attrs(description="Archivgut")
     def bestand_object_string(self, obj):

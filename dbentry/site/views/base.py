@@ -684,6 +684,8 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         - sortable_by (list): defines which list_display fields the changelist
           can be sorted against. If left empty, the changelist can be sorted
           against all fields.
+        - include_add_btn (bool): if False, the changelist will not display an
+          add button for the given model
     """
 
     template_name: str = "mizdb/changelist.html"
@@ -697,6 +699,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
     prioritize_search_ordering: bool = True
     actions: Sequence = ()
     sortable_by: Sequence[str] = ()
+    include_add_btn = True
 
     def has_permission(self):
         return has_view_permission(self.request.user, self.opts)
@@ -851,6 +854,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                 "search_term": self.request.GET.get(SEARCH_VAR, ""),
                 "actions": actions,
                 "is_filtered": bool(ctx["object_list"].query.has_filters()),
+                "include_add_btn": self.include_add_btn,
             }
         )
         # Provide the template with the URL for the view that syncs the
