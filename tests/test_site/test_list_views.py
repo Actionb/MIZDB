@@ -2,6 +2,7 @@
 
 import json
 from unittest.mock import Mock, patch
+from urllib import parse
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.contenttypes.models import ContentType
@@ -12,7 +13,7 @@ from django.views import View
 from dbentry import models as _models
 from dbentry.site.registry import ModelType, Registry, register_changelist
 from dbentry.site.views import list
-from dbentry.site.views.base import ORDER_VAR
+from dbentry.site.views.base import ORDER_VAR, ONLINE_HELP_INDEX, OFFLINE_HELP_INDEX
 from dbentry.site.views.list import _get_continue_url
 from tests.case import DataTestCase, RequestTestCase, ViewTestCase
 from tests.model_factory import make
@@ -161,6 +162,20 @@ class ListViewTestMethodsMixin:
         response = self.get_response(self.url)
         assert response.status_code == 200
 
+    def test_get_help_url(self: ListViewTestCase):
+        """Assert that the URL returned by get_help_url is as expected."""
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, f"{parse.quote(view.model._meta.model_name)}.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self: ListViewTestCase):
+        """Assert that the URL returned by get_offline_help_url is as expected."""
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = reverse("help", kwargs={"page_name": view.model._meta.model_name})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
+
 
 class TestAudioList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.AudioList
@@ -280,6 +295,18 @@ class TestBrochureList(ListViewTestMethodsMixin, ListViewTestCase):
         """Assert that the ordering field of jahr_list is set correctly."""
         self.assertEqual(self.get_view().jahr_list.ordering, "jahr_list")
 
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, "broschuere.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = reverse("help", kwargs={"page_name": "broschuere"})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
+
 
 class TestKatalogList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.WarenkatalogList
@@ -287,6 +314,18 @@ class TestKatalogList(ListViewTestMethodsMixin, ListViewTestCase):
     def test_jahr_list_ordering_field(self):
         """Assert that the ordering field of jahr_list is set correctly."""
         self.assertEqual(self.get_view().jahr_list.ordering, "jahr_list")
+
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, "warenkatalog.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = reverse("help", kwargs={"page_name": "warenkatalog"})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
 
 
 class TestKalenderList(ListViewTestMethodsMixin, ListViewTestCase):
@@ -296,6 +335,18 @@ class TestKalenderList(ListViewTestMethodsMixin, ListViewTestCase):
         """Assert that the ordering field of jahr_list is set correctly."""
         self.assertEqual(self.get_view().jahr_list.ordering, "jahr_list")
 
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, "programmheft.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        expected_url = reverse("help", kwargs={"page_name": "programmheft"})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
+
 
 class TestFotoList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.FotoList
@@ -303,6 +354,16 @@ class TestFotoList(ListViewTestMethodsMixin, ListViewTestCase):
 
 class TestPlattenfirmaList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.PlattenfirmaList
+
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
 
 
 class TestLagerortList(ListViewTestMethodsMixin, ListViewTestCase):
@@ -312,6 +373,16 @@ class TestLagerortList(ListViewTestMethodsMixin, ListViewTestCase):
 class TestGeberList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.GeberList
 
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestProvenienzList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.ProvenienzList
@@ -320,18 +391,68 @@ class TestProvenienzList(ListViewTestMethodsMixin, ListViewTestCase):
 class TestSchriftenreiheList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.SchriftenreiheList
 
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestBildreiheList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.BildreiheList
+
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
 
 
 class TestVeranstaltungsreiheList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.VeranstaltungsreiheList
 
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestVideoMediumList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.VideoMediumList
 
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestAudioMediumList(ListViewTestMethodsMixin, ListViewTestCase):
     view_class = list.AudioMediumList
+
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)

@@ -19,6 +19,8 @@ To declare inlines for handling relations:
         inlines = [ToppingsInline]
 """
 
+from urllib.parse import urljoin
+
 from django import forms
 from django.urls import NoReverseMatch, reverse, reverse_lazy
 
@@ -27,7 +29,7 @@ from dbentry.autocomplete.widgets import make_widget
 from dbentry.forms import GoogleBtnWidget
 from dbentry.site import forms as _forms
 from dbentry.site.registry import register_edit
-from dbentry.site.views.base import BaseEditView, Inline
+from dbentry.site.views.base import BaseEditView, Inline, ONLINE_HELP_INDEX
 from dbentry.utils.url import urlname
 
 
@@ -117,7 +119,6 @@ class AudioView(BaseEditView):
         BestandInline,
     ]
     form = _forms.AudioForm
-    help_url = reverse_lazy("help", kwargs={"page_name": "audio"})
 
 
 @register_edit(_models.Ausgabe)
@@ -655,7 +656,6 @@ class VideoView(BaseEditView):
         BestandInline,
     ]
     form = _forms.VideoForm
-    help_url = reverse_lazy("help", kwargs={"page_name": "video"})
 
 
 @register_edit(_models.Ort)
@@ -714,6 +714,8 @@ class BrochureView(BaseEditView):
         "beschreibung",
         "bemerkungen",
     ]
+    help_url = urljoin(ONLINE_HELP_INDEX, "broschuere.html")
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "broschuere"})
 
 
 @register_edit(_models.Katalog)
@@ -741,6 +743,8 @@ class KatalogView(BaseEditView):
         "beschreibung",
         "bemerkungen",
     ]
+    help_url = urljoin(ONLINE_HELP_INDEX, "warenkatalog.html")
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "warenkatalog"})
 
 
 @register_edit(_models.Kalender)
@@ -775,6 +779,8 @@ class KalenderView(BaseEditView):
         "beschreibung",
         "bemerkungen",
     ]
+    help_url = urljoin(ONLINE_HELP_INDEX, "programmheft.html")
+    offline_help_url = reverse_lazy("help", kwargs={"page_name": "programmheft"})
 
 
 @register_edit(_models.Foto)
@@ -843,6 +849,7 @@ class FotoView(BaseEditView):
 class PlattenfirmaView(BaseEditView):
     model = _models.Plattenfirma
     require_confirmation = True
+    view_has_help_page = False
 
 
 @register_edit(_models.Lagerort)
@@ -855,6 +862,7 @@ class LagerortView(BaseEditView):
 class GeberView(BaseEditView):
     model = _models.Geber
     require_confirmation = True
+    view_has_help_page = False
 
 
 @register_edit(_models.Provenienz)
@@ -867,27 +875,32 @@ class ProvenienzView(BaseEditView):
 class SchriftenreiheView(BaseEditView):
     model = _models.Schriftenreihe
     require_confirmation = True
+    view_has_help_page = False
 
 
 @register_edit(_models.Bildreihe)
 class BildreiheView(BaseEditView):
     model = _models.Bildreihe
     require_confirmation = True
+    view_has_help_page = False
 
 
 @register_edit(_models.Veranstaltungsreihe)
 class VeranstaltungsreiheView(BaseEditView):
     model = _models.Veranstaltungsreihe
     require_confirmation = True
+    view_has_help_page = False
 
 
 @register_edit(_models.VideoMedium)
 class VideoMediumView(BaseEditView):
     model = _models.VideoMedium
     require_confirmation = True
+    view_has_help_page = False
 
 
 @register_edit(_models.AudioMedium)
 class AudioMediumView(BaseEditView):
     model = _models.AudioMedium
     require_confirmation = True
+    view_has_help_page = False
