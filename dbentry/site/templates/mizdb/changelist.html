@@ -49,6 +49,7 @@
 
 {% url opts|urlname:'add' as add_url %}
 {% url opts|urlname:'export' as export_url %}
+{% has_perm user 'add' opts as user_has_add_perms %}
 {% has_export_permission user opts as user_has_export_perms %}
 <div class="d-flex mb-3 justify-content-between">
   <div class="d-flex align-items-center">
@@ -57,7 +58,7 @@
     {% reset_ordering_link cl %}
   </div>
   <div class="d-flex gap-2">
-    <a href="{% add_preserved_filters add_url %}" class="btn btn-success">{{ opts.verbose_name }} hinzufügen</a>
+    {% if user_has_add_perms and include_add_btn %}<a href="{% add_preserved_filters add_url %}" class="btn btn-success">{{ opts.verbose_name }} hinzufügen</a>{% endif %}
     {% if user_has_export_perms %}
       {% if is_filtered and result_rows and actions.export_results_action %}
         <form method="POST">
@@ -119,7 +120,7 @@
 <div class="d-flex align-items-center">
     {% include "mizdb/includes/pagination.html" %}
     <p class="ps-2 mb-0">{% if result_count and result_count != total_count %}{{ result_count }} Ergebnisse / {% endif %}{{ total_count }} insgesamt (<a href="?all=">alle anzeigen</a>)</p>
-    <a href="{% add_preserved_filters add_url %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>
+    {% if user_has_add_perms and include_add_btn %}<a href="{% add_preserved_filters add_url %}" class="btn btn-success ms-auto">{{ opts.verbose_name }} hinzufügen</a>{% endif %}
 </div>
 {% endif %}
 {% endblock content %}

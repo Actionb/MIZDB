@@ -153,3 +153,5 @@ CSRF_FAILURE_VIEW = "dbentry.csrf.csrf_failure"
 STATICFILES_DIRS = [
     BASE_DIR / "docs" / "docs",  # include static files for help pages, such as images
 ]
+
+ONLINE_HELP_URL = os.environ.get("MIZDB_ONLINE_HELP", "https://actionb.github.io/MIZDB/")

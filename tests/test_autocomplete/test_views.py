@@ -1,5 +1,7 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, DEFAULT
+from urllib.parse import urlencode
 
+from django.http.request import QueryDict
 from django.urls import reverse
 from mizdb_tomselect.views import SEARCH_VAR
 
@@ -12,10 +14,17 @@ from dbentry.autocomplete.views import (
     AutocompleteMostUsed,
     AutocompletePerson,
     MIZAutocompleteView,
+    AutocompleteBand,
+    AutocompleteMusiker,
+    AutoSuffixAutocompleteView,
 )
 from tests.case import DataTestCase, ViewTestCase
 from tests.model_factory import make
 from tests.test_autocomplete.models import Ausgabe
+
+
+def query_dict(other_dict):
+    return QueryDict(urlencode(other_dict, doseq=True))
 
 
 class TestMIZAutocompleteView(ViewTestCase):
@@ -186,6 +195,13 @@ class TestAutocompletePerson(ViewTestCase):
     model = _models.Person
     view_class = AutocompletePerson
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.duplicate1 = make(cls.model, vorname="one", nachname="duplicate")
+        cls.duplicate21 = make(cls.model, vorname="two", nachname="duplicates")
+        cls.duplicate22 = make(cls.model, vorname="two", nachname="duplicates (2)")
+        super().setUpTestData()
+
     def test_create_object(self):
         """Assert that create_object creates the expected Autor object."""
         request = self.get_request(
@@ -206,6 +222,55 @@ class TestAutocompletePerson(ViewTestCase):
         view = self.get_view(request)
         view.create_object({"cf": "Alice Testman"})
         log_addition_mock.assert_called()
+
+    def test_create_object_adds_suffix_no_duplicate(self):
+        """
+        Assert that create_object does not add a suffix to the name of the new
+        object if it is not a duplicate.
+        """
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person", "create-field": "__any__"}))
+        with patch("dbentry.autocomplete.views.parse_name") as parse_name_mock:
+            parse_name_mock.return_value = "not a", "duplicate"
+            # actual data for vorname, nachname set by parse_name_mock:
+            obj = view.create_object(data=query_dict({"__any__": "foo"}))
+            self.assertEqual(obj.nachname, "duplicate")
+
+    def test_create_object_adds_suffix_single_duplicate(self):
+        """
+        Assert that create_object adds a suffix to the name of the new object
+        if it is a duplicate.
+        """
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person", "create-field": "__any__"}))
+        for vorname, nachname, expected_suffix in [("one", "duplicate", " (2)"), ("two", "duplicates", " (3)")]:
+            with self.subTest(vorname=vorname, nachname=nachname):
+                with patch("dbentry.autocomplete.views.parse_name") as parse_name_mock:
+                    parse_name_mock.return_value = vorname, nachname
+                    # actual data for vorname, nachname set by parse_name_mock:
+                    obj = view.create_object(data=query_dict({"__any__": "foo"}))
+                    self.assertEqual(obj.nachname, f"{nachname}{expected_suffix}")
+
+    def test_add_suffix(self):
+        """Assert that add_suffix calls the get_suffix method."""
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person"}))
+        data = {"foo": "bar"}
+        queryset_mock = Mock()
+        queryset_mock.objects.filter.return_value.count.return_value = 1
+        with patch.multiple(view, model=queryset_mock, get_suffix=DEFAULT, get_query_filter=DEFAULT) as mocks:
+            view.add_suffix(data)
+            mocks["get_suffix"].assert_called_with(data, 1)
+
+    def test_get_query_filter(self):
+        """Assert that get_query_filter returns the expected Q object."""
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person"}))
+        q = view.get_query_filter(data={"vorname": "foo", "nachname": "bar"})
+        self.assertEqual(q.connector, "AND")
+        self.assertEqual(q.children, [("nachname__regex", r"^bar(\s\(\d+\))*$"), ("vorname", "foo")])
+
+    def test_get_suffix(self):
+        """Assert that get_suffix adds the suffix to the nachname."""
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person"}))
+        suffix = view.get_suffix(data={"vorname": "foo", "nachname": "bar"}, count=2)
+        self.assertEqual(suffix, "bar (3)")
 
 
 class TestAutocompleteMostUsed(ViewTestCase):
@@ -272,3 +337,121 @@ class TestAutocompleteMostUsed(ViewTestCase):
         """
         view = self.get_view(self.get_request(data={"model": "dbentry.Buch"}))
         view.order_queryset(_models.Buch.objects.all())
+
+
+class TestAutocompleteBand(ViewTestCase):
+    model = _models.Band
+    view_class = AutocompleteBand
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.duplicate1 = make(cls.model, band_name="one duplicate")
+        cls.duplicate21 = make(cls.model, band_name="two duplicates")
+        cls.duplicate22 = make(cls.model, band_name="two duplicates (2)")
+        super().setUpTestData()
+
+    def test_create_object_adds_suffix_no_duplicate(self):
+        """
+        Assert that create_object does not add a suffix to the name of the new
+        object if it is not a duplicate.
+        """
+        view = self.get_view(self.get_request(data={"model": "dbentry.Band", "create-field": "band_name"}))
+        obj = view.create_object(data=query_dict({"band_name": "not a duplicate"}))
+        self.assertEqual(obj.band_name, "not a duplicate")
+
+    def test_create_object_adds_suffix_single_duplicate(self):
+        """
+        Assert that create_object adds a suffix to the name of the new object
+        if it is a duplicate.
+        """
+        for duplicate_name, expected_suffix in [("one duplicate", " (2)"), ("two duplicates", " (3)")]:
+            with self.subTest(duplicate_name=duplicate_name):
+                view = self.get_view(self.get_request(data={"model": "dbentry.Band", "create-field": "band_name"}))
+                obj = view.create_object(data=query_dict({"band_name": duplicate_name}))
+                self.assertEqual(obj.band_name, f"{duplicate_name}{expected_suffix}")
+
+
+class TestAutocompleteMusiker(ViewTestCase):
+    model = _models.Musiker
+    view_class = AutocompleteMusiker
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.duplicate1 = make(cls.model, kuenstler_name="one duplicate")
+        cls.duplicate21 = make(cls.model, kuenstler_name="two duplicates")
+        cls.duplicate22 = make(cls.model, kuenstler_name="two duplicates (2)")
+        super().setUpTestData()
+
+    def test_create_object_adds_suffix_no_duplicate(self):
+        """
+        Assert that create_object does not add a suffix to the name of the new
+        object if it is not a duplicate.
+        """
+        view = self.get_view(self.get_request(data={"model": "dbentry.Musiker", "create-field": "kuenstler_name"}))
+        obj = view.create_object(data=query_dict({"kuenstler_name": "not a duplicate"}))
+        self.assertEqual(obj.kuenstler_name, "not a duplicate")
+
+    def test_create_object_adds_suffix_single_duplicate(self):
+        """
+        Assert that create_object adds a suffix to the name of the new object
+        if it is a duplicate.
+        """
+        for duplicate_name, expected_suffix in [("one duplicate", " (2)"), ("two duplicates", " (3)")]:
+            with self.subTest(duplicate_name=duplicate_name):
+                view = self.get_view(
+                    self.get_request(data={"model": "dbentry.Musiker", "create-field": "kuenstler_name"})
+                )
+                obj = view.create_object(data=query_dict({"kuenstler_name": duplicate_name}))
+                self.assertEqual(obj.kuenstler_name, f"{duplicate_name}{expected_suffix}")
+
+
+class TestAutoSuffixAutocompleteView(ViewTestCase):
+    view_class = AutoSuffixAutocompleteView
+
+    def test_add_suffix_calls_get_suffix(self):
+        """Assert that add_suffix calls the get_suffix method."""
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person"}))
+        data = {"foo": "bar"}
+        queryset_mock = Mock()
+        queryset_mock.objects.filter.return_value.count.return_value = 1
+        with patch.multiple(view, model=queryset_mock, get_suffix=DEFAULT, get_query_filter=DEFAULT) as mocks:
+            view.add_suffix(data)
+            mocks["get_suffix"].assert_called_with(data, 1)
+
+    def test_add_suffix_calls_copy_on_data(self):
+        """
+        Assert that add_suffix calls the dict method of the data argument.
+
+        (the data argument may an instance of QueryDict and must be made mutable)
+        """
+        view = self.get_view(self.get_request(data={"model": "dbentry.Person"}))
+        data = Mock()
+        data.__getitem__ = Mock()
+        copy_mock = Mock(return_value={})
+        data.copy = copy_mock
+        with patch.multiple(view, model=DEFAULT, get_suffix=DEFAULT, get_query_filter=DEFAULT):
+            view.add_suffix(data)
+            copy_mock.assert_called()
+
+    def test_get_query_filter(self):
+        """Assert that get_query_filter returns the expected Q object."""
+        view = self.view_class()
+        view.create_field = "foo"
+        q = view.get_query_filter(data={"foo": "bar"})
+        self.assertEqual(q.children, [("foo__regex", r"^bar(\s\(\d+\))*$")])
+
+    def test_get_suffix(self):
+        """Assert that get_suffix adds the suffix to the create_field data."""
+        view = self.view_class()
+        view.create_field = "foo"
+        suffix = view.get_suffix(data={"foo": "bar"}, count=2)
+        self.assertEqual(suffix, "bar (3)")
+
+    def test_create_object_calls_add_suffix(self):
+        """Assert that the create_object method calls the add_suffix method."""
+        view = self.view_class()
+        with patch("dbentry.autocomplete.views.super"):
+            with patch.object(view, "add_suffix") as add_suffix_mock:
+                data = {"foo": "bar"}
+                view.create_object(data=data)
+                add_suffix_mock.assert_called_with(data)

@@ -266,7 +266,7 @@ Häkchen aus "Änderungen bestätigen" entfernen. Die Art der Broschüre (also o
 wählst du am unteren Ende der Bestätigungsseite aus.
 
 [comment]: <> (@formatter:off)  
-!!! caution "Achtung: die Ausgaben werden beim Verschieben gelöscht!" 
+!!! danger "Achtung: die Ausgaben werden beim Verschieben gelöscht!" 
   
 [comment]: <> (@formatter:on)
 

@@ -1,12 +1,38 @@
 # Changelog
 
+## [0.21.0] - 2025-05-21
+
+### Added
+
+- non-admin autocomplete create function for Person, Band and Musiker now automatically add a numeric suffix when the
+  newly created object is an exact duplicate of an already existing object. For example: assuming that a Band "The
+  Beatles" already exists, when the user creates a new Band with the same name via the create autocomplete function, the
+  new Band will have the name "The Beatles (2)".
+- added docker compose file for running a (development) test server
+- mkdocs config using the Materials theme for the online help
+
+### Changed
+
+- changed how the help button works:
+    - the primary 'help button' now sends the user to the online help pages
+    - a dropdown menu includes a button for the offline help pages
+    - help button URLs should now always send the user to the help page that corresponds with the current list or edit
+      view
+- hide add buttons on the changelists if the user does not have 'add' permission
+
+### Fixed
+
+- re-added changelist links on view-only pages
+- fix Brochure-type list views using the wrong ordering field for the 'jahr_list' list display field
+- fix string_list annotations not including values that do not satisfy set filters
+
 ## [0.20.0] - 2024-09-20
 
 ### Changed
 
-- changed export permission requirements: 
-  - exporting a limited set of records only requires 'view' permission 
-  - exporting all records of a model requires superuser permission
+- changed export permission requirements:
+    - exporting a limited set of records only requires 'view' permission
+    - exporting all records of a model requires superuser permission
 - watchlist: include magazin name in Ausgabe watchlist items
 - moved docs and test requirements into their own requirement files
 - move dev configs (pytest, ruff, etc.) into pyproject.toml

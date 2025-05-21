@@ -1,5 +1,6 @@
 from django.core.exceptions import FieldError
 from django.db import transaction
+from django.db.models import Q
 from mizdb_tomselect.views import AutocompleteView
 from nameparser import HumanName
 from stdnum import issn
@@ -30,6 +31,31 @@ class MIZAutocompleteView(AutocompleteView):
         obj = super().create_object(data)
         log_addition(self.request.user.pk, obj)
         return obj
+
+
+class AutoSuffixAutocompleteView(MIZAutocompleteView):
+    """
+    A MIZAutocompleteView that automatically adds an appropriate numeric suffix
+    to newly created objects that are duplicates of already existing objects.
+    """
+
+    def get_query_filter(self, data):
+        return Q(**{f"{self.create_field}__regex": rf"^{data[self.create_field]}(\s\(\d+\))*$"})
+
+    def add_suffix(self, data):
+        _data = data.copy()  # make the query dict mutable
+        count = self.model.objects.filter(self.get_query_filter(data)).count()
+        _data[self.create_field] = self.get_suffix(data, count)
+        return _data
+
+    def get_suffix(self, data, count):
+        if count:
+            return f"{data[self.create_field]} ({count + 1})"
+        else:
+            return data[self.create_field]
+
+    def create_object(self, data):
+        return super().create_object(self.add_suffix(data))
 
 
 class AutocompleteAusgabe(MIZAutocompleteView):
@@ -84,7 +110,7 @@ class AutocompleteMagazin(MIZAutocompleteView):
         return super().search(queryset, q)
 
 
-class AutocompletePerson(MIZAutocompleteView):
+class AutocompletePerson(AutoSuffixAutocompleteView):
     """Autocomplete view for the Person model that can create new Person objects."""
 
     def create_object(self, data):
@@ -95,9 +121,25 @@ class AutocompletePerson(MIZAutocompleteView):
         object.
         """
         vorname, nachname = parse_name(data[self.create_field])
-        obj = self.model.objects.create(vorname=vorname, nachname=nachname)
+        data = self.add_suffix({"vorname": vorname, "nachname": nachname})
+        obj = self.model.objects.create(vorname=data["vorname"], nachname=data["nachname"])
         log_addition(self.request.user.pk, obj)
         return obj
+
+    def add_suffix(self, data):
+        _data = data.copy()
+        count = self.model.objects.filter(self.get_query_filter(data)).count()
+        _data["nachname"] = self.get_suffix(data, count)
+        return _data
+
+    def get_query_filter(self, data):
+        return Q(nachname__regex=rf"^{data['nachname']}(\s\(\d+\))*$") & Q(vorname=data["vorname"])
+
+    def get_suffix(self, data, count):
+        if count:
+            return f"{data['nachname']} ({count + 1})"
+        else:
+            return data["nachname"]
 
 
 class AutocompleteProvenienz(MIZAutocompleteView):
@@ -125,3 +167,11 @@ class AutocompleteMostUsed(MIZAutocompleteView):
                 # Model has no field "artikel"
                 pass
         return ordered
+
+
+class AutocompleteBand(AutoSuffixAutocompleteView):
+    pass
+
+
+class AutocompleteMusiker(AutoSuffixAutocompleteView):
+    pass

@@ -1,13 +1,15 @@
 """Tests for the edit views."""
 
 from unittest.mock import patch
+from urllib import parse
 from urllib.parse import unquote
 
 from django.forms import ModelChoiceField
 from django.urls import NoReverseMatch, reverse
 
 from dbentry import models as _models
-from dbentry.site.views import edit
+from dbentry.site.views import edit, ONLINE_HELP_INDEX
+from dbentry.site.views.base import OFFLINE_HELP_INDEX
 from tests.case import ViewTestCase
 from tests.model_factory import make
 
@@ -97,6 +99,20 @@ class EditViewTestMethodsMixin:
         """Assert that objects can be edited via POST request."""
         response = self.post_response(self.edit_url.format(pk=self.obj.pk), data=self.get_form_data(), follow=True)
         assert response.status_code == 200
+
+    def test_get_help_url(self: EditViewTestCase):
+        """Assert that the URL returned by get_help_url is as expected."""
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, f"{parse.quote(view.model._meta.model_name)}.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self: EditViewTestCase):
+        """Assert that the URL returned by get_offline_help_url is as expected."""
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = reverse("help", kwargs={"page_name": view.model._meta.model_name})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
 
 
 class TestAudioView(EditViewTestMethodsMixin, EditViewTestCase):
@@ -276,13 +292,49 @@ class TestHerausgeberView(EditViewTestMethodsMixin, EditViewTestCase):
 class TestBrochureView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.BrochureView
 
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, "broschuere.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = reverse("help", kwargs={"page_name": "broschuere"})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
+
 
 class TestKatalogView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.KatalogView
 
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, "warenkatalog.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = reverse("help", kwargs={"page_name": "warenkatalog"})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
+
 
 class TestKalenderView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.KalenderView
+
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = parse.urljoin(ONLINE_HELP_INDEX, "programmheft.html")
+        self.assertEqual(view.get_help_url(), expected_url)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        expected_url = reverse("help", kwargs={"page_name": "programmheft"})
+        self.assertEqual(view.get_offline_help_url(), expected_url)
 
 
 class TestFotoView(EditViewTestMethodsMixin, EditViewTestCase):
@@ -292,6 +344,16 @@ class TestFotoView(EditViewTestMethodsMixin, EditViewTestCase):
 class TestPlattenfirmaView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.PlattenfirmaView
 
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestLagerortView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.LagerortView
@@ -299,6 +361,16 @@ class TestLagerortView(EditViewTestMethodsMixin, EditViewTestCase):
 
 class TestGeberView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.GeberView
+
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
 
 
 class TestProvenienzView(EditViewTestMethodsMixin, EditViewTestCase):
@@ -308,18 +380,68 @@ class TestProvenienzView(EditViewTestMethodsMixin, EditViewTestCase):
 class TestSchriftenreiheView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.SchriftenreiheView
 
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestBildreiheView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.BildreiheView
+
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
 
 
 class TestVeranstaltungsreiheView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.VeranstaltungsreiheView
 
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestVideoMediumView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.VideoMediumView
 
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
 
 class TestAudioMediumView(EditViewTestMethodsMixin, EditViewTestCase):
     view_class = edit.AudioMediumView
+
+    def test_get_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.add_url)
+        view = self.get_view(request, extra_context={"add": True})
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)

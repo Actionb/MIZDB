@@ -70,22 +70,30 @@
     {% endif %}
 </div>
 {% if changelist_links %}
-<div id="related-objects" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="related-canvas-title">
-    <div class="offcanvas-header border-bottom">
-        <h5 id="related-canvas-title" class="offcanvas-title">Verwandte Objekte</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Schließen"></button>
-    </div>
-    <div class="offcanvas-body">
-    <div class="d-flex flex-column gap-3">
-    {% for url, label, count in changelist_links %}
-        <a href="{{ url }}" class="ms-5 me-5 btn btn-outline-success">
-            <span class="w-100 d-inline-block">{{ label }}</span>
-            <span class="badge text-bg-primary">{{ count }}</span>
-        </a>
-    {% endfor %}
-    </div>
-    </div>
-</div>
+{% if view_only %}
+  <div id="related-objects-view-only">
+      {% for url, label, count in changelist_links %}
+          <a href="{{ url }}" class="btn btn-link">{{ label }} ({{ count }})</a>
+      {% endfor %}
+  </div>
+{% else %}
+  <div id="related-objects" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="related-canvas-title">
+      <div class="offcanvas-header border-bottom">
+          <h5 id="related-canvas-title" class="offcanvas-title">Verwandte Objekte</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Schließen"></button>
+      </div>
+      <div class="offcanvas-body">
+      <div class="d-flex flex-column gap-3">
+      {% for url, label, count in changelist_links %}
+          <a href="{{ url }}" class="ms-5 me-5 btn btn-outline-success">
+              <span class="w-100 d-inline-block">{{ label }}</span>
+              <span class="badge text-bg-primary">{{ count }}</span>
+          </a>
+      {% endfor %}
+      </div>
+      </div>
+  </div>
+{% endif %}
 {% endif %}
 {% endblock content_head %}
 
