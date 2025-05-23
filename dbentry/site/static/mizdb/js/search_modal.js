@@ -4,6 +4,7 @@
 window.addEventListener('load', () => {
   const searchModal = document.querySelector('#searchModal')
   const searchInput = document.querySelector('#searchInput')
+  if (!searchModal || !searchInput) return
   searchModal.addEventListener('shown.bs.modal', () => searchInput.focus())
   searchInput.addEventListener('input', debounce((e) => search(e.target.value)))
   let controller = new AbortController()
