@@ -464,7 +464,7 @@ class BaseEditView(
         """Use GET parameters for initial form data."""
         initial = dict(self.request.GET.items())
         # Add preserved changelist filters:
-        if "_changelist_filters" in self.request.GET:
+        if self.add and "_changelist_filters" in self.request.GET:
             initial.update(dict(parse_qsl(self.request.GET["_changelist_filters"])))
         if hasattr(self, "csrf_form_data"):
             # Handling a CSRF failure: add data to restore the form.

@@ -1,5 +1,12 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- only add data from changelist filters to form initial data if the view is an 'add' view. This stops data from the
+  search form sneaking into form data on edit views.
+
 ## [0.21.0] - 2025-05-21
 
 ### Added

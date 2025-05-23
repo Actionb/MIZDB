@@ -309,17 +309,28 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
             links = view.get_changelist_links()
             self.assertIn((f"/musician/?band={self.obj.pk}", "Hovercrafts Full Of Eels", 1), links)
 
-    def test_initial_adds_preserved_filters(self):
+    def test_initial_adds_preserved_filters_on_add_view(self):
         """
         Assert that values from preserved changelist filters are added to the
-        form's initial data.
+        form's initial data if the view is an 'add' view.
         """
         filters = {"q": "Foo"}
         request = self.get_request("", data={"_changelist_filters": urlencode(filters)})
-        view = self.get_view(request)
+        view = self.get_view(request, add=True)
         initial = view.get_initial()
         self.assertIn("q", initial)
         self.assertEqual(initial["q"], filters["q"])
+
+    def test_initial_no_preserved_filters_on_edit_view(self):
+        """
+        Assert that values from preserved changelist filters are NOT added to
+        the form's initial data if this view is an 'edit' view.
+        """
+        filters = {"q": "Foo"}
+        request = self.get_request("", data={"_changelist_filters": urlencode(filters)})
+        view = self.get_view(request, add=False)
+        initial = view.get_initial()
+        self.assertNotIn("q", initial)
 
     def test_confirmation_required(self):
         """Changes that are big enough should require confirmation."""
