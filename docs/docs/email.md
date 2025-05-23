@@ -2,57 +2,53 @@ E-Mail Benachrichtigungen einrichten
 =======
 
 Um bei Server Fehlern automatisch Benachrichtigungen an Admins zu schicken, müssen eine Reihe von zusätzlichen Angaben
-gemacht
-werden.
+in die Datei `settings.py` im MIZDB Grundverzeichnis eingetragen werden. 
 
-## 1. Admins einrichten
+[comment]: <> (@formatter:off)  
+!!! info "Verwendung `settings.py`"
+    Die zusätzlichen Einstellungen können ab dieser Zeile eingetragen werden: 
+    ```python
+        # -----------------------------------------------------------------------------
+        # Add your own settings here:
+    ```
 
-In der `ADMINS` Datei werden die Admins eingetragen, die benachrichtigt werden sollen. Diese Datei befindet sich im
-Grundverzeichnis der Anwendung, dem MIZDB Ordner (dort wo auch Dateien wie `mizdb.sh` und `manage.py` zu finden sind).
-Ist die Datei noch nicht vorhanden, muss sie erstellt werden, z.B.: `touch /pfad/zu/MIZDB/ADMINS`.
+[comment]: <> (@formatter:on)
 
-Für jeden Admin muss dabei eine neue Zeile mit Name und E-Mail-Adresse angelegt werden. Zeilen, die mit `#` beginnen,
-werden ignoriert:
+## 1. Admins registrieren
 
-```text
-# name, email address
-Admin, admin@mail.com
-Willi Weber, weber@web.de
+Unter dem Punkt `ADMINS` werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste eingetragen. 
+
+Zum Beispiel:
+
+```python
+ADMINS = [
+    ("Admin", "admin@mail.com"),
+    ("Willi Weber", "weber@web.de"),
+    # weitere Admins...
+]
 ```
 
 ## 2. Verbindungsdaten angeben
 
-Abgesehen vom Passwort für den E-Mailbenutzer, werden die Verbindungsdaten für den E-Mail-Server als Umgebungsvariablen
-an die Einstellungen der Anwendung übergeben. Dazu werden die notwendigen Daten in die Datei `.env` (ebenfalls im MIZDB
-Grundverzeichnis) eingetragen.
+Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden: 
 
-Notwendige Daten:
+| SETTING             | Beschreibung                                                          |
+|---------------------|-----------------------------------------------------------------------|
+| EMAIL_HOST          | Der SMTP Server, mit dem die Mails verschickt werden.                 |
+| EMAIL_PORT          | Port für den SMTP Server.                                             |
+| EMAIL_HOST_USER     | Benutzername für den SMTP Server.                                     |
+| EMAIL_HOST_PASSWORD | Benutzerpassword für den Server.                                      |
+| SERVER_EMAIL        | Die Adresse, mit der die Mails für Fehlermeldungen verschickt werden. |
 
-| SETTING             | Beschreibung                                          |
-|---------------------|-------------------------------------------------------|
-| EMAIL_HOST          | Der SMTP Server, mit dem die Mails verschickt werden. |
-| EMAIL_PORT          | Port für den SMTP Server.                             |
-| EMAIL_HOST_USER     | Benutzername für den SMTP Server.                     |
-| EMAIL_HOST_PASSWORD | Benutzerpassword für den Server.                      |
+Zum Beispiel:
 
-Zusätzliche Einstellungen sind `EMAIL_USE_TLS` und `EMAIL_USE_SSL`, die beschreiben, ob bei der Kommunikation mit dem
-SMTP Server TLS oder SSL benutzt werden soll. Die einzutragenden Werte müssen hier `true` oder `false` sein, und nur
-einer der Werte darf `true` sein.
-
-Außerdem kann mit `SERVER_EMAIL` die E-Mail-Adresse festgelegt werden, von
-der E-Mails bezüglich Fehlermeldungen verschickt werden. Wird kein Wert angegeben, werden die E-Mails von
-`EMAIL_HOST_USER` versendet.
-
-Beispiel, Auszug aus der `.env` Datei:
-
-```yaml
-# ...
-
-# Settings for sending e-mail
-EMAIL_HOST = smtp.ionos.de
+```python
+EMAIL_HOST = "smtp.ionos.de"
 EMAIL_PORT = 465
-EMAIL_HOST_USER = myuser@mail.com
-EMAIL_USE_SSL = true
+EMAIL_HOST_USER = "admin@mail.de"
+EMAIL_HOST_PASSWORD = "mysupersecretpassword"
+EMAIL_USE_SSL = True
+SERVER_EMAIL = "admin@mail.de"
 ```
 
 [comment]: <> (@formatter:off)  
@@ -64,23 +60,37 @@ EMAIL_USE_SSL = true
 
 [comment]: <> (@formatter:on)
 
-## 3. E-Mail Password ablegen
+---
 
-Das Passwort für den Benutzer des E-Mail-Servers muss in die Datei `.secrets` eingetragen werden. Die Datei ist
-ebenfalls im MIZDB Grundverzeichnis zu finden.
+Eine vollständige `settings.py` könnte also so aussehen:
+```python
+"""
+Add your own settings that override the default settings.
 
-```yaml
-# ...
+For a list of settings, see:
+    - https://docs.djangoproject.com/en/4.2/ref/settings/
+"""
 
-EMAIL_HOST_PASSWORD: "mysupersecretpassword"
+from MIZDB.settings.defaults import BASE_DIR, secrets  # noqa
+from MIZDB.settings.production import *  # noqa
+
+# -----------------------------------------------------------------------------
+# Add your own settings here:
+
+ADMINS = [
+    ("Admin", "admin@mail.com"),
+    ("Willi Weber", "weber@web.de"),
+]
+
+EMAIL_HOST = "smtp.ionos.de"
+EMAIL_PORT = 465
+EMAIL_HOST_USER = "admin@mail.de"
+EMAIL_HOST_PASSWORD = "mysupersecretpassword"
+EMAIL_USE_SSL = True
+SERVER_EMAIL = "admin@mail.de"
 ```
 
-[comment]: <> (@formatter:off)  
-!!! warning "Achtung: Die Syntax in der `.secrets` Datei ist unterschiedlich zu der in der `.env` Datei!"  
-  
-[comment]: <> (@formatter:on)
-
-## 4. Docker Container/Apache neu starten
+## 3. Docker Container/Apache neu starten
 
 Abschließend muss der Docker Container der Anwendung neu gestartet werden, um die Änderungen anzuwenden:
 
@@ -98,7 +108,7 @@ Oder, wenn ohne Docker installiert wurde, Apache neu laden:
 sudo service apache2 reload
 ```
 
-## 5. E-Mail Einstellungen testen
+## 4. E-Mail Einstellungen testen
 
 ### Systemcheck
 
@@ -139,6 +149,8 @@ Anschließend:
 python manage.py shell -c 'from django.core.mail import mail_admins; mail_admins("Test Admin Mail", "Test successful!")'
 ```
 
+---
+
 Oder zum Ausführen mit dem Python Interpreter der MIZDB Umgebung:
 
 ```python
@@ -146,7 +158,7 @@ import os
 
 import django
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "MIZDB.settings"
+os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
 django.setup()
 
 

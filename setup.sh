@@ -20,6 +20,24 @@
 # USAGE:
 # 	DB_PASSWORD=supersecret DB_NAME=my_db ALLOWED_HOSTS=example.com sh setup.sh
 
+if [ -n "$DB_PASSWORD" ]; then
+  password=$DB_PASSWORD
+else
+  printf "Please enter database password: "
+  read -r password
+fi
+
+if [ -n "$ALLOWED_HOSTS" ]; then
+  hosts=$ALLOWED_HOSTS
+else
+  printf "Please enter hostname: "
+  read -r hosts
+fi
+
+# Create .passwd file for the postgres container (can't use a secrets yaml file)
+echo "$password" > .passwd
+
+# Generate the .env file for the Docker container
 cat << EOF > .env
 # Database connection parameters
 DB_NAME=${DB_NAME:-mizdb}
@@ -37,27 +55,28 @@ BACKUP_DIR=${BACKUP_DIR:-/var/lib/mizdb/backups}
 LOG_DIR=${LOG_DIR:-/var/log/mizdb}
 EOF
 
-# Create the secrets file.
-if [ -n "$DB_PASSWORD" ]; then
-  password=$DB_PASSWORD
-else
-  printf "Please enter database password: "
-  read -r password
-fi
-# Create .passwd file for the postgres container (can't use a secrets yaml file)
-echo "$password" > .passwd
 
-if [ -n "$ALLOWED_HOSTS" ]; then
-  hosts=$ALLOWED_HOSTS
-else
-  printf "Please enter hostname: "
-  read -r hosts
-fi
-
+# Create a secret key and the secrets file
 secret_key=$(python3 -c 'import secrets; allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"; print("".join(secrets.choice(allowed_chars) for _ in range(50)));')
 
 cat << EOF > .secrets
 ALLOWED_HOSTS: "$hosts"
 DATABASE_PASSWORD: "$password"
 SECRET_KEY: "$secret_key"
+EOF
+
+# Generate the settings.py file
+cat << EOF > settings.py
+"""
+Add your own settings that override the default settings.
+
+For a list of settings, see:
+    - https://docs.djangoproject.com/en/4.2/ref/settings/
+"""
+
+from MIZDB.settings.production import *  # noqa
+
+# -----------------------------------------------------------------------------
+# Add your own settings here:
+
 EOF

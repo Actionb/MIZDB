@@ -13,4 +13,4 @@
 !manage.py
 !README.md
 !VERSION
-!ADMINS
+!settings.py

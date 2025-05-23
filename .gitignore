@@ -6,7 +6,7 @@
 /.secrets
 /.passwd
 /dumps/
-ADMINS
+settings.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

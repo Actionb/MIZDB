@@ -24,8 +24,7 @@ services:
     container_name: mizdb-app
     volumes:
       - "$LOG_DIR:/var/log/mizdb"
-      - ${PWD}/ADMINS:/mizdb/ADMINS
-      - ${PWD}/.secrets:/mizdb/.secrets
+      - ${PWD}/settings.py:/mizdb/settings.py
     env_file:
       - .env
     ports:

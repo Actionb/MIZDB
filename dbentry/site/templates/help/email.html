@@ -9,7 +9,7 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#1-admins-einrichten">1. Admins einrichten</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#1-admins-registrieren">1. Admins registrieren</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -17,11 +17,7 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#3-e-mail-password-ablegen">3. E-Mail Password ablegen</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#4-docker-containerapache-neu-starten">4. Docker Container/Apache neu starten</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#3-docker-containerapache-neu-starten">3. Docker Container/Apache neu starten</a>
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="3"><a class="nav-link" href="#docker">Docker</a>
 <ul class="nav flex-column">
@@ -33,7 +29,7 @@
 </li>
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#5-e-mail-einstellungen-testen">5. E-Mail Einstellungen testen</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#4-e-mail-einstellungen-testen">4. E-Mail Einstellungen testen</a>
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="3"><a class="nav-link" href="#systemcheck">Systemcheck</a>
 <ul class="nav flex-column">
@@ -53,23 +49,25 @@
 <div class="col-md-9" role="main">
 <h1 id="e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</h1>
 <p>Um bei Server Fehlern automatisch Benachrichtigungen an Admins zu schicken, müssen eine Reihe von zusätzlichen Angaben
-gemacht
-werden.</p>
-<h2 id="1-admins-einrichten">1. Admins einrichten</h2>
-<p>In der <code>ADMINS</code> Datei werden die Admins eingetragen, die benachrichtigt werden sollen. Diese Datei befindet sich im
-Grundverzeichnis der Anwendung, dem MIZDB Ordner (dort wo auch Dateien wie <code>mizdb.sh</code> und <code>manage.py</code> zu finden sind).
-Ist die Datei noch nicht vorhanden, muss sie erstellt werden, z.B.: <code>touch /pfad/zu/MIZDB/ADMINS</code>.</p>
-<p>Für jeden Admin muss dabei eine neue Zeile mit Name und E-Mail-Adresse angelegt werden. Zeilen, die mit <code>#</code> beginnen,
-werden ignoriert:</p>
-<pre><code class="language-text"># name, email address
-Admin, admin@mail.com
-Willi Weber, weber@web.de
+in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werden. </p>
+<div class="admonition info">
+<p class="admonition-title">Verwendung <code>settings.py</code></p>
+<p>Die zusätzlichen Einstellungen können ab dieser Zeile eingetragen werden: 
+<code>python
+    # -----------------------------------------------------------------------------
+    # Add your own settings here:</code></p>
+</div>
+<h2 id="1-admins-registrieren">1. Admins registrieren</h2>
+<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste eingetragen. </p>
+<p>Zum Beispiel:</p>
+<pre><code class="language-python">ADMINS = [
+    ("Admin", "admin@mail.com"),
+    ("Willi Weber", "weber@web.de"),
+    # weitere Admins...
+]
 </code></pre>
 <h2 id="2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</h2>
-<p>Abgesehen vom Passwort für den E-Mailbenutzer, werden die Verbindungsdaten für den E-Mail-Server als Umgebungsvariablen
-an die Einstellungen der Anwendung übergeben. Dazu werden die notwendigen Daten in die Datei <code>.env</code> (ebenfalls im MIZDB
-Grundverzeichnis) eingetragen.</p>
-<p>Notwendige Daten:</p>
+<p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden: </p>
 <table>
 <thead>
 <tr>
@@ -94,22 +92,19 @@ Grundverzeichnis) eingetragen.</p>
 <td>EMAIL_HOST_PASSWORD</td>
 <td>Benutzerpassword für den Server.</td>
 </tr>
+<tr>
+<td>SERVER_EMAIL</td>
+<td>Die Adresse, mit der die Mails für Fehlermeldungen verschickt werden.</td>
+</tr>
 </tbody>
 </table>
-<p>Zusätzliche Einstellungen sind <code>EMAIL_USE_TLS</code> und <code>EMAIL_USE_SSL</code>, die beschreiben, ob bei der Kommunikation mit dem
-SMTP Server TLS oder SSL benutzt werden soll. Die einzutragenden Werte müssen hier <code>true</code> oder <code>false</code> sein, und nur
-einer der Werte darf <code>true</code> sein.</p>
-<p>Außerdem kann mit <code>SERVER_EMAIL</code> die E-Mail-Adresse festgelegt werden, von
-der E-Mails bezüglich Fehlermeldungen verschickt werden. Wird kein Wert angegeben, werden die E-Mails von
-<code>EMAIL_HOST_USER</code> versendet.</p>
-<p>Beispiel, Auszug aus der <code>.env</code> Datei:</p>
-<pre><code class="language-yaml"># ...
-
-# Settings for sending e-mail
-EMAIL_HOST = smtp.ionos.de
+<p>Zum Beispiel:</p>
+<pre><code class="language-python">EMAIL_HOST = "smtp.ionos.de"
 EMAIL_PORT = 465
-EMAIL_HOST_USER = myuser@mail.com
-EMAIL_USE_SSL = true
+EMAIL_HOST_USER = "admin@mail.de"
+EMAIL_HOST_PASSWORD = "mysupersecretpassword"
+EMAIL_USE_SSL = True
+SERVER_EMAIL = "admin@mail.de"
 </code></pre>
 <div class="admonition tip">
 <p class="admonition-title">Nützliche Links:</p>
@@ -120,17 +115,34 @@ EMAIL_USE_SSL = true
 <li><a href="https://dev.to/abderrahmanemustapha/how-to-send-email-with-django-and-gmail-in-production-the-right-way-24ab">Blog Post: Sending emails with Django and Gmail</a></li>
 </ul>
 </div>
-<h2 id="3-e-mail-password-ablegen">3. E-Mail Password ablegen</h2>
-<p>Das Passwort für den Benutzer des E-Mail-Servers muss in die Datei <code>.secrets</code> eingetragen werden. Die Datei ist
-ebenfalls im MIZDB Grundverzeichnis zu finden.</p>
-<pre><code class="language-yaml"># ...
+<hr/>
+<p>Eine vollständige <code>settings.py</code> könnte also so aussehen:</p>
+<pre><code class="language-python">"""
+Add your own settings that override the default settings.
 
-EMAIL_HOST_PASSWORD: "mysupersecretpassword"
+For a list of settings, see:
+    - https://docs.djangoproject.com/en/4.2/ref/settings/
+"""
+
+from MIZDB.settings.defaults import BASE_DIR, secrets  # noqa
+from MIZDB.settings.production import *  # noqa
+
+# -----------------------------------------------------------------------------
+# Add your own settings here:
+
+ADMINS = [
+    ("Admin", "admin@mail.com"),
+    ("Willi Weber", "weber@web.de"),
+]
+
+EMAIL_HOST = "smtp.ionos.de"
+EMAIL_PORT = 465
+EMAIL_HOST_USER = "admin@mail.de"
+EMAIL_HOST_PASSWORD = "mysupersecretpassword"
+EMAIL_USE_SSL = True
+SERVER_EMAIL = "admin@mail.de"
 </code></pre>
-<div class="admonition warning">
-<p class="admonition-title">Achtung: Die Syntax in der <code>.secrets</code> Datei ist unterschiedlich zu der in der <code>.env</code> Datei!</p>
-</div>
-<h2 id="4-docker-containerapache-neu-starten">4. Docker Container/Apache neu starten</h2>
+<h2 id="3-docker-containerapache-neu-starten">3. Docker Container/Apache neu starten</h2>
 <p>Abschließend muss der Docker Container der Anwendung neu gestartet werden, um die Änderungen anzuwenden:</p>
 <h3 id="docker">Docker</h3>
 <pre><code class="language-shell">mizdb restart
@@ -139,7 +151,7 @@ EMAIL_HOST_PASSWORD: "mysupersecretpassword"
 <p>Oder, wenn ohne Docker installiert wurde, Apache neu laden:</p>
 <pre><code class="language-shell">sudo service apache2 reload
 </code></pre>
-<h2 id="5-e-mail-einstellungen-testen">5. E-Mail Einstellungen testen</h2>
+<h2 id="4-e-mail-einstellungen-testen">4. E-Mail Einstellungen testen</h2>
 <h3 id="systemcheck">Systemcheck</h3>
 <p>Es kann ein Systemcheck durchgeführt werden, um zu prüfen, dass die Angaben und ihre Formatierung korrekt
 sind:</p>
@@ -161,12 +173,13 @@ Funktion <a href="https://docs.djangoproject.com/en/5.2/topics/email/#mail-admin
 <p>Anschließend:</p>
 <pre><code class="language-shell">python manage.py shell -c 'from django.core.mail import mail_admins; mail_admins("Test Admin Mail", "Test successful!")'
 </code></pre>
+<hr/>
 <p>Oder zum Ausführen mit dem Python Interpreter der MIZDB Umgebung:</p>
 <pre><code class="language-python">import os
 
 import django
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "MIZDB.settings"
+os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
 django.setup()
 
 

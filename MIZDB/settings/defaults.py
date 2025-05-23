@@ -155,29 +155,3 @@ STATICFILES_DIRS = [
 ]
 
 ONLINE_HELP_URL = os.environ.get("MIZDB_ONLINE_HELP", "https://actionb.github.io/MIZDB/")
-
-# Read the ADMINS file, if it exists.
-try:
-    ADMINS = []
-    with open("ADMINS", "r") as f:
-        for i, line in enumerate(f.readlines()):
-            if line.startswith("#"):
-                continue
-            try:
-                name, address = line.strip().split(",")
-            except ValueError as e:
-                raise ValueError(
-                    f"Error reading ADMINS file on line {i}. Line must have the form: name, email address "
-                ) from e
-            ADMINS.append((name, address))
-except FileNotFoundError:
-    ADMINS = []
-
-# EMAIL settings
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
-EMAIL_PORT = os.environ.get("EMAIL_PORT", 465)
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = secrets.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "").lower() == "true"
-EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "").lower() == "true"
-SERVER_EMAIL = os.environ.get("SERVER_EMAIL", EMAIL_HOST_USER)  # The email address that error messages come from
