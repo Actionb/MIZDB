@@ -1,0 +1,181 @@
+{% extends "help/base.html" %}{% block content %}<div class="container row" id="help_content">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Inhaltsverzeichnis" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#1-admins-einrichten">1. Admins einrichten</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#3-e-mail-password-ablegen">3. E-Mail Password ablegen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#4-docker-containerapache-neu-starten">4. Docker Container/Apache neu starten</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#docker">Docker</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ohne-docker">Ohne Docker</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#5-e-mail-einstellungen-testen">5. E-Mail Einstellungen testen</a>
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#systemcheck">Systemcheck</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#test-mail-versenden">Test-Mail versenden</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div></div>
+<div class="col-md-9" role="main">
+<h1 id="e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</h1>
+<p>Um bei Server Fehlern automatisch Benachrichtigungen an Admins zu schicken, müssen eine Reihe von zusätzlichen Angaben
+gemacht
+werden.</p>
+<h2 id="1-admins-einrichten">1. Admins einrichten</h2>
+<p>In der <code>ADMINS</code> Datei werden die Admins eingetragen, die benachrichtigt werden sollen. Diese Datei befindet sich im
+Grundverzeichnis der Anwendung, dem MIZDB Ordner (dort wo auch Dateien wie <code>mizdb.sh</code> und <code>manage.py</code> zu finden sind).
+Ist die Datei noch nicht vorhanden, muss sie erstellt werden, z.B.: <code>touch /pfad/zu/MIZDB/ADMINS</code>.</p>
+<p>Für jeden Admin muss dabei eine neue Zeile mit Name und E-Mail-Adresse angelegt werden. Zeilen, die mit <code>#</code> beginnen,
+werden ignoriert:</p>
+<pre><code class="language-text"># name, email address
+Admin, admin@mail.com
+Willi Weber, weber@web.de
+</code></pre>
+<h2 id="2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</h2>
+<p>Abgesehen vom Passwort für den E-Mailbenutzer, werden die Verbindungsdaten für den E-Mail-Server als Umgebungsvariablen
+an die Einstellungen der Anwendung übergeben. Dazu werden die notwendigen Daten in die Datei <code>.env</code> (ebenfalls im MIZDB
+Grundverzeichnis) eingetragen.</p>
+<p>Notwendige Daten:</p>
+<table>
+<thead>
+<tr>
+<th>SETTING</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EMAIL_HOST</td>
+<td>Der SMTP Server, mit dem die Mails verschickt werden.</td>
+</tr>
+<tr>
+<td>EMAIL_PORT</td>
+<td>Port für den SMTP Server.</td>
+</tr>
+<tr>
+<td>EMAIL_HOST_USER</td>
+<td>Benutzername für den SMTP Server.</td>
+</tr>
+<tr>
+<td>EMAIL_HOST_PASSWORD</td>
+<td>Benutzerpassword für den Server.</td>
+</tr>
+</tbody>
+</table>
+<p>Zusätzliche Einstellungen sind <code>EMAIL_USE_TLS</code> und <code>EMAIL_USE_SSL</code>, die beschreiben, ob bei der Kommunikation mit dem
+SMTP Server TLS oder SSL benutzt werden soll. Die einzutragenden Werte müssen hier <code>true</code> oder <code>false</code> sein, und nur
+einer der Werte darf <code>true</code> sein.</p>
+<p>Außerdem kann mit <code>SERVER_EMAIL</code> die E-Mail-Adresse festgelegt werden, von
+der E-Mails bezüglich Fehlermeldungen verschickt werden. Wird kein Wert angegeben, werden die E-Mails von
+<code>EMAIL_HOST_USER</code> versendet.</p>
+<p>Beispiel, Auszug aus der <code>.env</code> Datei:</p>
+<pre><code class="language-yaml"># ...
+
+# Settings for sending e-mail
+EMAIL_HOST = smtp.ionos.de
+EMAIL_PORT = 465
+EMAIL_HOST_USER = myuser@mail.com
+EMAIL_USE_SSL = true
+</code></pre>
+<div class="admonition tip">
+<p class="admonition-title">Nützliche Links:</p>
+<ul>
+<li><a href="https://docs.djangoproject.com/en/5.2/ref/settings/#email-host">Django Settings für E-Mail</a></li>
+<li><a href="https://www.ionos.de/hilfe/e-mail/allgemeine-themen/serverinformationen-fuer-imap-pop3-und-smtp/">SMTP Serverdaten IONOS</a></li>
+<li><a href="https://support.google.com/a/answer/176600?hl=de">E-Mails mit Gmail-SMTP Server senden</a></li>
+<li><a href="https://dev.to/abderrahmanemustapha/how-to-send-email-with-django-and-gmail-in-production-the-right-way-24ab">Blog Post: Sending emails with Django and Gmail</a></li>
+</ul>
+</div>
+<h2 id="3-e-mail-password-ablegen">3. E-Mail Password ablegen</h2>
+<p>Das Passwort für den Benutzer des E-Mail-Servers muss in die Datei <code>.secrets</code> eingetragen werden. Die Datei ist
+ebenfalls im MIZDB Grundverzeichnis zu finden.</p>
+<pre><code class="language-yaml"># ...
+
+EMAIL_HOST_PASSWORD: "mysupersecretpassword"
+</code></pre>
+<div class="admonition warning">
+<p class="admonition-title">Achtung: Die Syntax in der <code>.secrets</code> Datei ist unterschiedlich zu der in der <code>.env</code> Datei!</p>
+</div>
+<h2 id="4-docker-containerapache-neu-starten">4. Docker Container/Apache neu starten</h2>
+<p>Abschließend muss der Docker Container der Anwendung neu gestartet werden, um die Änderungen anzuwenden:</p>
+<h3 id="docker">Docker</h3>
+<pre><code class="language-shell">mizdb restart
+</code></pre>
+<h3 id="ohne-docker">Ohne Docker</h3>
+<p>Oder, wenn ohne Docker installiert wurde, Apache neu laden:</p>
+<pre><code class="language-shell">sudo service apache2 reload
+</code></pre>
+<h2 id="5-e-mail-einstellungen-testen">5. E-Mail Einstellungen testen</h2>
+<h3 id="systemcheck">Systemcheck</h3>
+<p>Es kann ein Systemcheck durchgeführt werden, um zu prüfen, dass die Angaben und ihre Formatierung korrekt
+sind:</p>
+<h4 id="docker_1">Docker</h4>
+<p>Bei einer Installation mit Docker:</p>
+<pre><code class="language-shell">mizdb check
+</code></pre>
+<h4 id="ohne-docker_1">Ohne Docker</h4>
+<p>Oder bei einer Installation ohne Docker, diese Zeile im MIZDB Grundverzeichnis ausführen:</p>
+<pre><code class="language-shell">DJANGO_SETTINGS_MODULE=MIZDB.settings .venv/bin/python3 manage.py check
+</code></pre>
+<h3 id="test-mail-versenden">Test-Mail versenden</h3>
+<p>Zu Testzwecken kann man mit Django auch direkt eine Mail an die Admins verschicken, siehe die Django Dokumentation für
+die
+Funktion <a href="https://docs.djangoproject.com/en/5.2/topics/email/#mail-admins">mail_admins</a>.</p>
+<p>Bei einer Docker Installation zunächst in den Container wechseln:</p>
+<pre><code class="language-shell">mizdb shell
+</code></pre>
+<p>Anschließend:</p>
+<pre><code class="language-shell">python manage.py shell -c 'from django.core.mail import mail_admins; mail_admins("Test Admin Mail", "Test successful!")'
+</code></pre>
+<p>Oder zum Ausführen mit dem Python Interpreter der MIZDB Umgebung:</p>
+<pre><code class="language-python">import os
+
+import django
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "MIZDB.settings"
+django.setup()
+
+
+def send_admin_mail():
+    from django.core.mail import mail_admins
+    mail_admins("Test Admin Mail", "Test successful!")
+
+
+if __name__ == "__main__":
+    send_admin_mail()
+</code></pre></div>
+</div>{% endblock content %}
