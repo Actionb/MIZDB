@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+- Audio changelist: add search form field for 'Plattennummer' 
+
 ### Changed
 
 - only add data from changelist filters to form initial data if the view is an 'add' view. This stops data from the

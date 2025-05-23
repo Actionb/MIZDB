@@ -10,7 +10,7 @@ from dbentry.base.models import AbstractJahrModel, AbstractURLModel, BaseAliasMo
 from dbentry.fields import EANField, ISBNField, ISSNField, PartialDateField, YearField
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
-from dbentry.query import AusgabeQuerySet
+from dbentry.query import AusgabeQuerySet, AudioQuerySet
 from dbentry.utils.models import get_model_fields, get_model_relations
 from dbentry.utils.query import array_to_string, limit, string_list, to_array
 from dbentry.utils.text import concat_limit
@@ -999,6 +999,8 @@ class Audio(BaseModel):
 
     name_field = "titel"
     select_related = ("medium",)
+
+    objects = AudioQuerySet.as_manager()
 
     class Meta(BaseModel.Meta):
         ordering = ["titel"]
