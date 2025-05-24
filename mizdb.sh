@@ -23,14 +23,19 @@ BEFEHLE:
   stop          MIZDB App Container beenden
   restart       MIZDB App Container neustarten
   reload        Apache Webserver unterbrechungsfrei neustarten (Verbindungen bleiben erhalten)
-  update        Nach Updates suchen und installieren
+
   restore       Datenbank aus einer Backup-Datei wiederherstellen
   dump          Daten der Datenbank in eine Backup-Datei übertragen
+
   shell         Kommandozeile des MIZDB App Containers aufrufen
   dbshell       Kommandozeile des Postgresql Containers aufrufen
+
   check         MIZDB/Django checks ausführen
+  update        Nach Updates suchen und installieren
   migrate       Datenbankmigrationen ausführen
+  collectstatic Statische Dateien sammeln
   uninstall     MIZDB deinstallieren
+
 EOF
 }
 
