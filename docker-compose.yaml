@@ -8,8 +8,8 @@ services:
       # Mount the directory that contains the restore and dump scripts:
       - ./scripts/db:/mizdb
     environment:
-      POSTGRES_DB: mizdb
-      POSTGRES_USER: mizdb_user
+      POSTGRES_DB: "$DB_NAME"
+      POSTGRES_USER: "$DB_USER"
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     restart: unless-stopped
     secrets:
