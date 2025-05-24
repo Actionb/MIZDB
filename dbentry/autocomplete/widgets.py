@@ -14,9 +14,15 @@ DEFAULTS = {
         "attrs": {"placeholder": "Bitte zuerst ein Magazin auswählen"},
     },
     _models.Autor: {"url": "autocomplete_autor", "create_field": "__any__"},
-    _models.Band: {"url": "autocomplete_band", "extra_columns": {"alias_list": "Aliase", "orte_list": "Orte"}},
+    _models.Band: {
+        "url": "autocomplete_band",
+        "extra_columns": {"alias_list": "Aliase", "genre_list": "Genres", "orte_list": "Orte"},
+    },
     _models.Magazin: {"url": "autocomplete_magazin"},
-    _models.Musiker: {"url": "autocomplete_musiker", "extra_columns": {"alias_list": "Aliase", "orte_list": "Orte"}},
+    _models.Musiker: {
+        "url": "autocomplete_musiker",
+        "extra_columns": {"alias_list": "Aliase", "genre_list": "Genres", "orte_list": "Orte"},
+    },
     _models.Person: {"url": "autocomplete_person", "create_field": "__any__"},
     _models.Spielort: {"extra_columns": {"ort___name": "Ort"}},
     _models.Veranstaltung: {"extra_columns": {"datum": "Datum", "spielort__name": "Spielort"}},
