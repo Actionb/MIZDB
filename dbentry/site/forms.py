@@ -250,3 +250,22 @@ class MusikerSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lookups["band"] = ["in"]
+
+
+################################################################################
+# SEND FEEDBACK FORM
+################################################################################
+
+
+class FeedbackForm(forms.Form):
+    subject = forms.CharField(label="Titel")
+    message = forms.CharField(
+        label="Nachricht",
+        widget=forms.Textarea(attrs={"class": "textarea-rows-4", "placeholder": "Deine Nachricht an die Admins"}),
+    )
+    email = forms.EmailField(
+        label="Deine E-Mail Adresse",
+        widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
+        required=False,
+        help_text="Wenn du möchtest, dass du per E-Mail eine Antwort bekommst, kannst du hier deine E-Mail Adresse angeben.",
+    )

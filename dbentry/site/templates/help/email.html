@@ -48,8 +48,10 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</h1>
-<p>Um bei Server Fehlern automatisch Benachrichtigungen an Admins zu schicken, müssen eine Reihe von zusätzlichen Angaben
-in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werden. </p>
+<p>Es können von MIZDB E-Mails an die Admins versendet werden; z.B. wenn Benutzer Feedback abgeben oder wenn ein Server
+Error eingetreten ist.
+Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in die Datei <code>settings.py</code> im
+MIZDB Grundverzeichnis eingetragen werden.</p>
 <div class="admonition info">
 <p class="admonition-title">Verwendung <code>settings.py</code></p>
 <p>Die zusätzlichen Einstellungen können ab dieser Zeile eingetragen werden: 
@@ -58,7 +60,8 @@ in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werd
     # Add your own settings here:</code></p>
 </div>
 <h2 id="1-admins-registrieren">1. Admins registrieren</h2>
-<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste eingetragen. </p>
+<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste
+eingetragen.</p>
 <p>Zum Beispiel:</p>
 <pre><code class="language-python">ADMINS = [
     ("Admin", "admin@mail.com"),
@@ -67,7 +70,7 @@ in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werd
 ]
 </code></pre>
 <h2 id="2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</h2>
-<p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden: </p>
+<p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden:</p>
 <table>
 <thead>
 <tr>

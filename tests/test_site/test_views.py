@@ -26,15 +26,24 @@ from dbentry.site.views.base import (
     Inline,
     ModelViewMixin,
     SearchableListView,
+    _email_configured,
 )
 from dbentry.site.views.delete import DeleteSelectedView, DeleteView
 from dbentry.site.views.help import HelpView, has_help_page
 from dbentry.site.views.history import HistoryView
 from dbentry.site.views.watchlist import WatchlistView
-from tests.case import DataTestCase, ViewTestCase
+from tests.case import DataTestCase, ViewTestCase, MIZTestCase
 from tests.model_factory import make
 
 from .models import Band, Country, Genre, Musician
+
+
+REQUIRED_EMAIL_SETTINGS = {
+    "ADMINS": [("Alice", "alice@admin.com")],
+    "EMAIL_HOST": "smtp.test.de",
+    "EMAIL_HOST_USER": "feedback@mizdb.de",
+    "EMAIL_HOST_PASSWORD": "foo",
+}
 
 
 class BandView(BaseEditView):
@@ -133,8 +142,37 @@ class URLConf:
         ],
         path("help/index/", dummy_view, name="help_index"),
         path("help/<path:page_name>/", dummy_view, name="help"),
+        path("feedback", dummy_view, name="feedback"),
     ]
     app_name = "test_site"
+
+
+class TestEmailConfigured(MIZTestCase):
+    def test_email_configured(self):
+        """
+        Assert that _email_configured returns True if all the settings required
+        for sending emails are set.
+        """
+        with override_settings(**REQUIRED_EMAIL_SETTINGS):
+            self.assertTrue(_email_configured())
+
+    def test_email_not_configured(self):
+        """
+        Assert that _email_configured returns False if not all the settings
+        required for sending emails are set.
+        """
+        for setting, value in (("foo", "bar"), *REQUIRED_EMAIL_SETTINGS.items()):
+            with override_settings(**{setting: value}):
+                self.assertFalse(_email_configured())
+
+    def test_email_not_configured_localhost(self):
+        """
+        Assert that _email_configured returns False if all the settings
+        required for sending emails are set but EMAIL_HOST is localhost.
+        """
+        REQUIRED_EMAIL_SETTINGS["EMAIL_HOST"] = "localhost"
+        with override_settings(**REQUIRED_EMAIL_SETTINGS):
+            self.assertFalse(_email_configured())
 
 
 @override_settings(ROOT_URLCONF=URLConf)
@@ -156,6 +194,24 @@ class TestBaseViewMixin(ViewTestCase):
         request = self.get_response(reverse("test_site_genre_changelist")).wsgi_request
         view = BaseViewMixin()
         self.assertEqual(view._get_admin_url(request), reverse("admin:index"))
+
+    def test_feedback_url(self):
+        """
+        Assert that get_feedback_url returns the URL to the feedback view if
+        _email_configured returns True.
+        """
+        view = BaseViewMixin()
+        with patch("dbentry.site.views.base._email_configured", new=Mock(return_value=True)):
+            self.assertEqual(view.get_feedback_url(), reverse("feedback"))
+
+    def test_feedback_url_email_not_configured(self):
+        """
+        Assert that get_feedback_url returns an empty string if
+        _email_configured returns False.
+        """
+        view = BaseViewMixin()
+        with patch("dbentry.site.views.base._email_configured", new=Mock(return_value=False)):
+            self.assertFalse(view.get_feedback_url())
 
 
 @override_settings(ROOT_URLCONF=URLConf)

@@ -1,8 +1,10 @@
 E-Mail Benachrichtigungen einrichten
 =======
 
-Um bei Server Fehlern automatisch Benachrichtigungen an Admins zu schicken, müssen eine Reihe von zusätzlichen Angaben
-in die Datei `settings.py` im MIZDB Grundverzeichnis eingetragen werden. 
+Es können von MIZDB E-Mails an die Admins versendet werden; z.B. wenn Benutzer Feedback abgeben oder wenn ein Server
+Error eingetreten ist.
+Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in die Datei `settings.py` im
+MIZDB Grundverzeichnis eingetragen werden.
 
 [comment]: <> (@formatter:off)  
 !!! info "Verwendung `settings.py`"
@@ -16,7 +18,8 @@ in die Datei `settings.py` im MIZDB Grundverzeichnis eingetragen werden.
 
 ## 1. Admins registrieren
 
-Unter dem Punkt `ADMINS` werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste eingetragen. 
+Unter dem Punkt `ADMINS` werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste
+eingetragen.
 
 Zum Beispiel:
 
@@ -30,7 +33,7 @@ ADMINS = [
 
 ## 2. Verbindungsdaten angeben
 
-Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden: 
+Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden:
 
 | SETTING             | Beschreibung                                                          |
 |---------------------|-----------------------------------------------------------------------|
@@ -63,6 +66,7 @@ SERVER_EMAIL = "admin@mail.de"
 ---
 
 Eine vollständige `settings.py` könnte also so aussehen:
+
 ```python
 """
 Add your own settings that override the default settings.
