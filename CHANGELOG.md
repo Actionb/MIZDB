@@ -6,6 +6,7 @@
 
 - Audio changelist: add search form field for 'Plattennummer'
 - include 'Genres' in Band and Musiker autocomplete dropdown table
+- send email to admins upon server errors
 
 ### Changed
 

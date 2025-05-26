@@ -53,5 +53,13 @@ def page_not_found(request, exception, template_name="mizdb/404.html"):  # pragm
     return defaults.page_not_found(request, exception, template_name)
 
 
+def server_error(request, template_name="mizdb/500.html"):  # pragma: no cover
+    if request.path_info.startswith("/admin"):
+        # Show the admin 404 if requesting an admin page.
+        template_name = "admin/500.html"
+    return defaults.server_error(request, template_name)
+
+
 handler403 = "dbentry.site.views.auth.permission_denied_view"
 handler404 = page_not_found
+handler500 = server_error
