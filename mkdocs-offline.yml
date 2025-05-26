@@ -50,6 +50,7 @@ nav:
       - 'Installation': install.md
       - 'Verwaltung': verwaltung.md
       - 'Deinstallation': deinstall.md
+      - 'E-Mail einrichten': email.md
 extra_css:
   - css/admonitions.css
   - css/toc_scroll.css

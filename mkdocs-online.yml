@@ -51,6 +51,7 @@ nav:
       - 'Installation': install.md
       - 'Verwaltung': verwaltung.md
       - 'Deinstallation': deinstall.md
+      - 'E-Mail einrichten': email.md
 theme:
   name: material
   custom_dir: 'docs/material_overrides/'
