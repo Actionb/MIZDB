@@ -4,7 +4,8 @@
 
 ### Added
 
-- Audio changelist: add search form field for 'Plattennummer' 
+- Audio changelist: add search form field for 'Plattennummer'
+- include 'Genres' in Band and Musiker autocomplete dropdown table
 
 ### Changed
 
