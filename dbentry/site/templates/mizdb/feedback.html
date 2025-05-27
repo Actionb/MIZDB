@@ -1,0 +1,22 @@
+{% extends "mizdb/base_form.html" %}
+{% load django_bootstrap5 %}
+
+{#{% block mainclass %}{% endblock %}#}
+
+{% block content_title %}<h2 class="ms-auto me-auto" style="max-width:600px;">{{ title }}</h2>{% endblock %}
+
+{% block content %}
+<div class="ms-auto me-auto" style="max-width:600px;">
+{% if feedback_url %}
+  Hier kannst du Feedback, Kritik oder Fragen an die Admins schicken. Einfach das Formular ausfüllen und abschicken!
+  <hr>
+  <form method="post">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% bootstrap_button button_type="submit" button_class="btn-success" content="Senden" %}
+  </form>
+{% else %}
+  Email nicht eingerichtet. Siehe <a href="{{ help_url }}" title="Hilfe: Email">Hilfe</a> für Anweisungen.
+{% endif %}
+</div>
+{% endblock content %}

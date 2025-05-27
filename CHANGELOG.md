@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.22.0] - 2025-05-27
+
+### Added
+
+- Audio changelist: add search form field for 'Plattennummer'
+- include 'Genres' in Band and Musiker autocomplete dropdown table
+- send email to admins upon server errors
+- add feedback page: let users mail feedback to the admins
+
+### Changed
+
+- only add data from changelist filters to form initial data if the view is an 'add' view. This stops data from the
+  search form sneaking into form data on edit views.
+
 ## [0.21.0] - 2025-05-21
 
 ### Added

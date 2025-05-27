@@ -11,7 +11,6 @@ from dbentry import models as _models
 from dbentry.query import CNQuerySet, InvalidJahrgangError, MIZQuerySet, build_date
 from tests.case import DataTestCase, MIZTestCase
 from tests.model_factory import make
-
 from .models import Band
 
 
@@ -782,3 +781,74 @@ class TestBuildDate(MIZTestCase):
         self.assertEqual(build_date([2001, 2000], [12, 1]), datetime.date(2000, 12, 31))
 
         self.assertIsNone(build_date([None], [None]))
+
+
+class TestAudioManager(DataTestCase):
+    model = _models.Audio
+
+    # Special characters used as separators in Plattennummer values:
+    pn_chars = [" ", "-", "/", ".", ",", "–", ":", "*", "·", "—", "'", "•", "!", "°", "(", ")", ""]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_data = [
+            make(cls.model, titel=f"Special Char: '{c}'", plattennummer=cls.get_pn(c)) for c in cls.pn_chars
+        ]
+        cls.control = make(cls.model, titel="Control Audio", plattennummer="Foo")
+
+    @staticmethod
+    def get_pn(special_char):
+        """Generate a Plattennummer that uses the given special character."""
+        return f"123{special_char}456{special_char}789A"
+
+    def setUp(self):
+        self.test_lookups = ("", "__contains", "__exact")
+        self.test_numbers = []
+        for c in self.pn_chars:
+            self.test_numbers.append(self.get_pn(c))
+
+    def test_clean_filter_value(self):
+        """Assert that _clean_filter_value reduces a given string as expected."""
+        expected = self.get_pn("")
+        for pn in self.test_numbers:
+            with self.subTest(plattennummer=pn):
+                self.assertEqual(self.model.objects.all()._clean_filter_value(pn), expected)
+
+    def test_clean_field_values(self):
+        """Assert that _clean_field_values adds a 'pn_cleaned' annotation."""
+        qs = self.model.objects.all()
+        annotations = qs._clean_field_values(qs).query.annotations
+        self.assertIn("pn_cleaned", annotations)
+
+    def test_filter_by_plattennummer(self):
+        """
+        Assert that Audio objects can be found via their plattennummer even if
+        the plattennummer or the search term contains special character.
+        """
+        for c in self.pn_chars:
+            for lookup in self.test_lookups:
+                for pn in self.test_numbers:
+                    with self.subTest(special_char=c, plattennummer=pn, lookup=lookup):
+                        qs = self.model.objects.filter(**{f"plattennummer{lookup}": pn})
+                        # The test numbers (filter values) and the stored
+                        # 'plattennummer' values (field values) should all reduce
+                        # to the same string, so the results should contain the
+                        # entire set of 'test_data' for all test numbers:
+                        self.assertEqual(qs.count(), len(self.test_data))
+                        # Check that 'control' is NOT part of the result to
+                        # make sure we don't just include every Audio object:
+                        self.assertNotIn(self.control, qs)
+
+    def test_filter_by_just_special_char(self):
+        """
+        Assert that filter values that are just a special character are not
+        reduced to a string without special characters and are simply used
+        'as-is' in a 'contains' query.
+        """
+        for c in self.pn_chars:
+            if c in ("", " "):
+                continue
+            with self.subTest(special_char=c):
+                qs = self.model.objects.filter(plattennummer__contains=c)
+                self.assertEqual(qs.count(), 1)
+                self.assertIn(self.model.objects.get(titel=f"Special Char: '{c}'"), qs)

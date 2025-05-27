@@ -5,7 +5,7 @@
 # Read password from the password file
 PASSWORD=$(cat ".passwd")
 
-echo "This drop the following databases:"
+echo "This drops the following databases:"
 PGPASSWORD="$PASSWORD" psql --user=mizdb_user --host=localhost --dbname=mizdb -c "SELECT datname FROM pg_database WHERE datname LIKE 'test_mizdb%';" | \
   grep -ve "datname" -e "^-" -e "^("
 read -r -p "Continue? [y/n]: "

@@ -214,9 +214,10 @@ class ArtikelList(SearchableListView):
 class AudioList(SearchableListView):
     model = _models.Audio
     ordering = ["titel", "jahr", "medium"]
-    list_display = ["titel", "jahr", "medium", "kuenstler_list"]
+    list_display = ["titel", "jahr", "medium", "kuenstler_list", "plattennummer"]
     search_form_kwargs = {
         "fields": [
+            "plattennummer__contains",  # also see AudioQuerySet.filter
             "musiker",
             "band",
             "schlagwort",

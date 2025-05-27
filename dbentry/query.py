@@ -1,5 +1,6 @@
 import calendar
 import datetime
+import re
 from collections import OrderedDict
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 from typing import OrderedDict as OrderedDictType
@@ -7,7 +8,7 @@ from typing import OrderedDict as OrderedDictType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import transaction
-from django.db.models import Count, Exists, Max, Min, Model, OuterRef, Q, QuerySet
+from django.db.models import Count, Exists, Max, Min, Model, OuterRef, Q, QuerySet, Value, Func, F
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry.fts.query import TextSearchQuerySetMixin
@@ -471,3 +472,43 @@ class AusgabeQuerySet(CNQuerySet):
         clone = clone.order_by(*ordering)
         clone.chronologically_ordered = True
         return clone
+
+
+class AudioQuerySet(MIZQuerySet):
+    """Queryset for the Audio model with improved 'plattennummer' filtering."""
+
+    def _clean_filter_value(self, value):
+        """Remove any special characters and empty spaces from the filter value."""
+        return re.sub(r"\W", "", value)
+
+    def _clean_field_values(self, queryset):
+        """
+        Remove any special characters and empty spaces from the 'plattennummer'
+        field values.
+        """
+        pattern = Value(r"\W")
+        replacement = Value("")
+        flags = Value("g")  # replace all occurrences in the text
+        return queryset.annotate(
+            pn_cleaned=Func(F("plattennummer"), pattern, replacement, flags, function="regexp_replace")
+        )
+
+    def filter(self, *args: Any, **kwargs: Any) -> MIZQuerySet:
+        for k, v in kwargs.items():
+            if k.startswith("plattennummer"):
+                # If filtering by 'plattennummer', remove any special characters
+                # from the filter value and the field values. This should make
+                # it easier to find objects by their plattennummer without
+                # needing to know the exact formatting.
+                q = self._clean_filter_value(v)
+                if not q:
+                    # 'Cleaned' filter value is just special characters.
+                    # Proceed without any special treatment.
+                    break
+                # Use the other filters as usual:
+                queryset = super().filter(*args, **{_k: _v for _k, _v in kwargs.items() if _k != k})
+                # Then remove special characters from field values:
+                queryset = self._clean_field_values(queryset)
+                # Filter by the 'cleaned' filter value:
+                return queryset.filter(pn_cleaned__contains=q)
+        return super().filter(*args, **kwargs)

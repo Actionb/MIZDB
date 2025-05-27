@@ -3,6 +3,7 @@ from django.urls import include, path
 
 from dbentry.site.registry import miz_site
 from dbentry.site.views.auth import LoginView, PasswordChangeDoneView, PasswordChangeView
+from dbentry.site.views.feedback import FeedbackView
 from dbentry.site.views.help import HelpIndexView, HelpView
 from dbentry.site.views.list import Index, changelist_selection_sync
 from dbentry.site.views.search import SearchbarSearch, SiteSearchView
@@ -25,4 +26,5 @@ urlpatterns = [
     path("hilfe/index/", HelpIndexView.as_view(), name="help_index"),
     path("hilfe/<path:page_name>/", HelpView.as_view(), name="help"),
     path("autocomplete/", include("dbentry.autocomplete.urls")),
+    path("feedback/", FeedbackView.as_view(), name="feedback"),
 ]

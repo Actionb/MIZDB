@@ -10,9 +10,6 @@ ALLOWED_HOSTS = secrets["ALLOWED_HOSTS"].split(",")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# FIXME: set DEBUG to False!
-DEBUG = True
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
