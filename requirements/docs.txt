@@ -1,4 +1,4 @@
 mkdocs[i18n]==1.6.0
 mkdocs-glightbox==0.4.0
-beautifulsoup4==4.12.3  # required for the post build hook
-mkdocs-material==9.5.35
+beautifulsoup4==4.13.4  # required for the post build hook
+mkdocs-material==9.6.14
