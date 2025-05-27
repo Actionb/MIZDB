@@ -1743,8 +1743,10 @@
 
 
 <h1 id="e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</h1>
-<p>Um bei Server Fehlern automatisch Benachrichtigungen an Admins zu schicken, müssen eine Reihe von zusätzlichen Angaben
-in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werden. </p>
+<p>Es können von MIZDB E-Mails an die Admins versendet werden; z.B. wenn Benutzer Feedback abgeben oder wenn ein Server
+Error eingetreten ist.
+Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in die Datei <code>settings.py</code> im
+MIZDB Grundverzeichnis eingetragen werden.</p>
 <div class="admonition info">
 <p class="admonition-title">Verwendung <code>settings.py</code></p>
 <p>Die zusätzlichen Einstellungen können ab dieser Zeile eingetragen werden: 
@@ -1753,7 +1755,8 @@ in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werd
 </span></code></pre></div></p>
 </div>
 <h2 id="1-admins-registrieren">1. Admins registrieren</h2>
-<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste eingetragen. </p>
+<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste
+eingetragen.</p>
 <p>Zum Beispiel:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">ADMINS</span> <span class="o">=</span> <span class="p">[</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;admin@mail.com&quot;</span><span class="p">),</span>
@@ -1762,7 +1765,7 @@ in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werd
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">]</span>
 </span></code></pre></div>
 <h2 id="2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</h2>
-<p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden: </p>
+<p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden:</p>
 <table>
 <thead>
 <tr>
@@ -1811,7 +1814,7 @@ in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werd
 </ul>
 </div>
 <hr />
-<p>Eine vollständige <code>settings.py</code> könnte also so aussehen:
+<p>Eine vollständige <code>settings.py</code> könnte also so aussehen:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="sd">Add your own settings that override the default settings.</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
@@ -1836,7 +1839,7 @@ in die Datei <code>settings.py</code> im MIZDB Grundverzeichnis eingetragen werd
 </span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">EMAIL_HOST_PASSWORD</span> <span class="o">=</span> <span class="s2">&quot;mysupersecretpassword&quot;</span>
 </span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="n">EMAIL_USE_SSL</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="n">SERVER_EMAIL</span> <span class="o">=</span> <span class="s2">&quot;admin@mail.de&quot;</span>
-</span></code></pre></div></p>
+</span></code></pre></div>
 <h2 id="3-docker-containerapache-neu-starten">3. Docker Container/Apache neu starten</h2>
 <p>Abschließend muss der Docker Container der Anwendung neu gestartet werden, um die Änderungen anzuwenden:</p>
 <h3 id="docker">Docker</h3>
