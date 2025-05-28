@@ -2,15 +2,18 @@
 https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#custom-colors
 */
 :root  > * {
-  --md-primary-fg-color:        #2c3e50;
-  --md-typeset-a-color:         #18bc9c;
-  --md-accent-fg-color:         #13967d;
-  --md-default-fg-color--light: #153d58;
+  --md-primary-fg-color:        #2c3e50;  /* primary color, used for header etc. */
+  --md-typeset-a-color:         #18bc9c !important;  /* color for links */
+  --md-accent-fg-color:         #13967d;  /* accent color (hover links, etc.) */
 }
 
 /* Add some bootstrap classes for aligning items */
 .d-flex {
     display: flex;
+}
+
+[data-md-color-scheme="default"] {
+  --md-default-fg-color--light: #153d58;  /* header color */
 }
 
 .justify-content-evenly {
