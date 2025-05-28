@@ -9,10 +9,6 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#artikel">Artikel</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#erfassung">Erfassung</a>
-<ul class="nav flex-column">
-</ul>
-</li>
 <li class="nav-item" data-bs-level="2"><a class="nav-link" href="#formularfelder">Formularfelder</a>
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="3"><a class="nav-link" href="#magazin">Magazin</a>
@@ -97,8 +93,10 @@
 <div class="col-md-9" role="main">
 <h1 id="artikel">Artikel</h1>
 <p>In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.</p>
-<h2 id="erfassung">Erfassung</h2>
+<div class="admonition tip">
+<p class="admonition-title">Erfassung</p>
 <p>Für eine umfangreiche Beschreibung wie man einen Artikel erfasst, siehe <a href="{% url 'help' page_name='erfassung'%}">Artikel Erfassen</a>.</p>
+</div>
 <h2 id="formularfelder">Formularfelder</h2>
 <h3 id="magazin">Magazin</h3>
 <p>Das <a href="{% url 'help' page_name='magazin'%}" title="Magazin">Magazin</a> der Ausgabe, welche den Artikel enthält.</p>

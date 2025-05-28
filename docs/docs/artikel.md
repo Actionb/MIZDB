@@ -3,9 +3,11 @@ Artikel
 
 In dieser Kategorie werden Artikel aus Zeitschriften gesammelt.
 
-## Erfassung
-
-Für eine umfangreiche Beschreibung wie man einen Artikel erfasst, siehe [Artikel Erfassen](erfassung.md).
+[comment]: <> (@formatter:off)  
+!!! tip "Erfassung"  
+    Für eine umfangreiche Beschreibung wie man einen Artikel erfasst, siehe [Artikel Erfassen](erfassung.md).
+  
+[comment]: <> (@formatter:on)
 
 ## Formularfelder
 
