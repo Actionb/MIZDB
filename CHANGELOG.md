@@ -12,6 +12,12 @@
 - now includes Python 3.13 in tests and CI
 - tweaked help docs
 
+## [0.22.1] - 2025-05-28
+
+### Fixed
+
+- fixed wsgi.py settings `DJANGO_SETTINGS_MODULE` incorrectly
+
 ## [0.22.0] - 2025-05-27
 
 ### Added
