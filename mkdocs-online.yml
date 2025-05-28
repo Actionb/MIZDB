@@ -78,6 +78,8 @@ theme:
     - content.code.copy
   icon:
     repo: fontawesome/brands/github
+  logo: img/logo.png
+  favicon: img/favicon.ico
 use_directory_urls: false
 extra_css:
   - css/material_extra.css
