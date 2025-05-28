@@ -1,5 +1,17 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+- added simple favicon and logo
+
+### Changed
+
+- updated project dependencies
+- now includes Python 3.13 in tests and CI
+- tweaked help docs
+
 ## [0.22.0] - 2025-05-27
 
 ### Added
