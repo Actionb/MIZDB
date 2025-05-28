@@ -1,5 +1,14 @@
-/* Add some bootstrap classes for aligning items */
+/* Set colors according to the flatly theme of the main app
+https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#custom-colors
+*/
+:root  > * {
+  --md-primary-fg-color:        #2c3e50;
+  --md-typeset-a-color:         #18bc9c;
+  --md-accent-fg-color:         #13967d;
+  --md-default-fg-color--light: #153d58;
+}
 
+/* Add some bootstrap classes for aligning items */
 .d-flex {
     display: flex;
 }
@@ -18,4 +27,28 @@
 
 .d-flex.justify-content-evenly.gap-5.text-center > figure {
     align-content: center;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(-1 * var(--bs-gutter-y));
+  margin-right: calc(-0.5 * var(--bs-gutter-x));
+  margin-left: calc(-0.5 * var(--bs-gutter-x));
+}
+
+.col {
+  flex: 1 0 0%;
+}
+
+.row-cols-1 > * {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 576px) {
+  .row-cols-sm-3 > * {
+    flex: 0 0 auto;
+    width: 33.33333333%;
+  }
 }

@@ -7,13 +7,9 @@
 </div>
 <div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#hilfe">Hilfe</a>
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#index">Index</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#tabellen">Tabellen</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#weitere-hilfeseiten">Weitere Hilfeseiten</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#hilfeseiten">Hilfeseiten</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -23,14 +19,14 @@
 </div>
 </div></div>
 <div class="col-md-9" role="main">
-<h1 id="hilfe">Hilfe</h1>
+<h1 id="index">Index</h1>
 <p>Willkommen auf der Hilfe-Seite der MIZDB Anwendung!</p>
 <p>Hier kannst du mehr über den Umgang mit der Datenbank erfahren.</p>
 <p>Neu hier? Dann lese die <strong><a href="{% url 'help' page_name='einfuehrung'%}">Einführung</a></strong>!</p>
-<h2 id="tabellen">Tabellen</h2>
-<p>Informationen zu den Tabellen findest du hier:</p>
-<div class="d-flex justify-content-evenly gap-3 mb-3">
-<div class="w-100 p-3 card bg-body-tertiary">
+<h2 id="hilfeseiten">Hilfeseiten</h2>
+<p>Informationen zu den Tabellen sowie weitere Hilfeseiten findest du hier:</p>
+<div class="row row-cols-sm-3 row-cols-1 gx-5 mb-3 px-5">
+<div class="col p-3">
 <h5 id="archiv-materialien">Archiv Materialien</h5>
 <ul>
 <li><a href="{% url 'help' page_name='artikel'%}">Artikel</a></li>
@@ -45,7 +41,7 @@
 <li><a href="{% url 'help' page_name='warenkatalog'%}">Warenkataloge</a></li>
 </ul>
 </div>
-<div class="w-100 p-3 card bg-body-tertiary">
+<div class="col p-3">
 <h5 id="stammdaten">Stammdaten</h5>
 <ul>
 <li><a href="{% url 'help' page_name='autor'%}">Autoren</a></li>
@@ -58,7 +54,7 @@
 <li><a href="{% url 'help' page_name='schlagwort'%}">Schlagwörter</a></li>
 </ul>
 </div>
-<div class="w-100 p-3 card bg-body-tertiary">
+<div class="col p-3">
 <h5 id="sonstige">Sonstige</h5>
 <ul>
 <li><a href="{% url 'help' page_name='herausgeber'%}">Herausgeber</a></li>
@@ -68,8 +64,8 @@
 <li><a href="{% url 'help' page_name='verlag'%}">Verlage</a></li>
 </ul>
 </div>
-</div>
-<h2 id="weitere-hilfeseiten">Weitere Hilfeseiten</h2>
+<div class="col p-3">
+<h5 id="weitere-seiten">Weitere Seiten</h5>
 <ul>
 <li><a href="{% url 'help' page_name='benutzer'%}">Benutzerverwaltung</a></li>
 <li><a href="{% url 'help' page_name='grundsaetze'%}">Grundsätze</a></li>
@@ -80,5 +76,7 @@
 <li><a href="{% url 'help' page_name='aenderungsliste'%}">Änderungsliste</a></li>
 <li><a href="{% url 'help' page_name='suchformular'%}">Suchformular</a></li>
 <li><a href="{% url 'help' page_name='merkliste'%}">Merkliste</a></li>
-</ul></div>
+</ul>
+</div>
+</div></div>
 </div>{% endblock content %}
