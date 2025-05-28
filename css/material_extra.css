@@ -1,5 +1,14 @@
-/* Add some bootstrap classes for aligning items */
+/* Set colors according to the flatly theme of the main app
+https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#custom-colors
+*/
+:root  > * {
+  --md-primary-fg-color:        #2c3e50;
+  --md-typeset-a-color:         #18bc9c;
+  --md-accent-fg-color:         #13967d;
+  --md-default-fg-color--light: #153d58;
+}
 
+/* Add some bootstrap classes for aligning items */
 .d-flex {
     display: flex;
 }
