@@ -18,7 +18,7 @@ MIZDB Grundverzeichnis eingetragen werden.
 
 ## 1. Admins registrieren
 
-Unter dem Punkt `ADMINS` werden die Admins, die benachrichtigt werden sollen, mit Namen und E-MAil Adresse in eine Liste
+Unter dem Punkt `ADMINS` werden die Admins, die benachrichtigt werden sollen, mit Namen und E-Mail-Adresse in eine Liste
 eingetragen.
 
 Zum Beispiel:

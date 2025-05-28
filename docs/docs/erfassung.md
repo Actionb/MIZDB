@@ -141,7 +141,7 @@ miteinbezogen; d.h. ein Artikel kann anhand der Angaben in der Zusammenfassung w
 [comment]: <> (@formatter:off)  
 !!! tip "Tipp: Textfeld zu klein?"  
     Manche Textfelder, wie z.B. "Zusammenfassung", kannst du vergrößern oder verkleinern, in dem du im Textfeld unten 
-    rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder runterbewegst.  
+    rechts auf das kleine Symbol klickst, die Maustaste gedrückt hältst und dann die Maus rauf- oder herunterbewegst.  
     Siehe: [Bedienelement#Textfeld](bedienelement.md#textfeld-mit-variabler-grosse).
 
 [comment]: <> (@formatter:on)
