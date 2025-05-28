@@ -1,4 +1,4 @@
-# Hilfe
+# Index
 
 Willkommen auf der Hilfe-Seite der MIZDB Anwendung!
 
@@ -6,11 +6,12 @@ Hier kannst du mehr über den Umgang mit der Datenbank erfahren.
 
 Neu hier? Dann lese die **[Einführung](einfuehrung.md)**!
 
-## Tabellen
+## Hilfeseiten
 
-Informationen zu den Tabellen findest du hier:
-<div markdown class="d-flex justify-content-evenly gap-3 mb-3">
-<div markdown class="w-100 p-3 card bg-body-tertiary">
+Informationen zu den Tabellen sowie weitere Hilfeseiten findest du hier:
+
+<div markdown class="row row-cols-sm-3 row-cols-1 gx-5 mb-3 px-5">
+<div markdown class="col p-3">
 
 ##### Archiv Materialien
 
@@ -26,7 +27,7 @@ Informationen zu den Tabellen findest du hier:
 * [Warenkataloge](warenkatalog.md)
 
 </div>
-<div markdown class="w-100 p-3 card bg-body-tertiary">
+<div markdown class="col p-3">
 
 ##### Stammdaten
 
@@ -40,7 +41,7 @@ Informationen zu den Tabellen findest du hier:
 * [Schlagwörter](schlagwort.md)
 
 </div>
-<div markdown class="w-100 p-3 card bg-body-tertiary">
+<div markdown class="col p-3">
 
 ##### Sonstige
 
@@ -51,9 +52,9 @@ Informationen zu den Tabellen findest du hier:
 * [Verlage](verlag.md)
 
 </div>
-</div>
+<div markdown class="col p-3">
 
-## Weitere Hilfeseiten
+##### Weitere Seiten
 
 * [Benutzerverwaltung](benutzer.md)
 * [Grundsätze](grundsaetze.md)
@@ -64,3 +65,6 @@ Informationen zu den Tabellen findest du hier:
 * [Änderungsliste](aenderungsliste.md)
 * [Suchformular](suchformular.md)
 * [Merkliste](merkliste.md)
+
+</div>
+</div>
