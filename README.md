@@ -107,6 +107,39 @@ oder ein Backup einlesen:
 POSTGRES_USER=mizdb_user POSTGRES_DB=mizdb scripts/db/restore.sh < backup_datei
 ```
 
+### Scripts mit Poe ausführen
+
+Mit [Poe The Poet](https://github.com/nat-n/poethepoet) können nützliche, vordefinierte Scripts ausgeführt werden.
+
+Installieren mit [pipx](https://pipx.pypa.io/stable/) (oder
+siehe [andere Methoden](https://poethepoet.natn.io/installation.html)):
+
+```shell
+pipx install poethepoet
+```
+
+Anschließend können einzelne Scripts so ausgeführt werden:
+
+```shell
+poe test
+```
+
+Die folgenden Scripts sind in `pyproject.toml`
+definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/index.html)):
+
+| Script Name | Beschreibung                                             |
+|-------------|----------------------------------------------------------|
+| server      | Development Server starten                               |
+| shell       | Django Shell starten                                     |
+| test        | Pytest Tests ausführen (mit Coverage)                    |
+| test-q      | Pytest Tests ausführen (ohne Coverage, schneller)        | 
+| test-pw     | Playwright Tests ausführen                               |
+| drop-testdb | Alle Test-Datenbanken löschen                            |
+| tox         | Python tox ausführen                                     |
+| ruff        | ruff Linter und Formatter ausführen und Probleme beheben |
+| ruff-check  | `ruff check .` ausführen                                 |
+| build-docs  | Dokumentation bauen und bei Github hochladen             |
+
 ### Dev Server (Docker)
 
 Um den Test-/Development Server zu starten:
