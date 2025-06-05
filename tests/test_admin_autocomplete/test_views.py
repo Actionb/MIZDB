@@ -2,7 +2,7 @@ import json
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
+from django.db.models import QuerySet
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import override as translation_override
 
@@ -325,20 +325,8 @@ class TestACBase(ACViewTestCase):
                     view.get_queryset()
 
     def test_get_queryset_ordering(self):
-        """Assert that the result queryset has the 'text search ordering'."""
-        # The expected ordering would be:
-        #   - name_field__iexact
-        #   - name_field__istartswith
-        #   - search rank
-        #   - name_field
-        q = "foo"
-        name_field = self.model.name_field
-        exact = ExpressionWrapper(Q(**{name_field + "__iexact": q}), output_field=BooleanField())
-        startswith = ExpressionWrapper(Q(**{name_field + "__istartswith": q}), output_field=BooleanField())
-
-        self.assertEqual(
-            self.get_view(q=q).get_queryset().query.order_by, (exact.desc(), startswith.desc(), "-rank", name_field)
-        )
+        """Assert that the result queryset has the expected order of results."""
+        self.assertEqual(list(self.get_view(q="foo").get_queryset()), [self.obj2, self.obj1])
 
 
 class TestACTabular(ACViewTestCase):

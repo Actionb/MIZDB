@@ -15,6 +15,7 @@
 ### Fixed
 
 - searchbar search: search term is now properly escaped before being attached to the result link
+- full text search now includes items that merely contain the search term
 
 ## [0.22.1] - 2025-05-28
 
