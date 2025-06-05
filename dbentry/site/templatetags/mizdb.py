@@ -7,7 +7,6 @@ from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from mizdb_tomselect.views import IS_POPUP_VAR
 
-from dbentry.site.renderer import TabularInlineFormsetRenderer
 from dbentry.utils import url
 from dbentry.utils import permission
 from dbentry.utils.html import create_hyperlink
@@ -151,11 +150,6 @@ def get_actionlist_item(entry):
         title = "Gelöscht"
         image = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x text-danger me-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'  # noqa
     return {"title": title, "image": mark_safe(image), "change_link": change_link}
-
-
-@register.simple_tag
-def tabular_inline_formset(formset, **kwargs):
-    return TabularInlineFormsetRenderer(formset, **kwargs).render()
 
 
 @register.simple_tag
