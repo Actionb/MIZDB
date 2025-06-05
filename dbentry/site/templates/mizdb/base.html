@@ -61,7 +61,7 @@
                     <button type="button" class="btn btn-primary border-dark dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu dropdown-menu-end">
                       {% if offline_help_url %}<li><a class="dropdown-item" href="{{ offline_help_url }}" {% if popup_links %}target="_blank"{% endif %}>Offline-Hilfe</a></li>{% endif %}
-                      {% if feedback_url %}<li><a class="dropdown-item" href="{{ feedback_url }}" {% if popup_links %}target="_blank"{% endif %}>Feedback senden</a></li>{% endif %}
+                      {% if user.is_authenticated and feedback_url %}<li><a class="dropdown-item" href="{{ feedback_url }}" {% if popup_links %}target="_blank"{% endif %}>Feedback senden</a></li>{% endif %}
                     </ul>
                   {% endif %}
                 </div>

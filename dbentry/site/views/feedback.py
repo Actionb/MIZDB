@@ -2,6 +2,7 @@ from urllib import parse
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import mail_admins
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy, reverse
@@ -11,7 +12,7 @@ from dbentry.site.forms import FeedbackForm
 from dbentry.site.views.base import BaseViewMixin, ONLINE_HELP_INDEX
 
 
-class FeedbackView(BaseViewMixin, FormView):
+class FeedbackView(BaseViewMixin, LoginRequiredMixin, FormView):
     template_name = "mizdb/feedback.html"
     form_class = FeedbackForm
     success_url = reverse_lazy("index")

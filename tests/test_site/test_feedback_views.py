@@ -72,3 +72,10 @@ class TestFeedbackView(ViewTestCase):
             self.view_class._create_mail_message(self.super_user, data={"message": "foo", "email": "foo@bar.com"}),
             expected_message,
         )
+
+    def test_login_required(self):
+        """Assert that an unauthenticated user is redirected to the login page."""
+        self.client.logout()
+        response = self.client.get(reverse("feedback"))
+        self.assertEqual(response.status_code, 302)
+        self.assertURLEqual(response.url, f"{reverse('login')}?next={reverse('feedback')}")

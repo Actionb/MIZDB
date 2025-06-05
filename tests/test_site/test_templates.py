@@ -67,3 +67,30 @@ class TestBase(RenderTestCase):
         for content_type, html in expected_content:
             with self.subTest(content_type=content_type):
                 self.assertInHTML(html, account, msg_prefix=account)
+
+    def test_feedback_link(self):
+        """
+        Assert that the link to the feedback page is added if the user is authenticated
+        and if the feedback_url template variable not set.
+        """
+        ctx = {"help_url": "/help/", "user": self.super_user, "feedback_url": "/feedback/"}
+        soup = self.get_soup(self.template_name, ctx)
+        self.assertIsNotNone(soup.find(string="Feedback senden"))
+
+    def test_feedback_link_unauthenticated_user(self):
+        """
+        Assert that the link to the feedback page is not added if the user is
+        not authenticated.
+        """
+        ctx = {"help_url": "/help/", "user": AnonymousUser(), "feedback_url": "/feedback/"}
+        soup = self.get_soup(self.template_name, ctx)
+        self.assertIsNone(soup.find(string="Feedback senden"))
+
+    def test_feedback_link_no_feedback_url(self):
+        """
+        Assert that the link to the feedback page is not added if no feedback
+        url is provided to the template.
+        """
+        ctx = {"help_url": "/help/", "user": self.super_user, "feedback_url": ""}
+        soup = self.get_soup(self.template_name, ctx)
+        self.assertIsNone(soup.find(string="Feedback senden"))
