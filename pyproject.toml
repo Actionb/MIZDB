@@ -68,6 +68,8 @@ pretty = true
 exclude = [
     "migrations",
     "management",
+    "docs",
+    "site",
 ]
 
 [tool.coverage.run]
@@ -128,4 +130,3 @@ shell = "docker compose down && docker compose up -d"
 [tool.poe.tasks.docker-rebuild]
 help = "Restart the Docker containers"
 shell = "docker compose down && docker compose up -d --build"
-
