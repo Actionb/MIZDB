@@ -187,6 +187,17 @@ class TestUnit(ViewTestCase):
         url = view._get_changelist_link_url(request="request", model="model", q="bar")
         self.assertNotIn("q=bar", url)
 
+    @patch("dbentry.site.views.search.get_changelist_url")
+    def test_get_changelist_link_escapes_string(self, get_changelist_mock):
+        """
+        Assert that the search term appended to the query string is escaped
+        properly.
+        """
+        get_changelist_mock.return_value = "foo/"
+        view = self.get_view()
+        url = view._get_changelist_link_url(request="request", model="model", q="foo & bar")
+        self.assertIn("q=foo%20%26%20bar", url)
+
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestSiteSearchView(ViewTestCase):

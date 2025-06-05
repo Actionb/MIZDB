@@ -12,6 +12,10 @@
 - now includes Python 3.13 in tests and CI
 - tweaked help docs
 
+### Fixed
+
+- searchbar search: search term is now properly escaped before being attached to the result link
+
 ## [0.22.1] - 2025-05-28
 
 ### Fixed
