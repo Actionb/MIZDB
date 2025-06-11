@@ -78,6 +78,7 @@ class AudioForm(DiscogsFormMixin, MIZEditForm):
         help_text="Beispiel Laufzeit von 144 Minuten: 0:144:0",
         required=False,
         widget=forms.TextInput(attrs={"placeholder": "hh:mm:ss", "style": "max-width: 200px;"}),
+        label="Laufzeit",
     )
 
     url_field_name = "discogs_url"

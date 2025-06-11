@@ -16,6 +16,8 @@
 
 - searchbar search: search term is now properly escaped before being attached to the result link
 - full text search now includes items that merely contain the search term
+- fixed change history messages including problematic `None` values in the list of changed fields if a form field has no
+  explicit label set
 
 ## [0.22.1] - 2025-05-28
 
