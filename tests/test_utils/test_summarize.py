@@ -103,7 +103,7 @@ class TestPersonParser(ParserTestCase):
             "Normdatei Name",
             "Link DNB",
             "Beschreibung",
-            "Webseiten",
+            "Weblinks",
             "Musiker",
             "Autoren",
             "Orte",
@@ -131,7 +131,7 @@ class TestMusikerParser(ParserTestCase):
             "Künstlername",
             "Personen",
             "Beschreibung",
-            "Webseiten",
+            "Weblinks",
             "Genres",
             "Aliases",
             "Bands",
@@ -157,7 +157,7 @@ class TestBandParser(ParserTestCase):
             "Bandname",
             "Beschreibung",
             "Aliases",
-            "Webseiten",
+            "Weblinks",
             "Genres",
             "Musiker",
             "Orte",
@@ -175,7 +175,7 @@ class TestAutorParser(ParserTestCase):
         self.assertCountEqual(list(annotations.keys()), expected)
 
     def test_get_text_repr(self):
-        expected = ["Objekt", "ID", "Name", "Kürzel", "Beschreibung", "Webseiten", "Magazine"]
+        expected = ["Objekt", "ID", "Name", "Kürzel", "Beschreibung", "Weblinks", "Magazine"]
         text_repr = self.parser.get_summary(self.queryset.get())
         self.assertEqual(list(text_repr.keys()), expected)
 
@@ -225,7 +225,7 @@ class TestMagazinParser(ParserTestCase):
             "Ist Fanzine",
             "ISSN",
             "Beschreibung",
-            "Webseiten",
+            "Weblinks",
             "Genres",
             "Verlage",
             "Herausgeber",
@@ -638,7 +638,7 @@ class TestBrochureParser(ParserTestCase):
             "Zusammenfassung",
             "Ausgabe",
             "Beschreibung",
-            "Webseiten",
+            "Weblinks",
             "Jahre",
             "Genres",
             "Schlagwörter",
@@ -664,7 +664,7 @@ class TestKalenderParser(ParserTestCase):
             "Zusammenfassung",
             "Ausgabe",
             "Beschreibung",
-            "Webseiten",
+            "Weblinks",
             "Jahre",
             "Genres",
             "Spielorte",
@@ -692,7 +692,7 @@ class TestKatalogParser(ParserTestCase):
             "Zusammenfassung",
             "Ausgabe",
             "Beschreibung",
-            "Webseiten",
+            "Weblinks",
             "Jahre",
             "Genres",
             "Bestände",

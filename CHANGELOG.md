@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.23.0] 2025-06-11
+
+### Added
+
+- added simple favicon and logo
+
+### Changed
+
+- updated project dependencies
+- now includes Python 3.13 in tests and CI
+- tweaked help docs
+
+### Fixed
+
+- searchbar search: search term is now properly escaped before being attached to the result link
+- full text search now includes items that merely contain the search term
+- fixed change history messages including problematic `None` values in the list of changed fields if a form field has no
+  explicit label set
+
 ## [0.22.1] - 2025-05-28
 
 ### Fixed

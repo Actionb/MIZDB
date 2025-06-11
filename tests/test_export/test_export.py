@@ -65,7 +65,7 @@ class TestExport(MIZTestCase):
             "Id",
             "Künstlername",
             "Person",
-            "Webseiten",
+            "Weblinks",
             "Genres",
             "Alias",
             "Bands (Mitglied)",
@@ -91,7 +91,7 @@ class TestExport(MIZTestCase):
 
     def test_url_data(self):
         datadict = self.get_datadict()
-        self.assertEqual(datadict["Webseiten"], ", ".join(sort(self.urls)))
+        self.assertEqual(datadict["Weblinks"], ", ".join(sort(self.urls)))
 
     def test_genre_data(self):
         datadict = self.get_datadict()

@@ -1,18 +1,18 @@
-Django==4.2.21
-django-admin-logs==1.1.0
-django-autocomplete-light==3.11.0
-django-bootstrap5==24.2
+Django==4.2.22
+django-admin-logs==1.4.0
+django-autocomplete-light==3.12.1
+django-bootstrap5==25.1
 django-formtools==2.5.1
 git+https://github.com/Actionb/django-tsvector-field-dj4.git#egg=django-tsvector-field  # Fork of django-tsvector-field updated for Django 4.0+
-Levenshtein==0.25.1
-mizdb-inlines==0.2.8
+Levenshtein==0.27.1
+mizdb-inlines==0.3.1
 mizdb-tomselect==0.10.0
-mod_wsgi==5.0.0
+mod_wsgi==5.0.2
 nameparser==1.1.3
-requests==2.32.0
-psycopg2==2.9.9
-python-stdnum==1.20
+requests==2.32.4
+psycopg2==2.9.10
+python-stdnum==2.1
 mizdb-watchlist==1.1.1
-django-import-export==3.3.8
+django-import-export==3.3.8  # avoid updating to 4.* because of breaking changes
 pyyaml==6.0.1
-semver==3.0.2
+semver==3.0.4

@@ -68,9 +68,65 @@ pretty = true
 exclude = [
     "migrations",
     "management",
+    "docs",
+    "site",
 ]
 
 [tool.coverage.run]
 omit = [
     "dbentry/migrations/*",
 ]
+
+[tool.poe.executor]
+type = "virtualenv"
+
+[tool.poe.tasks.server]
+help = "Run the Django development server"
+cmd = "python manage.py runserver"
+
+[tool.poe.tasks.shell]
+help = "Run interactive interpreter for this Django project"
+cmd = "python manage.py shell"
+
+[tool.poe.tasks.test]
+help = "Run pytest tests with coverage - exclude slow playwright tests"
+cmd = "pytest -n auto -m 'not e2e'  --cov --cov-report=html --cov-branch"
+
+[tool.poe.tasks.qtest]
+help = "(quickly) Run pytest tests, but without coverage to speed things up"
+cmd = "pytest -n auto -m 'not e2e'"
+
+[tool.poe.tasks.test-pw]
+help = "Run playwright tests"
+cmd = "pytest -n auto --browser firefox"
+
+[tool.poe.tasks.drop-testdb]
+help = "Drop all test databases. This can be helpful if databases get corrupted from aborted tests."
+cmd = "./scripts/droptest.sh"
+
+[tool.poe.tasks.tox]
+help = "Run tox"
+cmd = "tox"
+
+[tool.poe.tasks.ruff]
+help = "Run ruff linter und formatter and fix found issues"
+shell = "ruff check --fix .; ruff format"
+
+[tool.poe.tasks.ruff-check]
+help = "Run ruff check"
+shell = "ruff check ."
+
+[tool.poe.tasks.build-docs]
+help = "Build offline and online docs. Upload online docs to Github pages."
+shell = """
+  mkdocs build -f mkdocs-offline.yml
+  mkdocs gh-deploy -f mkdocs-online.yml
+"""
+
+[tool.poe.tasks.docker-restart]
+help = "Restart the Docker containers"
+shell = "docker compose down && docker compose up -d"
+
+[tool.poe.tasks.docker-rebuild]
+help = "Restart the Docker containers"
+shell = "docker compose down && docker compose up -d --build"

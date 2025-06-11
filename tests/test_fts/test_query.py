@@ -2,8 +2,8 @@ from unittest.mock import Mock, patch
 
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVectorExact
 from django.db import models
-from django.db.models import Max
-from django.db.models.expressions import CombinedExpression, Value
+from django.db.models import Max, Q, BooleanField
+from django.db.models.expressions import CombinedExpression, Value, ExpressionWrapper
 from django.db.models.functions import Coalesce
 from django.db.models.sql.where import NothingNode
 from django.test import TestCase
@@ -213,6 +213,39 @@ class TestFullTextSearch(DataTestCase):
         term are numeric.
         """
         self.assertFalse(self.queryset.search(f"{self.obj1.pk},Ärzte"))
+
+    def test_get_queryset_ordering(self):
+        """Assert that the result queryset has the 'text search ordering'."""
+        # The expected ordering would be:
+        #   - name_field__iexact
+        #   - name_field__istartswith
+        #   - search rank
+        #   - name_field__icontains
+        #   - name_field
+        q = "foo"
+        name_field = self.model.name_field
+        exact = ExpressionWrapper(Q(**{name_field + "__iexact": q}), output_field=BooleanField())
+        startswith = ExpressionWrapper(Q(**{name_field + "__istartswith": q}), output_field=BooleanField())
+        contains = ExpressionWrapper(Q(**{name_field + "__icontains": q}), output_field=BooleanField())
+        qs = self.queryset.search(q)
+
+        self.assertEqual(qs.query.order_by, (exact.desc(), startswith.desc(), "-rank", contains.desc(), name_field))
+
+    def test_get_queryset_ordering_no_name_field(self):
+        """
+        Assert that no 'text search ordering' is established if the model has no
+        name field.
+        """
+        with patch.object(self.model, "name_field", new=None):
+            qs = self.queryset.search("foo")
+            self.assertEqual(qs.query.order_by, ("-rank", *self.model._meta.ordering))
+
+    def test_get_queryset_ordering_not_ranked(self):
+        """
+        Assert that no 'text search ordering' is established if the ranked argument to the search
+        """
+        qs = self.queryset.search("foo", ranked=False)
+        self.assertEqual(qs.query.order_by, ("-rank", *self.model._meta.ordering))
 
 
 class TestTextSearchQuerySetMixin(TestCase):
@@ -493,3 +526,21 @@ class TestAusgabeFTS(DataTestCase):
         """Assert that forward slashes can be used in a search term."""
         # See: https://github.com/Actionb/MIZDB/issues/14
         self.assertTrue(self.model.objects.search("2001/02-02/03").exists())
+
+
+class TestInstrumentSearch(DataTestCase):
+    model = _models.Instrument
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.sax = make(cls.model, instrument="Saxophon", kuerzel="sax")
+        cls.asax = make(cls.model, instrument="Altsaxophon", kuerzel="asax")
+        super().setUpTestData()
+
+    def test_search_sax(self):
+        """Assert that 'Altsaxophon' can be found when querying for 'sax'."""
+        for q in ("sax", "Sax"):
+            with self.subTest(q=q):
+                qs = self.model.objects.search(q)
+                self.assertIn(self.sax, qs)
+                self.assertIn(self.asax, qs)

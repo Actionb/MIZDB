@@ -138,17 +138,26 @@ class TextSearchQuerySetMixin(object):
         else:
             search_rank = model_search_rank or Max(related_search_rank)
 
+        # Add a filter that checks if the search term is contained anywhere in
+        # the values of the 'name field'. This kind of filtering cannot be done
+        # with full text search, so use the 'icontains' lookup.
+        name_field = getattr(model, "name_field", None)
+        if name_field:
+            filters |= Q(**{f"{name_field}__icontains": q})
+
         results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]
         if ranked or not self.query.order_by:  # type: ignore[attr-defined]
             # Apply ordering to the results.
-            ordering = ["-rank", *(self.query.order_by or model._meta.ordering)]  # type: ignore
-            if ranked and getattr(model, "name_field", None):
-                name_field = model.name_field
+            _ordering = self.query.order_by or model._meta.ordering  # type: ignore[attr-defined]
+            if ranked and name_field:
                 exact = ExpressionWrapper(Q(**{name_field + "__iexact": q}), output_field=BooleanField())
                 startswith = ExpressionWrapper(Q(**{name_field + "__istartswith": q}), output_field=BooleanField())
-                ordering = [exact.desc(), startswith.desc()] + ordering
+                contains = ExpressionWrapper(Q(**{name_field + "__icontains": q}), output_field=BooleanField())
+                ordering = [exact.desc(), startswith.desc(), "-rank", contains.desc(), *_ordering]
                 if q.isnumeric():
                     # Prepend an ordering for exact pk matches:
                     ordering.insert(0, ExpressionWrapper(Q(**{pk_name: q}), output_field=BooleanField()).desc())
+            else:
+                ordering = ["-rank", *_ordering]
             results = results.order_by(*ordering)
         return results

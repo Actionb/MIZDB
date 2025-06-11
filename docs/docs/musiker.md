@@ -26,6 +26,10 @@ Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
 Notizen für Archiv-Mitarbeiter.
 
+### Weblinks
+
+Links zu Internetseiten mit Informationen zu dem Musiker können hier eingetragen werden.
+
 ### Genres
 
 Die [Genres](genre.md "Genre") des Musikers.

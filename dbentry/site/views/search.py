@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from django.http import JsonResponse
 from django.views import View
 from django.views.generic import TemplateView
@@ -69,7 +71,7 @@ class SearchViewMixin:
         url = get_changelist_url(request, model)
         if url:
             # Append a query string containing the search term
-            url += f"?q={q}"
+            url += f"?q={quote(q.strip())}"
         return url
 
     def _get_changelist_link_label(self, queryset, opts):

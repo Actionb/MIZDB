@@ -39,7 +39,7 @@ Je eine Zeile in einem Inline repräsentiert je eine Verknüpfung zu einem ander
 </figure>
 </div>
 
-### Verknüpfung änden
+### Verknüpfung ändern
 
 Um eine existierende Verknüpfung zu ändern, wähle im Auswahlfeld aus der Liste einen *anderen* Datensatz aus.
 

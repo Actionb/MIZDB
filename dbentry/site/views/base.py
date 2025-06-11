@@ -65,6 +65,8 @@ OFFLINE_HELP_INDEX = reverse_lazy("help", kwargs={"page_name": "index"})
 
 def _email_configured():
     """Return whether the settings required for sending admin emails are set."""
+    if settings.DEBUG:
+        return True
     required_settings = [
         settings.ADMINS,
         settings.EMAIL_HOST != "localhost",

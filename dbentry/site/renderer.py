@@ -1,5 +1,4 @@
 from django_bootstrap5.renderers import FieldRenderer
-from mizdb_inlines.renderers import InlineFormRenderer, InlineFormsetRenderer
 
 IS_INVALID_CLASS = "is-invalid"
 
@@ -10,14 +9,3 @@ class MIZFieldRenderer(FieldRenderer):
         if self.field_errors:
             return IS_INVALID_CLASS
         return ""  # Do not add the 'is-valid' class to valid elements
-
-
-class TabularInlineFormRenderer(InlineFormRenderer):
-    """Renderer for inline forms that renders all fields in a row."""
-
-    def get_field_container_class(self):
-        return "col fields-container row"
-
-
-class TabularInlineFormsetRenderer(InlineFormsetRenderer):
-    form_renderer = TabularInlineFormRenderer

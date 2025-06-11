@@ -17,6 +17,7 @@
     {% endblock script %}
     {% block extrastyle %}{% endblock extrastyle %}
     {% block extrahead %}{% endblock extrahead %}
+    <link rel ="icon" href="{% static 'favicon.png' %}" type="image/x-icon">
 </head>
 <body class="{% block bodyclass %}{% endblock %}" {% if opts %}data-model="{{ opts.app_label }}.{{ opts.model_name }}"{% endif %}{% if cls_sync_url %} data-cls-sync-url="{{ cls_sync_url }}"{% endif %}>
 
@@ -59,8 +60,8 @@
                   {% if offline_help_url or feedback_url %}
                     <button type="button" class="btn btn-primary border-dark dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                      {% if offline_help_url %}<li><a class="dropdown-item" href="{{ offline_help_url }}" {% if popup_links %}target="_blank"{% endif %}>Offline-Hilfe</a></li>{% endif %}
-                      {% if feedback_url %}<li><a class="dropdown-item" href="{{ feedback_url }}" {% if popup_links %}target="_blank"{% endif %}>Feedback senden</a></li>{% endif %}
+                      {% if offline_help_url %}<li><a class="dropdown-item" href="{{ offline_help_url }}" {% if popup_links %}target="_blank"{% endif %} title="Offline-Hilfe">Offline-Hilfe</a></li>{% endif %}
+                      {% if user.is_authenticated and feedback_url %}<li><a class="dropdown-item" href="{{ feedback_url }}" {% if popup_links %}target="_blank"{% endif %} title="Eine Nachricht an die Admins senden">Feedback senden</a></li>{% endif %}
                     </ul>
                   {% endif %}
                 </div>

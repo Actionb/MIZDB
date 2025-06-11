@@ -38,8 +38,14 @@ def construct_change_message(form: ModelForm, formsets: List[BaseInlineFormSet],
     if add:
         change_message.append({"added": {}})
     elif form.changed_data:
-        changed_fields = [form.fields[field].label for field in form.changed_data]
-        change_message.append({"changed": {"fields": changed_fields}})
+        changed_field_labels = []
+        for field_name in form.changed_data:
+            try:
+                verbose_field_name = form.fields[field_name].label or field_name
+            except KeyError:
+                verbose_field_name = field_name
+            changed_field_labels.append(str(verbose_field_name))
+        change_message.append({"changed": {"fields": changed_field_labels}})
     # Handle relational changes:
     if formsets:
         parent_model = form._meta.model

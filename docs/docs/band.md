@@ -22,6 +22,10 @@ Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
 Notizen für Archiv-Mitarbeiter.
 
+### Weblinks
+
+Links zu Internetseiten mit Informationen zu der Band können hier eingetragen werden.
+
 ### Genres
 
 Die [Genres](genre.md "Genre") der Band.

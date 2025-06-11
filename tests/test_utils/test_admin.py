@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.forms import modelform_factory
 from django.test import override_settings
@@ -96,6 +97,40 @@ class TestAdminUtils(RequestTestCase):
         self.assertEqual(
             admin_utils._get_relation_change_message(m2m, Genre), {"name": "base", "object": "Test-Programmheft"}
         )
+
+    def test_change_message_form_field_no_label(self):
+        """
+        Assert that construct_change_message properly handles form fields that
+        do not have an explicit label.
+        """
+        # There was an issue where, if a form field did not explicitly set the
+        # label attribute, construct_change_message would include a None value
+        # in the list of changed fields. 'None' will then be serialized to 'null'
+        # in LogEntryManager.log_action, and deserialized back to a None by
+        # LogEntry.get_change_message, which will cause a crash because string
+        # objects are expected here - not None objects.
+
+        class AudioForm(forms.ModelForm):
+            label = forms.CharField(label="Foo")
+            no_label = forms.CharField()
+
+            class Meta:
+                model = Audio
+                fields = ["titel", "label", "no_label"]
+
+        data = {"titel": "Testaudio", "label": "foo", "no_label": "bar"}
+        initial = {"label": "", "no_label": ""}
+        form = AudioForm(data=data, initial=initial)
+        self.assertTrue(form.is_valid(), msg=form.errors)
+
+        change_message = admin_utils.construct_change_message(form, formsets=[], add=False)
+        changed_fields = change_message[0]["changed"]["fields"]
+
+        label = changed_fields[form.changed_data.index("label")]
+        self.assertEqual(label, "Foo")
+        no_label = changed_fields[form.changed_data.index("no_label")]
+        self.assertIsNotNone(no_label)
+        self.assertEqual(no_label, "no_label")
 
     ################################################################################################
     # test AdminLog helper functions
