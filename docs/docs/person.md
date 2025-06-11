@@ -25,6 +25,10 @@ Ein Feld für weitere Angaben, welche in kein anderes der Felder passen.
 
 Notizen für Archiv-Mitarbeiter.
 
+### Weblinks
+
+Links zu Internetseiten mit Informationen zu der Person können hier eingetragen werden.
+
 ### Assoziierte Orte
 
 [Orte](ort.md "Ort"), mit denen die Person assoziiert ist oder war. Zum Beispiel der Geburtsort oder die Stadt, in der 
