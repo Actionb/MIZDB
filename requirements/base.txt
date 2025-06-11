@@ -1,4 +1,4 @@
-Django==4.2.21
+Django==4.2.22
 django-admin-logs==1.4.0
 django-autocomplete-light==3.12.1
 django-bootstrap5==25.1
@@ -9,7 +9,7 @@ mizdb-inlines==0.3.1
 mizdb-tomselect==0.10.0
 mod_wsgi==5.0.2
 nameparser==1.1.3
-requests==2.32.3
+requests==2.32.4
 psycopg2==2.9.10
 python-stdnum==2.1
 mizdb-watchlist==1.1.1
