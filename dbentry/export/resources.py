@@ -203,7 +203,7 @@ class AusgabeResource(MIZResource):
 class AutorResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Autor.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     magazin_list = CachedQuerysetField(
@@ -402,7 +402,7 @@ class PlakatResource(MIZResource):
 class BandResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Band.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     genre_list = CachedQuerysetField(
@@ -590,7 +590,7 @@ class GenreResource(MIZResource):
 class MagazinResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Magazin.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     genre_list = CachedQuerysetField(
@@ -647,7 +647,7 @@ class MagazinResource(MIZResource):
 class MusikerResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Musiker.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     genre_list = CachedQuerysetField(
@@ -709,7 +709,7 @@ class MusikerResource(MIZResource):
 class PersonResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Person.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     orte_list = CachedQuerysetField(
@@ -742,7 +742,7 @@ class SchlagwortResource(MIZResource):
 class SpielortResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Spielort.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     spielortalias_list = CachedQuerysetField(
@@ -762,7 +762,7 @@ class SpielortResource(MIZResource):
 class VeranstaltungResource(MIZResource):
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Veranstaltung.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     veranstaltungalias_list = CachedQuerysetField(
@@ -1051,7 +1051,7 @@ class BrochureResource(MIZResource):
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Brochure.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     jahre_list = CachedQuerysetField(
@@ -1113,7 +1113,7 @@ class KatalogResource(MIZResource):
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Katalog.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     jahre_list = CachedQuerysetField(
@@ -1169,7 +1169,7 @@ class KalenderResource(MIZResource):
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
-        column_name="Webseiten",
+        column_name="Weblinks",
         queryset=_models.Kalender.objects.annotate(urls_list=string_list("urls__url", length=1024)),
     )
     jahre_list = CachedQuerysetField(
