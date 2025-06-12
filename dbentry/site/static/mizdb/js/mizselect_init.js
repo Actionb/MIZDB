@@ -5,7 +5,13 @@ window.addEventListener('initMIZSelect', (e) => {
   const elem = e.target
   const germanSettings = {
     plugins: {
-      add_button: { label: 'Hinzufügen' },
+      add_button: {
+        label: 'Hinzufügen',
+        errorMessages: {
+          error: 'Ein Server-Fehler ist eingetreten :(',
+          unique: 'Dieser Datensatz existiert bereits. Bitte wähle ihn aus der Liste aus.'
+        },
+      },
       changelist_button: { label: 'Änderungsliste' },
       edit_button: { title: 'Bearbeiten' }
     },

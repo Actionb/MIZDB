@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+- show warning message in MIZSelect dropdown when trying to create duplicates of objects with unique constraints
+
 ## [0.23.0] 2025-06-11
 
 ### Added
