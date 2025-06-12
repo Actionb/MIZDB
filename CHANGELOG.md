@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.24.0] - 2025-06-12
+
+### Added
+
+- show warning message in MIZSelect dropdown when trying to create duplicates of objects with unique constraints
+
+### Fixed
+
+- fixed Erscheinungsdatum getting reset to default when updating an Ausgabe instance due to the DateInput not accepting
+  the initial value
+
 ## [0.23.0] 2025-06-11
 
 ### Added
