@@ -167,7 +167,13 @@ class AusgabeView(BaseEditView):
     inlines = [NumInline, MonatInline, LNumInline, JahrInline, AudioInline, VideoInline, BestandInline]
     widgets = {
         "sonderausgabe": forms.Select(choices=[(True, "Ja"), (False, "Nein")]),
-        "e_datum": forms.DateInput(attrs={"type": "date"}),
+        # Force format YYYY-MM-DD, otherwise the date input will not accept the
+        # initial value and e_datum will silently be reset to its default when
+        # the user saves the form.
+        # See:
+        # https://forum.djangoproject.com/t/django-form-date-override-in-update-view/34242
+        # https://stackoverflow.com/a/61081644/9313033
+        "e_datum": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
     }
     require_confirmation = True
     confirmation_threshold = 0.8
