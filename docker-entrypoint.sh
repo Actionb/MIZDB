@@ -1,5 +1,9 @@
 #!/bin/sh
 
+echo "Running migrations..."
+python manage.py migrate --skip-checks --no-input
+
+echo "Setting up server..."
 # https://pypi.org/project/mod-wsgi/
 # In running this command, it will not actually startup Apache. All it will do
 # is create the set of configuration files and the startup script to be run.
