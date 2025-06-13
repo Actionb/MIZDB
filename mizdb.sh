@@ -48,7 +48,7 @@ dump() {
     file="$dir/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"
   fi
   echo "Erstelle Datenbank Backup Datei..."
-  docker exec -i "$db_container" /bin/sh -c "/mizdb/dump.sh" > "$file"
+  docker exec -i "$db_container" /bin/sh -c 'pg_dump --username="$POSTGRES_USER" --host=localhost -Fc "$POSTGRES_DB"' > "$file"
   echo "Backup erstellt: $file"
 }
 
@@ -63,7 +63,18 @@ restore() {
   if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
     exit 1
   fi
-  docker exec -i "$db_container" /bin/sh -c "/mizdb/restore.sh" < "$1"
+  # Note that the quotes on 'EOF' make this whole thing work. Why? Magic!
+  cmd=$(cat <<'EOF'
+echo "Deleting database..." \
+&& dropdb --username="$POSTGRES_USER" --host=localhost "$POSTGRES_DB" \
+&& echo "Re-creating database..." \
+&& createdb --username="$POSTGRES_USER" --host=localhost --owner="$POSTGRES_USER" "$POSTGRES_DB" \
+&& echo "Restoring database data..." \
+&& pg_restore --username="$POSTGRES_USER" --host=localhost --dbname "$POSTGRES_DB" \
+&& echo "Done!"
+EOF
+  )
+  docker exec -i "$db_container" /bin/sh -c "$cmd" < "$1"
 }
 
 update() {
