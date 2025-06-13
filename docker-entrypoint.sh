@@ -29,6 +29,9 @@ echo "Setting up server..."
 # will be cached with the same configuration used each time. If you need to
 # update the set of options, run ``setup-server`` again with the new set of
 # options.
+#
+# The server is started by the default command in the docker-compose file:
+#   /etc/mizdb-server/apachectl start -DFOREGROUND
 python manage.py runmodwsgi --setup-only --user apache --group apache --server-root=/etc/mizdb-server --mount-point "$MOUNT_POINT"
 
 # The entrypoint is run as pid 1, and the container will remain up and running
