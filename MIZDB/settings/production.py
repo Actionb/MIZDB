@@ -3,9 +3,9 @@ from .defaults import *  # noqa
 import os
 from pathlib import Path
 
-from .defaults import BASE_DIR, secrets
+from .defaults import BASE_DIR
 
-ALLOWED_HOSTS = secrets["ALLOWED_HOSTS"].split(",")
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "*").split(",")]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -39,3 +39,16 @@ LOGGING = {
     },
     "loggers": {},
 }
+
+# The env var ADMINS is a comma-separated list of admin email-addresses. Split
+# this list into 2-tuples.
+ADMINS = [(email.strip(), email.strip()) for email in os.getenv("ADMINS", "").split(",")]
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.ionos.de")
+EMAIL_PORT = os.getenv("EMAIL_PORT", 465)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "false").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", EMAIL_HOST_USER)
