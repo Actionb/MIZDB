@@ -1,17 +1,9 @@
 #!/usr/bin/env python
 import os
 import sys
-from pathlib import Path
 
 if __name__ == "__main__":
-    if os.environ.get("DJANGO_DEVELOPMENT"):
-        settings_module = "MIZDB.settings.development"
-    else:
-        if not Path("settings.py").exists():
-            print("settings.py not found in root directory.\nHINT: run setup.sh")
-            exit(1)
-        settings_module = "settings"
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MIZDB.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError:
