@@ -15,6 +15,9 @@ RUN --mount=type=bind,source=requirements,target=/tmp/requirements ["uv", "pip",
 
 FROM python:3.11-alpine AS final
 
+LABEL org.opencontainers.image.source="https://github.com/Actionb/MIZDB"
+LABEL org.opencontainers.image.documentation="https://actionb.github.io/MIZDB/"
+
 RUN ["apk", "update", "&&", "upgrade"]
 # libpq required by psycopg2
 RUN ["apk", "add", "libpq", "apache2"]
