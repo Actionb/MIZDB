@@ -4,9 +4,6 @@ services:
     container_name: mizdb-postgres
     volumes:
       - "$DATA_DIR:/var/lib/postgresql/data"
-      - "$BACKUP_DIR:/var/lib/mizdb/backups"
-      # Mount the directory that contains the script for managing backups:
-      - ./scripts/db:/mizdb
     environment:
       POSTGRES_DB: "$DB_NAME"
       POSTGRES_USER: "$DB_USER"
