@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mizdb-postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "$DB_NAME"
+      POSTGRES_USER: "$DB_USER"
+      POSTGRES_PASSWORD: "$DB_PASSWORD"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 5s
+    shm_size: 128mb
+
+  web:
+    image: ghcr.io/actionb/mizdb:latest
+    container_name: mizdb-app
+    volumes:
+      - logs:/var/log/mizdb
+    env_file: docker-compose.env
+    environment:
+      DB_HOST: db
+    ports:
+      - 80:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: ["/mizdb/docker-entrypoint.sh"]
+    command: ["/etc/mizdb-server/apachectl", "start", "-DFOREGROUND"]
+
+volumes:
+  pgdata:
+  logs:
