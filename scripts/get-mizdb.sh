@@ -77,10 +77,6 @@ setup_mizdb() {
   printf "\nErzeuge Docker Container...\n\n"
   sudo docker compose up -d
   printf "\nContainer erstellt!\n\n"
-  echo "Richte Log-Verzeichnis ein..."
-  sudo docker exec -i mizdb-app sh -c 'chown -R apache:apache $LOG_DIR'
-  echo "Sammele statische Dateien..."
-  sudo docker exec -i mizdb-app python manage.py collectstatic --clear --noinput --skip-checks --verbosity 0
   restored=false
   if [ -f "$1" ]; then
     set +e
