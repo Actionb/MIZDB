@@ -139,6 +139,8 @@ definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/in
 | ruff        | ruff Linter und Formatter ausführen und Probleme beheben |
 | ruff-check  | `ruff check .` ausführen                                 |
 | build-docs  | Dokumentation bauen und bei Github hochladen             |
+| build       | Docker Image bauen                                       |
+| publish     | Docker Image bauen und hochladen                         |
 
 ### Dev Server (Docker)
 
