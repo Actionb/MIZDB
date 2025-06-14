@@ -130,3 +130,11 @@ shell = "docker compose down && docker compose up -d"
 [tool.poe.tasks.docker-rebuild]
 help = "Restart the Docker containers"
 shell = "docker compose down && docker compose up -d --build"
+
+[tool.poe.tasks.build]
+help = "Build the MIZDB docker image"
+shell = "docker build . -t ghcr.io/actionb/mizdb"
+
+[tool.poe.tasks.publish]
+help = "Build and upload the MIZDB docker image"
+shell = "docker build . -t ghcr.io/actionb/mizdb && docker push ghcr.io/actionb/mizdb"
