@@ -35,15 +35,11 @@ jobs:
         DB_PORT: 5432
     steps:
       - uses: actions/checkout@v4
-      - name: Run setup
-        run: sh setup.sh
-        env:
-          # Provide environment variables so setup.sh does not ask for them:
-          DB_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          ALLOWED_HOSTS: localhost
       - name: Install dependencies
         run: apt -qq update && apt -qq install -y apache2-dev libpq-dev
       - name: Install Python requirements
         run: pip install -r requirements/base.txt -r requirements/test.txt
       - name: Run tests
         run: pytest -m "not e2e" tests
+        env:
+          DB_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
