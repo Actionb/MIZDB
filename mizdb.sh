@@ -88,9 +88,10 @@ update() {
   fi
   set -e
   # Note there currently isn't an easy way to check whether a new version of
-  # the image is available, so this will always stop and start the containers
+  # the image is available, so this will always pull and restart the containers
   # even if already on the latest version.
   # You could look into the tool 'Watchtower' to help with updating.
+
   # Pull the update:
   echo "Neustes Image wird heruntergeladen..."
   docker compose pull
@@ -100,10 +101,10 @@ update() {
   echo "Starte Container..."
   docker compose up -d
   echo ""
-  if ! docker exec -i "$app_container" python manage.py migrate --check; then
+  if ! docker exec -i "$app_container" python manage.py migrate --check --no-input; then
     read -r -p "Ausstehende Migrationen anwenden? [j/n]: "
-    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
-      docker exec -i "$app_container" python manage.py migrate
+    if [[ $REPLY =~ ^[jJyY]$ ]]; then
+      docker exec -i "$app_container" python manage.py migrate --no-input
     else
       echo "Abgebrochen."
       exit 1
