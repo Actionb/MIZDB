@@ -48,7 +48,7 @@ case "$REPLY" in
 esac
 
 # Prepare the docker files
-# TODO: ask for an install folder?
+# TODO: ask where MIZDB should be installed?
 mkdir -p MIZDB
 cd MIZDB
 
@@ -115,3 +115,5 @@ case "$REPLY" in
 esac
 
 echo "Fertig!"
+echo "Zum Verwalten das Management Skript 'mizdb' werden: mizdb help"
+echo "Viel Spaß!"
