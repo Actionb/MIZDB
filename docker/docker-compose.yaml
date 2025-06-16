@@ -5,9 +5,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: "$DB_NAME"
-      POSTGRES_USER: "$DB_USER"
-      POSTGRES_PASSWORD: "$DB_PASSWORD"
+      POSTGRES_DB: "${DB_NAME:-mizdb}"
+      POSTGRES_USER: "${DB_USER:-mizdb_user}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-mizdb}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pg_isready"]
