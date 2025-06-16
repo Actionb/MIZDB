@@ -12,6 +12,10 @@ fi
 app_container=mizdb-app
 db_container=mizdb-postgres
 
+# Point docker at the env file:
+# https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_env_files
+export COMPOSE_ENV_FILES=docker-compose.env,./docker/docker-compose.env
+
 # Usage info
 show_help() {
   cat << EOF
@@ -78,44 +82,45 @@ EOF
 }
 
 update() {
-  current=$(git rev-parse --abbrev-ref HEAD)
-  git remote update
-  if [ "$current" != "master" ]; then git checkout master -q; fi
-  if docker exec -i $app_container scripts/app/check_update.py; then
-    read -r -p "Soll das Update installiert werden? [j/n]: "
-    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+  read -r -p "Um ein Update durchzuführen, müssen die Container gestoppt werden. Fortfahren? [j/n]: "
+  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+    echo "Abgebrochen."
+    exit 1
+  fi
+  set -e
+  # Note there currently isn't an easy way to check whether a new version of
+  # the image is available, so this will always pull and restart the containers
+  # even if already on the latest version.
+  # You could look into the tool 'Watchtower' to help with updating.
+
+  # Pull the update:
+  echo "Neustes Image wird heruntergeladen..."
+  docker compose pull
+  # Rebuild containers:
+  echo "Stoppe Container..."
+  docker compose down
+  echo "Starte Container..."
+  docker compose up -d
+  echo ""
+  if ! docker exec -i "$app_container" python manage.py migrate --check --no-input; then
+    read -r -p "Ausstehende Migrationen anwenden? [j/n]: "
+    if [[ $REPLY =~ ^[jJyY]$ ]]; then
+      docker exec -i "$app_container" python manage.py migrate --no-input
+    else
       echo "Abgebrochen."
-      if [ "$current" != "master" ]; then git checkout "$current" -q; fi
       exit 1
     fi
-    set -e
-
-    # Pull the update:
-    git pull -q
-
-    # Rebuild containers:
-    echo "Stoppe Container..."
-    docker compose down
-    echo "Erzeuge Container..."
-    docker compose up -d --build
-    echo ""
-
-    echo "Führe abschließende Checks aus..."
-    docker exec -i $app_container python manage.py check
-    echo "Update abgeschlossen!"
-    set +e
   fi
-  if [ "$current" != "master" ]; then git checkout "$current" -q; fi
+
+  echo "Führe abschließende Checks aus..."
+  docker exec -i $app_container python manage.py check
+  echo "Update abgeschlossen!"
+  set +e
 }
 
 restart() {
-  for container in $app_container $db_container; do
-    if [ -n "$(docker container ls -q -f name=$container)" ]; then
-      docker restart "$container"
-    else
-      docker start "$container"
-    fi
-  done
+  stop
+  start
 }
 
 start() {
