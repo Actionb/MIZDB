@@ -106,25 +106,19 @@ sudo -u postgres createdb mizdb --owner=mizdb_user
 
 Benutzername (hier: `mizdb_user`) und das verwendete Passwort werden später noch einmal benötigt.
 
-### 3. MIZDB Dateien herunterladen und einrichten
+### 3. MIZDB Dateien herunterladen
 
 ```shell
 # MIZDB git Repository klonen:
 git clone https://github.com/Actionb/MIZDB .
 # Virtuelle Umgebung erstellen und aktivieren:
 python3 -m venv venv && source venv/bin/activate
-# MIZDB einrichten:
-sh setup.sh
 ```
 
-Das Script `setup.sh` fragt nach einigen Daten für die Applikation und erstellt
-die folgenden Dateien:
-
-- im Stammverzeichnis wird die Datei `.env` mit den Werten für Umgebungsvariablen erstellt
-- im Unterverzeichnis `.secrets` werden die folgenden Dateien erstellt:
-    - `.passwd`: beinhaltet das Passwort der Datenbank
-    - `.key`: beinhaltet einen kryptografischen Schlüssel
-    - `.allowedhosts`: beinhaltet die erwarteten Hostnamen
+Passwort für Datenbank-Benutzer hinterlegen:
+```shell
+echo 'export "DB_PASSWORD=supersecret"' >> venv/bin/activate
+```
 
 #### Python Module installieren:
 
@@ -160,7 +154,7 @@ sudo a2enmod macro
 sudoedit /etc/apache2/sites-available/mizdb.conf  
 ```
 
-Folgendem Code in die Konfigurationsdatei einfügen:
+Folgenden Code in die Konfigurationsdatei einfügen:
 
 ```
 <Macro VHost $VENV_ROOT $PROJECT_ROOT>
@@ -210,8 +204,7 @@ UndefMacro VHost
 
 **⚠️ Notwendige Änderungen ⚠️**:
 
-* In der Zeile mit `ServerName` muss der Hostname des Servers eingefügt werden. Dieser Name muss auch in der `.env`
-  Datei unter `ALLOWED_HOSTS` auftauchen.
+* In der Zeile mit `ServerName` muss der Hostname des Servers eingefügt werden.
 * In der Zeile `USE VHOST` müssen gegebenenfalls die zwei Pfade angepasst werden.
     * der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung
     * der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch `manage.py` zu finden ist.
