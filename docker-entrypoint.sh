@@ -1,7 +1,7 @@
 #!/bin/sh
 
-echo "Running migrations..."
-python manage.py migrate --skip-checks --no-input
+echo "Collecting static files..."
+python manage.py collectstatic --no-input --skip-checks --verbosity 0
 
 echo "Setting up server..."
 # https://pypi.org/project/mod-wsgi/

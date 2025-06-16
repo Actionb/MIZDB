@@ -29,8 +29,6 @@ WORKDIR /mizdb
 COPY . /mizdb
 
 RUN set -eux \
-  && echo "Sammele statische Dateien..." \
-    && python3 manage.py collectstatic --clear --no-input --skip-checks --verbosity 0 \
   && echo "Richte Log Verzeichnis ein..." \
     && mkdir /var/log/mizdb \
     && chown apache:apache /var/log/mizdb
