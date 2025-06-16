@@ -70,8 +70,6 @@ docker compose --env-file docker-compose.env pull
 echo "Starte Docker Container..."
 docker compose --env-file docker-compose.env up -d
 
-cd - > /dev/null
-
 # Add mizdb management utility to the user's path
 echo "Erstelle Management Skript..."
 cat << EOF > ~/.local/bin/mizdb
@@ -83,6 +81,8 @@ bash mizdb.sh "\$1" "\$file"
 cd - > /dev/null || exit
 EOF
 chmod +x ~/.local/bin/mizdb
+
+cd - > /dev/null
 
 # Restore backup or run migrations
 restore_cmd=$(cat <<'EOF'
