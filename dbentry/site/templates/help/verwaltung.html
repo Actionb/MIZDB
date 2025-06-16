@@ -51,7 +51,7 @@
 <p>Für die Verwaltung der Anwendung steht das Programm <code>mizdb.sh</code> im MIZDB Verzeichnis zur Verfügung:</p>
 <pre><code class="language-shell">cd MIZDB_VERZEICHNIS &amp;&amp; bash mizdb.sh help
 </code></pre>
-<p>Wurde MIZDB mithilfe <a href="{% url 'help' page_name='install'%}#per-script">des Scripts</a> erstellt, so steht der Befehl <code>mizdb</code> zu Verfügung:</p>
+<p>Wurde MIZDB mithilfe <a href="{% url 'help' page_name='install'%}">des Scripts</a> erstellt, so steht der Befehl <code>mizdb</code> zu Verfügung:</p>
 <pre><code class="language-shell">mizdb help
 </code></pre>
 <p>Dieser kann anstelle von <code>bash mizdb.sh</code> verwendet werden (also z.B. <code>mizdb reload</code> anstelle
@@ -79,12 +79,32 @@ ist <code>mizdb-postgres</code>.</p>
 <p>Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis <code>MIZDB/dumps</code> erstellt.</p>
 <h3 id="backups-automatisieren">Backups automatisieren</h3>
 <h4 id="cronjob">Cronjob</h4>
-<p>Crontab des root users öffnen:</p>
+<p>Mit cronjob kann das Erstellen von Backups automatisiert werden. Dabei wird zu vordefinierten Zeiten ein Skript
+ausgeführt, dass die Backups erstellt. Ein solches Skript könnte so aussehen:</p>
+<pre><code class="language-shell">#!/bin/sh  
+# This script manages regular backups of the data of the MIZDB database.  
+#  
+# Use this in a cronjob (on the host machine of the docker container):  
+# &gt; crontab -e  
+# &gt; 51 7,11,16 * * 1-5  /path/to/mizdb_backup.sh  
+
+BACKUP_DIR="/var/lib/mizdb/backups"  
+# Numbers of days you want to keep copies of your database:  
+number_of_days=30  
+
+file="${BACKUP_DIR}/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"  
+docker exec -i mizdb-postgres /bin/sh -c 'pg_dump --username="$POSTGRES_USER" --host=localhost -Fc "$POSTGRES_DB"' &gt; "$file"
+
+# Delete older backup copies:  
+find "$BACKUP_DIR" -name "mizdb_*" -type f -mtime +$number_of_days -delete
+</code></pre>
+<p>Dieses Skript, beispielsweise <code>mizdb_backup.sh</code> genannt, erzeugt ein Backup, legt es in <code>/var/lib/mizdb/backups</code> ab und löscht Backups, die älter als 30 Tage sind.</p>
+<p>Um es zu aktivieren, zunächst den crontab des root users öffnen:</p>
 <pre><code class="language-shell">sudo crontab -e
 </code></pre>
 <p>Und folgenden cronjob hinzufügen:</p>
 <pre><code># Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
-51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+51 7,11,16 * * 1-5  /bin/sh /path/to/mizdb_backup.sh  
 </code></pre>
 <h4 id="rclone">rclone</h4>
 <p>Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.</p>
@@ -97,7 +117,7 @@ ist <code>mizdb-postgres</code>.</p>
    und dann den cronjob definieren, zum Beispiel:
     <code>shell
    # Backups mit rclone hochladen:
-    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups &lt;remote_name&gt;:backups</code></li>
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups &lt;remote_name&gt;:backups</code></li>
 </ol>
 <p>Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu

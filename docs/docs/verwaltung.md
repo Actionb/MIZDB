@@ -7,7 +7,7 @@ Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeic
 cd MIZDB_VERZEICHNIS && bash mizdb.sh help
 ```
 
-Wurde MIZDB mithilfe [des Scripts](install.md#per-script) erstellt, so steht der Befehl `mizdb` zu Verfügung:
+Wurde MIZDB mithilfe [des Scripts](install.md) erstellt, so steht der Befehl `mizdb` zu Verfügung:
 
 ```shell
 mizdb help
@@ -52,7 +52,31 @@ Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverz
 
 #### Cronjob
 
-Crontab des root users öffnen:
+Mit cronjob kann das Erstellen von Backups automatisiert werden. Dabei wird zu vordefinierten Zeiten ein Skript
+ausgeführt, dass die Backups erstellt. Ein solches Skript könnte so aussehen:
+
+```shell
+#!/bin/sh  
+# This script manages regular backups of the data of the MIZDB database.  
+#  
+# Use this in a cronjob (on the host machine of the docker container):  
+# > crontab -e  
+# > 51 7,11,16 * * 1-5  /path/to/mizdb_backup.sh  
+
+BACKUP_DIR="/var/lib/mizdb/backups"  
+# Numbers of days you want to keep copies of your database:  
+number_of_days=30  
+  
+file="${BACKUP_DIR}/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"  
+docker exec -i mizdb-postgres /bin/sh -c 'pg_dump --username="$POSTGRES_USER" --host=localhost -Fc "$POSTGRES_DB"' > "$file"
+  
+# Delete older backup copies:  
+find "$BACKUP_DIR" -name "mizdb_*" -type f -mtime +$number_of_days -delete
+```
+
+Dieses Skript, beispielsweise `mizdb_backup.sh` genannt, erzeugt ein Backup, legt es in `/var/lib/mizdb/backups` ab und löscht Backups, die älter als 30 Tage sind.
+
+Um es zu aktivieren, zunächst den crontab des root users öffnen:
 
 ```shell
 sudo crontab -e
@@ -62,7 +86,7 @@ Und folgenden cronjob hinzufügen:
 
 ```
 # Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
-51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+51 7,11,16 * * 1-5  /bin/sh /path/to/mizdb_backup.sh  
 ```
 
 #### rclone
@@ -78,7 +102,7 @@ Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive 
    und dann den cronjob definieren, zum Beispiel:
     ```shell
    # Backups mit rclone hochladen:
-    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups <remote_name>:backups
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups <remote_name>:backups
     ```
 
 Die Standardkonfiguration erfordert einen Webbrowser.
