@@ -9,15 +9,23 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#deinstallation">Deinstallation</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#deinstallation-via-mizdbsh">Deinstallation via mizdb.sh</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#container-stoppen">Container stoppen</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#manuelle-deinstallation">Manuelle Deinstallation</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#volumen-entfernen">Volumen entfernen</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#optional-docker-deinstallieren">(optional) Docker deinstallieren</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#images-loschen">Images löschen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#management-skript-entfernen">Management Skript entfernen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#backup-cronjob-entfernen">Backup Cronjob entfernen</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -28,41 +36,31 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="deinstallation">Deinstallation</h1>
-<h2 id="deinstallation-via-mizdbsh">Deinstallation via mizdb.sh</h2>
-<p>MIZDB kann mit</p>
-<pre><code class="language-shell">mizdb uninstall
+<h2 id="container-stoppen">Container stoppen</h2>
+<p>Um MIZDB zu deinstallieren, sollten zunächst die Docker Container gestoppt und werden:</p>
+<pre><code class="language-shell">docker compose --env-file docker-compose.env down
 </code></pre>
-<p>oder mit (wenn im MIZDB Verzeichnis):</p>
-<pre><code class="language-shell">bash mizdb.sh uninstall
+<h2 id="volumen-entfernen">Volumen entfernen</h2>
+<p>Anschließend können auch die Volumes (falls verwendet) mit den Daten der Datenbank und den Logs entfernt werden:</p>
+<div class="admonition danger">
+<p class="admonition-title">Die Daten aus der Datenbank werden dabei unwiederbringlich gelöscht!</p>
+</div>
+<pre><code class="language-shell">docker volume rm mizdb_{pgdata,logs}
 </code></pre>
-<p>deinstalliert werden.</p>
-<p>Bei der Deinstallation werden folgende Verzeichnisse und Dateien gelöscht:</p>
-<ul>
-<li>das MIZDB Source Verzeichnis</li>
-<li>das Datenbank Verzeichnis (standardmäßig: <code>/var/lib/mizdb</code>)</li>
-<li>das Log Verzeichnis (standardmäßig: <code>/var/log/mizdb</code>)</li>
-<li>das Management Skript (standardmäßig: <code>/usr/local/bin/mizdb</code>)</li>
-</ul>
-<p>Außerdem wird der Backup cronjob aus der root crontab entfernt.</p>
-<h2 id="manuelle-deinstallation">Manuelle Deinstallation</h2>
-<p>Container anhalten, Source Dateien und Management-Skript löschen:</p>
-<pre><code class="language-shell"># Docker Container anhalten:
-docker stop mizdb-app mizdb-postgres
-# MIZDB Verzeichnis löschen:
-sudo rm -rf &lt;PFAD/ZUM/MIZDB_VERZEICHNIS&gt;
-# Management-Skript löschen:
-sudo rm -f /usr/local/bin/mizdb
+<div class="admonition note">
+<p class="admonition-title">Hinweis: COMPOSE_PROJECT_NAME</p>
+<p>Der Präfix <code>mizdb</code> im Befehl oben entspricht dem Wert für <code>COMPOSE_PROJECT_NAME</code> in <code>docker-compose.env</code>.</p>
+</div>
+<h2 id="images-loschen">Images löschen</h2>
+<p>Die nun nicht mehr benötigten Images können auch gelöscht werden:</p>
+<pre><code class="language-shell">docker image prune
 </code></pre>
-<p>Datenbank und Logs löschen:</p>
-<pre><code class="language-shell">sudo rm -rf /var/lib/mizdb
-sudo rm -rf /var/log/mizdb 
+<h2 id="management-skript-entfernen">Management Skript entfernen</h2>
+<p>Der <code>mizdb</code> Befehl kann auf diese Weise vom System entfernt werden:</p>
+<pre><code class="language-shell">rm ~/.local/bin/mizdb
 </code></pre>
-<p>Cronjob entfernen:</p>
-<pre><code class="language-shell">sudo crontab -l 2&gt;/dev/null | grep -v 'docker exec mizdb-postgres sh /mizdb/backup.sh' | grep -v "Backup der MIZDB Datenbank" | sudo crontab -u root -
-</code></pre>
-<p>(Optional) Docker Images löschen:</p>
-<pre><code class="language-shell">docker image prune -a
-</code></pre>
-<h2 id="optional-docker-deinstallieren">(optional) Docker deinstallieren</h2>
-<p><a href="https://docs.docker.com/engine/install/debian/#uninstall-docker-engine">https://docs.docker.com/engine/install/debian/#uninstall-docker-engine</a></p></div>
+<h2 id="backup-cronjob-entfernen">Backup Cronjob entfernen</h2>
+<p>Falls <a href="{% url 'help' page_name='verwaltung'%}#backups-automatisieren">cronjobs für Backups</a> erstellt wurden, sollten diese entfernt werden:</p>
+<pre><code class="language-shell">sudo crontab -e
+</code></pre></div>
 </div>{% endblock content %}
