@@ -9,20 +9,36 @@ Links:
 
 ## Installation
 
-Das Script installiert Docker und lädt MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
-Beim Aufruf des Scripts kann eine Backup-Datei der Datenbank übergeben werden (unten: `database_backup`), worauf die
-Datenbank in der neuen Installation sofort wiederhergestellt wird.
+### Per Script (empfohlen)
 
 ```shell
-sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/get-mizdb.sh -o /tmp/get-mizdb.sh
-sh /tmp/get-mizdb.sh database_backup
-rm /tmp/get-mizdb.sh
+bash -c "$(curl https://raw.githubusercontent.com/Actionb/MIZDB/feature/docker-image/scripts/install-mizdb.sh)"
 ```
 
-Siehe auch:
+### Per Docker Compose
 
-* [Source Code des Installations-Scripts](https://github.com/Actionb/MIZDB/blob/master/scripts/get-mizdb.sh)
+1. Docker und Docker Compose müssen installiert sein
+2. Die Dateien `docker-compose.yaml` und `docker-compose.env` in einen Ordner deiner Wahl herunterladen
+3. Navigiere zu diesem Ordner und führe folgenden Befehl aus: `docker compose --env-file docker-compose.env up -d`
+
+Als Nächstes wird die Datenbank eingerichtet. Dazu kann entweder ein vorhandenes Backup eingelesen werden oder aber
+komplett neue Datenbanktabellen erzeugt werden.
+
+### Backup einlesen
+
+Mit dem folgenden Befehl kann ein Backup der Datenbank mit dem Dateinamen `backup` eingelesen werden:
+
+```shell
+docker exec -i mizdb-postgres /bin/sh -c 'PGDATABASE="$POSTGRES_DB" PGUSER="$POSTGRES_USER" PGHOST=localhost dropdb "$POSTGRES_DB" && createdb "$POSTGRES_DB" && pg_restore --dbname "$POSTGRES_DB"' < backup 
+```
+
+### Neue Datenbanktabellen erzeugen
+
+Dieser Befehl erzeugt die nötigen Tabellen:
+```shell
+docker exec -i mizdb-app python manage.py migrate
+```
+
 * [weitere Installationsmöglichkeiten](https://actionb.github.io/MIZDB/install.html)
 * [Deinstallation](https://actionb.github.io/MIZDB/deinstall.html)
 
