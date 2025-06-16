@@ -118,13 +118,8 @@ update() {
 }
 
 restart() {
-  for container in $app_container $db_container; do
-    if [ -n "$(docker container ls -q -f name=$container)" ]; then
-      docker restart "$container"
-    else
-      docker start "$container"
-    fi
-  done
+  stop
+  start
 }
 
 start() {
