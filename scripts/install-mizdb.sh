@@ -60,7 +60,7 @@ curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/refs/heads/feature/d
 
 echo "Erzeuge MIZDB Einstellungen..."
 if [[ $PASSWORD ]]; then sed -i "s/DB_PASSWORD=mizdb/DB_PASSWORD=$PASSWORD/" docker-compose.env; fi
-SECRET_KEY=$(LC_ALL=C tr -dc 'a-zA-Z0-9!#$%&()*+,-.:;<=>?@[\]^_`{|}~' < /dev/urandom | dd bs=1 count=64 2>/dev/null)
+SECRET_KEY=$(LC_ALL=C tr -dc 'a-zA-Z0-9!#%&()*+,-.:;<=>?@[\]^_`{|}~' < /dev/urandom | dd bs=1 count=64 2>/dev/null)
 sed -i "s/#SECRET_KEY=/SECRET_KEY=$SECRET_KEY/" docker-compose.env
 
 # Start docker containers
