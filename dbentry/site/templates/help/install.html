@@ -39,7 +39,7 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#3-mizdb-dateien-herunterladen-und-einrichten">3. MIZDB Dateien herunterladen und einrichten</a>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#3-mizdb-dateien-herunterladen">3. MIZDB Dateien herunterladen</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -133,25 +133,15 @@ sudo -u postgres createuser mizdb_user -P --createdb
 sudo -u postgres createdb mizdb --owner=mizdb_user
 </code></pre>
 <p>Benutzername (hier: <code>mizdb_user</code>) und das verwendete Passwort werden später noch einmal benötigt.</p>
-<h3 id="3-mizdb-dateien-herunterladen-und-einrichten">3. MIZDB Dateien herunterladen und einrichten</h3>
+<h3 id="3-mizdb-dateien-herunterladen">3. MIZDB Dateien herunterladen</h3>
 <pre><code class="language-shell"># MIZDB git Repository klonen:
 git clone https://github.com/Actionb/MIZDB .
 # Virtuelle Umgebung erstellen und aktivieren:
 python3 -m venv venv &amp;&amp; source venv/bin/activate
-# MIZDB einrichten:
-sh setup.sh
 </code></pre>
-<p>Das Script <code>setup.sh</code> fragt nach einigen Daten für die Applikation und erstellt
-die folgenden Dateien:</p>
-<ul>
-<li>im Stammverzeichnis wird die Datei <code>.env</code> mit den Werten für Umgebungsvariablen erstellt</li>
-<li>im Unterverzeichnis <code>.secrets</code> werden die folgenden Dateien erstellt:<ul>
-<li><code>.passwd</code>: beinhaltet das Passwort der Datenbank</li>
-<li><code>.key</code>: beinhaltet einen kryptografischen Schlüssel</li>
-<li><code>.allowedhosts</code>: beinhaltet die erwarteten Hostnamen</li>
-</ul>
-</li>
-</ul>
+<p>Passwort für Datenbank-Benutzer hinterlegen:</p>
+<pre><code class="language-shell">echo 'export "DB_PASSWORD=supersecret"' &gt;&gt; venv/bin/activate
+</code></pre>
 <h4 id="python-module-installieren">Python Module installieren:</h4>
 <pre><code class="language-shell"># Erforderliche Python Module installieren:  
 python3 -m pip install --upgrade pip wheel
@@ -177,7 +167,7 @@ sudo a2enmod macro
 # Danach Konfigurationsdatei für die MIZDB-Seite erstellen:  
 sudoedit /etc/apache2/sites-available/mizdb.conf  
 </code></pre>
-<p>Folgendem Code in die Konfigurationsdatei einfügen:</p>
+<p>Folgenden Code in die Konfigurationsdatei einfügen:</p>
 <pre><code>&lt;Macro VHost $VENV_ROOT $PROJECT_ROOT&gt;
     &lt;VirtualHost *:80&gt;  
         # Name of the host. The name must be included in the ALLOWED_HOSTS django settings.
@@ -224,8 +214,7 @@ UndefMacro VHost
 </code></pre>
 <p><strong>⚠️ Notwendige Änderungen ⚠️</strong>:</p>
 <ul>
-<li>In der Zeile mit <code>ServerName</code> muss der Hostname des Servers eingefügt werden. Dieser Name muss auch in der <code>.env</code>
-  Datei unter <code>ALLOWED_HOSTS</code> auftauchen.</li>
+<li>In der Zeile mit <code>ServerName</code> muss der Hostname des Servers eingefügt werden.</li>
 <li>In der Zeile <code>USE VHOST</code> müssen gegebenenfalls die zwei Pfade angepasst werden.<ul>
 <li>der erste Pfad ist der Pfad zum Verzeichnis der virtuellen Umgebung</li>
 <li>der zweite Pfad ist der Pfad zum Grundverzeichnis der App, in welchem auch <code>manage.py</code> zu finden ist.</li>
