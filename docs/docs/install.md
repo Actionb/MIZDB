@@ -1,58 +1,78 @@
-Installation Debian (Docker)
+Installation
 =======
 
-## Per script
+[comment]: <> (@formatter:off)  
+!!! note "Voraussetzungen"  
+    Docker und Docker Compose müssen installiert sein.
+[comment]: <> (@formatter:on)
 
-Das Script installiert Docker und lädt MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
-Beim Aufruf des Scripts kann eine Backup-Datei der Datenbank übergeben werden (unten: `database_backup`), worauf die
-Datenbank in der neuen Installation sofort wiederhergestellt wird.
+## Per Script (empfohlen)
 
-```shell
-sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/get-mizdb.sh -o /tmp/get-mizdb.sh
-sh /tmp/get-mizdb.sh database_backup
-rm /tmp/get-mizdb.sh
-```
-
-Die Seite sollte nun unter `http://<hostname>/miz/` erreichbar sein.
-
-## Manuell
-
-1. Docker installieren: [https://docs.docker.com/engine/install/](https://docs.docker.com/engine/install/)
-2. Docker Post-Install Schritte
-   durchführen: [https://docs.docker.com/engine/install/linux-postinstall/](https://docs.docker.com/engine/install/linux-postinstall/)
-3. MIZDB installieren:
+Das Installations-Skript richtet die Docker Container und das Management Werkzeug `mizdb` ein. Außerdem fragt es bei der
+Installation, ob die Datenbank aus einem Backup wiederhergestellt werden soll.
 
 ```shell
-# Git installieren:
-sudo apt update -qq 
-sudo apt install -y git
-# Repository holen:
-git clone https://github.com/Actionb/MIZDB 
-cd MIZDB
-# Konfigurieren und Docker Umgebung vorbereiten:
-sh setup.sh
-# Docker Container erstellen und starten: 
-docker compose up -d
-# Statische Dateien sammeln:
-bash mizdb.sh collectstatic
-# Log-Verzeichnis Besitzer einrichten:
-docker exec -i mizdb-app chown -R apache:apache logs
+bash -c "$(curl -sSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/install-mizdb.sh)"
 ```
 
-Wenn eine Backup-Datei (hier: `database_backup`) vorhanden ist, kann die Datenbank wiederhergestellt werden:
+Nach dem Ausführen des Skripts sollte MIZDB unter [http://localhost/miz/](http://localhost/miz/) verfügbar sein.
+
+## Per Docker Compose
+
+Die Dateien `docker-compose.yaml` und `docker-compose.env` (hier
+auf [github](https://github.com/Actionb/MIZDB/tree/master/docker)) in einen Ordner deiner Wahl herunterladen, z.B.:
 
 ```shell
-bash mizdb.sh restore database_backup
+curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.yaml" -o docker-compose.yaml
+curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.env" -o docker-compose.env
 ```
 
-Ansonsten müssen die Datenbank Migrationen ausgeführt werden:
+Anschließend führe folgenden Befehl aus, um die Docker Container zu erzeugen und zu starten:
 
 ```shell
-bash mizdb.sh migrate
+docker compose --env-file docker-compose.env up -d
 ```
 
-Die Seite sollte nun unter `http://<hostname>/miz/` erreichbar sein.
+Als Nächstes muss noch die Datenbank eingerichtet werden. Dazu kann entweder ein vorhandenes Backup eingelesen werden
+oder komplett neue Datenbanktabellen erzeugt werden.
+
+### Backup wiederherstellen
+
+Mit dem folgenden Befehl kann ein Backup der Datenbank mit dem Dateinamen `backup` eingelesen werden:
+
+```shell
+docker exec -i mizdb-postgres /bin/sh -c 'export PGUSER="$POSTGRES_USER" && export PGHOST=localhost && dropdb "$POSTGRES_DB" && createdb "$POSTGRES_DB" && pg_restore --dbname "$POSTGRES_DB"' < backup 
+```
+
+### Neue Datenbanktabellen erzeugen
+
+Soll kein Backup wiederhergestellt werden, müssen die Datenbanktabellen erzeugt werden:
+
+```shell
+docker exec -i mizdb-app python manage.py migrate
+```
+
+### Management Werkzeug herunterladen
+
+`mizdb.sh` herunterladen, um die [Verwaltung](verwaltung.md) leichter zu gestalten:
+
+```shell
+curl -sSL https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh -o mizdb.sh
+```
+
+Um `mizdb.sh` überall als `mizdb` ausführbar zu machen:
+
+```shell
+cat << EOF > ~/.local/bin/mizdb
+#!/bin/sh
+
+file=\$(readlink -f "\$2")
+cd $(pwd) || exit
+bash mizdb.sh "\$1" "\$file"
+cd - > /dev/null || exit
+EOF
+chmod +x ~/.local/bin/mizdb
+```
 
 ## Installation ohne Docker
 
