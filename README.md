@@ -114,13 +114,12 @@ cd MIZDB
 # Virtuelle Umgebung erstellen:
 python3 -m venv .venv
 echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
+echo 'export "DB_PASSWORD=supersecret"' >> .venv/bin/activate
 . .venv/bin/activate
 # Projekt Abhängigkeiten und Git Hooks installieren:
 pip install -r requirements/dev.txt
 npm install
 pre-commit install
-# MIZDB einrichten:
-sh setup.sh
 ```
 
 Anschließend entweder die Migrationen ausführen:
@@ -132,7 +131,7 @@ python3 manage.py migrate
 oder ein Backup einlesen:
 
 ```shell
-POSTGRES_USER=mizdb_user POSTGRES_DB=mizdb scripts/db/restore.sh < backup_datei
+pg_restore --user=mizdb_user --host=localhost --dbname mizdb < backup_datei
 ```
 
 ### Scripts mit Poe ausführen
