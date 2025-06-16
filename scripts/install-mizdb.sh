@@ -115,5 +115,4 @@ case "$REPLY" in
 esac
 
 echo "Fertig!"
-echo "Zum Verwalten das Management Skript 'mizdb' werden: mizdb help"
-echo "Viel Spaß!"
+echo "Zum Verwalten kann das Management Skript 'mizdb' verwendet werden: mizdb help"
