@@ -7,7 +7,7 @@ Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeic
 cd MIZDB_VERZEICHNIS && bash mizdb.sh help
 ```
 
-Wurde MIZDB mithilfe [des Scripts](install.md#per-script) erstellt, so steht systemweit der Befehl `mizdb` zu Verfügung:
+Wurde MIZDB mithilfe [des Scripts](install.md#per-script) erstellt, so steht der Befehl `mizdb` zu Verfügung:
 
 ```shell
 mizdb help

@@ -7,14 +7,26 @@
 </div>
 <div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#installation-debian-docker">Installation Debian (Docker)</a>
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#installation">Installation</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#per-script">Per script</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#per-script-empfohlen">Per Script (empfohlen)</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#manuell">Manuell</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#per-docker-compose">Per Docker Compose</a>
 <ul class="nav flex-column">
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#backup-wiederherstellen">Backup wiederherstellen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#neue-datenbanktabellen-erzeugen">Neue Datenbanktabellen erzeugen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#management-werkzeug-herunterladen">Management Werkzeug herunterladen</a>
+<ul class="nav flex-column">
+</ul>
+</li>
 </ul>
 </li>
 <li class="nav-item" data-bs-level="2"><a class="nav-link" href="#installation-ohne-docker">Installation ohne Docker</a>
@@ -55,46 +67,51 @@
 </div>
 </div></div>
 <div class="col-md-9" role="main">
-<h1 id="installation-debian-docker">Installation Debian (Docker)</h1>
-<h2 id="per-script">Per script</h2>
-<p>Das Script installiert Docker und lädt MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
-Beim Aufruf des Scripts kann eine Backup-Datei der Datenbank übergeben werden (unten: <code>database_backup</code>), worauf die
-Datenbank in der neuen Installation sofort wiederhergestellt wird.</p>
-<pre><code class="language-shell">sudo apt update -qq &amp;&amp; sudo apt install -qq -y curl
-curl -fsSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/get-mizdb.sh -o /tmp/get-mizdb.sh
-sh /tmp/get-mizdb.sh database_backup
-rm /tmp/get-mizdb.sh
+<h1 id="installation">Installation</h1>
+<div class="admonition note">
+<p class="admonition-title">Voraussetzungen</p>
+<p>Docker und Docker Compose müssen installiert sein.</p>
+</div>
+<h2 id="per-script-empfohlen">Per Script (empfohlen)</h2>
+<p>Das Installations-Skript richtet die Docker Container und das Management Werkzeug <code>mizdb</code> ein. Außerdem fragt es bei der
+Installation, ob die Datenbank aus einem Backup wiederhergestellt werden soll.</p>
+<pre><code class="language-shell">bash -c "$(curl -sSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/install-mizdb.sh)"
 </code></pre>
-<p>Die Seite sollte nun unter <code>http://&lt;hostname&gt;/miz/</code> erreichbar sein.</p>
-<h2 id="manuell">Manuell</h2>
-<ol>
-<li>Docker installieren: <a href="https://docs.docker.com/engine/install/">https://docs.docker.com/engine/install/</a></li>
-<li>Docker Post-Install Schritte
-   durchführen: <a href="https://docs.docker.com/engine/install/linux-postinstall/">https://docs.docker.com/engine/install/linux-postinstall/</a></li>
-<li>MIZDB installieren:</li>
-</ol>
-<pre><code class="language-shell"># Git installieren:
-sudo apt update -qq 
-sudo apt install -y git
-# Repository holen:
-git clone https://github.com/Actionb/MIZDB 
-cd MIZDB
-# Konfigurieren und Docker Umgebung vorbereiten:
-sh setup.sh
-# Docker Container erstellen und starten: 
-docker compose up -d
-# Statische Dateien sammeln:
-bash mizdb.sh collectstatic
-# Log-Verzeichnis Besitzer einrichten:
-docker exec -i mizdb-app chown -R apache:apache logs
+<p>Nach dem Ausführen des Skripts sollte MIZDB unter <a href="http://localhost/miz/">http://localhost/miz/</a> verfügbar sein.</p>
+<h2 id="per-docker-compose">Per Docker Compose</h2>
+<p>Die Dateien <code>docker-compose.yaml</code> und <code>docker-compose.env</code> (hier
+auf <a href="https://github.com/Actionb/MIZDB/tree/master/docker">github</a>) in einen Ordner deiner Wahl herunterladen, z.B.:</p>
+<pre><code class="language-shell">curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.yaml" -o docker-compose.yaml
+curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.env" -o docker-compose.env
 </code></pre>
-<p>Wenn eine Backup-Datei (hier: <code>database_backup</code>) vorhanden ist, kann die Datenbank wiederhergestellt werden:</p>
-<pre><code class="language-shell">bash mizdb.sh restore database_backup
+<p>Anschließend führe folgenden Befehl aus, um die Docker Container zu erzeugen und zu starten:</p>
+<pre><code class="language-shell">docker compose --env-file docker-compose.env up -d
 </code></pre>
-<p>Ansonsten müssen die Datenbank Migrationen ausgeführt werden:</p>
-<pre><code class="language-shell">bash mizdb.sh migrate
+<p>Als Nächstes muss noch die Datenbank eingerichtet werden. Dazu kann entweder ein vorhandenes Backup eingelesen werden
+oder komplett neue Datenbanktabellen erzeugt werden.</p>
+<h3 id="backup-wiederherstellen">Backup wiederherstellen</h3>
+<p>Mit dem folgenden Befehl kann ein Backup der Datenbank mit dem Dateinamen <code>backup</code> eingelesen werden:</p>
+<pre><code class="language-shell">docker exec -i mizdb-postgres /bin/sh -c 'export PGUSER="$POSTGRES_USER" &amp;&amp; export PGHOST=localhost &amp;&amp; dropdb "$POSTGRES_DB" &amp;&amp; createdb "$POSTGRES_DB" &amp;&amp; pg_restore --dbname "$POSTGRES_DB"' &lt; backup 
 </code></pre>
-<p>Die Seite sollte nun unter <code>http://&lt;hostname&gt;/miz/</code> erreichbar sein.</p>
+<h3 id="neue-datenbanktabellen-erzeugen">Neue Datenbanktabellen erzeugen</h3>
+<p>Soll kein Backup wiederhergestellt werden, müssen die Datenbanktabellen erzeugt werden:</p>
+<pre><code class="language-shell">docker exec -i mizdb-app python manage.py migrate
+</code></pre>
+<h3 id="management-werkzeug-herunterladen">Management Werkzeug herunterladen</h3>
+<p><code>mizdb.sh</code> herunterladen, um die <a href="{% url 'help' page_name='verwaltung'%}">Verwaltung</a> leichter zu gestalten:</p>
+<pre><code class="language-shell">curl -sSL https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh -o mizdb.sh
+</code></pre>
+<p>Um <code>mizdb.sh</code> überall als <code>mizdb</code> ausführbar zu machen:</p>
+<pre><code class="language-shell">cat &lt;&lt; EOF &gt; ~/.local/bin/mizdb
+#!/bin/sh
+
+file=\$(readlink -f "\$2")
+cd $(pwd) || exit
+bash mizdb.sh "\$1" "\$file"
+cd - &gt; /dev/null || exit
+EOF
+chmod +x ~/.local/bin/mizdb
+</code></pre>
 <h2 id="installation-ohne-docker">Installation ohne Docker</h2>
 <p><strong>Wichtig:</strong> MIZDB sollte nicht im Home Verzeichnis erstellt werden, da der Webserver keinen Zugriff auf dieses
 Verzeichnis hat!
