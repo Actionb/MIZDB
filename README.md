@@ -131,12 +131,7 @@ python3 manage.py migrate
 oder ein Backup einlesen:
 
 ```shell
-export PGPASSWORD=supersecret \
-&& export PGUSER=mizdb_user \
-&& export PGHOST=localhost \
-&& dropdb mizdb \
-&& createdb mizdb \
-&& pg_restore --dbname mizdb < backup_datei
+pg_restore --user=mizdb_user --host=localhost --dbname mizdb < backup_datei
 ```
 
 ### Scripts mit Poe ausführen
