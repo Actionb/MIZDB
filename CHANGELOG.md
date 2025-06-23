@@ -4,7 +4,12 @@
 
 ### Changed
 
-- made Audio.plattennummer queries case-insensitive 
+- made Audio.plattennummer queries case-insensitive
+- reworked docker setup:
+    - install process now downloads docker-compose files instead of the entire repository
+    - docker-compose now uses a MIZDB image from the GitHub container registry instead of building an image locally
+    - settings are now read from the environment file instead of many different files like `.secrets` or `settings.py`.
+      This allows using just a single `docker-compose.env` file to manage settings.
 
 ## [0.24.0] - 2025-06-12
 
