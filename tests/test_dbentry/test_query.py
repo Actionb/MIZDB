@@ -839,6 +839,16 @@ class TestAudioManager(DataTestCase):
                         # make sure we don't just include every Audio object:
                         self.assertNotIn(self.control, qs)
 
+    def test_filter_by_plattennummer_case_insensitive(self):
+        """Assert that the search via plattennummer is case-insensitive."""
+        for c in self.pn_chars:
+            for lookup in self.test_lookups:
+                for pn in self.test_numbers:
+                    with self.subTest(special_char=c, plattennummer=pn, lookup=lookup):
+                        qs = self.model.objects.filter(**{f"plattennummer{lookup}": pn.lower()})
+                        self.assertEqual(qs.count(), len(self.test_data))
+                        self.assertNotIn(self.control, qs)
+
     def test_filter_by_just_special_char(self):
         """
         Assert that filter values that are just a special character are not

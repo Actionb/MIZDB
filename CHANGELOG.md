@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- made Audio.plattennummer queries case-insensitive 
+
 ## [0.24.0] - 2025-06-12
 
 ### Added

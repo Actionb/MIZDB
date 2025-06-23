@@ -510,5 +510,5 @@ class AudioQuerySet(MIZQuerySet):
                 # Then remove special characters from field values:
                 queryset = self._clean_field_values(queryset)
                 # Filter by the 'cleaned' filter value:
-                return queryset.filter(pn_cleaned__contains=q)
+                return queryset.filter(pn_cleaned__icontains=q)
         return super().filter(*args, **kwargs)
