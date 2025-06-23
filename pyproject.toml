@@ -141,4 +141,5 @@ shell = "docker build . -t ghcr.io/actionb/mizdb"
 
 [tool.poe.tasks.publish]
 help = "Build and upload the MIZDB docker image"
-shell = "docker build . -t ghcr.io/actionb/mizdb && docker push ghcr.io/actionb/mizdb"
+shell = "docker push ghcr.io/actionb/mizdb"
+deps = ["build"]
