@@ -127,20 +127,41 @@ poe test
 Die folgenden Scripts sind in `pyproject.toml`
 definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/index.html)):
 
-| Script Name | Beschreibung                                             |
-|-------------|----------------------------------------------------------|
-| server      | Development Server starten                               |
-| shell       | Django Shell starten                                     |
-| test        | Pytest Tests ausführen (mit Coverage)                    |
-| test-q      | Pytest Tests ausführen (ohne Coverage, schneller)        | 
-| test-pw     | Playwright Tests ausführen                               |
-| drop-testdb | Alle Test-Datenbanken löschen                            |
-| tox         | Python tox ausführen                                     |
-| ruff        | ruff Linter und Formatter ausführen und Probleme beheben |
-| ruff-check  | `ruff check .` ausführen                                 |
-| build-docs  | Dokumentation bauen und bei Github hochladen             |
-| build       | Docker Image bauen                                       |
-| publish     | Docker Image bauen und hochladen                         |
+| Script Name    | Beschreibung                                             |
+|----------------|----------------------------------------------------------|
+| server         | Development Server starten                               |
+| shell          | Django Shell starten                                     |
+| test           | Pytest Tests ausführen (mit Coverage)                    |
+| test-q         | Pytest Tests ausführen (ohne Coverage, schneller)        | 
+| test-pw        | Playwright Tests ausführen                               |
+| drop-testdb    | Alle Test-Datenbanken löschen                            |
+| tox            | Python tox ausführen                                     |
+| ruff           | ruff Linter und Formatter ausführen und Probleme beheben |
+| ruff-check     | `ruff check .` ausführen                                 |
+| build-docs     | Dokumentation bauen und bei Github hochladen             |
+| docker-restart | MIZDB Docker Container neustarten                        |
+| docker-rebuild | MIZDB Docker Container neubauen                          |
+| build          | Docker Image bauen                                       |
+| publish        | Docker Image bauen und hochladen                         |
+
+## Docker Container
+
+Wenn man Docker im Project Root ausführen möchte, muss man die Pfade für `docker-compose.yaml` und `docker-compose.env`
+angeben, da sich diese Dateien in dem Unterordner `docker` befinden, wo Docker sie nicht sucht.
+
+Dazu sei es empfohlen, in der `activate` Datei der virtuellen Umgebung die Umgebungsvariablen `COMPOSE_FILE` und
+`COMPOSE_ENV_FILES` zu setzen:
+
+```shell
+export COMPOSE_FILE=./docker/docker-compose.yaml
+export COMPOSE_ENV_FILES=./docker/docker-compose.env
+```
+
+Alternativ können bei jedem Docker Befehl die Pfade als Argumente übergeben werden:
+
+```shell
+docker compose -f ./docker/docker-compose.yaml --env-file=./docker/docker-compose.env up
+```
 
 ### Dev Server (Docker)
 

@@ -125,11 +125,15 @@ shell = """
 
 [tool.poe.tasks.docker-restart]
 help = "Restart the Docker containers"
-shell = "docker compose down && docker compose up -d"
+shell = """
+export COMPOSE_FILE=./docker/docker-compose.yaml;
+export COMPOSE_ENV_FILES=./docker/docker-compose.env;
+docker compose down && docker compose up -d
+"""
 
 [tool.poe.tasks.docker-rebuild]
-help = "Restart the Docker containers"
-shell = "docker compose down && docker compose up -d --build"
+help = "Rebuild the Docker containers"
+sequence = ["build", "docker-restart"]
 
 [tool.poe.tasks.build]
 help = "Build the MIZDB docker image"
