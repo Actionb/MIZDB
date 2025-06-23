@@ -9,7 +9,7 @@ Links:
 
 ## Installation
 
-Das Installations-Skript richtet die Docker Container und das Management Werkzeug `mizdb` ein. Außerdem fragt es bei der
+Das Installations-Skript richtet die Docker Container und das Management Programm `mizdb` ein. Außerdem fragt es bei der
 Installation, ob die Datenbank aus einem Backup wiederhergestellt werden soll.
 
 > [!NOTE]  
