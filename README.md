@@ -73,10 +73,14 @@ sudo apt update && sudo apt install python3-pip python3-venv postgresql apache2-
 
 ```shell
 # Datenbankbenutzer erstellen:
-sudo -u postgres createuser mizdb_user -P --createdb  
+sudo -u postgres createuser mizdb_user -P --createdb
 # Datenbank erzeugen:
 sudo -u postgres createdb mizdb --owner=mizdb_user
 ```
+
+> [!NOTE]  
+> Es wird empfohlen, für den Datenbankbenutzer das Passwort "mizdb" zu benutzen. Dies ist das Passwort, welches
+> standardmäßig von den Docker Containern und den Django Settings für MIZDB benutzt wird.
 
 #### MIZDB installieren
 
@@ -87,7 +91,6 @@ cd MIZDB
 # Virtuelle Umgebung erstellen:
 python3 -m venv .venv
 echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
-echo 'export "DB_PASSWORD=supersecret"' >> .venv/bin/activate
 . .venv/bin/activate
 # Projekt Abhängigkeiten und Git Hooks installieren:
 pip install -r requirements/dev.txt
