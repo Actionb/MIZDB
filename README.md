@@ -9,20 +9,21 @@ Links:
 
 ## Installation
 
-Das Script installiert Docker und lädt MIZDB in einen Unterordner im gegenwärtigen Verzeichnis herunter.
-Beim Aufruf des Scripts kann eine Backup-Datei der Datenbank übergeben werden (unten: `database_backup`), worauf die
-Datenbank in der neuen Installation sofort wiederhergestellt wird.
+Das Installations-Skript richtet die Docker Container und das Management Werkzeug `mizdb` ein. Außerdem fragt es bei der
+Installation, ob die Datenbank aus einem Backup wiederhergestellt werden soll.
+
+> [!NOTE]  
+> Docker und Docker Compose müssen installiert sein.
 
 ```shell
-sudo apt update -qq && sudo apt install -qq -y curl
-curl -fsSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/get-mizdb.sh -o /tmp/get-mizdb.sh
-sh /tmp/get-mizdb.sh database_backup
-rm /tmp/get-mizdb.sh
+bash -c "$(curl -sSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scripts/install-mizdb.sh)"
 ```
+
+Nach dem Ausführen des Skripts sollte MIZDB unter [http://localhost/miz/](http://localhost/miz/) verfügbar sein.
 
 Siehe auch:
 
-* [Source Code des Installations-Scripts](https://github.com/Actionb/MIZDB/blob/master/scripts/get-mizdb.sh)
+* [Source Code des Installations-Scripts](https://github.com/Actionb/MIZDB/blob/master/scripts/install-mizdb.sh)
 * [weitere Installationsmöglichkeiten](https://actionb.github.io/MIZDB/install.html)
 * [Deinstallation](https://actionb.github.io/MIZDB/deinstall.html)
 
@@ -34,7 +35,7 @@ Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeic
 cd MIZDB_VERZEICHNIS && bash mizdb.sh help
 ```
 
-Wurde MIZDB mithilfe des Scripts oben erstellt, so steht systemweit der Befehl `mizdb` zu Verfügung:
+Wurde MIZDB mithilfe des Installations-Skripts erstellt, so steht für den Benutzer der Befehl `mizdb` zu Verfügung:
 
 ```shell
 mizdb help
@@ -72,10 +73,14 @@ sudo apt update && sudo apt install python3-pip python3-venv postgresql apache2-
 
 ```shell
 # Datenbankbenutzer erstellen:
-sudo -u postgres createuser mizdb_user -P --createdb  
+sudo -u postgres createuser mizdb_user -P --createdb
 # Datenbank erzeugen:
 sudo -u postgres createdb mizdb --owner=mizdb_user
 ```
+
+> [!NOTE]  
+> Es wird empfohlen, für den Datenbankbenutzer das Passwort "mizdb" zu benutzen. Dies ist das Passwort, welches
+> standardmäßig von den Docker Containern und den Django Settings für MIZDB benutzt wird.
 
 #### MIZDB installieren
 
@@ -91,8 +96,6 @@ echo 'export "DJANGO_DEVELOPMENT=1"' >> .venv/bin/activate
 pip install -r requirements/dev.txt
 npm install
 pre-commit install
-# MIZDB einrichten:
-sh setup.sh
 ```
 
 Anschließend entweder die Migrationen ausführen:
@@ -104,7 +107,7 @@ python3 manage.py migrate
 oder ein Backup einlesen:
 
 ```shell
-POSTGRES_USER=mizdb_user POSTGRES_DB=mizdb scripts/db/restore.sh < backup_datei
+pg_restore --user=mizdb_user --host=localhost --dbname mizdb < backup_datei
 ```
 
 ### Scripts mit Poe ausführen
@@ -127,18 +130,41 @@ poe test
 Die folgenden Scripts sind in `pyproject.toml`
 definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/index.html)):
 
-| Script Name | Beschreibung                                             |
-|-------------|----------------------------------------------------------|
-| server      | Development Server starten                               |
-| shell       | Django Shell starten                                     |
-| test        | Pytest Tests ausführen (mit Coverage)                    |
-| test-q      | Pytest Tests ausführen (ohne Coverage, schneller)        | 
-| test-pw     | Playwright Tests ausführen                               |
-| drop-testdb | Alle Test-Datenbanken löschen                            |
-| tox         | Python tox ausführen                                     |
-| ruff        | ruff Linter und Formatter ausführen und Probleme beheben |
-| ruff-check  | `ruff check .` ausführen                                 |
-| build-docs  | Dokumentation bauen und bei Github hochladen             |
+| Script Name    | Beschreibung                                             |
+|----------------|----------------------------------------------------------|
+| server         | Development Server starten                               |
+| shell          | Django Shell starten                                     |
+| test           | Pytest Tests ausführen (mit Coverage)                    |
+| test-q         | Pytest Tests ausführen (ohne Coverage, schneller)        | 
+| test-pw        | Playwright Tests ausführen                               |
+| drop-testdb    | Alle Test-Datenbanken löschen                            |
+| tox            | Python tox ausführen                                     |
+| ruff           | ruff Linter und Formatter ausführen und Probleme beheben |
+| ruff-check     | `ruff check .` ausführen                                 |
+| build-docs     | Dokumentation bauen und bei Github hochladen             |
+| docker-restart | MIZDB Docker Container neustarten                        |
+| docker-rebuild | MIZDB Docker Container neubauen                          |
+| build          | Docker Image bauen                                       |
+| publish        | Docker Image bauen und hochladen                         |
+
+## Docker Container
+
+Wenn man Docker im Project Root ausführen möchte, muss man die Pfade für `docker-compose.yaml` und `docker-compose.env`
+angeben, da sich diese Dateien in dem Unterordner `docker` befinden, wo Docker sie nicht sucht.
+
+Dazu sei es empfohlen, in der `activate` Datei der virtuellen Umgebung die Umgebungsvariablen `COMPOSE_FILE` und
+`COMPOSE_ENV_FILES` zu setzen:
+
+```shell
+export COMPOSE_FILE=./docker/docker-compose.yaml
+export COMPOSE_ENV_FILES=./docker/docker-compose.env
+```
+
+Alternativ können bei jedem Docker Befehl die Pfade als Argumente übergeben werden:
+
+```shell
+docker compose -f ./docker/docker-compose.yaml --env-file=./docker/docker-compose.env up
+```
 
 ### Dev Server (Docker)
 
