@@ -29,6 +29,10 @@
 </li>
 </ul>
 </li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#mizdb-konfigurieren">MIZDB konfigurieren</a>
+<ul class="nav flex-column">
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -79,5 +83,14 @@ bash mizdb.sh "\$1" "\$file"
 cd - &gt; /dev/null || exit
 EOF
 chmod +x ~/.local/bin/mizdb
-</code></pre></div>
+</code></pre>
+<h2 id="mizdb-konfigurieren">MIZDB konfigurieren</h2>
+<p>Einstellungen wie Datenbankpasswort und <a href="{% url 'help' page_name='email'%}">E-Mail Settings</a> können mit der Datei <code>docker-compose.env</code> geändert
+werden. Standardmäßig liegt diese Datei in dem Ordner <code>~/.local/share/MIZDB</code> (genauer: <code>$XDG_DATA_HOME/MIZDB</code>). Der
+Befehl <code>mizdb config</code> kann verwendet werden, um diese Datei zu finden:</p>
+<pre><code class="language-shell">mizdb config
+/home/myuser/.local/share/MIZDB/docker-compose.env
+</code></pre>
+<p>Docker Compose Eigenschaften wie zum Beispiel Volumes und Mounts können in der Datei <code>docker-compose.yaml</code> geändert werden, die in demselben Ordner wie <code>docker-compose.env</code> zu finden ist.</p>
+<p>Siehe dazu Die Docker Compose Referenz: <a href="https://docs.docker.com/reference/compose-file/services/">Compose File Reference</a></p></div>
 </div>{% endblock content %}
