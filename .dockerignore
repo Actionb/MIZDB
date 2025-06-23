@@ -6,7 +6,6 @@
 !locale/
 !MIZDB/
 !requirements/
-!scripts/app/
 !docker-entrypoint.sh
 !manage.py
 !README.md
