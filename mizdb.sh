@@ -38,6 +38,7 @@ BEFEHLE:
   update        Nach Updates suchen und installieren
   migrate       Datenbankmigrationen ausführen
   collectstatic Statische Dateien sammeln
+  config        Pfad der Konfigurationsdatei anzeigen
 
 EOF
 }
@@ -154,6 +155,10 @@ migrate() {
   docker exec -i $app_container python manage.py migrate --no-input
 }
 
+config() {
+  echo "$PWD"/docker-compose.env
+}
+
 case "$1" in
   dump) dump "$2" ;;
   restore) restore "$2" ;;
@@ -167,5 +172,6 @@ case "$1" in
   check) check ;;
   collectstatic) collectstatic ;;
   migrate) migrate;;
+  config) config;;
   *) show_help ;;
 esac
