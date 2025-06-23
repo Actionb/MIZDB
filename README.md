@@ -21,33 +21,6 @@ bash -c "$(curl -sSL https://raw.githubusercontent.com/Actionb/MIZDB/master/scri
 
 Nach dem Ausführen des Skripts sollte MIZDB unter [http://localhost/miz/](http://localhost/miz/) verfügbar sein.
 
-### Per Docker Compose
-
-1. Docker und Docker Compose müssen installiert sein
-2. Die Dateien `docker-compose.yaml` und `docker-compose.env` in einen Ordner deiner Wahl herunterladen
-3. Navigiere zu diesem Ordner und führe folgenden Befehl aus: `docker compose --env-file docker-compose.env up -d`
-
-Als Nächstes wird die Datenbank eingerichtet. Dazu kann entweder ein vorhandenes Backup eingelesen werden oder aber
-komplett neue Datenbanktabellen erzeugt werden.
-
-#### Backup wiederherstellen
-
-Mit dem folgenden Befehl kann ein Backup der Datenbank mit dem Dateinamen `backup` eingelesen werden:
-
-```shell
-docker exec -i mizdb-postgres /bin/sh -c 'PGDATABASE="$POSTGRES_DB" PGUSER="$POSTGRES_USER" PGHOST=localhost dropdb "$POSTGRES_DB" && createdb "$POSTGRES_DB" && pg_restore --dbname "$POSTGRES_DB"' < backup 
-```
-
-#### Neue Datenbanktabellen erzeugen
-
-Soll kein Backup wiederhergestellt werden, müssen die Datenbanktabellen erzeugt werden:
-
-```shell
-docker exec -i mizdb-app python manage.py migrate
-```
-
----
-
 Siehe auch:
 
 * [Source Code des Installations-Scripts](https://github.com/Actionb/MIZDB/blob/master/scripts/install-mizdb.sh)
