@@ -67,9 +67,9 @@ cd "$MIZDB_DIR"
 echo ""
 echo "Lade MIZDB Dateien herunter..."
 # TODO: use production URLs once merged to master branch
-curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/refs/heads/feature/docker-image/docker/docker-compose.yaml" -o docker-compose.yaml
-curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/refs/heads/feature/docker-image/docker/docker-compose.env" -o docker-compose.env
-curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/refs/heads/feature/docker-image/mizdb.sh" -o mizdb.sh
+curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.yaml" -o docker-compose.yaml
+curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.env" -o docker-compose.env
+curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh" -o mizdb.sh
 
 echo "Erzeuge MIZDB Einstellungen..."
 if [[ $PASSWORD ]]; then sed -i "s/DB_PASSWORD=mizdb/DB_PASSWORD=$PASSWORD/" docker-compose.env; fi
