@@ -143,7 +143,6 @@ definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/in
 | ruff-check     | `ruff check .` ausführen                                 |
 | build-docs     | Dokumentation bauen und bei Github hochladen             |
 | docker-restart | MIZDB Docker Container neustarten                        |
-| docker-rebuild | MIZDB Docker Container neubauen                          |
 | build          | Docker Image bauen                                       |
 | publish        | Docker Image bauen und hochladen                         |
 
