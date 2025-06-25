@@ -10,6 +10,7 @@
     - docker-compose now uses a MIZDB image from the GitHub container registry instead of building an image locally
     - settings are now read from the environment file instead of many different files like `.secrets` or `settings.py`.
       This allows using just a single `docker-compose.env` file to manage settings.
+    - added GitHub workflow that builds and publishes an image when a new release tag is pushed
 
 ## [0.24.0] - 2025-06-12
 
