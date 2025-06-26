@@ -145,6 +145,7 @@ definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/in
 | docker-restart | MIZDB Docker Container neustarten                        |
 | build          | Docker Image bauen                                       |
 | publish        | Docker Image bauen und hochladen                         |
+| restore-db     | Lokale Development Datenbank wiederherstellen            |
 
 ## Docker Container
 

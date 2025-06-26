@@ -139,3 +139,29 @@ shell = "docker build . -t ghcr.io/actionb/mizdb"
 help = "Build and upload the MIZDB docker image"
 shell = "docker push ghcr.io/actionb/mizdb"
 deps = ["build"]
+
+[tool.poe.tasks.restore-db]
+help = "Use pg_restore to restore the dev database from a backup file"
+shell = """
+set -e
+export PGPASSWORD=$password
+echo 'Deleting database...'
+dropdb --username=mizdb_user --host=localhost mizdb
+echo 'Re-creating database...'
+createdb --username=mizdb_user --host=localhost --owner=mizdb_user mizdb
+echo 'Restoring database data...'
+pg_restore --username=mizdb_user --host=localhost --dbname=mizdb $file
+"""
+
+[[tool.poe.tasks.restore-db.args]]
+name = "file"
+help = "The database backup file"
+options = ["-f", "--file"]
+
+[[tool.poe.tasks.restore-db.args]]
+name = "password"
+help = "Password for the database"
+default = "mizdb"
+options = ["-p", "--password"]
+
+
