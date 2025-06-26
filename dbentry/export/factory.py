@@ -76,6 +76,7 @@ def resource_factory(model):
     try:
         edit_view = miz_site.views[model](extra_context={"add": True})
     except KeyError:
+        # TODO: this should (re-)raise an exception
         print(f"No view for model '{model}'.")
         return
 
