@@ -47,7 +47,6 @@ class TestExport(MIZTestCase):
         musiker.orte.set(orte)
 
     def setUp(self):
-        super().setUp()
         self.resource = resource_factory(_models.Musiker)()
 
     def get_dataset(self):

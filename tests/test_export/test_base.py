@@ -23,7 +23,6 @@ class DummyResource(MIZResource):
 
 class TestMIZResource(MIZTestCase):
     def setUp(self):
-        super().setUp()
         self.resource = DummyResource()
 
     def test_filter_export_calls_defer_fts(self):
