@@ -11,7 +11,8 @@ from tests.case import MIZTestCase
 
 
 class DummyModel(models.Model):
-    foo = models.TextField(verbose_name="Foo")
+    name_set = models.TextField(verbose_name="Verbose Name Explicitly Set")
+    no_name_set = models.TextField()
 
 
 class DummyResource(MIZResource):
@@ -109,14 +110,23 @@ class TestMIZResource(MIZTestCase):
             select_related_mock.assert_not_called()
 
     def test_get_export_headers(self):
-        export_fields = [Field(attribute="foo", column_name="bar")]
+        """
+        Assert that get_export_headers prefers the value given by the
+        column_name argument if column_name isn't the default value (which
+        would be equal to the value of the attribute argument).
+        """
+        export_fields = [Field(attribute="name_set", column_name="bar")]
         with patch.object(self.resource, "get_export_fields", new=Mock(return_value=export_fields)):
             self.assertEqual(self.resource.get_export_headers(), ["bar"])
 
     def test_get_export_headers_model_field_verbose_name(self):
-        export_fields = [Field(attribute="foo", column_name="foo")]
+        """
+        Assert that get_export_headers uses the field's verbose name if
+        column_name has the default value (equal to attribute argument).
+        """
+        export_fields = [Field(attribute="name_set", column_name="name_set")]
         with patch.object(self.resource, "get_export_fields", new=Mock(return_value=export_fields)):
-            self.assertEqual(self.resource.get_export_headers(), ["Foo"])
+            self.assertEqual(self.resource.get_export_headers(), ["Verbose Name Explicitly Set"])
 
     def test_get_export_headers_not_a_model_field(self):
         export_fields = [Field(attribute="not_on_model", column_name="A Different Field")]
@@ -124,9 +134,22 @@ class TestMIZResource(MIZTestCase):
             assert self.resource.get_export_headers() == ["A Different Field"]
 
     def test_get_export_headers_column_name_is_none(self):
-        export_fields = [Field(attribute="foo")]
+        """
+        Assert that get_export_headers uses the field's verbose name if the
+        value for the column_name argument is None.
+        """
+        export_fields = [Field(attribute="name_set", column_name=None)]
         with patch.object(self.resource, "get_export_fields", new=Mock(return_value=export_fields)):
-            self.assertEqual(self.resource.get_export_headers(), ["Foo"])
+            self.assertEqual(self.resource.get_export_headers(), ["Verbose Name Explicitly Set"])
+
+    def test_get_export_headers_capitalizes_derived_verbose_name(self):
+        """
+        Assert that get_export_headers capitalizes a verbose name that has been
+        derived from the model field's name.
+        """
+        export_fields = [Field(attribute="no_name_set")]
+        with patch.object(self.resource, "get_export_fields", new=Mock(return_value=export_fields)):
+            self.assertEqual(self.resource.get_export_headers(), ["No name set"])
 
     def test_get_annotations(self):
         export_fields = ["any", AnnotationField(attribute="foo", expr="bar")]

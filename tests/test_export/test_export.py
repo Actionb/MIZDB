@@ -62,7 +62,7 @@ class TestExport(MIZTestCase):
 
     def test_export_headers(self):
         expected = [
-            "Id",
+            "ID",
             "Künstlername",
             "Person",
             "Weblinks",
@@ -82,7 +82,7 @@ class TestExport(MIZTestCase):
 
     def test_musiker_Data(self):
         datadict = self.get_datadict()
-        self.assertEqual(datadict["Id"], self.musiker.pk)
+        self.assertEqual(datadict["ID"], self.musiker.pk)
         self.assertEqual(datadict["Künstlername"], "Alicia Testy")
 
     def test_person_data(self):
