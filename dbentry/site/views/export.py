@@ -1,13 +1,16 @@
 from django.db import models
 from django.contrib.auth.mixins import UserPassesTestMixin
-from import_export.mixins import ExportViewFormMixin
+from django.http import HttpResponse
+from django.views.generic import FormView
+from import_export.mixins import ExportViewMixin
+from import_export.signals import post_export
 
 from dbentry.actions.base import ActionConfirmationView
 from dbentry.site.views.base import ModelViewMixin
 from dbentry.utils.permission import has_export_permission
 
 
-class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
+class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewMixin, FormView):
     """Base view for exporting model objects."""
 
     queryset: models.QuerySet = None
@@ -31,6 +34,18 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewFormMixin):
     def test_func(self) -> bool:  # pragma: no cover
         """test_func for UserPassesTestMixin."""
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
+
+    def form_valid(self, form):
+        # Originally, this was part of the ExportViewFormMixin from
+        # django-import-export, but that mixin has been slated for deprecation.
+        formats = self.get_export_formats()
+        file_format = formats[int(form.cleaned_data["format"])]()
+        export_data = self.get_export_data(file_format, self.get_queryset())
+        content_type = file_format.get_content_type()
+        response = HttpResponse(export_data, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{self.get_export_filename(file_format)}"'
+        post_export.send(sender=None, model=self.model)
+        return response
 
 
 class ExportActionView(BaseExportView, ActionConfirmationView):
