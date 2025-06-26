@@ -82,30 +82,11 @@ class MIZResource(ModelResource):
         return queryset.order_by(queryset.model._meta.pk.name)
 
     def get_export_headers(self, selected_fields=None):
-        # For fields derived from the model fields, use the field's
-        # verbose_name, unless column_name was set:
         headers = []
         for field in self.get_export_fields(selected_fields):
-            try:
-                model_field = self._meta.model._meta.get_field(field.attribute)
-                if model_field.verbose_name == model_field.name.replace("_", " "):
-                    # The verbose name was derived from the field name; ensure
-                    # that the first letter is upper case. Do not use
-                    # str.capitalize here because some fields like "ISBN" are
-                    # supposed to be all upper case, which capitalize() would
-                    # turn into "Isbn".
-                    verbose_name = f"{model_field.verbose_name[0].upper()}{model_field.verbose_name[1:]}"
-                else:
-                    # An explicit verbose name was set. Assume that the
-                    # capitalization is appropriate here.
-                    verbose_name = model_field.verbose_name
-            except FieldDoesNotExist:
-                verbose_name = field.column_name
-            if field.column_name is not None and field.column_name != field.attribute:
-                # Not the default column_name
-                headers.append(force_str(field.column_name))
-            else:
-                headers.append(force_str(verbose_name))
+            # For fields derived from the model fields, use the field's
+            # verbose_name, unless column_name was set:
+            headers.append(get_verbose_name_for_resource_field(self, self.get_field_name(field)))
         return headers
 
     def get_annotations(self):
