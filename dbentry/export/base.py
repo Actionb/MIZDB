@@ -36,11 +36,11 @@ class MIZResource(ModelResource):
         queryset = self._defer_fts(self._add_annotations(self._select_related(queryset)))
         return queryset.order_by(queryset.model._meta.pk.name)
 
-    def get_export_headers(self):
+    def get_export_headers(self, selected_fields=None):
         # For fields derived from the model fields, use the field's
         # verbose_name, unless column_name was set:
         headers = []
-        for field in self.get_export_fields():
+        for field in self.get_export_fields(selected_fields):
             try:
                 model_field = self._meta.model._meta.get_field(field.attribute)
                 if model_field.verbose_name == model_field.name.replace("_", " "):
