@@ -7,6 +7,51 @@ from dbentry.export.fields import AnnotationField
 from dbentry.export.widgets import YesNoBooleanWidget
 
 
+def get_verbose_name_for_resource_field(resource, field_name):
+    """
+    Return a verbose name for a given resource field.
+
+    verbose_name selection, by priority:
+        - use the resource field's column_name if column_name isn't the default
+        value derived from the field's name
+        - use the model field's verbose name if the resource field attribute
+        refers to a model field
+        - use the field's column name if no model field could be found
+        - use the field's name
+
+    Raises a ValueError if the resource does not have a field with the given
+    name.
+    """
+    try:
+        field = resource.fields[field_name]
+    except KeyError:
+        raise ValueError(f"The resource '{resource.__class__}' has no field with the name '{field_name}'")
+    if field.column_name is not None and field.column_name != field_name:
+        # An explicit column_name was declared, so just use that:
+        return force_str(field.column_name)
+    try:
+        model_field = resource._meta.model._meta.get_field(field.attribute)
+        if model_field.verbose_name == model_field.name.replace("_", " "):
+            # The verbose name was derived from the model field name; ensure
+            # that the first letter is upper case. Do not use
+            # str.capitalize here because some fields like "ISBN" are
+            # supposed to be all upper case, which capitalize() would
+            # turn into "Isbn".
+            verbose_name = f"{model_field.verbose_name[0].upper()}{model_field.verbose_name[1:]}"
+        else:
+            # An explicit verbose name was set. Assume that the capitalization
+            # is appropriate here and leave the verbose name as-is.
+            verbose_name = model_field.verbose_name
+    except FieldDoesNotExist:
+        verbose_name = ""
+    if not verbose_name:
+        # Use the given field name, if the model field's verbose name is empty,
+        # or if no model field could be found and the column_name is not set.
+        name = field_name.replace("_", " ")
+        verbose_name = f"{name[0].upper()}{name[1:]}"
+    return force_str(verbose_name)
+
+
 class MIZResource(ModelResource):
     add_annotations = True
 
@@ -36,21 +81,12 @@ class MIZResource(ModelResource):
         queryset = self._defer_fts(self._add_annotations(self._select_related(queryset)))
         return queryset.order_by(queryset.model._meta.pk.name)
 
-    def get_export_headers(self):
-        # For fields derived from the model fields, use the field's
-        # verbose_name, unless column_name was set:
+    def get_export_headers(self, selected_fields=None):
         headers = []
-        for field in self.get_export_fields():
-            try:
-                model_field = self._meta.model._meta.get_field(field.attribute)
-                verbose_name = model_field.verbose_name.capitalize()
-            except FieldDoesNotExist:
-                verbose_name = field.column_name
-            if field.column_name is not None and field.column_name != field.attribute:
-                # Not the default column_name
-                headers.append(force_str(field.column_name))
-            else:
-                headers.append(force_str(verbose_name))
+        for field in self.get_export_fields(selected_fields):
+            # For fields derived from the model fields, use the field's
+            # verbose_name, unless column_name was set:
+            headers.append(get_verbose_name_for_resource_field(self, self.get_field_name(field)))
         return headers
 
     def get_annotations(self):

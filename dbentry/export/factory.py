@@ -76,6 +76,7 @@ def resource_factory(model):
     try:
         edit_view = miz_site.views[model](extra_context={"add": True})
     except KeyError:
+        # TODO: this should (re-)raise an exception
         print(f"No view for model '{model}'.")
         return
 
@@ -93,7 +94,7 @@ def resource_factory(model):
             form_fields.append(field_name)
     fields = [model._meta.pk.name, *form_fields]
 
-    # Widget overrides, select_related and ChoiceFields:
+    # Field overrides for ForeignKeys, select_related and ChoiceFields:
     widgets = {}
     select_related = []
     field_declarations = []
@@ -103,8 +104,13 @@ def resource_factory(model):
         except FieldDoesNotExist:
             continue
         if model_field.is_relation and model_field.many_to_one:
-            # Set the widget field to the name_field of the related model:
-            widgets[model_field.name] = {"field": model_field.related_model.name_field}
+            # Adjust the attribute to export the value of the related object's
+            # name field:
+            resource_field = Field(
+                attribute=f"{model_field.name}__{model_field.related_model.name_field}",
+                column_name=model_field.verbose_name,
+            )
+            field_declarations.append((model_field.name, resource_field))
             select_related.append(model_field.name)
         if getattr(model_field, "choices", None):
             resource_field = ChoiceField(attribute=model_field.name, column_name=model_field.verbose_name)

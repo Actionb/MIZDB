@@ -3,20 +3,12 @@
 import os
 from pathlib import Path
 
-import yaml
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # BASE_DIR/MIZDB project dir/settings dir/__file__
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Read secrets from files
-try:
-    with open(BASE_DIR / ".secrets") as f:
-        secrets = yaml.load(f, yaml.Loader)
-except FileNotFoundError as e:
-    raise FileNotFoundError(".secrets file not found.\nHINT: run setup.sh") from e
-
-SECRET_KEY = secrets["SECRET_KEY"]
+SECRET_KEY = os.environ.get("SECRET_KEY", "mizdb")
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -27,7 +19,7 @@ DATABASES = {
         "USER": os.environ.get("DB_USER", "mizdb_user"),
         "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", 5432),
-        "PASSWORD": secrets["DATABASE_PASSWORD"],
+        "PASSWORD": os.environ.get("DB_PASSWORD", "mizdb"),
     }
 }
 

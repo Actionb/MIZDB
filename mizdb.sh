@@ -12,6 +12,10 @@ fi
 app_container=mizdb-app
 db_container=mizdb-postgres
 
+# Point docker at the env file:
+# https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_env_files
+export COMPOSE_ENV_FILES=docker-compose.env,./docker/docker-compose.env
+
 # Usage info
 show_help() {
   cat << EOF
@@ -34,7 +38,7 @@ BEFEHLE:
   update        Nach Updates suchen und installieren
   migrate       Datenbankmigrationen ausführen
   collectstatic Statische Dateien sammeln
-  uninstall     MIZDB deinstallieren
+  config        Pfad der Konfigurationsdatei anzeigen
 
 EOF
 }
@@ -48,7 +52,7 @@ dump() {
     file="$dir/mizdb_$(date +%Y_%m_%d_%H_%M_%S)"
   fi
   echo "Erstelle Datenbank Backup Datei..."
-  docker exec -i "$db_container" /bin/sh -c "/mizdb/dump.sh" > "$file"
+  docker exec -i "$db_container" /bin/sh -c 'pg_dump --username="$POSTGRES_USER" --host=localhost -Fc "$POSTGRES_DB"' > "$file"
   echo "Backup erstellt: $file"
 }
 
@@ -63,64 +67,60 @@ restore() {
   if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
     exit 1
   fi
-  docker exec -i "$db_container" /bin/sh -c "/mizdb/restore.sh" < "$1"
+  # Note that the quotes on 'EOF' make this whole thing work. Why? Magic!
+  cmd=$(cat <<'EOF'
+echo "Deleting database..." \
+&& dropdb --username="$POSTGRES_USER" --host=localhost "$POSTGRES_DB" \
+&& echo "Re-creating database..." \
+&& createdb --username="$POSTGRES_USER" --host=localhost --owner="$POSTGRES_USER" "$POSTGRES_DB" \
+&& echo "Restoring database data..." \
+&& pg_restore --username="$POSTGRES_USER" --host=localhost --dbname "$POSTGRES_DB" \
+&& echo "Done!"
+EOF
+  )
+  docker exec -i "$db_container" /bin/sh -c "$cmd" < "$1"
 }
 
 update() {
-  current=$(git rev-parse --abbrev-ref HEAD)
-  git remote update
-  if [ "$current" != "master" ]; then git checkout master -q; fi
-  if docker exec -i $app_container scripts/app/check_update.py; then
-    read -r -p "Soll das Update installiert werden? [j/n]: "
-    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+  read -r -p "Um ein Update durchzuführen, müssen die Container gestoppt werden. Fortfahren? [j/n]: "
+  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+    echo "Abgebrochen."
+    exit 1
+  fi
+  set -e
+  # Note there currently isn't an easy way to check whether a new version of
+  # the image is available, so this will always pull and restart the containers
+  # even if already on the latest version.
+  # You could look into the tool 'Watchtower' to help with updating.
+
+  # Pull the update:
+  echo "Neustes Image wird heruntergeladen..."
+  docker compose pull
+  # Rebuild containers:
+  echo "Stoppe Container..."
+  docker compose down
+  echo "Starte Container..."
+  docker compose up -d
+  echo ""
+  if ! docker exec -i "$app_container" python manage.py migrate --check --no-input; then
+    read -r -p "Ausstehende Migrationen anwenden? [j/n]: "
+    if [[ $REPLY =~ ^[jJyY]$ ]]; then
+      docker exec -i "$app_container" python manage.py migrate --no-input
+    else
       echo "Abgebrochen."
-      if [ "$current" != "master" ]; then git checkout "$current" -q; fi
       exit 1
     fi
-    set -e
-
-    # Pull the update:
-    git pull -q
-
-    # Rebuild containers:
-    echo "Stoppe Container..."
-    docker compose down
-    echo "Erzeuge Container..."
-    docker compose up -d --build
-    echo ""
-
-    # Run migrations, if necessary:
-    if ! docker exec -i $app_container python manage.py migrate --check; then
-      read -r -p "Es gibt ausstehende Datenbankmigrationen. Sollen diesen nun angewendet werden? [j/n]: "
-      if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
-        echo "Migrationen nicht angewendet. Um diese später anzuwenden: bash mizdb.sh migrate"
-      else
-        dump
-        migrate
-      fi
-      echo ""
-    fi
-
-    # Collect static files and run checks:
-    echo "Führe abschließende Checks aus..."
-    docker exec -i $app_container python manage.py collectstatic --clear --no-input --verbosity 0
-    docker exec -i $app_container python manage.py check
-    echo ""
-
-    echo "Update abgeschlossen!"
-    set +e
   fi
-  if [ "$current" != "master" ]; then git checkout "$current" -q; fi
+
+  echo "Führe abschließende Checks aus..."
+  docker exec -i $app_container python manage.py check
+  echo "Update abgeschlossen!"
+  set +e
 }
 
 restart() {
-  for container in $app_container $db_container; do
-    if [ -n "$(docker container ls -q -f name=$container)" ]; then
-      docker restart "$container"
-    else
-      docker start "$container"
-    fi
-  done
+  stop
+  start
 }
 
 start() {
@@ -155,57 +155,8 @@ migrate() {
   docker exec -i $app_container python manage.py migrate --no-input
 }
 
-uninstall() {
-  set -e
-  MIZDB_DIR="$(dirname -- "$( readlink -f -- "$0"; )"; )"
-  set +a
-  source "$MIZDB_DIR/.env"
-  set -a
-
-  echo "MIZDB wird deinstalliert."
-  echo "WARNUNG: Dabei werden alle Daten gelöscht!"
-
-  read -r -p "Bitte geben Sie 'MIZDB löschen' ein, um zu bestätigen: "
-  if [[ ! $REPLY = "MIZDB löschen" ]]; then
-    echo "Abgebrochen."
-    exit 1
-  fi
-
-  echo "Lösche Docker Container..."
-  set +e
-  docker stop $app_container $db_container
-  docker container rm $app_container $db_container
-  docker image prune -a
-  set -e
-  printf "Docker Container gelöscht.\n\n"
-
-  echo "Lösche Datenbankverzeichnis: $(dirname "$DATA_DIR")"
-  read -r -p "Fortfahren? [j/N]: "
-  if [[ $REPLY =~ ^[jJyY]$ ]]; then
-    sudo rm -rf "$(dirname "$DATA_DIR")"
-  fi
-  echo "Lösche Log Verzeichnis: ${LOG_DIR}"
-  read -r -p "Fortfahren? [j/N]: "
-  if [[ $REPLY =~ ^[jJyY]$ ]]; then
-    sudo rm -rf "$LOG_DIR"
-  fi
-
-  echo "Lösche Management Skript."
-  sudo rm -f /usr/local/bin/mizdb
-
-  echo "Entferne Backup cronjob."
-  # https://askubuntu.com/a/719877
-  sudo crontab -l 2>/dev/null | grep -v 'docker exec mizdb-postgres sh /mizdb/backup.sh' | grep -v "Backup der MIZDB Datenbank" | sudo crontab -u root -
-
-  echo "Lösche MIZDB Source Verzeichnis ${MIZDB_DIR}"
-  read -r -p "Fortfahren? [j/N]: "
-  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
-    exit 1
-  fi
-  cd ..
-  rm -rf "$MIZDB_DIR"
-  set +e
-  printf "\nFertig!\n"
+config() {
+  echo "$PWD"/docker-compose.env
 }
 
 case "$1" in
@@ -221,6 +172,6 @@ case "$1" in
   check) check ;;
   collectstatic) collectstatic ;;
   migrate) migrate;;
-  uninstall) uninstall;;
+  config) config;;
   *) show_help ;;
 esac

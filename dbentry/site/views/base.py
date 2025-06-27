@@ -640,8 +640,12 @@ class BaseEditView(
                 else:
                     selected = [value]
                 if isinstance(formfield, forms.ModelChoiceField):
+                    if has_change_permission(request.user, bf.field.queryset.model._meta):
+                        get_link_func = get_obj_link
+                    else:
+                        get_link_func = get_view_link
                     return ", ".join(
-                        get_view_link(request, o, blank=True) for o in bf.field.queryset.filter(pk__in=selected)
+                        get_link_func(request, obj, blank=True) for obj in bf.field.queryset.filter(pk__in=selected)
                     )
                 return ", ".join(dict(formfield.choices)[s] for s in selected)
             elif isinstance(formfield.widget, forms.URLInput) and value:

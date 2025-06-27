@@ -19,14 +19,6 @@
 </li>
 <li class="nav-item" data-bs-level="2"><a class="nav-link" href="#3-docker-containerapache-neu-starten">3. Docker Container/Apache neu starten</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#docker">Docker</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="3"><a class="nav-link" href="#ohne-docker">Ohne Docker</a>
-<ul class="nav flex-column">
-</ul>
-</li>
 </ul>
 </li>
 <li class="nav-item" data-bs-level="2"><a class="nav-link" href="#4-e-mail-einstellungen-testen">4. E-Mail Einstellungen testen</a>
@@ -49,25 +41,16 @@
 <div class="col-md-9" role="main">
 <h1 id="e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</h1>
 <p>Es können von MIZDB E-Mails an die Admins versendet werden; z.B. wenn Benutzer Feedback abgeben oder wenn ein Server
-Error eingetreten ist.
-Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in die Datei <code>settings.py</code> im
-MIZDB Grundverzeichnis eingetragen werden.</p>
+Error eingetreten ist. Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in
+die <a href="{% url 'help' page_name='install'%}#mizdb-konfigurieren">MIZDB Konfigurationsdatei</a> gemacht werden.</p>
 <div class="admonition info">
-<p class="admonition-title">Verwendung <code>settings.py</code></p>
-<p>Die zusätzlichen Einstellungen können ab dieser Zeile eingetragen werden: 
-<code>python
-    # -----------------------------------------------------------------------------
-    # Add your own settings here:</code></p>
+<p class="admonition-title">Wo finde ich die Konfigurationsdatei?</p>
+<p>Der Befehl <code>mizdb config</code> zeigt den Pfad zu der Konfigurationsdatei an. </p>
 </div>
 <h2 id="1-admins-registrieren">1. Admins registrieren</h2>
-<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-Mail-Adresse in eine Liste
-eingetragen.</p>
+<p>Unter dem Punkt <code>ADMINS</code> werden die E-Mail-Adressen der Admins, die benachrichtigt werden sollen, eingetragen.</p>
 <p>Zum Beispiel:</p>
-<pre><code class="language-python">ADMINS = [
-    ("Admin", "admin@mail.com"),
-    ("Willi Weber", "weber@web.de"),
-    # weitere Admins...
-]
+<pre><code class="language-dotenv">ADMINS=admin@mail.com,weber@web.de
 </code></pre>
 <h2 id="2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</h2>
 <p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden:</p>
@@ -102,12 +85,12 @@ eingetragen.</p>
 </tbody>
 </table>
 <p>Zum Beispiel:</p>
-<pre><code class="language-python">EMAIL_HOST = "smtp.ionos.de"
-EMAIL_PORT = 465
-EMAIL_HOST_USER = "admin@mail.de"
-EMAIL_HOST_PASSWORD = "mysupersecretpassword"
-EMAIL_USE_SSL = True
-SERVER_EMAIL = "admin@mail.de"
+<pre><code class="language-dotenv">EMAIL_HOST=smtp.ionos.de
+EMAIL_PORT=465
+EMAIL_HOST_USER=admin@mail.de
+EMAIL_HOST_PASSWORD=mysupersecretpassword
+EMAIL_USE_SSL=True
+SERVER_EMAIL=admin@mail.de
 </code></pre>
 <div class="admonition tip">
 <p class="admonition-title">Nützliche Links:</p>
@@ -119,58 +102,21 @@ SERVER_EMAIL = "admin@mail.de"
 </ul>
 </div>
 <hr/>
-<p>Eine vollständige <code>settings.py</code> könnte also so aussehen:</p>
-<pre><code class="language-python">"""
-Add your own settings that override the default settings.
-
-For a list of settings, see:
-    - https://docs.djangoproject.com/en/4.2/ref/settings/
-"""
-
-from MIZDB.settings.defaults import BASE_DIR, secrets  # noqa
-from MIZDB.settings.production import *  # noqa
-
-# -----------------------------------------------------------------------------
-# Add your own settings here:
-
-ADMINS = [
-    ("Admin", "admin@mail.com"),
-    ("Willi Weber", "weber@web.de"),
-]
-
-EMAIL_HOST = "smtp.ionos.de"
-EMAIL_PORT = 465
-EMAIL_HOST_USER = "admin@mail.de"
-EMAIL_HOST_PASSWORD = "mysupersecretpassword"
-EMAIL_USE_SSL = True
-SERVER_EMAIL = "admin@mail.de"
-</code></pre>
 <h2 id="3-docker-containerapache-neu-starten">3. Docker Container/Apache neu starten</h2>
 <p>Abschließend muss der Docker Container der Anwendung neu gestartet werden, um die Änderungen anzuwenden:</p>
-<h3 id="docker">Docker</h3>
 <pre><code class="language-shell">mizdb restart
-</code></pre>
-<h3 id="ohne-docker">Ohne Docker</h3>
-<p>Oder, wenn ohne Docker installiert wurde, Apache neu laden:</p>
-<pre><code class="language-shell">sudo service apache2 reload
 </code></pre>
 <h2 id="4-e-mail-einstellungen-testen">4. E-Mail Einstellungen testen</h2>
 <h3 id="systemcheck">Systemcheck</h3>
 <p>Es kann ein Systemcheck durchgeführt werden, um zu prüfen, dass die Angaben und ihre Formatierung korrekt
 sind:</p>
-<h4 id="docker_1">Docker</h4>
 <p>Bei einer Installation mit Docker:</p>
 <pre><code class="language-shell">mizdb check
 </code></pre>
-<h4 id="ohne-docker_1">Ohne Docker</h4>
-<p>Oder bei einer Installation ohne Docker, diese Zeile im MIZDB Grundverzeichnis ausführen:</p>
-<pre><code class="language-shell">DJANGO_SETTINGS_MODULE=MIZDB.settings .venv/bin/python3 manage.py check
-</code></pre>
 <h3 id="test-mail-versenden">Test-Mail versenden</h3>
 <p>Zu Testzwecken kann man mit Django auch direkt eine Mail an die Admins verschicken, siehe die Django Dokumentation für
-die
-Funktion <a href="https://docs.djangoproject.com/en/5.2/topics/email/#mail-admins">mail_admins</a>.</p>
-<p>Bei einer Docker Installation zunächst in den Container wechseln:</p>
+die Funktion <a href="https://docs.djangoproject.com/en/5.2/topics/email/#mail-admins">mail_admins</a>.</p>
+<p>Zunächst in den Container wechseln:</p>
 <pre><code class="language-shell">mizdb shell
 </code></pre>
 <p>Anschließend:</p>

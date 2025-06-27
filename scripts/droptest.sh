@@ -2,11 +2,13 @@
 
 # Drops all test databases (i.e. databases starting with the string "test_mizdb").
 
-# Read password from the password file
-PASSWORD=$(cat ".passwd")
+set -e
+
+read -r -p 'Database password (leave empty to use default password): '
+export PGPASSWORD=${REPLY:-mizdb}
 
 echo "This drops the following databases:"
-PGPASSWORD="$PASSWORD" psql --user=mizdb_user --host=localhost --dbname=mizdb -c "SELECT datname FROM pg_database WHERE datname LIKE 'test_mizdb%';" | \
+psql --user=mizdb_user --host=localhost --dbname=mizdb -c "SELECT datname FROM pg_database WHERE datname LIKE 'test_mizdb%';" | \
   grep -ve "datname" -e "^-" -e "^("
 read -r -p "Continue? [y/n]: "
 if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
@@ -14,6 +16,6 @@ if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
   exit 0
 fi
 
-PGPASSWORD="$PASSWORD" psql --user=mizdb_user --host=localhost --dbname=mizdb -c "SELECT datname FROM pg_database WHERE datname LIKE 'test_mizdb%';" | \
+psql --user=mizdb_user --host=localhost --dbname=mizdb -c "SELECT datname FROM pg_database WHERE datname LIKE 'test_mizdb%';" | \
   grep -ve "datname" -e "^-" -e "^(" | \
-  PGPASSWORD="$PASSWORD" xargs -I {} psql --user=mizdb_user --host=localhost --dbname=mizdb -c "DROP DATABASE {};"
+  xargs -I {} psql --user=mizdb_user --host=localhost --dbname=mizdb -c "DROP DATABASE {};"

@@ -130,8 +130,10 @@ class URLConf:
         path("country/", CountryListView.as_view(), name="test_site_country_changelist"),
         path("country/<path:object_id>/delete/", CountryDeleteView.as_view(), name="test_site_country_delete"),
         path("country/<path:object_id>/view/", dummy_view, name="test_site_country_view"),
+        path("country/<path:object_id>/change/", dummy_view, name="test_site_country_change"),
         path("genre/", GenreListView.as_view(), name="test_site_genre_changelist"),
         path("genre/<path:object_id>/view/", dummy_view, name="test_site_genre_view"),
+        path("genre/<path:object_id>/change/", dummy_view, name="test_site_genre_change"),
         path("musician/", MusicianListView.as_view(), name="test_site_musician_changelist"),
         path("admin/", admin_site.urls),
         path("genre/<path:object_id>/view/", dummy_view, name="test_site_genre_view"),
@@ -547,24 +549,30 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
     def test_view_only(self):
         """Assert that the 'view_only' response contains the expected context."""
         url = reverse("test_site_band_view", kwargs={"object_id": self.obj.pk})
-        response = self.get_response(url, user=self.super_user)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "mizdb/viewonly.html")
-        expected = [
-            ("Name", "Vikings of SPAM"),
-            ("Band Alias", "---"),
-            ("Url", '<a href="www.lovely-spam.com" target="_blank">www.lovely-spam.com</a>'),
-            ("Origin Country", f'<a href="/country/{self.origin.pk}/view/" target="_blank">Denmark</a>'),
-            (
-                "Genres",
-                f'<a href="/genre/{self.rock.pk}/view/" target="_blank">Rock</a>\n'
-                f'<a href="/genre/{self.spam.pk}/view/" target="_blank">Spam</a>\n',
-            ),
-        ]
-        object_data = response.context["data"]
-        for name, value in expected:
-            with self.subTest(field=name):
-                self.assertEqual(object_data[name], value)
+        for user in (self.super_user, self.noperms_user):
+            has_change_perms = user == self.super_user
+            with self.subTest(has_change_perms=has_change_perms):
+                response = self.get_response(url, user=user)
+                self.assertEqual(response.status_code, 200)
+                self.assertTemplateUsed(response, "mizdb/viewonly.html")
+                expected = [
+                    ("Name", "Vikings of SPAM"),
+                    ("Band Alias", "---"),
+                    ("Url", '<a href="www.lovely-spam.com" target="_blank">www.lovely-spam.com</a>'),
+                    (
+                        "Origin Country",
+                        f"""<a href="/country/{self.origin.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Denmark</a>""",
+                    ),
+                    (
+                        "Genres",
+                        f"""<a href="/genre/{self.rock.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Rock</a>\n"""
+                        f"""<a href="/genre/{self.spam.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Spam</a>\n""",
+                    ),
+                ]
+                object_data = response.context["data"]
+                for name, value in expected:
+                    with self.subTest(field=name):
+                        self.assertEqual(object_data[name], value)
 
 
 @override_settings(ROOT_URLCONF=URLConf)

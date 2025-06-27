@@ -2,11 +2,6 @@
 /static/
 /.vscode/
 /.idea/
-/db/data/
-/.secrets
-/.passwd
-/dumps/
-settings.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

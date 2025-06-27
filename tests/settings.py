@@ -2,17 +2,9 @@ import logging
 import os
 from pathlib import Path
 
-import yaml
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-try:
-    with open(BASE_DIR / ".secrets") as f:
-        secrets = yaml.load(f, yaml.Loader)
-except FileNotFoundError as e:
-    raise FileNotFoundError(".secrets file not found.\nHINT: run setup.sh") from e
-
-SECRET_KEY = "abcdefghi"
+SECRET_KEY = "test"
 
 ALWAYS_INSTALLED_APPS = [
     "dbentry.apps.DbentryConfig",
@@ -88,7 +80,7 @@ DATABASES = {
         "USER": os.environ.get("DB_USER", "mizdb_user"),
         "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", 5432),
-        "PASSWORD": secrets["DATABASE_PASSWORD"],
+        "PASSWORD": os.environ.get("DB_PASSWORD", "mizdb"),
     },
 }
 

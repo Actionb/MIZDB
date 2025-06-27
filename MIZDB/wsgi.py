@@ -11,10 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-if os.environ.get("DJANGO_DEVELOPMENT"):
-    settings_module = "MIZDB.settings.development"
-else:
-    settings_module = "settings"
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MIZDB.settings")
 
 application = get_wsgi_application()

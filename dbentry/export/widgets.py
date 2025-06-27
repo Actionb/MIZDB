@@ -2,7 +2,7 @@ from import_export.widgets import BooleanWidget, CharWidget
 
 
 class YesNoBooleanWidget(BooleanWidget):
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         if value in self.NULL_VALUES:
             return ""
         return "Ja" if value else "Nein"
@@ -15,7 +15,7 @@ class ChoiceLabelWidget(CharWidget):
         self.field_name = field_name
         super().__init__()
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         # Use get_FOO_display method to get the human-readable labels:
         # https://docs.djangoproject.com/en/5.0/ref/models/instances/#django.db.models.Model.get_FOO_display
         try:
