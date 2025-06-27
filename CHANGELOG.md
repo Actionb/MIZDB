@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+- added possibility to select which fields to export  
+
 ### Changed
 
 - made Audio.plattennummer queries case-insensitive
@@ -12,6 +16,7 @@
       This allows using just a single `docker-compose.env` file to manage settings.
     - added GitHub workflow that builds and publishes an image when a new release tag is pushed
 - added background to favicon
+- updated django-import-export to version 4.3.8
 
 ## [0.24.0] - 2025-06-12
 

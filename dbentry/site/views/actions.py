@@ -71,7 +71,7 @@ def watchlist(view, request, queryset):
     description="Die ausgewählten Objekte exportieren",
 )
 def export(view, request, queryset):
-    view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_class=view.resource_class)
+    view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_classes=[view.resource_class])
     return view(request)
 
 
@@ -81,5 +81,5 @@ def export(view, request, queryset):
     description="Die gefundenen Objekte exportieren",
 )
 def export_results(view, request, queryset):
-    view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_class=view.resource_class)
+    view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_classes=[view.resource_class])
     return view(request)

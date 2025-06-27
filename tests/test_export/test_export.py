@@ -47,7 +47,6 @@ class TestExport(MIZTestCase):
         musiker.orte.set(orte)
 
     def setUp(self):
-        super().setUp()
         self.resource = resource_factory(_models.Musiker)()
 
     def get_dataset(self):
@@ -80,9 +79,9 @@ class TestExport(MIZTestCase):
         export_queryset = self.resource.filter_export(self.resource.get_queryset())
         self.assertIn("person", export_queryset.query.select_related)
 
-    def test_musiker_Data(self):
+    def test_musiker_data(self):
         datadict = self.get_datadict()
-        self.assertEqual(datadict["ID"], self.musiker.pk)
+        self.assertEqual(datadict["ID"], str(self.musiker.pk))
         self.assertEqual(datadict["Künstlername"], "Alicia Testy")
 
     def test_person_data(self):

@@ -29,9 +29,9 @@ class CachedQuerysetField(Field):
             cache[pk] = values_dict
         return cache
 
-    def export(self, obj):
+    def export(self, instance, **kwargs):
         try:
-            return self.cache[obj.pk][self.attribute]
+            return self.cache[instance.pk][self.attribute]
         except KeyError:
             return ""
 

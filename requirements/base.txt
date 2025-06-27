@@ -13,5 +13,5 @@ requests==2.32.4
 psycopg2==2.9.10
 python-stdnum==2.1
 mizdb-watchlist==1.1.1
-django-import-export==3.3.8  # avoid updating to 4.* because of breaking changes
+django-import-export==4.3.8  # avoid updating to 4.* because of breaking changes
 semver==3.0.4
