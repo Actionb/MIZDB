@@ -267,6 +267,13 @@ class ArtikelResource(MIZResource):
         column_name="Personen",
         queryset=_models.Artikel.objects.annotate(person_list=string_list("person___name", length=1024)),
     )
+    bestand_list = CachedQuerysetField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        queryset=_models.Artikel.objects.annotate(
+            bestand_list=string_list("ausgabe__bestand__lagerort___name", length=1024)
+        ),
+    )
 
     class Meta:
         model = _models.Artikel
@@ -287,6 +294,7 @@ class ArtikelResource(MIZResource):
             "spielort_list",
             "veranstaltung_list",
             "person_list",
+            "bestand_list",
             "beschreibung",
         ]
         export_order = [
@@ -306,6 +314,7 @@ class ArtikelResource(MIZResource):
             "spielort_list",
             "veranstaltung_list",
             "person_list",
+            "bestand_list",
             "beschreibung",
         ]
         widgets = {"ausgabe": {"field": "_name"}}
