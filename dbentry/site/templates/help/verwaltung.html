@@ -98,7 +98,8 @@ docker exec -i mizdb-postgres /bin/sh -c 'pg_dump --username="$POSTGRES_USER" --
 # Delete older backup copies:  
 find "$BACKUP_DIR" -name "mizdb_*" -type f -mtime +$number_of_days -delete
 </code></pre>
-<p>Dieses Skript, beispielsweise <code>mizdb_backup.sh</code> genannt, erzeugt ein Backup, legt es in <code>/var/lib/mizdb/backups</code> ab und löscht Backups, die älter als 30 Tage sind.</p>
+<p>Dieses Skript, beispielsweise <code>mizdb_backup.sh</code> genannt, erzeugt ein Backup, legt es in <code>/var/lib/mizdb/backups</code> ab und
+löscht Backups, die älter als 30 Tage sind.</p>
 <p>Um es zu aktivieren, zunächst den crontab des root users öffnen:</p>
 <pre><code class="language-shell">sudo crontab -e
 </code></pre>
@@ -111,14 +112,14 @@ find "$BACKUP_DIR" -name "mizdb_*" -type f -mtime +$number_of_days -delete
 <ol>
 <li>rclone installieren: <a href="https://rclone.org/install/">https://rclone.org/install/</a></li>
 <li>rclone für Google Drive konfigurieren: <a href="https://rclone.org/drive/">https://rclone.org/drive/</a></li>
-<li>crontab öffnen:
-    <code>shell
-    sudo crontab -e</code>
-   und dann den cronjob definieren, zum Beispiel:
-    <code>shell
-   # Backups mit rclone hochladen:
-    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups &lt;remote_name&gt;:backups</code></li>
+<li>crontab öffnen:</li>
 </ol>
+<pre><code class="language-shell">sudo crontab -e
+</code></pre>
+<p>und dann den cronjob definieren, zum Beispiel:  </p>
+<pre><code class="language-shell"># Backups mit rclone hochladen:
+53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups &lt;remote_name&gt;:backups
+</code></pre>
 <p>Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
 konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/remote_setup/</a></p>
@@ -187,8 +188,8 @@ service_account_file = /pfad/zu/service/account/credentials.json
 <code>bash mizdb dbshell</code> und dann <code>psql --user=$POSTGRES_USER $POSTGRES_DB</code></p>
 <h3 id="webserver-einhangepunkt-andern">Webserver Einhängepunkt ändern</h3>
 <p>Standardmäßig ist die Seite der Datenbank unter <code>http://&lt;ServerName&gt;/miz</code> erreichbar, d.h. der Einhängepunkt ist <code>/miz</code>.
-Um einen anderen Einhängepunkt festzulegen, muss in der Datei <code>.env</code> der Wert für <code>MOUNT_POINT</code> geändert werden.<br/>
-Anschließend müssen die Container gestoppt und neu gestartet werden:</p>
+Um einen anderen Einhängepunkt festzulegen, muss in der Datei <code>docker-compose.env</code> der Wert für <code>MOUNT_POINT</code> geändert
+werden. Anschließend müssen die Container gestoppt und neu gestartet werden:</p>
 <pre><code class="language-shell">bash mizdb.sh stop &amp;&amp; bash mizdb.sh start
 </code></pre></div>
 </div>{% endblock content %}
