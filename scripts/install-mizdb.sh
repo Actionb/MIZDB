@@ -28,7 +28,7 @@ echo ""
 echo "MIZDB Installation"
 echo ""
 echo "Dieses Skript wird MIZDB in $MIZDB_DIR installieren."
-printf "Fortfahren? (y/n): "
+printf "Fortfahren? (j/n): "
 read -r REPLY
 if [[ "$REPLY" != [yYjJ]* ]]; then
   echo "Abgebrochen."
@@ -36,7 +36,7 @@ if [[ "$REPLY" != [yYjJ]* ]]; then
 fi
 
 # Ask for a password
-printf "Soll für den Datenbankbenutzer ein Passwort eingerichtet werden? (y/n): "
+printf "Soll für den Datenbankbenutzer ein Passwort eingerichtet werden? (j/n): "
 read -r REPLY
 if [[ "$REPLY" == [yYjJ]* ]]; then
   while true; do
@@ -108,7 +108,7 @@ EOF
 )
 
 echo ""
-printf "Soll ein Backup wiederhergestellt werden? (y/n): "
+printf "Soll ein Backup wiederhergestellt werden? (j/n): "
 read -r REPLY
 if [[ "$REPLY" == [yYjJ]* ]]; then
   while true; do
