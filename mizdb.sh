@@ -93,19 +93,17 @@ update() {
   # even if already on the latest version.
   # You could look into the tool 'Watchtower' to help with updating.
 
-  # Pull the update:
+  echo ""
   echo "Neuestes Image wird heruntergeladen..."
   docker compose pull
-  # Rebuild containers:
-  echo "Stoppe Container..."
-  docker compose down
-  echo "Starte Container..."
+  echo "Starte Container neu..."
   docker compose up -d
   echo ""
   if ! docker exec -i "$app_container" python manage.py migrate --check --no-input; then
     read -r -p "Ausstehende Migrationen anwenden? [j/n]: "
     if [[ $REPLY =~ ^[jJyY]$ ]]; then
       docker exec -i "$app_container" python manage.py migrate --no-input
+      echo ""
     else
       echo "Abgebrochen."
       exit 1
