@@ -7,6 +7,8 @@ from dbentry.utils.query import string_list
 
 
 class AudioResource(MIZResource):
+    land_pressung = Field(attribute="land_pressung__land_name", column_name="Land Pressung")
+    medium = Field(attribute="medium__medium", column_name="Speichermedium")
     musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
@@ -121,11 +123,11 @@ class AudioResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"land_pressung": {"field": "land_name"}, "medium": {"field": "medium"}}
         select_related = ["land_pressung", "medium"]
 
 
 class AusgabeResource(MIZResource):
+    magazin = Field(attribute="magazin__magazin_name")
     ausgabenum_list = CachedQuerysetField(
         attribute="ausgabenum_list",
         column_name="Ausgabennummern",
@@ -196,11 +198,11 @@ class AusgabeResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"magazin": {"field": "magazin_name"}}
         select_related = ["magazin"]
 
 
 class AutorResource(MIZResource):
+    person = Field(attribute="person___name", column_name="Person")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -216,12 +218,12 @@ class AutorResource(MIZResource):
         model = _models.Autor
         fields = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
         export_order = ["id", "person", "kuerzel", "urls_list", "magazin_list", "beschreibung"]
-        widgets = {"person": {"field": "_name"}}
         select_related = ["person"]
 
 
 class ArtikelResource(MIZResource):
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
+    ausgabe = Field(attribute="ausgabe___name", column_name="Ausgabe")
     autor_list = CachedQuerysetField(
         attribute="autor_list",
         column_name="Autoren",
@@ -317,11 +319,11 @@ class ArtikelResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"ausgabe": {"field": "_name"}}
         select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class PlakatResource(MIZResource):
+    reihe = Field(attribute="reihe__name", column_name="Bildreihe")
     schlagwort_list = CachedQuerysetField(
         attribute="schlagwort_list",
         column_name="Schlagwörter",
@@ -404,7 +406,6 @@ class PlakatResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"reihe": {"field": "name"}}
         select_related = ["reihe"]
 
 
@@ -460,6 +461,8 @@ class BandResource(MIZResource):
 
 
 class BuchResource(MIZResource):
+    schriftenreihe = Field(attribute="schriftenreihe__name", column_name="Schriftenreihe")
+    buchband = Field(attribute="buchband__titel", column_name="Sammelband")
     autor_list = CachedQuerysetField(
         attribute="autor_list",
         column_name="Autoren",
@@ -579,7 +582,6 @@ class BuchResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"schriftenreihe": {"field": "name"}, "buchband": {"field": "titel"}}
         select_related = ["schriftenreihe", "buchband"]
 
 
@@ -654,6 +656,7 @@ class MagazinResource(MIZResource):
 
 
 class MusikerResource(MIZResource):
+    person = Field(attribute="person___name", column_name="Person")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -711,7 +714,6 @@ class MusikerResource(MIZResource):
             "instrument_list",
             "beschreibung",
         ]
-        widgets = {"person": {"field": "_name"}}
         select_related = ["person"]
 
 
@@ -749,6 +751,7 @@ class SchlagwortResource(MIZResource):
 
 
 class SpielortResource(MIZResource):
+    ort = Field(attribute="ort___name", column_name="Ort")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -764,11 +767,12 @@ class SpielortResource(MIZResource):
         model = _models.Spielort
         fields = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
         export_order = ["id", "name", "ort", "urls_list", "spielortalias_list", "beschreibung"]
-        widgets = {"ort": {"field": "_name"}}
         select_related = ["ort"]
 
 
 class VeranstaltungResource(MIZResource):
+    spielort = Field(attribute="spielort__name", column_name="Spielort")
+    reihe = Field(attribute="reihe__name", column_name="Veranstaltungsreihe")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -843,20 +847,21 @@ class VeranstaltungResource(MIZResource):
             "person_list",
             "beschreibung",
         ]
-        widgets = {"spielort": {"field": "name"}, "reihe": {"field": "name"}}
         select_related = ["spielort", "reihe"]
 
 
 class VerlagResource(MIZResource):
+    sitz = Field(attribute="sitz___name", column_name="Sitz")
+
     class Meta:
         model = _models.Verlag
         fields = ["id", "verlag_name", "sitz"]
         export_order = ["id", "verlag_name", "sitz"]
-        widgets = {"sitz": {"field": "_name"}}
         select_related = ["sitz"]
 
 
 class VideoResource(MIZResource):
+    medium = Field(attribute="medium__medium", column_name="Speichermedium")
     musiker_list = CachedQuerysetField(
         attribute="musiker_list",
         column_name="Musiker",
@@ -958,20 +963,33 @@ class VideoResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"medium": {"field": "medium"}}
         select_related = ["medium"]
 
 
 class OrtResource(MIZResource):
+    land = Field(attribute="land__land_name", column_name="Land")
+    bland = Field(attribute="bland__bland_name", column_name="Bundesland")
+
     class Meta:
         model = _models.Ort
         fields = ["id", "stadt", "land", "bland"]
         export_order = ["id", "stadt", "land", "bland"]
-        widgets = {"land": {"field": "land_name"}, "bland": {"field": "bland_name"}}
         select_related = ["land", "bland"]
 
 
 class BestandResource(MIZResource):
+    lagerort = Field(attribute="lagerort___name", column_name="Lagerort")
+    provenienz = Field(attribute="provenienz__geber__name", column_name="Provenienz")
+    audio = Field(attribute="audio__titel", column_name="Audio")
+    ausgabe = Field(attribute="ausgabe___name", column_name="Ausgabe")
+    brochure = Field(attribute="brochure__titel", column_name="Broschüre")
+    buch = Field(attribute="buch__titel", column_name="Buch")
+    dokument = Field(attribute="dokument__titel", column_name="Dokument")
+    foto = Field(attribute="foto__titel", column_name="Foto")
+    memorabilien = Field(attribute="memorabilien__titel", column_name="Memorabilien")
+    plakat = Field(attribute="plakat__titel", column_name="Plakat")
+    technik = Field(attribute="technik__titel", column_name="Technik")
+    video = Field(attribute="video__titel", column_name="Video")
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
 
     class Meta:
@@ -1010,20 +1028,6 @@ class BestandResource(MIZResource):
             "technik",
             "video",
         ]
-        widgets = {
-            "lagerort": {"field": "_name"},
-            "provenienz": {"field": "geber__name"},
-            "audio": {"field": "titel"},
-            "ausgabe": {"field": "_name"},
-            "brochure": {"field": "titel"},
-            "buch": {"field": "titel"},
-            "dokument": {"field": "titel"},
-            "foto": {"field": "titel"},
-            "memorabilien": {"field": "titel"},
-            "plakat": {"field": "titel"},
-            "technik": {"field": "titel"},
-            "video": {"field": "titel"},
-        }
         select_related = [
             "lagerort",
             "provenienz",
@@ -1058,6 +1062,7 @@ class HerausgeberResource(MIZResource):
 class BrochureResource(MIZResource):
     basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
+    ausgabe = Field(attribute="ausgabe___name", column_name="Ausgabe")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -1112,7 +1117,6 @@ class BrochureResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"ausgabe": {"field": "_name"}}
         select_related = ["ausgabe", "ausgabe__magazin"]
 
 
@@ -1120,6 +1124,7 @@ class KatalogResource(MIZResource):
     basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
     art = ChoiceField(attribute="art")
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
+    ausgabe = Field(attribute="ausgabe___name", column_name="Ausgabe")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -1169,13 +1174,13 @@ class KatalogResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"ausgabe": {"field": "_name"}}
         select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class KalenderResource(MIZResource):
     basebrochure_ptr = Field(attribute="basebrochure_ptr__id", column_name="Id")
     magazin = Field(attribute="ausgabe__magazin__magazin_name", column_name="Magazin")
+    ausgabe = Field(attribute="ausgabe___name", column_name="Ausgabe")
     urls_list = CachedQuerysetField(
         attribute="urls_list",
         column_name="Weblinks",
@@ -1237,12 +1242,12 @@ class KalenderResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"ausgabe": {"field": "_name"}}
         select_related = ["ausgabe", "ausgabe__magazin"]
 
 
 class FotoResource(MIZResource):
     typ = ChoiceField(attribute="typ")
+    reihe = Field(attribute="reihe__name", column_name="Bildreihe")
     schlagwort_list = CachedQuerysetField(
         attribute="schlagwort_list",
         column_name="Schlagwörter",
@@ -1331,7 +1336,6 @@ class FotoResource(MIZResource):
             "bestand_list",
             "beschreibung",
         ]
-        widgets = {"reihe": {"field": "name"}}
         select_related = ["reihe"]
 
 
@@ -1357,11 +1361,12 @@ class GeberResource(MIZResource):
 
 
 class ProvenienzResource(MIZResource):
+    geber = Field(attribute="geber__name", column_name="Geber")
+
     class Meta:
         model = _models.Provenienz
         fields = ["id", "typ", "geber"]
         export_order = ["id", "typ", "geber"]
-        widgets = {"geber": {"field": "name"}}
         select_related = ["geber"]
 
 
