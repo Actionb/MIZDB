@@ -98,7 +98,7 @@ cmd = "pytest -n auto -m 'not e2e'"
 
 [tool.poe.tasks.test-pw]
 help = "Run playwright tests"
-cmd = "pytest -n auto --browser firefox"
+cmd = "pytest -n auto --browser firefox -m e2e"
 
 [tool.poe.tasks.drop-testdb]
 help = "Drop all test databases. This can be helpful if databases get corrupted from aborted tests."
