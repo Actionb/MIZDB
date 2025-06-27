@@ -1600,30 +1600,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. Docker Container/Apache neu starten">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      Docker
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ohne-docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      Ohne Docker
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1642,30 +1618,6 @@
       Systemcheck
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Systemcheck">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#docker_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Docker
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ohne-docker_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Ohne Docker
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -1750,30 +1702,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. Docker Container/Apache neu starten">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      Docker
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ohne-docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      Ohne Docker
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1792,30 +1720,6 @@
       Systemcheck
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Systemcheck">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#docker_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Docker
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ohne-docker_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Ohne Docker
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -1854,25 +1758,16 @@
 
 <h1 id="e-mail-benachrichtigungen-einrichten">E-Mail Benachrichtigungen einrichten</h1>
 <p>Es können von MIZDB E-Mails an die Admins versendet werden; z.B. wenn Benutzer Feedback abgeben oder wenn ein Server
-Error eingetreten ist.
-Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in die Datei <code>settings.py</code> im
-MIZDB Grundverzeichnis eingetragen werden.</p>
+Error eingetreten ist. Um E-Mail Benachrichtigungen einzurichten, müssen eine Reihe von zusätzlichen Angaben in
+die <a href="install.html#mizdb-konfigurieren">MIZDB Konfigurationsdatei</a> gemacht werden.</p>
 <div class="admonition info">
-<p class="admonition-title">Verwendung <code>settings.py</code></p>
-<p>Die zusätzlichen Einstellungen können ab dieser Zeile eingetragen werden: 
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>    <span class="c1"># -----------------------------------------------------------------------------</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="c1"># Add your own settings here:</span>
-</span></code></pre></div></p>
+<p class="admonition-title">Wo finde ich die Konfigurationsdatei?</p>
+<p>Der Befehl <code>mizdb config</code> zeigt den Pfad zu der Konfigurationsdatei an. </p>
 </div>
 <h2 id="1-admins-registrieren">1. Admins registrieren</h2>
-<p>Unter dem Punkt <code>ADMINS</code> werden die Admins, die benachrichtigt werden sollen, mit Namen und E-Mail-Adresse in eine Liste
-eingetragen.</p>
+<p>Unter dem Punkt <code>ADMINS</code> werden die E-Mail-Adressen der Admins, die benachrichtigt werden sollen, eingetragen.</p>
 <p>Zum Beispiel:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">ADMINS</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;admin@mail.com&quot;</span><span class="p">),</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="p">(</span><span class="s2">&quot;Willi Weber&quot;</span><span class="p">,</span> <span class="s2">&quot;weber@web.de&quot;</span><span class="p">),</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="c1"># weitere Admins...</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">]</span>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ADMINS=admin@mail.com,weber@web.de
 </span></code></pre></div>
 <h2 id="2-verbindungsdaten-angeben">2. Verbindungsdaten angeben</h2>
 <p>Als Nächstes müssen die Verbindungsdaten für den SMTP-Server eingetragen werden:</p>
@@ -1907,12 +1802,12 @@ eingetragen.</p>
 </tbody>
 </table>
 <p>Zum Beispiel:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">EMAIL_HOST</span> <span class="o">=</span> <span class="s2">&quot;smtp.ionos.de&quot;</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">EMAIL_PORT</span> <span class="o">=</span> <span class="mi">465</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">EMAIL_HOST_USER</span> <span class="o">=</span> <span class="s2">&quot;admin@mail.de&quot;</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">EMAIL_HOST_PASSWORD</span> <span class="o">=</span> <span class="s2">&quot;mysupersecretpassword&quot;</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">EMAIL_USE_SSL</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">SERVER_EMAIL</span> <span class="o">=</span> <span class="s2">&quot;admin@mail.de&quot;</span>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>EMAIL_HOST=smtp.ionos.de
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>EMAIL_PORT=465
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>EMAIL_HOST_USER=admin@mail.de
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>EMAIL_HOST_PASSWORD=mysupersecretpassword
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>EMAIL_USE_SSL=True
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>SERVER_EMAIL=admin@mail.de
 </span></code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Nützliche Links:</p>
@@ -1924,80 +1819,43 @@ eingetragen.</p>
 </ul>
 </div>
 <hr />
-<p>Eine vollständige <code>settings.py</code> könnte also so aussehen:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="sd">Add your own settings that override the default settings.</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="sd">For a list of settings, see:</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="sd">    - https://docs.djangoproject.com/en/4.2/ref/settings/</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="kn">from</span> <span class="nn">MIZDB.settings.defaults</span> <span class="kn">import</span> <span class="n">BASE_DIR</span><span class="p">,</span> <span class="n">secrets</span>  <span class="c1"># noqa</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="kn">from</span> <span class="nn">MIZDB.settings.production</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># -----------------------------------------------------------------------------</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># Add your own settings here:</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">ADMINS</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;admin@mail.com&quot;</span><span class="p">),</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="p">(</span><span class="s2">&quot;Willi Weber&quot;</span><span class="p">,</span> <span class="s2">&quot;weber@web.de&quot;</span><span class="p">),</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="p">]</span>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="n">EMAIL_HOST</span> <span class="o">=</span> <span class="s2">&quot;smtp.ionos.de&quot;</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="n">EMAIL_PORT</span> <span class="o">=</span> <span class="mi">465</span>
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="n">EMAIL_HOST_USER</span> <span class="o">=</span> <span class="s2">&quot;admin@mail.de&quot;</span>
-</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">EMAIL_HOST_PASSWORD</span> <span class="o">=</span> <span class="s2">&quot;mysupersecretpassword&quot;</span>
-</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="n">EMAIL_USE_SSL</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="n">SERVER_EMAIL</span> <span class="o">=</span> <span class="s2">&quot;admin@mail.de&quot;</span>
-</span></code></pre></div>
 <h2 id="3-docker-containerapache-neu-starten">3. Docker Container/Apache neu starten</h2>
 <p>Abschließend muss der Docker Container der Anwendung neu gestartet werden, um die Änderungen anzuwenden:</p>
-<h3 id="docker">Docker</h3>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mizdb<span class="w"> </span>restart
-</span></code></pre></div>
-<h3 id="ohne-docker">Ohne Docker</h3>
-<p>Oder, wenn ohne Docker installiert wurde, Apache neu laden:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>service<span class="w"> </span>apache2<span class="w"> </span>reload
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mizdb<span class="w"> </span>restart
 </span></code></pre></div>
 <h2 id="4-e-mail-einstellungen-testen">4. E-Mail Einstellungen testen</h2>
 <h3 id="systemcheck">Systemcheck</h3>
 <p>Es kann ein Systemcheck durchgeführt werden, um zu prüfen, dass die Angaben und ihre Formatierung korrekt
 sind:</p>
-<h4 id="docker_1">Docker</h4>
 <p>Bei einer Installation mit Docker:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mizdb<span class="w"> </span>check
-</span></code></pre></div>
-<h4 id="ohne-docker_1">Ohne Docker</h4>
-<p>Oder bei einer Installation ohne Docker, diese Zeile im MIZDB Grundverzeichnis ausführen:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span>MIZDB.settings<span class="w"> </span>.venv/bin/python3<span class="w"> </span>manage.py<span class="w"> </span>check
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mizdb<span class="w"> </span>check
 </span></code></pre></div>
 <h3 id="test-mail-versenden">Test-Mail versenden</h3>
 <p>Zu Testzwecken kann man mit Django auch direkt eine Mail an die Admins verschicken, siehe die Django Dokumentation für
-die
-Funktion <a href="https://docs.djangoproject.com/en/5.2/topics/email/#mail-admins">mail_admins</a>.</p>
-<p>Bei einer Docker Installation zunächst in den Container wechseln:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mizdb<span class="w"> </span>shell
+die Funktion <a href="https://docs.djangoproject.com/en/5.2/topics/email/#mail-admins">mail_admins</a>.</p>
+<p>Zunächst in den Container wechseln:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mizdb<span class="w"> </span>shell
 </span></code></pre></div>
 <p>Anschließend:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;from django.core.mail import mail_admins; mail_admins(&quot;Test Admin Mail&quot;, &quot;Test successful!&quot;)&#39;</span>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;from django.core.mail import mail_admins; mail_admins(&quot;Test Admin Mail&quot;, &quot;Test successful!&quot;)&#39;</span>
 </span></code></pre></div>
 <hr />
 <p>Oder zum Ausführen mit dem Python Interpreter der MIZDB Umgebung:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span> <span class="nn">os</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="kn">import</span> <span class="nn">django</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DJANGO_SETTINGS_MODULE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;settings&quot;</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">django</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="k">def</span> <span class="nf">send_admin_mail</span><span class="p">():</span>
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">mail_admins</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="n">mail_admins</span><span class="p">(</span><span class="s2">&quot;Test Admin Mail&quot;</span><span class="p">,</span> <span class="s2">&quot;Test successful!&quot;</span><span class="p">)</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
-</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    <span class="n">send_admin_mail</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span> <span class="nn">os</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">import</span> <span class="nn">django</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DJANGO_SETTINGS_MODULE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;settings&quot;</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">django</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">def</span> <span class="nf">send_admin_mail</span><span class="p">():</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">mail_admins</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">mail_admins</span><span class="p">(</span><span class="s2">&quot;Test Admin Mail&quot;</span><span class="p">,</span> <span class="s2">&quot;Test successful!&quot;</span><span class="p">)</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="n">send_admin_mail</span><span class="p">()</span>
 </span></code></pre></div>
 
 

@@ -1876,7 +1876,7 @@
 <p>Für die Verwaltung der Anwendung steht das Programm <code>mizdb.sh</code> im MIZDB Verzeichnis zur Verfügung:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>MIZDB_VERZEICHNIS<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span><span class="nb">help</span>
 </span></code></pre></div>
-<p>Wurde MIZDB mithilfe <a href="install.html#per-script">des Scripts</a> erstellt, so steht systemweit der Befehl <code>mizdb</code> zu Verfügung:</p>
+<p>Wurde MIZDB mithilfe <a href="install.html">des Scripts</a> erstellt, so steht der Befehl <code>mizdb</code> zu Verfügung:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mizdb<span class="w"> </span><span class="nb">help</span>
 </span></code></pre></div>
 <p>Dieser kann anstelle von <code>bash mizdb.sh</code> verwendet werden (also z.B. <code>mizdb reload</code> anstelle
@@ -1904,12 +1904,32 @@ ist <code>mizdb-postgres</code>.</p>
 <p>Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis <code>MIZDB/dumps</code> erstellt.</p>
 <h3 id="backups-automatisieren">Backups automatisieren</h3>
 <h4 id="cronjob">Cronjob</h4>
-<p>Crontab des root users öffnen:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>crontab<span class="w"> </span>-e
+<p>Mit cronjob kann das Erstellen von Backups automatisiert werden. Dabei wird zu vordefinierten Zeiten ein Skript
+ausgeführt, dass die Backups erstellt. Ein solches Skript könnte so aussehen:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="ch">#!/bin/sh  </span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># This script manages regular backups of the data of the MIZDB database.  </span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">#  </span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Use this in a cronjob (on the host machine of the docker container):  </span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># &gt; crontab -e  </span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># &gt; 51 7,11,16 * * 1-5  /path/to/mizdb_backup.sh  </span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="nv">BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;/var/lib/mizdb/backups&quot;</span><span class="w">  </span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1"># Numbers of days you want to keep copies of your database:  </span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="nv">number_of_days</span><span class="o">=</span><span class="m">30</span><span class="w">  </span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="nv">file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">BACKUP_DIR</span><span class="si">}</span><span class="s2">/mizdb_</span><span class="k">$(</span>date<span class="w"> </span>+%Y_%m_%d_%H_%M_%S<span class="k">)</span><span class="s2">&quot;</span><span class="w">  </span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>mizdb-postgres<span class="w"> </span>/bin/sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;pg_dump --username=&quot;$POSTGRES_USER&quot; --host=localhost -Fc &quot;$POSTGRES_DB&quot;&#39;</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$file</span><span class="s2">&quot;</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="c1"># Delete older backup copies:  </span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>find<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">&quot;</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;mizdb_*&quot;</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+<span class="nv">$number_of_days</span><span class="w"> </span>-delete
+</span></code></pre></div>
+<p>Dieses Skript, beispielsweise <code>mizdb_backup.sh</code> genannt, erzeugt ein Backup, legt es in <code>/var/lib/mizdb/backups</code> ab und löscht Backups, die älter als 30 Tage sind.</p>
+<p>Um es zu aktivieren, zunächst den crontab des root users öffnen:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>crontab<span class="w"> </span>-e
 </span></code></pre></div>
 <p>Und folgenden cronjob hinzufügen:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a># Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>51 7,11,16 * * 1-5  docker exec mizdb-postgres sh /mizdb/backup.sh
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a># Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>51 7,11,16 * * 1-5  /bin/sh /path/to/mizdb_backup.sh  
 </span></code></pre></div>
 <h4 id="rclone">rclone</h4>
 <p>Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.</p>
@@ -1917,12 +1937,12 @@ ist <code>mizdb-postgres</code>.</p>
 <li>rclone installieren: <a href="https://rclone.org/install/">https://rclone.org/install/</a></li>
 <li>rclone für Google Drive konfigurieren: <a href="https://rclone.org/drive/">https://rclone.org/drive/</a></li>
 <li>crontab öffnen:
-    <div class="language-shell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>crontab<span class="w"> </span>-e
+    <div class="language-shell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>crontab<span class="w"> </span>-e
 </span></code></pre></div>
    und dann den cronjob definieren, zum Beispiel:
     <code>shell
    # Backups mit rclone hochladen:
-    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /path/to/mizdb/backups &lt;remote_name&gt;:backups</code></li>
+    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups &lt;remote_name&gt;:backups</code></li>
 </ol>
 <p>Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
@@ -1965,14 +1985,14 @@ konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/rem
 </li>
 </ol>
 <p>Mit einer solchen rclone.conf, zu finden unter <code>/home/my_user/.config/rclone/</code>:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>[dbbackup]
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>type = drive
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>scope = drive
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>root_folder_id = foo1bar
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>service_account_file = /pfad/zu/service/account/credentials.json
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>[dbbackup]
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>type = drive
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>scope = drive
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>root_folder_id = foo1bar
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>service_account_file = /pfad/zu/service/account/credentials.json
 </span></code></pre></div>
 <p>müsste der cronjob so aussehen:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>53 7,11,16 * * 1-5  rclone --config=/home/my_user/.config/rclone/rclone.conf sync /var/lib/mizdb/backups dbbackup:/
 </span></code></pre></div>
 <p>Weitere Links:</p>
 <ul>
@@ -1980,7 +2000,7 @@ konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/rem
 </ul>
 <h3 id="update">Update</h3>
 <p>Um die Anwendung zu aktualisieren, benutze:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>update
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>update
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!</p>
@@ -1994,7 +2014,7 @@ konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/rem
 <p>Standardmäßig ist die Seite der Datenbank unter <code>http://&lt;ServerName&gt;/miz</code> erreichbar, d.h. der Einhängepunkt ist <code>/miz</code>.
 Um einen anderen Einhängepunkt festzulegen, muss in der Datei <code>.env</code> der Wert für <code>MOUNT_POINT</code> geändert werden.<br />
 Anschließend müssen die Container gestoppt und neu gestartet werden:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>stop<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>start
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>stop<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>start
 </span></code></pre></div>
 
 
