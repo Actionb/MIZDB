@@ -14,7 +14,7 @@ db_container=mizdb-postgres
 
 # Point docker at the env file:
 # https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_env_files
-export COMPOSE_ENV_FILES=docker-compose.env,./docker/docker-compose.env
+export COMPOSE_ENV_FILES=docker-compose.env
 
 # Usage info
 show_help() {
@@ -94,7 +94,7 @@ update() {
   # You could look into the tool 'Watchtower' to help with updating.
 
   # Pull the update:
-  echo "Neustes Image wird heruntergeladen..."
+  echo "Neuestes Image wird heruntergeladen..."
   docker compose pull
   # Rebuild containers:
   echo "Stoppe Container..."

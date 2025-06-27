@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.1] - 2025-06-27
+
+### Fixed
+
+- fixed value for `COMPOSE_ENV_FILES` environment variable in mizdb.sh 
+
 ## [0.25.0] - 2025-06-27
 
 ### Added
