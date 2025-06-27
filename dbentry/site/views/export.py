@@ -24,7 +24,7 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewMixin, FormV
         return self.queryset
 
     def get_export_resource(self):  # pragma: no cover
-        return self.resource_class()
+        return self.resource_classes[0]()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

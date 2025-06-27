@@ -52,7 +52,7 @@ class Registry:
                 urlpatterns.append(
                     path(
                         f"{opts.model_name}/export",
-                        ExportModelView.as_view(model=model, resource_class=view.resource_class),
+                        ExportModelView.as_view(model=model, resource_classes=[view.resource_class]),
                         name=urlname("export", opts),
                     )
                 )

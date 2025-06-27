@@ -65,7 +65,7 @@ class TestBaseExportView(ViewTestCase):
         request = self.post_request(data={"fields_select": ["id", "name"], "format": "0"})
         band = make(Band, name="Foo Fighters", alias="FF")
         queryset = Band.objects.all()
-        view = self.get_view(request, queryset=queryset, model=Band, resource_class=BandResource)
+        view = self.get_view(request, queryset=queryset, model=Band, resource_classes=[BandResource])
         form = view.get_form()
         assert form.is_valid()
         with patch.object(view, "get_export_filename", new=Mock(return_value="export.csv")):
