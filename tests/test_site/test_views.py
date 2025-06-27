@@ -561,12 +561,12 @@ class TestBaseEditView(DataTestCase, ViewTestCase):
                     ("Url", '<a href="www.lovely-spam.com" target="_blank">www.lovely-spam.com</a>'),
                     (
                         "Origin Country",
-                        f'<a href="/country/{self.origin.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Denmark</a>',
+                        f"""<a href="/country/{self.origin.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Denmark</a>""",
                     ),
                     (
                         "Genres",
-                        f'<a href="/genre/{self.rock.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Rock</a>\n'
-                        f'<a href="/genre/{self.spam.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Spam</a>\n',
+                        f"""<a href="/genre/{self.rock.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Rock</a>\n"""
+                        f"""<a href="/genre/{self.spam.pk}/{'change' if has_change_perms else 'view'}/" target="_blank">Spam</a>\n""",
                     ),
                 ]
                 object_data = response.context["data"]
