@@ -6,6 +6,8 @@ from import_export.mixins import ExportViewMixin
 from import_export.signals import post_export
 
 from dbentry.actions.base import ActionConfirmationView
+from dbentry.export.base import get_verbose_name_for_resource_field
+from dbentry.export.forms import MIZSelectableFieldsExportForm
 from dbentry.site.views.base import ModelViewMixin
 from dbentry.utils.permission import has_export_permission
 
@@ -14,6 +16,7 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewMixin, FormV
     """Base view for exporting model objects."""
 
     queryset: models.QuerySet = None
+    form_class = MIZSelectableFieldsExportForm
 
     title: str = "Export"
 
@@ -22,9 +25,6 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewMixin, FormV
 
     def get_export_resource(self):  # pragma: no cover
         return self.resource_class()
-
-    def get_data_for_export(self, request, queryset, *args, **kwargs):  # pragma: no cover
-        return self.get_export_resource().export(*args, queryset=queryset, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -35,12 +35,25 @@ class BaseExportView(UserPassesTestMixin, ModelViewMixin, ExportViewMixin, FormV
         """test_func for UserPassesTestMixin."""
         return has_export_permission(self.request.user, self.get_queryset().model._meta)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["choices"] = {}
+        fields_choices = []
+        resource = self.get_export_resource()
+        for field_name in resource.get_export_order():
+            fields_choices.append((field_name, get_verbose_name_for_resource_field(resource, field_name)))
+        kwargs["choices"]["fields_select"] = fields_choices
+        return kwargs
+
+    def get_export_resource_fields_from_form(self, form):
+        return form.cleaned_data.get("fields_select")
+
     def form_valid(self, form):
         # Originally, this was part of the ExportViewFormMixin from
         # django-import-export, but that mixin has been slated for deprecation.
         formats = self.get_export_formats()
         file_format = formats[int(form.cleaned_data["format"])]()
-        export_data = self.get_export_data(file_format, self.get_queryset())
+        export_data = self.get_export_data(file_format, self.get_queryset(), export_form=form)
         content_type = file_format.get_content_type()
         response = HttpResponse(export_data, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{self.get_export_filename(file_format)}"'

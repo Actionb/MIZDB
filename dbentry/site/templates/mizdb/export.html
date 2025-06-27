@@ -2,11 +2,35 @@
 {% load django_bootstrap5 %}
 
 {% block form_fields %}
-  <p>Export von {{ queryset.count }} Datensätzen.</p>
-  <p>Bitte wählen Sie das Dateiformat:</p>
-  {% bootstrap_field form.file_format layout="horizontal" %}
+<p>Export von {{ queryset.count }} Datensätzen.</p>
+{% bootstrap_field form.fields_select layout="horizontal" %}
+<div class="row mb-3">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-10">
+    <div class="form-check">
+      <input id="id_fields_select_all" class="form-check-input" type="checkbox" checked="checked">
+      <label class="form-check-label" for="id_fields_select_all">Alle auswählen</label>
+    </div>
+  </div>
+</div>
+{% bootstrap_field form.format layout="horizontal" %}
 {% endblock form_fields %}
+
+{% block non_field_errors %}
+<div>{% if form.non_field_errors %} {{ form.non_field_errors }} {% endif %}</div>
+{% endblock non_field_errors %}
 
 {% block submit_button %}
 <input class="btn btn-success" type="submit" name="{{ action_confirmed_name }}" value="Exportieren">
 {% endblock submit_button %}
+
+{% block extrascript %}
+<script>
+const selectAll = document.querySelector('#id_fields_select_all')
+selectAll.addEventListener('change', (e) => {
+  console.log("foo")
+  const isChecked = e.target.checked;
+  document.querySelectorAll('input[name="fields_select"]').forEach((cb) => { cb.checked = isChecked })
+})
+</script>
+{% endblock extrascript %}
