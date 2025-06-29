@@ -142,7 +142,12 @@ dbshell() {
 }
 
 check() {
+  echo "MIZDB Status:"
   docker exec -i $app_container python manage.py check
+
+  echo ""
+  echo "Docker Container Status:"
+  docker compose ps
 }
 
 collectstatic() {
