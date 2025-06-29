@@ -66,7 +66,6 @@ cd "$MIZDB_DIR"
 
 echo ""
 echo "Lade MIZDB Dateien herunter..."
-# TODO: use production URLs once merged to master branch
 curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.yaml" -o docker-compose.yaml
 curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.env" -o docker-compose.env
 curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh" -o mizdb.sh
