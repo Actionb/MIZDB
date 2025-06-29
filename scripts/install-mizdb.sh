@@ -84,19 +84,6 @@ docker compose --env-file docker-compose.env pull
 echo "Starte Docker Container..."
 docker compose --env-file docker-compose.env up -d
 
-# Add mizdb management utility to the user's path
-echo ""
-echo "Erstelle Management Skript..."
-cat << EOF > ~/.local/bin/mizdb
-#!/bin/sh
-
-file=\$(readlink -f "\$2")
-cd $(pwd) || exit
-bash mizdb.sh "\$1" "\$file"
-cd - > /dev/null || exit
-EOF
-chmod +x ~/.local/bin/mizdb
-
 cd - > /dev/null
 
 # Restore backup or run migrations
@@ -127,6 +114,22 @@ else
   echo "Wende Datenbank Migration an..."
   docker exec -i mizdb-app python manage.py migrate
 fi
+
+set +e
+
+# Add mizdb management utility to the user's path
+echo ""
+echo "Erstelle Management Skript..."
+mkdir -p ~/.local/bin/
+cat << EOF > ~/.local/bin/mizdb
+#!/bin/sh
+
+file=\$(readlink -f "\$2")
+cd $(pwd) || exit
+bash mizdb.sh "\$1" "\$file"
+cd - > /dev/null || exit
+EOF
+chmod +x ~/.local/bin/mizdb
 
 echo ""
 echo "Fertig!"
