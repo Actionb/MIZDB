@@ -74,7 +74,8 @@ docker exec -i mizdb-postgres /bin/sh -c 'pg_dump --username="$POSTGRES_USER" --
 find "$BACKUP_DIR" -name "mizdb_*" -type f -mtime +$number_of_days -delete
 ```
 
-Dieses Skript, beispielsweise `mizdb_backup.sh` genannt, erzeugt ein Backup, legt es in `/var/lib/mizdb/backups` ab und löscht Backups, die älter als 30 Tage sind.
+Dieses Skript, beispielsweise `mizdb_backup.sh` genannt, erzeugt ein Backup, legt es in `/var/lib/mizdb/backups` ab und
+löscht Backups, die älter als 30 Tage sind.
 
 Um es zu aktivieren, zunächst den crontab des root users öffnen:
 
@@ -96,14 +97,14 @@ Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive 
 1. rclone installieren: [https://rclone.org/install/](https://rclone.org/install/)
 2. rclone für Google Drive konfigurieren: [https://rclone.org/drive/](https://rclone.org/drive/)
 3. crontab öffnen:
-    ```shell
-    sudo crontab -e
-    ```
-   und dann den cronjob definieren, zum Beispiel:
-    ```shell
-   # Backups mit rclone hochladen:
-    53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups <remote_name>:backups
-    ```
+```shell
+sudo crontab -e
+```
+   und dann den cronjob definieren, zum Beispiel:  
+```shell
+# Backups mit rclone hochladen:
+53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups <remote_name>:backups
+```
 
 Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
@@ -182,8 +183,8 @@ Um das interaktive PostgreSQL Terminal zu öffnen:
 ### Webserver Einhängepunkt ändern
 
 Standardmäßig ist die Seite der Datenbank unter `http://<ServerName>/miz` erreichbar, d.h. der Einhängepunkt ist `/miz`.
-Um einen anderen Einhängepunkt festzulegen, muss in der Datei `.env` der Wert für `MOUNT_POINT` geändert werden.  
-Anschließend müssen die Container gestoppt und neu gestartet werden:
+Um einen anderen Einhängepunkt festzulegen, muss in der Datei `docker-compose.env` der Wert für `MOUNT_POINT` geändert
+werden. Anschließend müssen die Container gestoppt und neu gestartet werden:
 
 ```shell
 bash mizdb.sh stop && bash mizdb.sh start

@@ -28,7 +28,7 @@ echo ""
 echo "MIZDB Installation"
 echo ""
 echo "Dieses Skript wird MIZDB in $MIZDB_DIR installieren."
-printf "Fortfahren? (y/n): "
+printf "Fortfahren? (j/n): "
 read -r REPLY
 if [[ "$REPLY" != [yYjJ]* ]]; then
   echo "Abgebrochen."
@@ -36,7 +36,7 @@ if [[ "$REPLY" != [yYjJ]* ]]; then
 fi
 
 # Ask for a password
-printf "Soll für den Datenbankbenutzer ein Passwort eingerichtet werden? (y/n): "
+printf "Soll für den Datenbankbenutzer ein Passwort eingerichtet werden? (j/n): "
 read -r REPLY
 if [[ "$REPLY" == [yYjJ]* ]]; then
   while true; do
@@ -66,7 +66,6 @@ cd "$MIZDB_DIR"
 
 echo ""
 echo "Lade MIZDB Dateien herunter..."
-# TODO: use production URLs once merged to master branch
 curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.yaml" -o docker-compose.yaml
 curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/docker/docker-compose.env" -o docker-compose.env
 curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh" -o mizdb.sh
@@ -84,19 +83,6 @@ docker compose --env-file docker-compose.env pull
 echo "Starte Docker Container..."
 docker compose --env-file docker-compose.env up -d
 
-# Add mizdb management utility to the user's path
-echo ""
-echo "Erstelle Management Skript..."
-cat << EOF > ~/.local/bin/mizdb
-#!/bin/sh
-
-file=\$(readlink -f "\$2")
-cd $(pwd) || exit
-bash mizdb.sh "\$1" "\$file"
-cd - > /dev/null || exit
-EOF
-chmod +x ~/.local/bin/mizdb
-
 cd - > /dev/null
 
 # Restore backup or run migrations
@@ -108,7 +94,7 @@ EOF
 )
 
 echo ""
-printf "Soll ein Backup wiederhergestellt werden? (y/n): "
+printf "Soll ein Backup wiederhergestellt werden? (j/n): "
 read -r REPLY
 if [[ "$REPLY" == [yYjJ]* ]]; then
   while true; do
@@ -127,6 +113,22 @@ else
   echo "Wende Datenbank Migration an..."
   docker exec -i mizdb-app python manage.py migrate
 fi
+
+set +e
+
+# Add mizdb management utility to the user's path
+echo ""
+echo "Erstelle Management Skript..."
+mkdir -p ~/.local/bin/
+cat << EOF > ~/.local/bin/mizdb
+#!/bin/sh
+
+file=\$(readlink -f "\$2")
+cd $(pwd) || exit
+bash mizdb.sh "\$1" "\$file"
+cd - > /dev/null || exit
+EOF
+chmod +x ~/.local/bin/mizdb
 
 echo ""
 echo "Fertig!"

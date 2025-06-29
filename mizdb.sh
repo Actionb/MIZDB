@@ -14,7 +14,7 @@ db_container=mizdb-postgres
 
 # Point docker at the env file:
 # https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_env_files
-export COMPOSE_ENV_FILES=docker-compose.env
+export COMPOSE_ENV_FILES=${COMPOSE_ENV_FILES:-docker-compose.env}
 
 # Usage info
 show_help() {
@@ -82,30 +82,30 @@ EOF
 }
 
 update() {
-  read -r -p "Um ein Update durchzuführen, müssen die Container gestoppt werden. Fortfahren? [j/n]: "
-  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
-    echo "Abgebrochen."
-    exit 1
+  if docker exec -i "$app_container" python manage.py update_available; then
+    read -r -p "Soll das Update installiert werden? [j/n]: "
+    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+      echo "Abgebrochen."
+      exit 1
+    fi
+  else
+    exit 0
   fi
   set -e
-  # Note there currently isn't an easy way to check whether a new version of
-  # the image is available, so this will always pull and restart the containers
-  # even if already on the latest version.
-  # You could look into the tool 'Watchtower' to help with updating.
 
-  # Pull the update:
-  echo "Neuestes Image wird heruntergeladen..."
+  echo ""
+  echo "Lade neueste mizdb.sh herunter..."
+  curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh" -o mizdb.sh
+  echo "Lade neuestes Image herunter..."
   docker compose pull
-  # Rebuild containers:
-  echo "Stoppe Container..."
-  docker compose down
-  echo "Starte Container..."
+  echo "Starte Container neu..."
   docker compose up -d
   echo ""
   if ! docker exec -i "$app_container" python manage.py migrate --check --no-input; then
     read -r -p "Ausstehende Migrationen anwenden? [j/n]: "
     if [[ $REPLY =~ ^[jJyY]$ ]]; then
       docker exec -i "$app_container" python manage.py migrate --no-input
+      echo ""
     else
       echo "Abgebrochen."
       exit 1
@@ -144,7 +144,12 @@ dbshell() {
 }
 
 check() {
+  echo "MIZDB Status:"
   docker exec -i $app_container python manage.py check
+
+  echo ""
+  echo "Docker Container Status:"
+  docker compose ps
 }
 
 collectstatic() {
