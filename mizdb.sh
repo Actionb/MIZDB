@@ -88,13 +88,15 @@ update() {
       echo "Abgebrochen."
       exit 1
     fi
+  else
+    exit 0
   fi
   set -e
 
   echo ""
-  echo "Update mizdb.sh..."
+  echo "Lade neueste mizdb.sh herunter..."
   curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh" -o mizdb.sh
-  echo "Neuestes Image wird heruntergeladen..."
+  echo "Lade neuestes Image herunter..."
   docker compose pull
   echo "Starte Container neu..."
   docker compose up -d
