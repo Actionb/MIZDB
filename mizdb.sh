@@ -92,6 +92,8 @@ update() {
   set -e
 
   echo ""
+  echo "Update mizdb.sh..."
+  curl -fsSL "https://raw.githubusercontent.com/Actionb/MIZDB/master/mizdb.sh" -o mizdb.sh
   echo "Neuestes Image wird heruntergeladen..."
   docker compose pull
   echo "Starte Container neu..."
