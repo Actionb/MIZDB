@@ -14,7 +14,7 @@ db_container=mizdb-postgres
 
 # Point docker at the env file:
 # https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_env_files
-export COMPOSE_ENV_FILES=docker-compose.env
+export COMPOSE_ENV_FILES=${COMPOSE_ENV_FILES:-docker-compose.env}
 
 # Usage info
 show_help() {
