@@ -1,5 +1,13 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- reworked MIZDB update process
+  - now calls a Django management command that checks if an update is available
+  - now also downloads a newer version of mizdb.sh if available
+
 ## [0.25.1] - 2025-06-27
 
 ### Fixed
