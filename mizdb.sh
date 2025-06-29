@@ -82,16 +82,14 @@ EOF
 }
 
 update() {
-  read -r -p "Um ein Update durchzuführen, müssen die Container gestoppt werden. Fortfahren? [j/n]: "
-  if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
-    echo "Abgebrochen."
-    exit 1
+  if docker exec -i "$app_container" python manage.py update_available; then
+    read -r -p "Soll das Update installiert werden? [j/n]: "
+    if [[ ! $REPLY =~ ^[jJyY]$ ]]; then
+      echo "Abgebrochen."
+      exit 1
+    fi
   fi
   set -e
-  # Note there currently isn't an easy way to check whether a new version of
-  # the image is available, so this will always pull and restart the containers
-  # even if already on the latest version.
-  # You could look into the tool 'Watchtower' to help with updating.
 
   echo ""
   echo "Neuestes Image wird heruntergeladen..."
