@@ -22,15 +22,15 @@ RUN ["apk", "update", "&&", "upgrade"]
 # libpq required by psycopg2
 RUN ["apk", "add", "libpq", "apache2"]
 
+RUN set -eux \
+  && echo "Richte Log Verzeichnis ein..." \
+    && mkdir /var/log/mizdb \
+    && chown apache:apache /var/log/mizdb
+
 COPY --from=build /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /mizdb
 COPY . /mizdb
-
-RUN set -eux \
-  && echo "Richte Log Verzeichnis ein..." \
-    && mkdir /var/log/mizdb \
-    && chown apache:apache /var/log/mizdb
 
 EXPOSE 80
