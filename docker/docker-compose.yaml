@@ -28,6 +28,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/$MOUNT_POINT/"]
     entrypoint: ["/mizdb/docker-entrypoint.sh"]
     command: ["/etc/mizdb-server/apachectl", "start", "-DFOREGROUND"]
 

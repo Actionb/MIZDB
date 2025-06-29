@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+- added docker health check for MIZDB service
+
 ### Changed
 
 - reworked MIZDB update process
