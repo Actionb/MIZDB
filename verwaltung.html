@@ -1873,14 +1873,12 @@
 
 
 <h1 id="verwaltung">Verwaltung</h1>
-<p>Für die Verwaltung der Anwendung steht das Programm <code>mizdb.sh</code> im MIZDB Verzeichnis zur Verfügung:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>MIZDB_VERZEICHNIS<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span><span class="nb">help</span>
-</span></code></pre></div>
 <p>Wurde MIZDB mithilfe <a href="install.html">des Scripts</a> erstellt, so steht der Befehl <code>mizdb</code> zu Verfügung:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mizdb<span class="w"> </span><span class="nb">help</span>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mizdb<span class="w"> </span><span class="nb">help</span>
 </span></code></pre></div>
-<p>Dieser kann anstelle von <code>bash mizdb.sh</code> verwendet werden (also z.B. <code>mizdb reload</code> anstelle
-von <code>bash mizdb.sh reload</code>).</p>
+<p>Ansonsten kann <code>mizdb.sh</code> im MIZDB Verzeichnis (standardmäßig <code>~/.local/share/MIZDB</code>) auch direkt benutzt werden:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>MIZDB_VERZEICHNIS<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span><span class="nb">help</span>
+</span></code></pre></div>
 <h2 id="befehle">Befehle</h2>
 <h3 id="docker-container-webserver">Docker Container &amp; Webserver</h3>
 <ul>
@@ -1937,14 +1935,14 @@ löscht Backups, die älter als 30 Tage sind.</p>
 <ol>
 <li>rclone installieren: <a href="https://rclone.org/install/">https://rclone.org/install/</a></li>
 <li>rclone für Google Drive konfigurieren: <a href="https://rclone.org/drive/">https://rclone.org/drive/</a></li>
-<li>crontab öffnen:
+<li>crontab öffnen:</li>
+</ol>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>crontab<span class="w"> </span>-e
 </span></code></pre></div>
-   und dann den cronjob definieren, zum Beispiel:<br />
+<p>und dann den cronjob definieren, zum Beispiel:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Backups mit rclone hochladen:</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="m">53</span><span class="w"> </span><span class="m">7</span>,11,16<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span><span class="m">1</span>-5<span class="w">  </span>rclone<span class="w"> </span>--config<span class="o">=</span>/path/to/rclone.conf<span class="w"> </span>sync<span class="w"> </span>/var/lib/mizdb/backups<span class="w"> </span>&lt;remote_name&gt;:backups
-</span></code></pre></div></li>
-</ol>
+</span></code></pre></div>
 <p>Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
 konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/remote_setup/</a></p>
@@ -2001,7 +1999,10 @@ konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/rem
 </ul>
 <h3 id="update">Update</h3>
 <p>Um die Anwendung zu aktualisieren, benutze:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>update
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mizdb<span class="w"> </span>update
+</span></code></pre></div>
+<p>oder wenn im Installationsverzeichnis:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>update
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!</p>
@@ -2015,7 +2016,7 @@ konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/rem
 <p>Standardmäßig ist die Seite der Datenbank unter <code>http://&lt;ServerName&gt;/miz</code> erreichbar, d.h. der Einhängepunkt ist <code>/miz</code>.
 Um einen anderen Einhängepunkt festzulegen, muss in der Datei <code>docker-compose.env</code> der Wert für <code>MOUNT_POINT</code> geändert
 werden. Anschließend müssen die Container gestoppt und neu gestartet werden:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>stop<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>start
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>stop<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bash<span class="w"> </span>mizdb.sh<span class="w"> </span>start
 </span></code></pre></div>
 
 
