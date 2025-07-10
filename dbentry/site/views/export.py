@@ -88,3 +88,13 @@ class ExportModelView(BaseExportView):
 
     def test_func(self) -> bool:
         return self.request.user.is_superuser
+
+
+class ExportResultsActionView(ExportActionView):
+    """Exports all objects of a filtered changelist."""
+
+    action_name = "export_results"
+    # The queryset to export is the same as the changelist's queryset. As such,
+    # the template need not render a hidden field for each of the 'selected
+    # items' like for ExportActionView.
+    template_name: str = "mizdb/export_results.html"

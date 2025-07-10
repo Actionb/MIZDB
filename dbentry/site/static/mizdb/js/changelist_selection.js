@@ -10,7 +10,12 @@
     selectionTemplate: '#selected-item-template',
     counterElement: '#selection-count',
     clearButton: '#clear-selection',
-    storageKey: 'mizdb_selection'
+    storageKey: 'mizdb_selection',
+    actionButtonsContainer: '#action-selection-container',
+    maxSelectedWarning: '#max-selected-warning',
+    // Maximum number of items that may be selected. Requesting an action on
+    // too many items will result in a 400 BadRequest response.
+    maxItems: 900
   }
 
   /**
@@ -130,6 +135,8 @@
       this.itemTemplate = document.querySelector(this.options.selectionTemplate)
       this.counterElement = document.querySelector(this.options.counterElement)
       this.allSelectionCheckbox = document.querySelector(this.options.selectAllCheckbox)
+      this.actionButtonsContainer = document.querySelector(this.options.actionButtonsContainer)
+      this.maxSelectedWarning = document.querySelector(this.options.maxSelectedWarning)
 
       this.storage = storage || new SelectionStorage()
       this.load()
@@ -254,6 +261,17 @@
       })
       this.counterElement.innerText = count
       if (this.allSelectionCheckbox) this.allSelectionCheckbox.checked = this.allChecked()
+
+      // If the number of selected items exceeds the maximum, disable the
+      // action buttons and show a warning.
+      const actionButtons = this.actionButtonsContainer.querySelectorAll("button.action-button")
+      if (count > this.options.maxItems) {
+        actionButtons.forEach((b) => {b.disabled = true})
+        this.maxSelectedWarning.style.display = "block"
+      } else {
+        actionButtons.forEach((b) => {b.disabled = false})
+        this.maxSelectedWarning.style.display = "none"
+      }
     }
 
     /**
