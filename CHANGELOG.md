@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.26.1] - 2025-07-10
+
+### Added
+
+- added a warning when selecting too many items with the changelist selection box. Action buttons are now disabled if
+  the number of selected items exceeds 900.
+
+### Fixed
+
+- fix BadRequest error when exporting changelist results with over a thousand objects
+
 ## [0.26.0] - 2025-06-29
 
 ### Added
@@ -9,21 +20,21 @@
 ### Changed
 
 - reworked MIZDB update process
-  - now calls a Django management command that checks if an update is available
-  - now also downloads a newer version of mizdb.sh if available
+    - now calls a Django management command that checks if an update is available
+    - now also downloads a newer version of mizdb.sh if available
 - `mizdb.sh check` now also outputs the results of `docker compose ps`
 
 ## [0.25.1] - 2025-06-27
 
 ### Fixed
 
-- fixed value for `COMPOSE_ENV_FILES` environment variable in mizdb.sh 
+- fixed value for `COMPOSE_ENV_FILES` environment variable in mizdb.sh
 
 ## [0.25.0] - 2025-06-27
 
 ### Added
 
-- added possibility to select which fields to export  
+- added possibility to select which fields to export
 
 ### Changed
 
