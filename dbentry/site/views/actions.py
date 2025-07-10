@@ -3,7 +3,7 @@ from mizdb_watchlist.manager import get_manager
 
 from dbentry.actions.views import MergeView
 from dbentry.site.views.delete import DeleteSelectedView
-from dbentry.site.views.export import ExportActionView
+from dbentry.site.views.export import ExportActionView, ExportResultsActionView
 from dbentry.utils import permission as perms
 from dbentry.utils.permission import has_delete_permission, has_export_permission
 
@@ -81,5 +81,7 @@ def export(view, request, queryset):
     description="Die gefundenen Objekte exportieren",
 )
 def export_results(view, request, queryset):
-    view = ExportActionView.as_view(model=queryset.model, queryset=queryset, resource_classes=[view.resource_class])
+    view = ExportResultsActionView.as_view(
+        model=queryset.model, queryset=queryset, resource_classes=[view.resource_class]
+    )
     return view(request)
