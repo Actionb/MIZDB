@@ -1,41 +1,51 @@
 Verwaltung
 =======
 
-Für die Verwaltung der Anwendung steht das Programm `mizdb.sh` im MIZDB Verzeichnis zur Verfügung:
-
-```shell
-cd MIZDB_VERZEICHNIS && bash mizdb.sh help
-```
-
 Wurde MIZDB mithilfe [des Scripts](install.md) erstellt, so steht der Befehl `mizdb` zu Verfügung:
 
 ```shell
 mizdb help
 ```
 
-Dieser kann anstelle von `bash mizdb.sh` verwendet werden (also z.B. `mizdb reload` anstelle
-von `bash mizdb.sh reload`).
+Ansonsten kann `mizdb.sh` im MIZDB Verzeichnis (standardmäßig `~/.local/share/MIZDB`) auch direkt benutzt werden:
+
+```shell
+cd MIZDB_VERZEICHNIS && bash mizdb.sh help
+```
 
 ## Befehle
 
 ### Docker Container & Webserver
 
-* [Container starten](https://docs.docker.com/engine/reference/commandline/compose_up/): `bash mizdb.sh start`
-* [Container stoppen](https://docs.docker.com/engine/reference/commandline/compose_down/): `bash mizdb.sh stop`
-* [Container neustarten](https://docs.docker.com/engine/reference/commandline/restart/): `bash mizdb.sh restart`
-* [Webserver neuladen](https://httpd.apache.org/docs/current/stopping.html#graceful): `bash mizdb.sh reload`
+* [Container starten](https://docs.docker.com/engine/reference/commandline/compose_up/): `mizdb start`
+* [Container stoppen](https://docs.docker.com/engine/reference/commandline/compose_down/): `mizdb stop`
+* [Container neustarten](https://docs.docker.com/engine/reference/commandline/restart/): `mizdb restart`
+* [Webserver neuladen](https://httpd.apache.org/docs/current/stopping.html#graceful): `mizdb reload`
 
 Mit [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) `docker ps` kann der Zustand der Container
 ermittelt werden.  
 Der Name des Containers der App ist `mizdb-app` und der Name des Containers der PostgreSQL Datenbank
 ist `mizdb-postgres`.
 
+### Update
+
+Um die Anwendung zu aktualisieren, benutze:
+
+```shell
+mizdb update
+```
+
+[comment]: <> (@formatter:off)  
+!!! warning "Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!"  
+  
+[comment]: <> (@formatter:on)
+
 ### Datenbank wiederherstellen ([pg_restore](https://www.postgresql.org/docs/current/app-pgrestore.html))
 
 Um die Daten der Datenbank aus einer Backup-Datei wiederherzustellen, benutze:
 
 ```shell
-bash mizdb.sh restore backup_datei 
+mizdb restore backup_datei 
 ```
 
 ### Backup erstellen ([pg_dump](https://www.postgresql.org/docs/current/app-pgdump.html))
@@ -43,14 +53,14 @@ bash mizdb.sh restore backup_datei
 Um eine Backup-Datei zu erstellen, benutze:
 
 ```shell
-bash mizdb.sh dump backup_datei
+mizdb dump backup_datei
 ```
 
 Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis `MIZDB/dumps` erstellt.
 
-### Backups automatisieren
+## Backups automatisieren
 
-#### Cronjob
+### Cronjob
 
 Mit cronjob kann das Erstellen von Backups automatisiert werden. Dabei wird zu vordefinierten Zeiten ein Skript
 ausgeführt, dass die Backups erstellt. Ein solches Skript könnte so aussehen:
@@ -90,17 +100,20 @@ Und folgenden cronjob hinzufügen:
 51 7,11,16 * * 1-5  /bin/sh /path/to/mizdb_backup.sh  
 ```
 
-#### rclone
+### rclone
 
 Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.
 
 1. rclone installieren: [https://rclone.org/install/](https://rclone.org/install/)
 2. rclone für Google Drive konfigurieren: [https://rclone.org/drive/](https://rclone.org/drive/)
 3. crontab öffnen:
+
 ```shell
 sudo crontab -e
 ```
-   und dann den cronjob definieren, zum Beispiel:  
+
+und dann den cronjob definieren, zum Beispiel:
+
 ```shell
 # Backups mit rclone hochladen:
 53 7,11,16 * * 1-5  rclone --config=/path/to/rclone.conf sync /var/lib/mizdb/backups <remote_name>:backups
@@ -110,7 +123,7 @@ Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
 konfigurieren: [https://rclone.org/remote_setup/](https://rclone.org/remote_setup/)
 
-##### rclone mit Google Service Account
+#### rclone mit Google Service Account
 
 Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:
 
@@ -159,33 +172,20 @@ Weitere Links:
 
 * [Gdrive access via service account](https://forum.rclone.org/t/gdrive-access-via-service-account/17926)
 
-### Update
-
-Um die Anwendung zu aktualisieren, benutze:
-
-```shell
-bash mizdb.sh update
-```
-
-[comment]: <> (@formatter:off)  
-!!! warning "Achtung: Während des Updates ist die Anwendung für die Benutzer nicht verfügbar!"  
-  
-[comment]: <> (@formatter:on)
-
-### Django Shell & psql
-
-Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:  
-`bash mizdb shell` und dann `python manage.py shell`
-
-Um das interaktive PostgreSQL Terminal zu öffnen:  
-`bash mizdb dbshell` und dann `psql --user=$POSTGRES_USER $POSTGRES_DB`
-
-### Webserver Einhängepunkt ändern
+## Webserver Einhängepunkt ändern
 
 Standardmäßig ist die Seite der Datenbank unter `http://<ServerName>/miz` erreichbar, d.h. der Einhängepunkt ist `/miz`.
 Um einen anderen Einhängepunkt festzulegen, muss in der Datei `docker-compose.env` der Wert für `MOUNT_POINT` geändert
 werden. Anschließend müssen die Container gestoppt und neu gestartet werden:
 
 ```shell
-bash mizdb.sh stop && bash mizdb.sh start
+mizdb restart
 ```
+
+## Django Shell & psql
+
+Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:  
+`bash mizdb shell` und dann `python manage.py shell`
+
+Um das interaktive PostgreSQL Terminal zu öffnen:  
+`bash mizdb dbshell` und dann `psql --user=$POSTGRES_USER $POSTGRES_DB`
