@@ -1577,7 +1577,12 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backups-automatisieren" class="md-nav__link">
     <span class="md-ellipsis">
       Backups automatisieren
@@ -1624,8 +1629,8 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#webserver-einhangepunkt-andern" class="md-nav__link">
     <span class="md-ellipsis">
       Webserver Einhängepunkt ändern
@@ -1633,18 +1638,13 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#django-shell-psql" class="md-nav__link">
     <span class="md-ellipsis">
       Django Shell &amp; psql
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1782,7 +1782,12 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backups-automatisieren" class="md-nav__link">
     <span class="md-ellipsis">
       Backups automatisieren
@@ -1829,8 +1834,8 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#webserver-einhangepunkt-andern" class="md-nav__link">
     <span class="md-ellipsis">
       Webserver Einhängepunkt ändern
@@ -1838,18 +1843,13 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#django-shell-psql" class="md-nav__link">
     <span class="md-ellipsis">
       Django Shell &amp; psql
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1907,8 +1907,8 @@ ist <code>mizdb-postgres</code>.</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mizdb<span class="w"> </span>dump<span class="w"> </span>backup_datei
 </span></code></pre></div>
 <p>Wird keine Datei als Argument übergeben, so wird eine Backup-Datei im Unterverzeichnis <code>MIZDB/dumps</code> erstellt.</p>
-<h3 id="backups-automatisieren">Backups automatisieren</h3>
-<h4 id="cronjob">Cronjob</h4>
+<h2 id="backups-automatisieren">Backups automatisieren</h2>
+<h3 id="cronjob">Cronjob</h3>
 <p>Mit cronjob kann das Erstellen von Backups automatisiert werden. Dabei wird zu vordefinierten Zeiten ein Skript
 ausgeführt, dass die Backups erstellt. Ein solches Skript könnte so aussehen:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="ch">#!/bin/sh  </span>
@@ -1937,7 +1937,7 @@ löscht Backups, die älter als 30 Tage sind.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a># Backup der MIZDB Datenbank erstellen (Wochentags, um 7:51, 11:51 und 16:51 Uhr):
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>51 7,11,16 * * 1-5  /bin/sh /path/to/mizdb_backup.sh  
 </span></code></pre></div>
-<h4 id="rclone">rclone</h4>
+<h3 id="rclone">rclone</h3>
 <p>Mit rclone sync und cronjob kann das Hochladen der Backups auf ein Google Drive automatisiert werden.</p>
 <ol>
 <li>rclone installieren: <a href="https://rclone.org/install/">https://rclone.org/install/</a></li>
@@ -1953,7 +1953,7 @@ löscht Backups, die älter als 30 Tage sind.</p>
 <p>Die Standardkonfiguration erfordert einen Webbrowser.
 Um rclone ohne Webbrowser (z.B. für einen headless Server) zu
 konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/remote_setup/</a></p>
-<h5 id="rclone-mit-google-service-account">rclone mit Google Service Account</h5>
+<h4 id="rclone-mit-google-service-account">rclone mit Google Service Account</h4>
 <p>Alternativ kann über einen Service Account auf den Backup-Ordner zugegriffen werden:</p>
 <p><a href="https://rclone.org/drive/#service-account-support">https://rclone.org/drive/#service-account-support</a></p>
 <p>Als Beispiel, Upload zum existierenden Backup-Drive auf mizdbbackup@gmail.com:</p>
@@ -2004,13 +2004,13 @@ konfigurieren: <a href="https://rclone.org/remote_setup/">https://rclone.org/rem
 <ul>
 <li><a href="https://forum.rclone.org/t/gdrive-access-via-service-account/17926">Gdrive access via service account</a></li>
 </ul>
-<h3 id="webserver-einhangepunkt-andern">Webserver Einhängepunkt ändern</h3>
+<h2 id="webserver-einhangepunkt-andern">Webserver Einhängepunkt ändern</h2>
 <p>Standardmäßig ist die Seite der Datenbank unter <code>http://&lt;ServerName&gt;/miz</code> erreichbar, d.h. der Einhängepunkt ist <code>/miz</code>.
 Um einen anderen Einhängepunkt festzulegen, muss in der Datei <code>docker-compose.env</code> der Wert für <code>MOUNT_POINT</code> geändert
 werden. Anschließend müssen die Container gestoppt und neu gestartet werden:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mizdb<span class="w"> </span>restart
 </span></code></pre></div>
-<h3 id="django-shell-psql">Django Shell &amp; psql</h3>
+<h2 id="django-shell-psql">Django Shell &amp; psql</h2>
 <p>Um den interaktiven Python Interpreter für die MIZDB App zu öffnen:<br />
 <code>bash mizdb shell</code> und dann <code>python manage.py shell</code></p>
 <p>Um das interaktive PostgreSQL Terminal zu öffnen:<br />
