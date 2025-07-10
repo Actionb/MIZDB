@@ -141,6 +141,7 @@ definiert (siehe [Poe Docs - Defining tasks](https://poethepoet.natn.io/tasks/in
 | tox            | Python tox ausführen                                     |
 | ruff           | ruff Linter und Formatter ausführen und Probleme beheben |
 | ruff-check     | `ruff check .` ausführen                                 |
+| serve-docs     | Den mkdocs Entwicklungsserver starten                    |
 | build-docs     | Dokumentation bauen und bei Github hochladen             |
 | docker-restart | MIZDB Docker Container neustarten                        |
 | build          | Docker Image bauen                                       |
