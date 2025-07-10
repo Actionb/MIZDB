@@ -1,12 +1,16 @@
 from unittest.mock import Mock, patch
 
 from django.db import models
+from django.test import override_settings
+from django.urls import reverse, path
 from import_export.resources import ModelResource
 
-from dbentry.site.views.export import BaseExportView, ExportActionView
+from dbentry.site.views.base import BaseListView
+from dbentry.site.views.export import BaseExportView, ExportActionView, ExportModelView
 from tests.case import ViewTestCase
-from tests.model_factory import make
+from tests.model_factory import make, batch
 from tests.test_site.models import Band
+from tests.test_site.urls import urlpatterns as base_url_patterns
 
 
 class DummyModel(models.Model):
@@ -21,6 +25,9 @@ class BandResource(ModelResource):
 
 class TestBaseExportView(ViewTestCase):
     view_class = BaseExportView
+
+    def test(self):
+        pass
 
     @patch("dbentry.site.views.export.super")
     def test_get_context_data_adds_queryset(self, super_mock):
@@ -95,3 +102,48 @@ class TestExportActionView(ViewTestCase):
         with patch.object(view, "action_confirmed", new=Mock(return_value=True)):
             view.post(request)
             post_mock.assert_called()
+
+
+class BandList(BaseListView):
+    model = Band
+    resource_classes = [BandResource]
+    resource_class = BandResource
+
+
+class URLConf:
+    urlpatterns = base_url_patterns + [
+        path("band", BandList.as_view(), name="changelist"),
+        path("band/export", ExportModelView.as_view(model=Band, resource_classes=[BandResource]), name="export"),
+    ]
+
+
+@override_settings(ROOT_URLCONF=URLConf)
+class TestExportMany(ViewTestCase):
+    view_class = ExportActionView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.objs = list(batch(Band, num=2000))
+
+    def test_export_all(self):
+        """Assert that the model export view can export many thousand objects."""
+        request_data = {
+            "format": "0",
+            "fields_select": ["id"],
+        }
+        response = self.post_response(path=reverse("export"), data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get("Content-Disposition").startswith("attachment"))
+
+    def test_export_results(self):
+        """Assert that the export results view can export many thousand objects."""
+        request_data = {
+            "action_name": "export_results",
+            "action_confirmed": 1,
+            "format": "0",
+            "fields_select": ["id"],
+        }
+        response = self.post_response(path=reverse("changelist"), data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get("Content-Disposition").startswith("attachment"))
