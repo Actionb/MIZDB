@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased] 
+
+### Changed
+
+- added 'ID' column to almost all changelists
+
 ## [0.26.1] - 2025-07-10
 
 ### Added

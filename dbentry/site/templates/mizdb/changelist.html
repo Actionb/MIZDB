@@ -83,7 +83,7 @@
           <input id="select-all-cb" class="form-check-input" type="checkbox" title="Alle auswählen">
         </th>
         {% for header in result_headers %}
-            <th scope="col" class="sticky-top z-999">
+            <th scope="col" class="sticky-top z-999"{% if header.text|lower == "id" %}style="width: 2%;"{% endif %}>
                <div class="text d-flex justify-content-between">
                    <span class="me-2">{{ header.text|capfirst }}</span>
                    {% if header.sortable %}
