@@ -13,7 +13,7 @@ attribute:
     @register_changelist(MyModel)
     class MyModelListView(BaseListView):
         model = MyModel
-        list_display = ["name", "field_2"]
+        list_display = ["id", "name", "field_2"]
 
 
 Use SearchableListView to add a search form to the changelist:
@@ -152,6 +152,7 @@ class ArtikelList(SearchableListView):
     order_unfiltered_results = False
     prioritize_search_ordering = False
     list_display = [
+        "id",
         "schlagzeile",
         "zusammenfassung_short",
         "seite_umfang",
@@ -214,7 +215,7 @@ class ArtikelList(SearchableListView):
 class AudioList(SearchableListView):
     model = _models.Audio
     ordering = ["titel", "jahr", "medium"]
-    list_display = ["titel", "jahr", "medium", "kuenstler_list", "plattennummer"]
+    list_display = ["id", "titel", "jahr", "medium", "kuenstler_list", "plattennummer"]
     search_form_kwargs = {
         "fields": [
             "plattennummer__contains",  # also see AudioQuerySet.filter
@@ -246,7 +247,8 @@ class AudioList(SearchableListView):
 class AusgabeList(SearchableListView):
     model = _models.Ausgabe
     ordering = ["magazin__magazin_name", "_name"]
-    list_display = (
+    list_display = [
+        "id",
         "ausgabe_name",
         "num_list",
         "lnum_list",
@@ -257,7 +259,7 @@ class AusgabeList(SearchableListView):
         "e_datum",
         "anz_artikel",
         "status",
-    )
+    ]
     search_form_kwargs = {
         "fields": [
             "magazin",
@@ -343,7 +345,7 @@ class AusgabeList(SearchableListView):
 @register_changelist(_models.Brochure, category=ModelType.ARCHIVGUT)
 class BrochureList(SearchableListView):
     model = _models.Brochure
-    list_display = ["titel", "zusammenfassung", "jahr_list"]
+    list_display = ["id", "titel", "zusammenfassung", "jahr_list"]
     search_form_kwargs = {
         "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range"],
         "labels": {"jahre__jahr__range": "Jahr"},
@@ -365,7 +367,7 @@ class BrochureList(SearchableListView):
 class BuchList(SearchableListView):
     model = _models.Buch
     ordering = ["titel"]
-    list_display = ["titel", "seitenumfang", "autoren_string", "kuenstler_list", "schlagwort_string"]
+    list_display = ["id", "titel", "seitenumfang", "autoren_string", "kuenstler_list", "schlagwort_string"]
     search_form_kwargs = {
         "fields": [
             "autor",
@@ -413,7 +415,7 @@ class BuchList(SearchableListView):
 class FotoList(SearchableListView):
     model = _models.Foto
     ordering = ["titel", "datum"]
-    list_display = ["titel", "foto_id", "size", "typ", "datum_localized", "schlagwort_list"]
+    list_display = ["id", "titel", "foto_id", "size", "typ", "datum_localized", "schlagwort_list"]
     search_form_kwargs = {
         "fields": [
             "musiker",
@@ -454,7 +456,7 @@ class FotoList(SearchableListView):
 class PlakatList(SearchableListView):
     model = _models.Plakat
     ordering = ["titel", "datum"]
-    list_display = ["titel", "plakat_id", "size", "datum_localized", "veranstaltung_string"]
+    list_display = ["id", "titel", "plakat_id", "size", "datum_localized", "veranstaltung_string"]
     search_form_kwargs = {
         "fields": [
             "musiker",
@@ -495,7 +497,7 @@ class PlakatList(SearchableListView):
 @register_changelist(_models.Kalender, category=ModelType.ARCHIVGUT)
 class ProgrammheftList(SearchableListView):
     model = _models.Kalender
-    list_display = ["titel", "zusammenfassung", "jahr_list"]
+    list_display = ["id", "titel", "zusammenfassung", "jahr_list"]
     search_form_kwargs = {
         "fields": ["ausgabe__magazin", "ausgabe", "genre", "spielort", "veranstaltung", "jahre__jahr__range"],
         "labels": {"jahre__jahr__range": "Jahr"},
@@ -517,7 +519,7 @@ class ProgrammheftList(SearchableListView):
 class VideoList(SearchableListView):
     model = _models.Video
     ordering = ["titel"]
-    list_display = ["titel", "medium", "kuenstler_list"]
+    list_display = ["id", "titel", "medium", "kuenstler_list"]
     search_form_kwargs = {
         "fields": [
             "musiker",
@@ -545,7 +547,7 @@ class VideoList(SearchableListView):
 @register_changelist(_models.Katalog, category=ModelType.ARCHIVGUT)
 class WarenkatalogList(SearchableListView):
     model = _models.Katalog
-    list_display = ["titel", "zusammenfassung", "art", "jahr_list"]
+    list_display = ["id", "titel", "zusammenfassung", "art", "jahr_list"]
     search_form_kwargs = {
         "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range"],
         "labels": {"jahre__jahr__range": "Jahr"},
@@ -572,7 +574,7 @@ class WarenkatalogList(SearchableListView):
 class AutorList(SearchableListView):
     model = _models.Autor
     ordering = ["_name"]
-    list_display = ["autor_name", "person", "kuerzel", "magazin_string"]
+    list_display = ["id", "autor_name", "person", "kuerzel", "magazin_string"]
     search_form_kwargs = {"fields": ["magazin", "person"]}
     resource_class = resources.AutorResource
 
@@ -591,7 +593,7 @@ class AutorList(SearchableListView):
 class BandList(SearchableListView):
     model = _models.Band
     ordering = ["band_name"]
-    list_display = ["band_name", "genre_string", "musiker_string", "orte_string"]
+    list_display = ["id", "band_name", "genre_string", "musiker_string", "orte_string"]
     search_form_kwargs = {
         "fields": ["musiker", "genre", "orte__land", "orte"],
         "labels": {"musiker": "Mitglied"},
@@ -621,7 +623,7 @@ class BandList(SearchableListView):
 @register_changelist(_models.Genre, category=ModelType.STAMMDATEN)
 class GenreList(SearchableListView):
     model = _models.Genre
-    list_display = ["genre", "alias_string"]
+    list_display = ["id", "genre", "alias_string"]
     resource_class = resources.GenreResource
 
     @add_attrs(description="Aliase")
@@ -635,7 +637,7 @@ class GenreList(SearchableListView):
 class MagazinList(SearchableListView):
     model = _models.Magazin
     ordering = ["magazin_name"]
-    list_display = ["magazin_name", "short_beschreibung", "orte_string", "anz_ausgaben"]
+    list_display = ["id", "magazin_name", "short_beschreibung", "orte_string", "anz_ausgaben"]
     search_form_kwargs = {
         "fields": ["verlag", "herausgeber", "orte", "genre", "issn", "fanzine"],
         "widgets": {"fanzine": null_boolean_select},
@@ -663,7 +665,7 @@ class MagazinList(SearchableListView):
 class MusikerList(SearchableListView):
     model = _models.Musiker
     ordering = ["kuenstler_name"]
-    list_display = ["kuenstler_name", "genre_string", "band_string", "orte_string"]
+    list_display = ["id", "kuenstler_name", "genre_string", "band_string", "orte_string"]
     search_form_kwargs = {
         "fields": ["band", "person", "genre", "instrument", "orte__land", "orte"],
         "form": MusikerSearchForm,
@@ -693,7 +695,7 @@ class MusikerList(SearchableListView):
 class OrtList(SearchableListView):
     model = _models.Ort
     ordering = ["land", "bland", "stadt"]
-    list_display = ["stadt", "bland", "land"]
+    list_display = ["id", "stadt", "bland", "land"]
     list_display_links = ["stadt", "bland", "land"]
     search_form_kwargs = {
         "fields": ["land", "bland"],
@@ -706,7 +708,7 @@ class OrtList(SearchableListView):
 class PersonList(SearchableListView):
     model = _models.Person
     ordering = ["nachname", "vorname"]
-    list_display = ("vorname", "nachname", "orte_string", "is_musiker", "is_autor")
+    list_display = ["id", "vorname", "nachname", "orte_string", "is_musiker", "is_autor"]
     list_display_links = ["vorname", "nachname"]
     search_form_kwargs = {
         "fields": ["orte", "orte__land", "orte__bland", "gnd_id"],
@@ -741,7 +743,7 @@ class PersonList(SearchableListView):
 class SchlagwortList(SearchableListView):
     model = _models.Schlagwort
     ordering = ["schlagwort"]
-    list_display = ["schlagwort", "alias_string"]
+    list_display = ["id", "schlagwort", "alias_string"]
     resource_class = resources.SchlagwortResource
 
     @add_attrs(description="Aliase", ordering="alias_list")
@@ -760,6 +762,7 @@ class SchlagwortList(SearchableListView):
 class HerausgeberList(SearchableListView):
     model = _models.Herausgeber
     ordering = ["herausgeber"]
+    list_display = ["id", "herausgeber"]
     resource_class = resources.HerausgeberResource
 
 
@@ -767,13 +770,14 @@ class HerausgeberList(SearchableListView):
 class InstrumentList(SearchableListView):
     model = _models.Instrument
     ordering = ["instrument"]
-    list_display = ["instrument", "kuerzel"]
+    list_display = ["id", "instrument", "kuerzel"]
     resource_class = resources.InstrumentResource
 
 
 @register_changelist(_models.Plattenfirma, category=ModelType.SONSTIGE)
 class PlattenfirmaList(SearchableListView):
     model = _models.Plattenfirma
+    list_display = ["id", "name"]
     resource_class = resources.PlattenfirmaResource
     view_has_help_page = False
 
@@ -782,7 +786,7 @@ class PlattenfirmaList(SearchableListView):
 class SpielortList(SearchableListView):
     model = _models.Spielort
     ordering = ["name", "ort"]
-    list_display = ["name", "ort"]
+    list_display = ["id", "name", "ort"]
     search_form_kwargs = {"fields": ["ort", "ort__land"]}
     resource_class = resources.SpielortResource
 
@@ -791,7 +795,7 @@ class SpielortList(SearchableListView):
 class VeranstaltungList(SearchableListView):
     model = _models.Veranstaltung
     ordering = ["name", "spielort", "datum"]
-    list_display = ["name", "datum_localized", "spielort", "kuenstler_list"]
+    list_display = ["id", "name", "datum_localized", "spielort", "kuenstler_list"]
     search_form_kwargs = {
         "fields": ["musiker", "band", "schlagwort", "genre", "person", "spielort", "reihe", "datum__range"],
         "tabular": ["musiker", "band", "spielort"],
@@ -813,7 +817,7 @@ class VeranstaltungList(SearchableListView):
 class VerlagList(SearchableListView):
     model = _models.Verlag
     ordering = ["verlag_name", "sitz"]
-    list_display = ["verlag_name", "sitz"]
+    list_display = ["id", "verlag_name", "sitz"]
     search_form_kwargs = {
         "fields": ["sitz", "sitz__land", "sitz__bland"],
         "labels": {"sitz": "Sitz"},
@@ -825,13 +829,14 @@ class VerlagList(SearchableListView):
 @register_changelist(_models.Lagerort, category=ModelType.SONSTIGE)
 class LagerortList(SearchableListView):
     model = _models.Lagerort
-    list_display = ["ort", "raum", "regal", "fach", "ordner"]
+    list_display = ["id", "ort", "raum", "regal", "fach", "ordner"]
     resource_class = resources.LagerortResource
 
 
 @register_changelist(_models.Geber, category=ModelType.SONSTIGE)
 class GeberList(SearchableListView):
     model = _models.Geber
+    list_display = ["id", "name"]
     resource_class = resources.GeberResource
     view_has_help_page = False
 
@@ -839,12 +844,14 @@ class GeberList(SearchableListView):
 @register_changelist(_models.Provenienz, category=ModelType.SONSTIGE)
 class ProvenienzList(SearchableListView):
     model = _models.Provenienz
+    list_display = ["id", "geber", "typ"]
     resource_class = resources.ProvenienzResource
 
 
 @register_changelist(_models.Schriftenreihe, category=ModelType.SONSTIGE)
 class SchriftenreiheList(SearchableListView):
     model = _models.Schriftenreihe
+    list_display = ["id", "name"]
     resource_class = resources.SchriftenreiheResource
     view_has_help_page = False
 
@@ -852,6 +859,7 @@ class SchriftenreiheList(SearchableListView):
 @register_changelist(_models.Bildreihe, category=ModelType.SONSTIGE)
 class BildreiheList(SearchableListView):
     model = _models.Bildreihe
+    list_display = ["id", "name"]
     resource_class = resources.BildreiheResource
     view_has_help_page = False
 
@@ -859,6 +867,7 @@ class BildreiheList(SearchableListView):
 @register_changelist(_models.Veranstaltungsreihe, category=ModelType.SONSTIGE)
 class VeranstaltungsreiheList(SearchableListView):
     model = _models.Veranstaltungsreihe
+    list_display = ["id", "name"]
     resource_class = resources.VeranstaltungsreiheResource
     view_has_help_page = False
 
@@ -866,6 +875,7 @@ class VeranstaltungsreiheList(SearchableListView):
 @register_changelist(_models.VideoMedium, category=ModelType.SONSTIGE)
 class VideoMediumList(SearchableListView):
     model = _models.VideoMedium
+    list_display = ["id", "medium"]
     resource_class = resources.VideoMediumResource
     view_has_help_page = False
 
@@ -873,6 +883,7 @@ class VideoMediumList(SearchableListView):
 @register_changelist(_models.AudioMedium, category=ModelType.SONSTIGE)
 class AudioMediumList(SearchableListView):
     model = _models.AudioMedium
+    list_display = ["id", "medium"]
     resource_class = resources.AudioMediumResource
     view_has_help_page = False
 

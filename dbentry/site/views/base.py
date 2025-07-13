@@ -1041,7 +1041,7 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
         """Return the values to display in the row for the given result."""
 
         def link_in_col(is_first, field_name):
-            if self.list_display_links is None:
+            if self.list_display_links is None or field_name == "id":
                 return False
             if is_first and not self.list_display_links:
                 return True
@@ -1086,7 +1086,10 @@ class BaseListView(WatchlistMixin, PermissionRequiredMixin, ModelViewMixin, List
                     if url:
                         value = create_hyperlink(url, value, **{"class": "change-link"})
             result_items.append(value)
-            first = False
+            if name != "id":
+                # On most changelists, the 'id' column comes first, but it
+                # should not be the link for a result.
+                first = False
         return result_items
 
     def get_actions(self):
