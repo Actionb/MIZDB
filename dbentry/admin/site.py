@@ -1,16 +1,20 @@
 from collections import OrderedDict
+from datetime import datetime, timedelta
 from typing import Any, List, Optional, Sequence, ValuesView
 from typing import OrderedDict as OrderedDictType
 
 from django.contrib import admin
+from django.contrib import messages
 from django.core import checks
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.decorators.cache import never_cache
 from mizdb_watchlist.actions import add_to_watchlist
 
+from dbentry.management.commands.update_available import update_available
 from dbentry.utils.admin import get_model_admin_for_model
 
 
@@ -107,6 +111,7 @@ class MIZAdminSite(admin.AdminSite):
         new_app_list = self.add_categories(response.context_data["app_list"])
         if new_app_list:
             response.context_data["app_list"] = new_app_list
+        self.check_for_update(request)
         return response
 
     def check(self, app_configs: Optional[ValuesView]) -> List[checks.CheckMessage]:
@@ -164,6 +169,41 @@ class MIZAdminSite(admin.AdminSite):
                 continue
             result[url] = label
         return result
+
+    def check_for_update(self, request: HttpRequest):
+        """
+        Once per day, check if an update is available. If an update is
+        available, display a helpful user message.
+        """
+        if not request.user.is_superuser:
+            return
+
+        refresh = True
+        try:
+            last_check = datetime.fromisoformat(request.session["last_check"])
+            if datetime.now() - last_check <= timedelta(days=1):
+                refresh = False
+        except (KeyError, ValueError):
+            pass
+
+        if refresh:
+            available, remote_version, local_version = update_available()
+            request.session["update_available"] = available
+            request.session["remote_version"] = str(remote_version)
+            request.session["local_version"] = str(local_version)
+            request.session["last_check"] = datetime.now().isoformat()
+        else:
+            available = request.session.get("update_available", False)
+            remote_version = request.session.get("remote_version", "")
+            local_version = request.session.get("local_version", "")
+        if available:
+            help_link = '<a href="https://actionb.github.io/MIZDB/verwaltung.html#update">Hilfe: Update</a>'
+            messages.info(
+                request,
+                mark_safe(
+                    f"Ein Update für MIZDB ist verfügbar: Version '{local_version}' → '{remote_version}'. {help_link}"
+                ),
+            )
 
 
 miz_site = MIZAdminSite()

@@ -2,6 +2,10 @@
 
 ## [unreleased] 
 
+### Added
+
+- message superusers about available updates when they visit the admin index page
+
 ### Changed
 
 - added 'ID' column to almost all changelists

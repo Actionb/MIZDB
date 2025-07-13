@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.messages import get_messages
 from django.core import checks
 from django.test import override_settings
 from django.urls import path, reverse
@@ -59,7 +61,8 @@ class TestMIZAdminSite(RequestTestCase):
                         self.assertFalse(index_mock.called)
                         self.assertTrue(super_mock.called)
 
-    def test_app_index_categories(self):
+    @patch("dbentry.admin.site.MIZAdminSite.check_for_update")
+    def test_app_index_categories(self, *_mocks):
         """
         Assert that the dbentry app_list contains the additional 'fake' apps
         that organize the various models of the app.
@@ -175,6 +178,58 @@ class TestMIZAdminSite(RequestTestCase):
             tools = response.context_data.get("admintools")
             self.assertIn("dummy_tool", tools)
             self.assertEqual(tools["dummy_tool"], "label")
+
+    @patch("dbentry.admin.site.update_available")
+    def test_check_update(self, available_mock):
+        """Assert that check_update adds a user message if an update is available."""
+        request = self.get_response("/").wsgi_request
+        available_mock.return_value = (True, "0.1.0", "0.0.1")
+        MIZAdminSite().check_for_update(request)
+        self.assertMessageSent(request, "Ein Update für MIZDB ist verfügbar")
+
+    @patch("dbentry.admin.site.update_available")
+    def test_check_update_no_update(self, available_mock):
+        """
+        Assert that check_update does not add a user message if no update is
+        available.
+        """
+        request = self.get_response("/").wsgi_request
+        available_mock.return_value = (False, "0.1.0", "0.0.1")
+        MIZAdminSite().check_for_update(request)
+        self.assertFalse(get_messages(request))
+
+    @patch("dbentry.admin.site.update_available")
+    def test_check_update_rechecks(self, available_mock):
+        """
+        Assert that check_update rechecks whether an update is available if the
+        last check was over a day ago.
+        """
+        request = self.get_response("/").wsgi_request
+        available_mock.return_value = (True, "0.1.0", "0.0.1")
+        for delta in (1, 25):
+            with self.subTest(timedelta=delta):
+                request.session["last_check"] = str(datetime.now() - timedelta(hours=delta))
+                MIZAdminSite().check_for_update(request)
+                if delta == 1:
+                    available_mock.assert_not_called()
+                else:
+                    available_mock.assert_called()
+
+    @patch("dbentry.admin.site.update_available")
+    def test_check_update_superuser_only(self, available_mock):
+        """
+        Assert that the message about an available update is only shown to
+        superusers.
+        """
+        available_mock.return_value = (True, "0.1.0", "0.0.1")
+        for user in (self.staff_user, self.super_user):
+            with self.subTest(user=user):
+                request = self.get_response("/", user=user).wsgi_request
+                MIZAdminSite().check_for_update(request)
+                if user == self.super_user:
+                    self.assertMessageSent(request, "Ein Update für MIZDB ist verfügbar")
+                else:
+                    self.assertFalse(get_messages(request))
 
 
 class TestMIZSite(RequestTestCase):
