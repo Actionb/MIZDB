@@ -1,9 +1,10 @@
 # Changelog
 
-## [unreleased] 
+## [unreleased]
 
 ### Added
 
+- add list and edit views for 'Memorabilien' model
 - message superusers about available updates when they visit the admin index page
 
 ### Changed
