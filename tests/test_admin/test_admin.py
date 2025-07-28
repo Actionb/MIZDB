@@ -1127,7 +1127,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
     model = _models.Memorabilien
-    fields_expected = ["titel", "beschreibung", "bemerkungen"]
+    fields_expected = ["titel", "typ", "beschreibung", "bemerkungen"]
     exclude_expected = ["genre", "schlagwort", "person", "band", "musiker", "ort", "spielort", "veranstaltung"]
 
     @classmethod

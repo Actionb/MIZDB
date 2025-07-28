@@ -904,3 +904,34 @@ class BestandList(SearchableListView):
         """
         if bestand_object := obj.bestand_object:
             return f"{bestand_object._meta.verbose_name}: {bestand_object}"
+
+
+@register_changelist(_models.Memorabilien, category=ModelType.ARCHIVGUT)
+class MemorabilienList(SearchableListView):
+    model = _models.Memorabilien
+    list_display = ["id", "titel", "typ"]
+    search_form_kwargs = {
+        "fields": [
+            "typ",
+            "musiker",
+            "band",
+            "schlagwort",
+            "genre",
+            "ort",
+            "spielort",
+            "veranstaltung",
+            "person",
+        ],
+        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+    }
+    # TODO: add resource_class
+    view_has_help_page = False  # TODO: add help page
+
+
+@register_changelist(_models.MemoTyp, category=ModelType.SONSTIGE)
+class MemoTypList(SearchableListView):
+    model = _models.MemoTyp
+    list_display = ["id", "name"]
+    # TODO: add a resource?
+    # resource_class = resources.AudioMediumResource
+    view_has_help_page = False
