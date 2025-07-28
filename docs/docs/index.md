@@ -21,6 +21,7 @@ Informationen zu den Tabellen sowie weitere Hilfeseiten findest du hier:
 * [Broschüren](broschuere.md)
 * [Bücher](buch.md)
 * [Fotos](foto.md)
+* [Memorabilien](memorabilien.md)
 * [Plakate](plakat.md)
 * [Programmhefte](programmheft.md)
 * [Video Materialien](video.md)

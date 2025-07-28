@@ -925,7 +925,7 @@ class MemorabilienList(SearchableListView):
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
     resource_class = resources.MemorabilienResource
-    view_has_help_page = False  # TODO: add help page
+    view_has_help_page = True
 
     @add_attrs(description="Beschreibung", ordering="beschreibung")
     def short_beschreibung(self, obj: _models.Memorabilien):
