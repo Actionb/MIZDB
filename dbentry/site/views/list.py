@@ -924,7 +924,7 @@ class MemorabilienList(SearchableListView):
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
-    # TODO: add resource_class
+    resource_class = resources.MemorabilienResource
     view_has_help_page = False  # TODO: add help page
 
     @add_attrs(description="Beschreibung", ordering="beschreibung")
@@ -942,6 +942,5 @@ class MemorabilienList(SearchableListView):
 class MemoTypList(SearchableListView):
     model = _models.MemoTyp
     list_display = ["id", "name"]
-    # TODO: add a resource?
-    # resource_class = resources.AudioMediumResource
+    resource_class = resources.MemoTypResource
     view_has_help_page = False
