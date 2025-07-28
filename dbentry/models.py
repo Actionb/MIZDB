@@ -1152,7 +1152,10 @@ class Dokument(BaseModel):
 
 class Memorabilien(BaseModel):
     titel = models.CharField(max_length=200)
-    beschreibung = models.TextField(blank=True, help_text="Beschreibung bzgl. des Memorabiliums")
+    typ = models.ForeignKey(
+        "MemoTyp", on_delete=models.PROTECT, blank=True, null=True, verbose_name="Art d. Memorabilie"
+    )
+    beschreibung = models.TextField(blank=True, help_text="Beschreibung der Memorabilie")
     bemerkungen = models.TextField(blank=True, help_text="Kommentare für Archiv-Mitarbeiter")
 
     genre = models.ManyToManyField("Genre")
@@ -1175,9 +1178,23 @@ class Memorabilien(BaseModel):
     name_field = "titel"
 
     class Meta(BaseModel.Meta):
-        verbose_name = "Memorabilia"
+        verbose_name = "Memorabilie"
         verbose_name_plural = "Memorabilien"
         ordering = ["titel"]
+
+
+class MemoTyp(BaseModel):
+    name = models.CharField("Typ", max_length=100, unique=True)
+
+    _fts = SearchVectorField(columns=[WeightedColumn("name", "A", SIMPLE)])
+
+    create_field = "name"
+    name_field = "name"
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Memorabilie-Typ"
+        verbose_name_plural = "Memorabilie-Typen"
+        ordering = ["name"]
 
 
 class Spielort(BaseModel):

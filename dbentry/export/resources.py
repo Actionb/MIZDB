@@ -986,7 +986,7 @@ class BestandResource(MIZResource):
     buch = Field(attribute="buch__titel", column_name="Buch")
     dokument = Field(attribute="dokument__titel", column_name="Dokument")
     foto = Field(attribute="foto__titel", column_name="Foto")
-    memorabilien = Field(attribute="memorabilien__titel", column_name="Memorabilien")
+    memorabilien = Field(attribute="memorabilien__titel", column_name="Memorabilie")
     plakat = Field(attribute="plakat__titel", column_name="Plakat")
     technik = Field(attribute="technik__titel", column_name="Technik")
     video = Field(attribute="video__titel", column_name="Video")
