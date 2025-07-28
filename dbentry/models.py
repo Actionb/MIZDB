@@ -1182,6 +1182,12 @@ class Memorabilien(BaseModel):
         verbose_name_plural = "Memorabilien"
         ordering = ["titel"]
 
+    @staticmethod
+    def get_overview_annotations() -> dict:
+        return {
+            "kuenstler_list": limit(array_to_string(to_array("band__band_name"), to_array("musiker__kuenstler_name"))),
+        }
+
 
 class MemoTyp(BaseModel):
     name = models.CharField("Typ", max_length=100, unique=True)

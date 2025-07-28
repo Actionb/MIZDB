@@ -909,7 +909,7 @@ class BestandList(SearchableListView):
 @register_changelist(_models.Memorabilien, category=ModelType.ARCHIVGUT)
 class MemorabilienList(SearchableListView):
     model = _models.Memorabilien
-    list_display = ["id", "titel", "typ"]
+    list_display = ["id", "titel", "typ", "short_beschreibung", "kuenstler_list"]
     search_form_kwargs = {
         "fields": [
             "typ",
@@ -926,6 +926,16 @@ class MemorabilienList(SearchableListView):
     }
     # TODO: add resource_class
     view_has_help_page = False  # TODO: add help page
+
+    @add_attrs(description="Beschreibung", ordering="beschreibung")
+    def short_beschreibung(self, obj: _models.Memorabilien):
+        return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
+
+    @add_attrs(description="Künstler")
+    def kuenstler_list(self, obj: _models.Memorabilien):
+        # noinspection PyUnresolvedReferences
+        # (added by annotations)
+        return obj.kuenstler_list or self.get_empty_value_display()
 
 
 @register_changelist(_models.MemoTyp, category=ModelType.SONSTIGE)
