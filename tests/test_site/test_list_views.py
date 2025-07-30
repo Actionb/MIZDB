@@ -456,3 +456,21 @@ class TestAudioMediumList(ListViewTestMethodsMixin, ListViewTestCase):
         request = self.get_request(self.url)
         view = self.get_view(request)
         self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)
+
+
+class TestMemorabilienList(ListViewTestMethodsMixin, ListViewTestCase):
+    view_class = list.MemorabilienList
+
+
+class TestMemoTypList(ListViewTestMethodsMixin, ListViewTestCase):
+    view_class = list.MemoTypList
+
+    def test_get_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_help_url(), ONLINE_HELP_INDEX)
+
+    def test_get_offline_help_url(self):
+        request = self.get_request(self.url)
+        view = self.get_view(request)
+        self.assertEqual(view.get_offline_help_url(), OFFLINE_HELP_INDEX)

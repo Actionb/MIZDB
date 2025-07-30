@@ -116,6 +116,10 @@ shell = "ruff check --fix .; ruff format"
 help = "Run ruff check"
 shell = "ruff check ."
 
+[tool.poe.tasks.serve-docs]
+help = "Start the mkdocs development server"
+shell = "mkdocs serve -f mkdocs-online.yml -a 127.0.0.1:9000"
+
 [tool.poe.tasks.build-docs]
 help = "Build offline and online docs. Upload online docs to Github pages."
 shell = """

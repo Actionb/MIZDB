@@ -44,6 +44,8 @@ def get_data_for_model(model):
         _models.Veranstaltungsreihe: {"name": "Testreihe"},
         _models.VideoMedium: {"medium": "Testmedium"},
         _models.AudioMedium: {"medium": "Testmedium"},
+        _models.Memorabilien: {"titel": "Test Memorabilie"},
+        _models.MemoTyp: {"name": "Test MemoTyp"},
     }
     return data.get(model, None)
 

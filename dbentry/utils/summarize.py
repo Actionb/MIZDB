@@ -500,7 +500,7 @@ class MemorabilienParser(Parser):
     def get_summary(self, obj: ModelObject) -> OrderedDict:
         return OrderedDict(
             {
-                "Objekt": "Memorabilia",
+                "Objekt": "Memorabilie",
                 "ID": obj.id,
                 "Titel": obj.titel,
                 "Beschreibung": obj.beschreibung,

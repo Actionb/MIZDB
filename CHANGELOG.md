@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.27.0] - 2025-07-30
+
+### Added
+
+- add list and edit views for 'Memorabilien' model
+- message superusers about available updates when they visit the admin index page
+
+### Changed
+
+- added 'ID' column to almost all changelists
+
 ## [0.26.1] - 2025-07-10
 
 ### Added
