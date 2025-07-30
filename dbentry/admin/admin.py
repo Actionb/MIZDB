@@ -963,11 +963,70 @@ class MagazinAdmin(MIZModelAdmin):
 
 @admin.register(_models.Memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
+        model = _models.Memorabilien.genre.through
+
+    class SchlagwortInLine(BaseSchlagwortInline):
+        model = _models.Memorabilien.schlagwort.through
+
+    class PersonInLine(BaseTabularInline):
+        model = _models.Memorabilien.person.through
+        verbose_model = _models.Person
+
+    class MusikerInLine(BaseTabularInline):
+        model = _models.Memorabilien.musiker.through
+        verbose_model = _models.Musiker
+        tabular_autocomplete = ["musiker"]
+
+    class BandInLine(BaseTabularInline):
+        model = _models.Memorabilien.band.through
+        verbose_model = _models.Band
+        tabular_autocomplete = ["band"]
+
+    class OrtInLine(BaseTabularInline):
+        model = _models.Memorabilien.ort.through
+        verbose_model = _models.Ort
+
+    class SpielortInLine(BaseTabularInline):
+        model = _models.Memorabilien.spielort.through
+        verbose_model = _models.Spielort
+        tabular_autocomplete = ["veranstaltung"]
+
+    class VeranstaltungInLine(BaseTabularInline):
+        model = _models.Memorabilien.veranstaltung.through
+        verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ["veranstaltung"]
+
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     index_category = "Archivgut"
-    inlines = [BestandInLine]
-    superuser_only = True
     ordering = ["titel"]
+    list_display = ["titel", "typ"]
+
+    inlines = [
+        SchlagwortInLine,
+        GenreInLine,
+        MusikerInLine,
+        BandInLine,
+        OrtInLine,
+        SpielortInLine,
+        VeranstaltungInLine,
+        PersonInLine,
+        BestandInLine,
+    ]
+    search_form_kwargs = {
+        "fields": [
+            "typ",
+            "musiker",
+            "band",
+            "schlagwort",
+            "genre",
+            "ort",
+            "spielort",
+            "veranstaltung",
+            "person",
+        ],
+        "tabular": ["musiker", "band", "spielort", "veranstaltung"],
+    }
 
 
 @admin.register(_models.Musiker, site=miz_site)
@@ -1728,6 +1787,7 @@ class PlattenfirmaAdmin(MIZModelAdmin):
     _models.Veranstaltungsreihe,
     _models.VideoMedium,
     _models.AudioMedium,
+    _models.MemoTyp,
     site=miz_site,
 )
 class HiddenFromIndex(MIZModelAdmin):

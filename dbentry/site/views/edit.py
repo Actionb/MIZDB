@@ -910,3 +910,60 @@ class AudioMediumView(BaseEditView):
     model = _models.AudioMedium
     require_confirmation = True
     view_has_help_page = False
+
+
+@register_edit(_models.Memorabilien)
+class MemorabilienView(BaseEditView):
+    class SchlagwortInline(Inline):
+        model = _models.Memorabilien.schlagwort.through
+        verbose_model = _models.Schlagwort
+
+    class GenreInline(Inline):
+        model = _models.Memorabilien.genre.through
+        verbose_model = _models.Genre
+
+    class MusikerInline(Inline):
+        model = _models.Memorabilien.musiker.through
+        verbose_model = _models.Musiker
+
+    class BandInline(Inline):
+        model = _models.Memorabilien.band.through
+        verbose_model = _models.Band
+
+    class OrtInline(Inline):
+        model = _models.Memorabilien.ort.through
+        verbose_model = _models.Ort
+
+    class SpielortInline(Inline):
+        model = _models.Memorabilien.spielort.through
+        verbose_model = _models.Spielort
+
+    class VeranstaltungInline(Inline):
+        model = _models.Memorabilien.veranstaltung.through
+        verbose_model = _models.Veranstaltung
+
+    class PersonInline(Inline):
+        model = _models.Memorabilien.person.through
+        verbose_model = _models.Person
+
+    # form = _forms.MemorabilienForm
+    model = _models.Memorabilien
+    fields = ["titel", "typ", "beschreibung", "bemerkungen"]
+    inlines = [
+        SchlagwortInline,
+        GenreInline,
+        MusikerInline,
+        BandInline,
+        OrtInline,
+        SpielortInline,
+        VeranstaltungInline,
+        PersonInline,
+        BestandInline,
+    ]
+
+
+@register_edit(_models.MemoTyp)
+class MemoTypView(BaseEditView):
+    model = _models.MemoTyp
+    require_confirmation = True
+    view_has_help_page = False

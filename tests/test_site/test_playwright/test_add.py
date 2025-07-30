@@ -162,6 +162,13 @@ def get_data_for_model(model):
         _models.AudioMedium: {
             "medium": "Testmedium",
         },
+        _models.Memorabilien: {
+            "titel": "Test Memorabilie",
+            "typ": "T-Shirt",
+        },
+        _models.MemoTyp: {
+            "name": "Test MemoTyp",
+        },
     }
     return data.get(model, None)
 
@@ -176,6 +183,7 @@ def test_data():
     ort = make(_models.Ort, stadt="Dortmund", land=land, bland=bland)
     spielort = make(_models.Spielort, name="Testspielort", ort=ort)
     geber = make(_models.Geber, name="Testgeber")
+    memo_typ = make(_models.MemoTyp, name="T-Shirt")
     return {
         _models.Magazin: magazin,
         _models.Ausgabe: ausgabe,
@@ -185,6 +193,7 @@ def test_data():
         _models.Ort: ort,
         _models.Spielort: spielort,
         _models.Geber: geber,
+        _models.MemoTyp: memo_typ,
     }
 
 

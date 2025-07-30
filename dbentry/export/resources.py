@@ -986,7 +986,7 @@ class BestandResource(MIZResource):
     buch = Field(attribute="buch__titel", column_name="Buch")
     dokument = Field(attribute="dokument__titel", column_name="Dokument")
     foto = Field(attribute="foto__titel", column_name="Foto")
-    memorabilien = Field(attribute="memorabilien__titel", column_name="Memorabilien")
+    memorabilien = Field(attribute="memorabilien__titel", column_name="Memorabilie")
     plakat = Field(attribute="plakat__titel", column_name="Plakat")
     technik = Field(attribute="technik__titel", column_name="Technik")
     video = Field(attribute="video__titel", column_name="Video")
@@ -1403,3 +1403,101 @@ class AudioMediumResource(MIZResource):
         model = _models.AudioMedium
         fields = ["id", "medium"]
         export_order = ["id", "medium"]
+
+
+class MemorabilienResource(MIZResource):
+    typ = Field(attribute="typ__name", column_name="typ")
+    schlagwort_list = CachedQuerysetField(
+        attribute="schlagwort_list",
+        column_name="Schlagwörter",
+        queryset=_models.Memorabilien.objects.annotate(
+            schlagwort_list=string_list("schlagwort__schlagwort", length=1024)
+        ),
+    )
+    genre_list = CachedQuerysetField(
+        attribute="genre_list",
+        column_name="Genres",
+        queryset=_models.Memorabilien.objects.annotate(genre_list=string_list("genre__genre", length=1024)),
+    )
+    musiker_list = CachedQuerysetField(
+        attribute="musiker_list",
+        column_name="Musiker",
+        queryset=_models.Memorabilien.objects.annotate(
+            musiker_list=string_list("musiker__kuenstler_name", length=1024)
+        ),
+    )
+    band_list = CachedQuerysetField(
+        attribute="band_list",
+        column_name="Bands",
+        queryset=_models.Memorabilien.objects.annotate(band_list=string_list("band__band_name", length=1024)),
+    )
+    ort_list = CachedQuerysetField(
+        attribute="ort_list",
+        column_name="Orte",
+        queryset=_models.Memorabilien.objects.annotate(ort_list=string_list("ort___name", sep="; ", length=1024)),
+    )
+    spielort_list = CachedQuerysetField(
+        attribute="spielort_list",
+        column_name="Spielorte",
+        queryset=_models.Memorabilien.objects.annotate(spielort_list=string_list("spielort__name", length=1024)),
+    )
+    veranstaltung_list = CachedQuerysetField(
+        attribute="veranstaltung_list",
+        column_name="Veranstaltungen",
+        queryset=_models.Memorabilien.objects.annotate(
+            veranstaltung_list=string_list("veranstaltung__name", length=1024)
+        ),
+    )
+    person_list = CachedQuerysetField(
+        attribute="person_list",
+        column_name="Personen",
+        queryset=_models.Memorabilien.objects.annotate(person_list=string_list("person___name", length=1024)),
+    )
+    bestand_list = CachedQuerysetField(
+        attribute="bestand_list",
+        column_name="Bestände",
+        queryset=_models.Memorabilien.objects.annotate(
+            bestand_list=string_list("bestand__lagerort___name", length=1024)
+        ),
+    )
+
+    class Meta:
+        model = _models.Memorabilien
+        fields = [
+            "id",
+            "titel",
+            "typ",
+            "beschreibung",
+            "schlagwort_list",
+            "genre_list",
+            "musiker_list",
+            "band_list",
+            "ort_list",
+            "spielort_list",
+            "veranstaltung_list",
+            "person_list",
+            "bestand_list",
+        ]
+        export_order = [
+            "id",
+            "titel",
+            "typ",
+            "beschreibung",
+            "schlagwort_list",
+            "genre_list",
+            "musiker_list",
+            "band_list",
+            "ort_list",
+            "spielort_list",
+            "veranstaltung_list",
+            "person_list",
+            "bestand_list",
+        ]
+        select_related = ["typ"]
+
+
+class MemoTypResource(MIZResource):
+    class Meta:
+        model = _models.MemoTyp
+        fields = ["id", "name"]
+        export_order = ["id", "name"]
