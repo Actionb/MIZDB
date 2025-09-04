@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.28.0] - 2025-09-04 
+
+### Added
+
+- added 'Lagerort' search field to list views search forms
+
 ## [0.27.0] - 2025-07-30
 
 ### Added
