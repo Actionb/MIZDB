@@ -184,6 +184,7 @@ class AudioAdmin(MIZModelAdmin):
             "medium",
             "release_id",
             "land_pressung",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
@@ -256,6 +257,7 @@ class AusgabenAdmin(MIZModelAdmin):
             "sonderausgabe",
             "audio",
             "video",
+            "bestand__lagerort",
         ],
         "labels": {
             "ausgabejahr__jahr__range": "Jahr",
@@ -669,6 +671,7 @@ class PlakatAdmin(MIZModelAdmin):
             "reihe",
             "datum__range",
             "signatur__contains",
+            "bestand__lagerort",
         ],
         "labels": {"reihe": "Bildreihe"},
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
@@ -820,6 +823,7 @@ class BuchAdmin(MIZModelAdmin):
             "jahr",
             "ISBN",
             "EAN",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
         # 'autor' help_text refers to quick item creation which is not allowed
@@ -1024,6 +1028,7 @@ class MemoAdmin(MIZModelAdmin):
             "spielort",
             "veranstaltung",
             "person",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
@@ -1351,6 +1356,7 @@ class VideoAdmin(MIZModelAdmin):
             "person",
             "medium",
             "release_id",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
@@ -1573,7 +1579,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ["titel", "zusammenfassung", "jahr_list"]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range"],
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range", "bestand__lagerort"],
         "forwards": {"ausgabe": "ausgabe__magazin"},
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe"],
@@ -1620,7 +1626,7 @@ class BrochureAdmin(BaseBrochureAdmin):
 
     inlines = [URLInLine, JahrInLine, GenreInLine, SchlagwortInLine, BestandInLine]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range"],
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range", "bestand__lagerort"],
         "forwards": {"ausgabe": "ausgabe__magazin"},
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe"],
@@ -1669,7 +1675,15 @@ class KalenderAdmin(BaseBrochureAdmin):
     actions = [_actions.merge_records, _actions.change_bestand, _actions.summarize]
     inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "spielort", "veranstaltung", "jahre__jahr__range"],
+        "fields": [
+            "ausgabe__magazin",
+            "ausgabe",
+            "genre",
+            "spielort",
+            "veranstaltung",
+            "jahre__jahr__range",
+            "bestand__lagerort",
+        ],
         "forwards": {"ausgabe": "ausgabe__magazin"},
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe", "spielort", "veranstaltung"],
@@ -1746,6 +1760,7 @@ class FotoAdmin(MIZModelAdmin):
             "person",
             "reihe",
             "datum__range",
+            "bestand__lagerort",
         ],
         "labels": {"reihe": "Bildreihe"},
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],

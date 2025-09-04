@@ -231,6 +231,7 @@ class AudioList(SearchableListView):
             "medium",
             "release_id",
             "land_pressung",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
@@ -272,6 +273,7 @@ class AusgabeList(SearchableListView):
             "sonderausgabe",
             "audio",
             "video",
+            "bestand__lagerort",
         ],
         "labels": {
             "ausgabejahr__jahr__range": "Jahr",
@@ -347,7 +349,7 @@ class BrochureList(SearchableListView):
     model = _models.Brochure
     list_display = ["id", "titel", "zusammenfassung", "jahr_list"]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range"],
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "schlagwort", "jahre__jahr__range", "bestand__lagerort"],
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
@@ -386,6 +388,7 @@ class BuchList(SearchableListView):
             "jahr",
             "ISBN",
             "EAN",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
         "help_texts": {"autor": None},
@@ -428,6 +431,7 @@ class FotoList(SearchableListView):
             "person",
             "reihe",
             "datum__range",
+            "bestand__lagerort",
         ],
         "labels": {"reihe": "Bildreihe"},
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
@@ -470,6 +474,7 @@ class PlakatList(SearchableListView):
             "reihe",
             "datum__range",
             "signatur__contains",
+            "bestand__lagerort",
         ],
         "labels": {"reihe": "Bildreihe"},
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
@@ -499,7 +504,15 @@ class ProgrammheftList(SearchableListView):
     model = _models.Kalender
     list_display = ["id", "titel", "zusammenfassung", "jahr_list"]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "spielort", "veranstaltung", "jahre__jahr__range"],
+        "fields": [
+            "ausgabe__magazin",
+            "ausgabe",
+            "genre",
+            "spielort",
+            "veranstaltung",
+            "jahre__jahr__range",
+            "bestand__lagerort",
+        ],
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe", "spielort", "veranstaltung"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
@@ -532,6 +545,7 @@ class VideoList(SearchableListView):
             "person",
             "medium",
             "release_id",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
@@ -549,7 +563,7 @@ class WarenkatalogList(SearchableListView):
     model = _models.Katalog
     list_display = ["id", "titel", "zusammenfassung", "art", "jahr_list"]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range"],
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__rangebestand__lagerort"],
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
@@ -921,6 +935,7 @@ class MemorabilienList(SearchableListView):
             "spielort",
             "veranstaltung",
             "person",
+            "bestand__lagerort",
         ],
         "tabular": ["musiker", "band", "spielort", "veranstaltung"],
     }
