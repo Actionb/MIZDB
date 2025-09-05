@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.28.1] - 2025-09-05
+
+### Fixed
+
+- fixed incorrect search form fields for Warenkatalog list view
+
 ## [0.28.0] - 2025-09-04 
 
 ### Added

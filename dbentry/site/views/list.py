@@ -46,7 +46,7 @@ from dbentry.export import resources
 from dbentry.site.forms import MusikerSearchForm, null_boolean_select
 from dbentry.site.registry import ModelType, register_changelist
 from dbentry.site.templatetags.mizdb import add_preserved_filters
-from dbentry.site.views.base import ORDER_VAR, BaseViewMixin, SearchableListView, ONLINE_HELP_INDEX
+from dbentry.site.views.base import ONLINE_HELP_INDEX, ORDER_VAR, BaseViewMixin, SearchableListView
 from dbentry.utils import add_attrs
 from dbentry.utils.text import concat_limit
 from dbentry.utils.url import get_change_url
@@ -563,7 +563,7 @@ class WarenkatalogList(SearchableListView):
     model = _models.Katalog
     list_display = ["id", "titel", "zusammenfassung", "art", "jahr_list"]
     search_form_kwargs = {
-        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__rangebestand__lagerort"],
+        "fields": ["ausgabe__magazin", "ausgabe", "genre", "jahre__jahr__range", "bestand__lagerort"],
         "labels": {"jahre__jahr__range": "Jahr"},
         "tabular": ["ausgabe"],
         "filter_by": {"ausgabe": ("ausgabe__magazin", "magazin_id")},
