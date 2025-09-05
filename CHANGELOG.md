@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## [0.28.1] - 2025-09-05
 
 ### Fixed
 
