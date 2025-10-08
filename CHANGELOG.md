@@ -7,6 +7,7 @@
 - fixed crash from ISBNField attempting to format an invalid value
 - fixed crash when merging Kalender objects
 - fixed crash when using UnusedObjectsView with models that inherit relations
+- fixed crash when trying to access history view for objects that do not exist
 
 ## [0.28.1] - 2025-09-05
 

@@ -2,6 +2,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.admin.utils import unquote
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import get_object_or_404
 from django.views.generic.list import ListView
 
 from dbentry.site.views.base import PAGE_VAR, ModelViewMixin
@@ -31,6 +32,7 @@ class HistoryView(PermissionRequiredMixin, ModelViewMixin, ListView):
         return perms.has_view_permission(self.request.user, self.opts)
 
     def get_context_data(self, **kwargs):  # pragma: no cover
+        obj = get_object_or_404(self.model, pk=unquote(self.kwargs.get(self.pk_url_kwarg)))
         ctx = super().get_context_data(**kwargs)
         paginator = self.get_paginator(self.get_queryset(), 100)
         page_number = self.request.GET.get(self.page_kwarg, 1)
@@ -44,6 +46,6 @@ class HistoryView(PermissionRequiredMixin, ModelViewMixin, ListView):
             "page_range": page_range,
             "page_var": self.page_kwarg,
             "pagination_required": paginator.count > 100,
-            "title": f"{self.title}: {str(self.model.objects.get(pk=unquote(self.kwargs.get(self.pk_url_kwarg))))}",
+            "title": f"{self.title}: {str(obj)}",
         }
         return ctx

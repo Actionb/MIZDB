@@ -1188,6 +1188,14 @@ class TestHistoryView(ViewTestCase):
         view = self.get_view(kwargs={"object_id": str(self.obj.pk)})
         self.assertQuerySetEqual(view.get_queryset(), [self.obj_log1, self.obj_log2])
 
+    def test_object_does_not_exist_404(self):
+        """
+        Assert that the view returns a 404 response if the requested object
+        does not exist.
+        """
+        response = self.client.get(reverse("test_site_band_history", kwargs={"object_id": "0"}))
+        self.assertEqual(response.status_code, 404)
+
 
 @override_settings(ROOT_URLCONF=URLConf)
 class TestSearchableListView(ViewTestCase):
