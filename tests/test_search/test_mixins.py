@@ -444,7 +444,9 @@ class TestChangelistSearchFormMixin(RequestTestCase):
         request = self.get_request(data={"schlagzeile": "Schlagzeile", "seite_0": "10", "seite_1": "20"})
         changelist = self.SearchFormChangelist(request)
         changelist.model_admin = ArtikelAdmin(Artikel, admin_site)
-        self.assertEqual(changelist.get_filters_params({}), {"schlagzeile": "Schlagzeile", "seite__range": [10, 20]})
+        self.assertEqual(
+            changelist.get_filters_params({}), {"schlagzeile": ["Schlagzeile"], "seite__range": [[10, 20]]}
+        )
 
     def test_get_filters_params_no_search_form_mixin(self):
         """

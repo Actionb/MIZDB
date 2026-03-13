@@ -307,6 +307,11 @@ class ChangelistSearchFormMixin(object):
         search_form_params = self.model_admin.get_search_form(  # type: ignore[attr-defined]
             data=self.request.GET
         ).get_filters_params()
+        # Django 5.*: django.contrib.admin.views.main.ChangeList.get_filters
+        # now requires values to be lists (and range params to be nested lists):
+        for k, v in search_form_params.items():
+            if not isinstance(v, list) or "__range" in k:
+                search_form_params[k] = [v]
         if search_form_params:
             return search_form_params
         return filter_params
