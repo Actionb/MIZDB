@@ -8,6 +8,9 @@ from dbentry.site.views.base import PAGE_VAR, ModelViewMixin
 from dbentry.utils import permission as perms
 
 
+# TODO: handle invalid pk / object does not exist
+#  This causes an error if a user tries to access this view for an object that
+#  does not exist.
 class HistoryView(PermissionRequiredMixin, ModelViewMixin, ListView):
     title = "Änderungsgeschichte"
     template_name = "mizdb/object_history.html"
