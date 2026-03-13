@@ -8,6 +8,7 @@
 - fixed crash when merging Kalender objects
 - fixed crash when using UnusedObjectsView with models that inherit relations
 - fixed crash when trying to access history view for objects that do not exist
+- fixed ValueError when using strings that are numerical but not decimal in searches
 
 ## [0.28.1] - 2025-09-05
 

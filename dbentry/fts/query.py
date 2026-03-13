@@ -89,7 +89,7 @@ class TextSearchQuerySetMixin(object):
         filters = Q()
         # Check if q is an id number or a list of ids, and add filters
         # accordingly.
-        if all(v.strip().isnumeric() for v in q.split(",")):
+        if all(v.strip().isdecimal() for v in q.split(",")):
             for v in q.split(","):
                 filters |= Q(**{pk_name: v.strip()})
 
@@ -154,7 +154,7 @@ class TextSearchQuerySetMixin(object):
                 startswith = ExpressionWrapper(Q(**{name_field + "__istartswith": q}), output_field=BooleanField())
                 contains = ExpressionWrapper(Q(**{name_field + "__icontains": q}), output_field=BooleanField())
                 ordering = [exact.desc(), startswith.desc(), "-rank", contains.desc(), *_ordering]
-                if q.isnumeric():
+                if q.isdecimal():
                     # Prepend an ordering for exact pk matches:
                     ordering.insert(0, ExpressionWrapper(Q(**{pk_name: q}), output_field=BooleanField()).desc())
             else:
