@@ -1,4 +1,4 @@
-Django==4.2.29
+Django==5.2.12
 django-admin-logs==1.4.0
 django-autocomplete-light==3.12.1
 django-bootstrap5==25.1

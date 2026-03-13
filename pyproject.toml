@@ -56,7 +56,7 @@ markers = [
     "logging: This test is tagged as a logging test: @tag('logging')",
 ]
 filterwarnings = [
-    "ignore::django.utils.deprecation.RemovedInDjango50Warning",
+    "ignore::django.utils.deprecation.RemovedInDjango60Warning",
 ]
 
 [tool.mypy]
