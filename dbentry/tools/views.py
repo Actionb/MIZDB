@@ -322,8 +322,8 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 # self relation
                 continue
             if rel.many_to_many:
-                if rel.related_model == model:
-                    # A m2m relation established by THIS model.
+                if issubclass(model, rel.related_model):
+                    # A m2m relation established by THIS model or its parent.
                     query_name = rel.field.name
                     related_model = rel.model
                 else:
