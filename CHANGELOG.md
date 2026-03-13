@@ -10,6 +10,10 @@
 - fixed crash when trying to access history view for objects that do not exist
 - fixed ValueError when using strings that are numerical but not decimal in searches
 
+### Changed
+
+- updated Django to version `4.2.29`
+
 ## [0.28.1] - 2025-09-05
 
 ### Fixed
