@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+- fixed crash from ISBNField attempting to format an invalid value 
+
 ## [0.28.1] - 2025-09-05
 
 ### Fixed

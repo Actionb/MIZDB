@@ -380,6 +380,12 @@ class TestISBNField(StdNumFieldTestsMixin, MIZTestCase):
             with self.subTest(empty_value=value):
                 self.assertFalse(self.model_field.get_format_callback()(value))
 
+    def test_get_format_callback_invalid_value(self):
+        """Assert that the callback does not attempt to modify invalid values."""
+        for value in self.invalid:
+            with self.subTest(invalid_number=value):
+                self.assertEqual(self.model_field.get_format_callback()(value), value)
+
     def test_modelform_handles_isbn10_as_isbn13(self):
         """
         Assert that the form treats a value of ISBN13 passed in as initial as
