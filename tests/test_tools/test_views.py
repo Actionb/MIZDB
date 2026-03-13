@@ -5,6 +5,7 @@ from urllib.parse import unquote
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldError
 from django.test import override_settings
 from django.urls import reverse, path, include
 
@@ -335,6 +336,17 @@ class TestUnusedObjectsView(ViewTestCase):
         url = reverse("test_tools:test_tools_genre_change", args=[self.used_once.pk])
         self.assertIn(url, used_once[0])
         self.assertIn("Musiker (1)", used_once[1])
+
+
+@override_settings(ROOT_URLCONF="tests.test_tools.urls")
+class TestUnusedObjectsViewKalender(ViewTestCase):
+    # Regression test - view crashed for models with inherited relations
+    view_class = UnusedObjectsView
+
+    def test_queryset(self):
+        view = self.get_view()
+        with self.assertNotRaises(FieldError):
+            view.get_queryset(model=_models.Kalender, limit=0)
 
 
 class TestFindDuplicates(DataTestCase):

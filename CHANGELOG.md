@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.29.0] - 2026-03-13
+
+### Fixed
+
+- fixed crash from ISBNField attempting to format an invalid value
+- fixed crash when merging Kalender objects
+- fixed crash when using UnusedObjectsView with models that inherit relations
+- fixed crash when trying to access history view for objects that do not exist
+- fixed ValueError when using strings that are numerical but not decimal in searches
+
+### Changed
+
+- updated Django to version `4.2.29`
+
 ## [0.28.1] - 2025-09-05
 
 ### Fixed

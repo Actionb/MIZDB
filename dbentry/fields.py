@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import formats
-from stdnum import ean, isbn, issn
+from stdnum import ean, isbn, issn, exceptions as stdnum_exception
 
 from dbentry.site.renderer import IS_INVALID_CLASS
 from dbentry.validators import EANValidator, ISBNValidator, ISSNValidator
@@ -199,9 +199,16 @@ class ISBNField(StdNumField):
         return isbn.to_isbn13(value)
 
     def get_format_callback(self) -> Callable[[str], str]:
+        def _is_valid(value: str) -> bool:
+            try:
+                isbn.validate(value, convert=True)
+                return True
+            except stdnum_exception.ValidationError:
+                return False
+
         def _format(value: str) -> str:
             """Return a well formatted ISBN13."""
-            if value in self.empty_values:
+            if value in self.empty_values or not _is_valid(value):
                 return value
             return isbn.format(value, convert=True)
 

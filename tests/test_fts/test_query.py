@@ -493,6 +493,12 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertIsInstance(queryset.query.where.children[0], NothingNode)
         self.assertFalse(queryset.query.annotations)
 
+    def test_search_pk_numeric_but_not_decimal(self):
+        # Regression test - search only checked if a string is numeric which
+        # allowed strings like "7²" to be used in filters against integer fields
+        # which in turn resulted in a ValueError.
+        self.queryset.search("7²")
+
 
 class TestProvenienzSearch(DataTestCase):
     """

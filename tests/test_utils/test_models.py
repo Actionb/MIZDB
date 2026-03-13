@@ -12,6 +12,8 @@ from django.test import override_settings
 from django.urls import path
 
 from dbentry.utils import models as utils
+from dbentry import models as _models
+from dbentry.utils.models import get_relation_info_to
 from tests.case import MIZTestCase, RequestTestCase
 from tests.model_factory import make
 from tests.test_utils.models import Audio, Band, Genre, Musiker
@@ -342,3 +344,33 @@ class TestGetDeletedObjects(RequestTestCase):
         to_delete, model_count, perms_needed, protected = utils.get_deleted_objects(request, [obj])
         self.assertNotIn("Genre Beziehung", perms_needed)  # auto created
         self.assertIn("Audio-Musiker", perms_needed)  # not auto created
+
+
+class TestGetRelationInfoTo(MIZTestCase):
+    # get_relation_info_to
+
+    def test_get_relation_info_to(self):
+        test_data = {
+            # test_case: (model, rel, expected related_model, expected related_field)
+            "m2m": (
+                _models.Musiker,
+                _models.Musiker._meta.get_field("genre").remote_field,
+                _models.Musiker.genre.through,
+                _models.Musiker.genre.through._meta.get_field("musiker"),
+            ),
+            "m2o": (
+                _models.Person,
+                _models.Musiker._meta.get_field("person").remote_field,
+                _models.Musiker,
+                _models.Musiker._meta.get_field("person"),
+            ),
+            "parent_model": (  # related_model is the parent model of model
+                _models.Kalender,
+                _models.Kalender._meta.get_field("genre").remote_field,
+                _models.BaseBrochure.genre.through,
+                _models.BaseBrochure.genre.through._meta.get_field("basebrochure"),
+            ),
+        }
+        for test_case, (model, rel, related_model, related_field) in test_data.items():
+            with self.subTest(test_case=test_case):
+                self.assertEqual(get_relation_info_to(model, rel), (related_model, related_field))
