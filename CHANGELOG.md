@@ -4,7 +4,8 @@
 
 ### Fixed
 
-- fixed crash from ISBNField attempting to format an invalid value 
+- fixed crash from ISBNField attempting to format an invalid value
+- fixed crash when merging Kalender objects
 
 ## [0.28.1] - 2025-09-05
 

@@ -1,6 +1,9 @@
+from typing import Union
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from dbentry import models as _models
 from dbentry.utils.merge import merge_records
 from tests.case import DataTestCase, LoggingTestMixin, RequestTestCase
 from tests.model_factory import make
@@ -168,3 +171,32 @@ class TestMerge(LoggingTestMixin, DataTestCase, RequestTestCase):
             merge_records(self.obj2, queryset, expand_original=True, user_id=self.super_user.pk)
             # Check that the merge was aborted and obj3 was not deleted:
             self.assertTrue(self.model.objects.filter(pk=self.obj3.pk).exists())
+
+
+class MergeTestMethodsMixin:
+    def test_merge(self: Union["MergeTestMethodsMixin", "MergeTestCase"]):
+        merged, _ = merge_records(original=self.original, queryset=self.queryset)
+        self.assertIn(self.jazz, merged.genre.all())
+
+
+class MergeTestCase(DataTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.rock = make(_models.Genre, genre="Rock")
+        cls.jazz = make(_models.Genre, genre="Jazz")
+        cls.original = make(cls.model, genre=cls.rock)
+        cls.merger = make(cls.model, genre=cls.jazz)
+        super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        self.queryset = self.model.objects.filter(pk=self.merger.pk)
+
+
+class TestMergeBand(MergeTestCase, MergeTestMethodsMixin):
+    model = _models.Band
+
+
+class TestMergeKalender(MergeTestCase, MergeTestMethodsMixin):
+    # Regression test - there was a bug where Kalender objects could not be merged
+    model = _models.Kalender

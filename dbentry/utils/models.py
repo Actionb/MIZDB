@@ -154,8 +154,8 @@ def get_relation_info_to(model: ModelClassOrInstance, rel: Relations) -> Tuple[T
         related_model = rel.through
         related_opts = related_model._meta
         m2m_field = rel.field
-        if m2m_field.model == model:
-            # The ManyToManyField is with model:
+        if issubclass(model, m2m_field.model):
+            # The ManyToManyField is declared on the model or its parent model:
             # the field pointing back to model on the intermediary table can
             # be retrieved via m2m_field_name().
             related_field = related_opts.get_field(m2m_field.m2m_field_name())
