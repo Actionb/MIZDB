@@ -198,11 +198,11 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
             can_change_related (bool): if True, add a 'change' icon
             can_delete_related (bool): if True, add a 'delete' icon
         """
+        self.widget = widget
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         # noinspection PyUnresolvedReferences
         self.choices = widget.choices
-        self.widget = widget
         multiple = getattr(widget, "allow_multiple_selected", False)
         self.can_add_related = not multiple and can_add_related
         self.can_change_related = not multiple and can_change_related
